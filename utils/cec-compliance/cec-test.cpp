@@ -751,6 +751,10 @@ static int log_tuner_service(const struct cec_op_tuner_device_info &info,
 	if (info.is_analog) {
 		double freq_mhz = (info.analog.ana_freq * 625) / 10000.0;
 
+		printf("Analog Channel %.2f MHz (%s, %s)\n", freq_mhz,
+		       bcast_system2s(info.analog.bcast_system),
+		       bcast_type2s(info.analog.ana_bcast_type));
+
 		switch (info.analog.bcast_system) {
 		case CEC_OP_BCAST_SYSTEM_PAL_BG:
 		case CEC_OP_BCAST_SYSTEM_SECAM_LQ:
@@ -763,42 +767,15 @@ static int log_tuner_service(const struct cec_op_tuner_device_info &info,
 		case CEC_OP_BCAST_SYSTEM_PAL_DK:
 			break;
 		default:
-			fail("invalid analog bcast_system");
-			break;
+			return fail("invalid analog bcast_system %u", info.analog.bcast_system);
 		}
-		fail_on_test(info.analog.ana_bcast_type > CEC_OP_ANA_BCAST_TYPE_TERRESTRIAL);
+		if (info.analog.ana_bcast_type > CEC_OP_ANA_BCAST_TYPE_TERRESTRIAL)
+			return fail("invalid analog bcast_type %u\n", info.analog.ana_bcast_type);
 		fail_on_test(!info.analog.ana_freq);
-		printf("Analog Channel %.2f MHz (%s, %s)\n", freq_mhz,
-		       bcast_system2s(info.analog.bcast_system),
-		       bcast_type2s(info.analog.ana_bcast_type));
 		return 0;
 	}
 
 	__u8 system = info.digital.dig_bcast_system;
-
-	switch (system) {
-	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_GEN:
-	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_GEN:
-	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_GEN:
-		warn_once("generic digital broadcast systems should not be used");
-		break;
-	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_BS:
-	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_CS:
-	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_T:
-	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_CABLE:
-	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_SAT:
-	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_T:
-	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_C:
-	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S:
-	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S2:
-	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_T:
-		break;
-	default:
-		fail("invalid digital broadcast system");
-		break;
-	}
-
-	fail_on_test(info.digital.service_id_method > CEC_OP_SERVICE_ID_METHOD_BY_CHANNEL);
 
 	printf("%s Channel ", dig_bcast_system2s(system));
 	if (info.digital.service_id_method) {
@@ -813,8 +790,8 @@ static int log_tuner_service(const struct cec_op_tuner_device_info &info,
 			printf("%u\n", minor);
 			break;
 		default:
-			fail("invalid service ID method\n");
-			break;
+			printf("%u.%u\n", major, minor);
+			return fail("invalid service ID method\n");
 		}
 		return 0;
 	}
@@ -857,6 +834,31 @@ static int log_tuner_service(const struct cec_op_tuner_device_info &info,
 	default:
 		break;
 	}
+
+	switch (system) {
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_GEN:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_GEN:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_GEN:
+		warn_once("generic digital broadcast systems should not be used");
+		break;
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_BS:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_CS:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_T:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_CABLE:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_SAT:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_T:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_C:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S2:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_T:
+		break;
+	default:
+		return fail("invalid digital broadcast system %u", system);
+	}
+
+	if (info.digital.service_id_method > CEC_OP_SERVICE_ID_METHOD_BY_CHANNEL)
+		return fail("invalid service ID method %u\n", info.digital.service_id_method);
+
 	return 0;
 }
 
@@ -934,6 +936,10 @@ static int tuner_ctl_test(struct node *node, unsigned me, unsigned la, bool inte
 		fail_on_test(timed_out_or_abort(&msg));
 		info = {};
 		cec_ops_tuner_device_status(&msg, &info);
+		if (memcmp(&info, &(*iter), sizeof(info))) {
+			log_tuner_service(info);
+			log_tuner_service(*iter);
+		}
 		fail_on_test(memcmp(&info, &(*iter), sizeof(info)));
 	}
 	printf("\t    Finished Channel Test\n");
