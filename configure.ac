@@ -521,6 +521,12 @@ AM_CONDITIONAL([WITH_BPF],          [test x$enable_bpf != xno -a x$libelf_pkgcon
 AS_IF([test x$enable_libdvbv5 = xno], [AC_SUBST([ENFORCE_LIBDVBV5_STATIC], ["-static"])])
 AS_IF([test x$enable_libv4l = xno],   [AC_SUBST([ENFORCE_LIBV4L_STATIC],   ["-static"])])
 
+# Since systemd v239, udevd is not allowed to execute BPF systems calls;
+# add an override to allow bpf(2) in that case. On earlier versions, the
+# override will restrict udevd to bpf syscall only and will stop the system
+# from booting. This is also true on current debian versions.
+AM_CONDITIONAL([HAVE_UDEVDSYSCALLFILTER], [grep -s SystemCallFilter $with_systemdsystemunitdir/systemd-udevd.service])
+
 # misc
 
 if test "x$linux_os" = "xyes"; then
