@@ -973,6 +973,10 @@ void common_set(cv4l_fd &_fd)
 					strncpy(ctrl.string, iter->second.c_str(), qc.maximum);
 					ctrl.string[qc.maximum] = 0;
 					break;
+				case V4L2_CTRL_TYPE_AREA:
+					sscanf(iter->second.c_str(), "%ux%u",
+					       &ctrl.p_area->width, &ctrl.p_area->height);
+					break;
 				default:
 					fprintf(stderr, "%s: unsupported payload type\n",
 							qc.name);
