@@ -458,6 +458,9 @@ static void print_qctrl(int fd, struct v4l2_query_ext_ctrl *queryctrl,
 				queryctrl->minimum, queryctrl->maximum,
 				queryctrl->step, queryctrl->default_value);
 		break;
+	case V4L2_CTRL_TYPE_AREA:
+		printf("%31s %#8.8x (area)   :", s.c_str(), queryctrl->id);
+		break;
 	default:
 		printf("%31s %#8.8x (unknown): type=%x",
 				s.c_str(), queryctrl->id, queryctrl->type);
