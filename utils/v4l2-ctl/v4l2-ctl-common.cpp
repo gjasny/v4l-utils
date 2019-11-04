@@ -1150,6 +1150,11 @@ void common_get(cv4l_fd &_fd)
 							printf("%s: '%s'\n", name.c_str(),
 								safename(ctrl.string).c_str());
 							break;
+						case V4L2_CTRL_TYPE_AREA:
+							printf("%s: %dx%d\n", name.c_str(),
+							       ctrl.p_area->width,
+							       ctrl.p_area->height);
+							break;
 						default:
 							fprintf(stderr, "%s: unsupported payload type\n",
 									qc.name);
