@@ -457,9 +457,12 @@ static int routing_control_inactive_source(struct node *node, unsigned me, unsig
 	doioctl(node, CEC_S_MODE, &mode);
 	if (me == CEC_LOG_ADDR_TV) {
 		// Inactive Source should be ignored by all other devices
+		if (response >= 0)
+			return fail("Unexpected reply to Inactive Source\n");
 		fail_on_test(response >= 0);
 	} else {
-		fail_on_test(response < 0);
+		if (response < 0)
+			return fail("Expected Active Source or Set Stream Path reply to Inactive Source\n");
 		fail_on_test(interactive && !question("Did the TV switch away from or stop showing this source?"));
 	}
 
