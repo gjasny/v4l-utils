@@ -1678,6 +1678,7 @@ struct v4l2_ext_control {
 		__u8 *p_u8;
 		__u16 *p_u16;
 		__u32 *p_u32;
+		struct v4l2_area *p_area;
 		void *ptr;
 	};
 } __attribute__ ((packed));
