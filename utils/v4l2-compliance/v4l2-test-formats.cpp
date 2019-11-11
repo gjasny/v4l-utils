@@ -1790,6 +1790,47 @@ static int testBasicScaling(struct node *node, const struct v4l2_format &cur)
 	return 0;
 }
 
+static int testM2MScaling(struct node *node)
+{
+	struct v4l2_selection sel_compose = {
+		V4L2_BUF_TYPE_VIDEO_CAPTURE,
+		V4L2_SEL_TGT_COMPOSE,
+		0,
+		{ 1, 1, 0, 0 }
+	};
+	__u32 cap_type = node->g_type();
+	__u32 out_type = v4l_type_invert(cap_type);
+	cv4l_fmt out_fmt, cap_fmt, fmt;
+
+	fail_on_test(node->g_fmt(out_fmt, out_type));
+	out_fmt.s_width(1);
+	out_fmt.s_height(1);
+	fail_on_test(node->s_fmt(out_fmt, out_type));
+
+	fail_on_test(node->g_fmt(cap_fmt, cap_type));
+	cap_fmt.s_width(out_fmt.g_width());
+	cap_fmt.s_height(out_fmt.g_height());
+	fail_on_test(node->s_fmt(cap_fmt, cap_type));
+	fmt = cap_fmt;
+	fmt.s_width(0x4000);
+	fmt.s_height(0x4000);
+	fail_on_test(node->s_fmt(fmt, cap_type));
+	if (!doioctl(node, VIDIOC_G_SELECTION, &sel_compose)) {
+		sel_compose.r.width = fmt.g_width();
+		sel_compose.r.height = fmt.g_height();
+		doioctl(node, VIDIOC_S_SELECTION, &sel_compose);
+		doioctl(node, VIDIOC_G_SELECTION, &sel_compose);
+		if (sel_compose.r.width > cap_fmt.g_width() ||
+		    sel_compose.r.height > cap_fmt.g_height())
+			node->can_scale = true;
+	} else {
+		if (fmt.g_width() > cap_fmt.g_width() ||
+		    fmt.g_height() > cap_fmt.g_height())
+			node->can_scale = true;
+	}
+	return node->can_scale ? 0 : ENOTTY;
+}
+
 int testScaling(struct node *node)
 {
 	struct v4l2_format fmt;
@@ -1797,6 +1838,17 @@ int testScaling(struct node *node)
 	if (!node->is_video)
 		return ENOTTY;
 	node->can_scale = false;
+
+	/*
+	 * Encoders do not have a scaler. Decoders might, but it is
+	 * very hard to detect this for any decoder but JPEG.
+	 */
+	if (node->codec_mask && node->codec_mask != JPEG_DECODER)
+		return ENOTTY;
+
+	if (node->is_m2m)
+		return testM2MScaling(node);
+
 	if (node->can_capture) {
 		v4l_format_init(&fmt, node->is_planar ?
 			V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
