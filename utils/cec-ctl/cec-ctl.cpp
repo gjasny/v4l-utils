@@ -66,6 +66,7 @@ enum Option {
 	OptClear = 'C',
 	OptSetDevice = 'd',
 	OptSetDriver = 'D',
+	OptPhysAddrFromEDID = 'e',
 	OptFrom = 'f',
 	OptHelp = 'h',
 	OptLogicalAddress = 'l',
@@ -157,6 +158,7 @@ static struct option long_options[] = {
 	{ "verbose", no_argument, 0, OptVerbose },
 	{ "wall-clock", no_argument, 0, OptWallClock },
 	{ "osd-name", required_argument, 0, OptOsdName },
+	{ "phys-addr-from-edid", required_argument, 0, OptPhysAddrFromEDID },
 	{ "phys-addr", required_argument, 0, OptPhysAddr },
 	{ "vendor-id", required_argument, 0, OptVendorID },
 	{ "cec-version-1.4", no_argument, 0, OptCECVersion1_4 },
@@ -233,6 +235,7 @@ static void usage(void)
 	       "  -D, --driver <driver>    Use a cec device with this driver name\n"
 	       "  -a, --adapter <adapter>  Use a cec device with this adapter name\n"
 	       "  -p, --phys-addr <addr>   Use this physical address\n"
+	       "  -e, --phys-addr-from-edid <path>   Set physical address from this EDID file\n"
 	       "  -o, --osd-name <name>    Use this OSD name\n"
 	       "  -V, --vendor-id <id>     Use this vendor ID\n"
 	       "  -l, --logical-address    Show first configured logical address\n"
@@ -1490,6 +1493,78 @@ static bool sort_on_device_name(const std::string &s1, const std::string &s2)
 	return n1 < n2;
 }
 
+static unsigned int cec_get_edid_spa_location(const __u8 *edid,
+					      unsigned int size)
+{
+	unsigned int blocks = size / 128;
+	unsigned int block;
+	__u8 d;
+
+	/* Sanity check: at least 2 blocks and a multiple of the block size */
+	if (blocks < 2 || size % 128)
+		return 0;
+
+	/*
+	 * If there are fewer extension blocks than the size, then update
+	 * 'blocks'. It is allowed to have more extension blocks than the size,
+	 * since some hardware can only read e.g. 256 bytes of the EDID, even
+	 * though more blocks are present. The first CEA-861 extension block
+	 * should normally be in block 1 anyway.
+	 */
+	if (edid[0x7e] + 1U < blocks)
+		blocks = edid[0x7e] + 1;
+
+	for (block = 1; block < blocks; block++) {
+		unsigned int offset = block * 128;
+
+		/* Skip any non-CEA-861 extension blocks */
+		if (edid[offset] != 0x02 || edid[offset + 1] != 0x03)
+			continue;
+
+		/* search Vendor Specific Data Block (tag 3) */
+		d = edid[offset + 2] & 0x7f;
+		/* Check if there are Data Blocks */
+		if (d <= 4)
+			continue;
+		if (d > 4) {
+			unsigned int i = offset + 4;
+			unsigned int end = offset + d;
+
+			/* Note: 'end' is always < 'size' */
+			do {
+				__u8 tag = edid[i] >> 5;
+				__u8 len = edid[i] & 0x1f;
+
+				if (tag == 3 && len >= 5 && i + len <= end &&
+				    edid[i + 1] == 0x03 &&
+				    edid[i + 2] == 0x0c &&
+				    edid[i + 3] == 0x00)
+					return i + 4;
+				i += len + 1;
+			} while (i < end);
+		}
+	}
+	return 0;
+}
+
+static __u16 parse_phys_addr_from_edid(const char *edid_path)
+{
+	FILE *f = fopen(edid_path, "r");
+	__u16 pa = CEC_PHYS_ADDR_INVALID;
+	__u8 edid[256];
+
+	if (f == NULL)
+		return pa;
+	if (fread(edid, sizeof(edid), 1, f) == 1) {
+		unsigned int loc = cec_get_edid_spa_location(edid, sizeof(edid));
+
+		if (loc)
+			pa = (edid[loc] << 8) | edid[loc + 1];
+	}
+	fclose(f);
+	return pa;
+}
+
 typedef std::vector<std::string> dev_vec;
 typedef std::map<std::string, std::string> dev_map;
 
@@ -1708,6 +1783,9 @@ int main(int argc, char **argv)
 			break;
 		case OptPhysAddr:
 			phys_addr = cec_parse_phys_addr(optarg);
+			break;
+		case OptPhysAddrFromEDID:
+			phys_addr = parse_phys_addr_from_edid(optarg);
 			break;
 		case OptOsdName:
 			osd_name = optarg;
@@ -2083,7 +2161,9 @@ int main(int argc, char **argv)
 	node.caps = caps.capabilities;
 	node.available_log_addrs = caps.available_log_addrs;
 
-	if (options[OptPhysAddr] && !(node.caps & CEC_CAP_PHYS_ADDR))
+	bool set_phys_addr = options[OptPhysAddr] || options[OptPhysAddrFromEDID];
+
+	if (set_phys_addr && !(node.caps & CEC_CAP_PHYS_ADDR))
 		fprintf(stderr, "The CEC adapter doesn't allow setting the physical address manually, ignore this option.\n\n");
 
 	unsigned flags = 0;
@@ -2129,7 +2209,6 @@ int main(int argc, char **argv)
 	}
 
 	bool set_log_addrs = (node.caps & CEC_CAP_LOG_ADDRS) && flags;
-	bool set_phys_addr = (node.caps & CEC_CAP_PHYS_ADDR) && options[OptPhysAddr];
 	bool clear_log_addrs = (node.caps & CEC_CAP_LOG_ADDRS) && options[OptClear];
 
 	// When setting both PA and LA it is best to clear the LAs first.
