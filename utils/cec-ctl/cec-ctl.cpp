@@ -1424,6 +1424,9 @@ static void stress_test_power_cycle(struct node &node,
 			exit(1);
 		}
 
+		if (cnt && iter == cnt)
+			break;
+
 		if (mod_usleep)
 			printf("Sleep %.2fs, then transmit Standby ", usecs2 / 1000000.0);
 		else
@@ -1470,9 +1473,6 @@ static void stress_test_power_cycle(struct node &node,
 			sleep(1);
 		}
 		printf(" %d second%s\n", tries, tries == 1 ? "" : "s");
-
-		if (cnt && iter == cnt)
-			break;
 	}
 }
 
