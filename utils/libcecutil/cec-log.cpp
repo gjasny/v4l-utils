@@ -46,7 +46,12 @@ static void log_arg(const struct cec_arg *arg, const char *arg_name, __u32 val)
 		}
 		/* fall through */
 	case CEC_ARG_TYPE_U8:
-		printf("\t%s: %u (0x%02x)\n", arg_name, val, val);
+		if (!strcmp(arg_name, "video-latency") ||
+		    !strcmp(arg_name, "audio-out-delay"))
+			printf("\t%s: %u (0x%02x, %d ms)\n", arg_name, val, val,
+			       (val - 1) * 2);
+		else
+			printf("\t%s: %u (0x%02x)\n", arg_name, val, val);
 		return;
 	case CEC_ARG_TYPE_U16:
 		if (strstr(arg_name, "phys-addr"))
