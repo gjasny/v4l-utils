@@ -807,7 +807,7 @@ struct remote_subtest sac_subtests[] = {
 	{ "User Control Pressed (Mute Function)",
 	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
 	  sac_user_control_press_mute_function },
-	{ "User Control Released",
+	{ "User Control Released (Audio)",
 	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
 	  sac_user_control_release },
 	{ "Set System Audio Mode (broadcast off)",

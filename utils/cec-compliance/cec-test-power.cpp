@@ -246,7 +246,7 @@ struct remote_subtest one_touch_play_subtests[] = {
 	{ "Wakeup Text View On", CEC_LOG_ADDR_MASK_TV, one_touch_play_text_view_on_wakeup },
 	{ "Input change on Image View On", CEC_LOG_ADDR_MASK_TV, one_touch_play_image_view_on_change },
 	{ "Input change on Text View On", CEC_LOG_ADDR_MASK_TV, one_touch_play_text_view_on_change },
-	{ "Request Active Source", CEC_LOG_ADDR_MASK_ALL, one_touch_play_req_active_source },
+	{ "Active Source and Request Active Source", CEC_LOG_ADDR_MASK_ALL, one_touch_play_req_active_source },
 };
 
 const unsigned one_touch_play_subtests_size = ARRAY_SIZE(one_touch_play_subtests);
