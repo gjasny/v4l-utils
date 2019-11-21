@@ -239,12 +239,12 @@ std::string safename(const char *name)
 
 	while (*name) {
 		if (isalnum(*name)) {
+			if (not_alnum && !s.empty())
+				s += '-';
 			s += tolower(*name);
 			not_alnum = false;
-		} else if (!not_alnum) {
-			s += "_";
+		} else if (!not_alnum)
 			not_alnum = true;
-		}
 		name++;
 	}
 	return s;
