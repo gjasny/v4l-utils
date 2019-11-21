@@ -37,10 +37,12 @@ enum Option {
 	OptColor = 'C',
 	OptSetDevice = 'd',
 	OptSetDriver = 'D',
+	OptExpect = 'e',
 	OptExitOnFail = 'E',
 	OptTestFuzzing = 'F',
 	OptHelp = 'h',
 	OptInteractive = 'i',
+	OptListTests = 'l',
 	OptNoWarnings = 'n',
 	OptRemote = 'r',
 	OptReplyThreshold = 'R',
@@ -118,6 +120,8 @@ static struct option long_options[] = {
 	{"exit-on-fail", no_argument, 0, OptExitOnFail},
 	{"exit-on-warn", no_argument, 0, OptExitOnWarn},
 	{"remote", optional_argument, 0, OptRemote},
+	{"list-tests", no_argument, 0, OptListTests},
+	{"expect", required_argument, 0, OptExpect},
 	{"timeout", required_argument, 0, OptTimeout},
 	{"trace", no_argument, 0, OptTrace},
 	{"verbose", no_argument, 0, OptVerbose},
@@ -214,6 +218,8 @@ static void usage(void)
 	       "                                      testing of Standby, Give Device Power Status and One Touch Play.\n"
 	       "\n"
 	       "  -E, --exit-on-fail Exit on the first fail.\n"
+	       "  -l, --list-tests   List all tests.\n"
+	       "  --expect <test>=<result> Fail if the test gave a different result.\n"
 	       "  -h, --help         Display this help message\n"
 	       "  -C, --color <when> Highlight OK/warn/fail/FAIL strings with colors\n"
 	       "                     <when> can be set to always, never, or auto (the default)\n"
@@ -224,6 +230,24 @@ static void usage(void)
 	       "  -w, --wall-clock   Show timestamps as wall-clock time (implies -v)\n"
 	       "  -W, --exit-on-warn Exit on the first warning.\n"
 	       );
+}
+
+std::string safename(const char *name)
+{
+	std::string s;
+	bool not_alnum = false;
+
+	while (*name) {
+		if (isalnum(*name)) {
+			s += tolower(*name);
+			not_alnum = false;
+		} else if (!not_alnum) {
+			s += "_";
+			not_alnum = true;
+		}
+		name++;
+	}
+	return s;
 }
 
 static std::string ts2s(__u64 ts)
@@ -731,24 +755,32 @@ const char *ok(int res)
 {
 	static char buf[100];
 
-	if (res == NOTSUPPORTED) {
+	if (res == OK_NOT_SUPPORTED) {
 		strcpy(buf, show_colors ? COLOR_GREEN("OK") " (Not Supported)" :
 		       "OK (Not Supported)");
 		res = 0;
-	} else if (res == PRESUMED_OK) {
+	} else if (res == OK_PRESUMED) {
 		strcpy(buf, show_colors ? COLOR_GREEN("OK") " (Presumed)" :
 		       "OK (Presumed)");
 		res = 0;
-	} else if (res == REFUSED) {
+	} else if (res == OK_REFUSED) {
 		strcpy(buf, show_colors ? COLOR_GREEN("OK") " (Refused)" :
 		       "OK (Refused)");
+		res = 0;
+	} else if (res == OK_UNEXPECTED) {
+		strcpy(buf, show_colors ? COLOR_GREEN("OK") " (Unexpected)" :
+		       "OK (Unexpected)");
+		res = 0;
+	} else if (res == OK_EXPECTED_FAIL) {
+		strcpy(buf, show_colors ? COLOR_GREEN("OK") " (Expected Failure)" :
+		       "OK (Expected Failure)");
 		res = 0;
 	} else
 		strcpy(buf, show_colors ? COLOR_GREEN("OK") : "OK");
 	tests_total++;
 	if (res) {
 		app_result = res;
-		sprintf(buf, show_colors ? COLOR_RED("FAIL") : "FAIL");
+		strcpy(buf, show_colors ? COLOR_RED("FAIL") : "FAIL");
 	} else {
 		tests_ok++;
 	}
@@ -1107,6 +1139,8 @@ int main(int argc, char **argv)
 			"cec-compliance: invalid value for MEDIA_APPS_COLOR environment variable\n");
 	}
 
+	collectTests();
+
 	for (i = 0; long_options[i].name; i++) {
 		if (!isalpha(long_options[i].val))
 			continue;
@@ -1185,6 +1219,13 @@ int main(int argc, char **argv)
 			break;
 		case OptExitOnWarn:
 			exit_on_warn = true;
+			break;
+		case OptExpect:
+			if (setExpectedResult(optarg)) {
+				fprintf(stderr, "invalid -e argument %s\n", optarg);
+				usage();
+				return 1;
+			}
 			break;
 		case OptRemote:
 			if (optarg) {
@@ -1403,12 +1444,26 @@ int main(int argc, char **argv)
 		printf("\nCompliance test for %s device %s:\n\n",
 		       caps.driver, device.c_str());
 		printf("    The test results mean the following:\n"
-		       "        OK                  Supported correctly by the device.\n"
-		       "        OK (Not Supported)  Not supported and not mandatory for the device.\n"
-		       "        OK (Presumed)       Presumably supported.  Manually check to confirm.\n"
-		       "        OK (Unexpected)     Supported correctly but is not expected to be supported for this device.\n"
-		       "        OK (Refused)        Supported by the device, but was refused.\n"
-		       "        FAIL                Failed and was expected to be supported by this device.\n\n");
+		       "        OK                    Supported correctly by the device.\n"
+		       "        OK (Not Supported)    Not supported and not mandatory for the device.\n"
+		       "        OK (Presumed)         Presumably supported.  Manually check to confirm.\n"
+		       "        OK (Unexpected)       Supported correctly but is not expected to be supported for this device.\n"
+		       "        OK (Refused)          Supported by the device, but was refused.\n"
+		       "        OK (Expected Failure) Failed but this was expected (see -e option).\n"
+		       "        FAIL                  Failed and was expected to be supported by this device.\n\n");
+	}
+
+	if (options[OptListTests]) {
+		printf("\nAvailable Tests:\n\n");
+		listTests();
+		printf("\n");
+		printf("Possible test results:\n"
+		       "\t0 = OK                  Supported correctly by the device.\n"
+		       "\t1 = FAIL                Failed and was expected to be supported by this device.\n"
+		       "\t2 = OK (Presumed)       Presumably supported.  Manually check to confirm.\n"
+		       "\t3 = OK (Not Supported)  Not supported and not mandatory for the device.\n"
+		       "\t4 = OK (Refused)        Supported by the device, but was refused.\n"
+		       "\t5 = OK (Unexpected)     Supported correctly but is not expected to be supported for this device.\n\n");
 	}
 
 	node.has_cec20 = laddrs.cec_version >= CEC_OP_CEC_VERSION_2_0;

@@ -178,12 +178,15 @@ struct remote_subtest {
 	bool in_standby;
 };
 
-#define PRESUMED_OK 1
-#define FAIL 2
-#define FAIL_CRITICAL 3
-#define NOTSUPPORTED 4
-#define NOTAPPLICABLE 5
-#define REFUSED 6
+#define FAIL			1
+#define OK_PRESUMED		2
+#define OK_NOT_SUPPORTED	3
+#define OK_REFUSED		4
+#define OK_UNEXPECTED		5
+#define OK_EXPECTED_FAIL	6
+#define NOTAPPLICABLE		7
+#define FAIL_CRITICAL		8
+#define DONT_CARE		255
 
 #define CEC_LOG_ADDR_MASK_ALL 0xffff
 
@@ -390,6 +393,7 @@ int check_0(const void *p, int len);
 int util_receive(struct node *node, unsigned la, unsigned timeout,
 		 struct cec_msg *msg, __u8 sent_msg,
 		 __u8 reply1, __u8 reply2 = 0);
+std::string safename(const char *name);
 
 // CEC adapter tests
 int testCap(struct node *node);
@@ -423,6 +427,9 @@ int device_osd_transfer_give(struct node *node, unsigned me, unsigned la, bool i
 int testProcessing(struct node *node, unsigned me);
 
 // CEC testing
+void collectTests(void);
+void listTests(void);
+int setExpectedResult(char *optarg);
 void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 			     bool interactive);
 

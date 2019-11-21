@@ -75,9 +75,9 @@ static int power_status_give(struct node *node, unsigned me, unsigned la, bool i
 	fail_on_test(timed_out(&msg));
 	fail_on_test(unrecognized_op(&msg));
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	__u8 power_status;
 	cec_ops_report_power_status(&msg, &power_status);
@@ -94,11 +94,11 @@ static int power_status_report(struct node *node, unsigned me, unsigned la, bool
 	cec_msg_report_power_status(&msg, CEC_OP_POWER_STATUS_ON);
 	fail_on_test(!transmit_timeout(node, &msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 struct remote_subtest power_status_subtests[] = {
@@ -132,9 +132,9 @@ static int one_touch_play_view_on(struct node *node, unsigned me, unsigned la, b
 
 	fail_on_test(is_tv(la, node->remote[la].prim_type) && unrecognized_op(&msg));
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	if (opcode == CEC_MSG_IMAGE_VIEW_ON)
 		node->remote[la].has_image_view_on = true;
 	else if (opcode == CEC_MSG_TEXT_VIEW_ON)
@@ -160,14 +160,14 @@ static int one_touch_play_view_on_wakeup(struct node *node, unsigned me, unsigne
 
 	int ret = one_touch_play_view_on(node, me, la, interactive, opcode);
 
-	if (ret && ret != PRESUMED_OK)
+	if (ret && ret != OK_PRESUMED)
 		return ret;
 	fail_on_test(interactive && !question("Did the TV turn on?"));
 
 	if (interactive)
 		return 0;
 	else
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 }
 
 static int one_touch_play_image_view_on_wakeup(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -194,7 +194,7 @@ static int one_touch_play_view_on_change(struct node *node, unsigned me, unsigne
 
 	interactive_info(true, "Please switch the TV to another source.");
 	ret = one_touch_play_view_on(node, me, la, interactive, opcode);
-	if (ret && ret != PRESUMED_OK)
+	if (ret && ret != OK_PRESUMED)
 		return ret;
 	cec_msg_init(&msg, me, la);
 	cec_msg_active_source(&msg, node->phys_addr);
@@ -204,7 +204,7 @@ static int one_touch_play_view_on_change(struct node *node, unsigned me, unsigne
 	if (interactive)
 		return 0;
 	else
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 }
 
 static int one_touch_play_image_view_on_change(struct node *node, unsigned me, unsigned la, bool interactive)

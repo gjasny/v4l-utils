@@ -31,7 +31,7 @@ static int dal_request_current_latency(struct node *node, unsigned me, unsigned 
 	fail_on_test_v2(node->remote[la].cec_version,
 			timed_out(&msg) && is_tv(la, node->remote[la].prim_type));
 	if (timed_out(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 
 	/* When the device supports Dynamic Auto Lipsync but does not implement
 	   CEC 1.4b, or 2.0, a very strict subset of CEC can be supported. If we
@@ -140,11 +140,11 @@ static int arc_initiate_tx(struct node *node, unsigned me, unsigned la, bool int
 	if (timed_out(&msg)) {
 		fail_on_test_v2(node->remote[la].cec_version, node->remote[la].sink_has_arc_tx);
 		warn("Timed out waiting for Report ARC Initiated/Terminated.\n");
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	}
 	if (unrecognized_op(&msg)) {
 		fail_on_test_v2(node->remote[la].cec_version, node->remote[la].sink_has_arc_tx);
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	}
 	if (cec_msg_opcode(&msg) == CEC_MSG_REPORT_ARC_INITIATED) {
 		fail_on_test(!pa_are_adjacent(node->phys_addr, node->remote[la].phys_addr));
@@ -154,9 +154,9 @@ static int arc_initiate_tx(struct node *node, unsigned me, unsigned la, bool int
 	else if (cec_msg_opcode(&msg) == CEC_MSG_REPORT_ARC_TERMINATED)
 		announce("Device supports ARC but is not ready to initiate.");
 	else if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	else if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	return 0;
 }
@@ -177,14 +177,14 @@ static int arc_terminate_tx(struct node *node, unsigned me, unsigned la, bool in
 	fail_on_test(!transmit_timeout(node, &msg));
 	if (timed_out(&msg)) {
 		warn("Timed out waiting for Report ARC Terminated.\n");
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	}
 	fail_on_test(unrecognized_op(&msg));
 	if (cec_msg_status_is_abort(&msg)) {
 		warn("Received Feature Abort for Terminate ARC (but the message was recognized).\n");
 		if (refused(&msg))
-			return REFUSED;
-		return PRESUMED_OK;
+			return OK_REFUSED;
+		return OK_PRESUMED;
 	}
 
 	return 0;
@@ -222,7 +222,7 @@ static int arc_initiate_rx(struct node *node, unsigned me, unsigned la, bool int
 	}
 	if (unsupported) {
 		fail_on_test_v2(node->remote[la].cec_version, node->remote[la].source_has_arc_rx);
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	}
 	fail_on_test(!pa_are_adjacent(node->phys_addr, node->remote[la].phys_addr));
 	fail_on_test_v2(node->remote[la].cec_version, !node->remote[la].source_has_arc_rx);
@@ -252,14 +252,14 @@ static int arc_terminate_rx(struct node *node, unsigned me, unsigned la, bool in
 	fail_on_test(!transmit_timeout(node, &msg));
 	if (timed_out(&msg)) {
 		warn("Timed out waiting for Terminate ARC.\n");
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	}
 	fail_on_test(unrecognized_op(&msg));
 	if (cec_msg_status_is_abort(&msg)) {
 		warn("Received Feature Abort for Request ARC Termination (but the message was recognized).\n");
 		if (refused(&msg))
-			return REFUSED;
-		return PRESUMED_OK;
+			return OK_REFUSED;
+		return OK_PRESUMED;
 	}
 
 	cec_msg_init(&msg, me, la);
@@ -331,11 +331,11 @@ static int sac_request_sad_probe(struct node *node, unsigned me, unsigned la, bo
 	fail_on_test(!transmit_timeout(node, &msg));
 	fail_on_test(timed_out(&msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	node->remote[la].has_sad = true;
 
 	return 0;
@@ -452,12 +452,12 @@ static int sac_set_system_audio_mode_direct(struct node *node, unsigned me, unsi
 	fail_on_test_v2(node->remote[la].cec_version,
 			unrecognized_op(&msg) && is_tv(la, node->remote[la].prim_type));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	node->remote[la].has_set_sys_audio_mode = true;
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 static int sac_set_system_audio_mode_broadcast_on(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -468,7 +468,7 @@ static int sac_set_system_audio_mode_broadcast_on(struct node *node, unsigned me
 	cec_msg_set_system_audio_mode(&msg, CEC_OP_SYS_AUD_STATUS_ON);
 	fail_on_test(!transmit_timeout(node, &msg));
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 static int sac_system_audio_mode_status(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -485,12 +485,12 @@ static int sac_system_audio_mode_status(struct node *node, unsigned me, unsigned
 	fail_on_test_v2(node->remote[la].cec_version,
 			is_tv(la, node->remote[la].prim_type) && unrecognized_op(&msg));
 	if (unrecognized_op(&msg) && !node->remote[la].has_set_sys_audio_mode)
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	fail_on_test(unrecognized_op(&msg));
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	return 0;
 }
@@ -503,7 +503,7 @@ static int sac_set_system_audio_mode_broadcast_off(struct node *node, unsigned m
 	cec_msg_set_system_audio_mode(&msg, CEC_OP_SYS_AUD_STATUS_OFF);
 	fail_on_test(!transmit_timeout(node, &msg));
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 static int sac_system_audio_mode_req_on(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -523,11 +523,11 @@ static int sac_system_audio_mode_req_on(struct node *node, unsigned me, unsigned
 	fail_on_test_v2(node->remote[la].cec_version,
 			cec_has_audiosystem(1 << la) && unrecognized_op(&msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	node->remote[la].has_sys_audio_mode_req = true;
 	cec_ops_set_system_audio_mode(&msg, &status);
 	fail_on_test(status != CEC_OP_SYS_AUD_STATUS_ON);
@@ -551,12 +551,12 @@ static int sac_give_system_audio_mode_status(struct node *node, unsigned me, uns
 	fail_on_test_v2(node->remote[la].cec_version,
 			cec_has_audiosystem(1 << la) && unrecognized_op(&msg));
 	if (unrecognized_op(&msg) && !node->remote[la].has_sys_audio_mode_req)
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	fail_on_test(unrecognized_op(&msg));
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	cec_ops_system_audio_mode_status(&msg, &system_audio_status);
 	fail_on_test(system_audio_status != CEC_OP_SYS_AUD_STATUS_ON);
 
@@ -576,11 +576,11 @@ static int sac_give_audio_status(struct node *node, unsigned me, unsigned la, bo
 	fail_on_test_v2(node->remote[la].cec_version,
 			cec_has_audiosystem(1 << la) && unrecognized_op(&msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	cec_ops_report_audio_status(&msg, &node->remote[la].mute, &node->remote[la].volume);
 	fail_on_test(node->remote[la].volume > 100);
@@ -629,18 +629,18 @@ static int sac_util_send_user_control_press(struct node *node, unsigned me, unsi
 	fail_on_test_v2(node->remote[la].cec_version, unrecognized_op(&msg) &&
 			(is_tv(la, node->remote[la].prim_type) || cec_has_audiosystem(1 << la)));
 	if (unrecognized_op(&msg) && !node->remote[la].has_sys_audio_mode_req)
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	fail_on_test(unrecognized_op(&msg));
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	if (got_response) {
 		cec_ops_report_audio_status(&msg, &node->remote[la].mute, &node->remote[la].volume);
 		return 0;
 	}
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 static int sac_user_control_press_vol_up(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -725,14 +725,14 @@ static int sac_user_control_release(struct node *node, unsigned me, unsigned la,
 	fail_on_test_v2(node->remote[la].cec_version, unrecognized_op(&msg) &&
 			(is_tv(la, node->remote[la].prim_type) || cec_has_audiosystem(1 << la)));
 	if (unrecognized_op(&msg) && !node->remote[la].has_sys_audio_mode_req)
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	fail_on_test(unrecognized_op(&msg));
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 static int sac_system_audio_mode_req_off(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -750,11 +750,11 @@ static int sac_system_audio_mode_req_off(struct node *node, unsigned me, unsigne
 	fail_on_test_v2(node->remote[la].cec_version,
 			cec_has_audiosystem(1 << la) && unrecognized_op(&msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	cec_ops_set_system_audio_mode(&msg, &status);
 	fail_on_test(status != CEC_OP_SYS_AUD_STATUS_OFF);
 
@@ -840,11 +840,11 @@ static int audio_rate_ctl_set_audio_rate(struct node *node, unsigned me, unsigne
 	fail_on_test_v2(node->remote[la].cec_version,
 			!node->remote[la].has_aud_rate && !unrecognized_op(&msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 struct remote_subtest audio_rate_ctl_subtests[] = {

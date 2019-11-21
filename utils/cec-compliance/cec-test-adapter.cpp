@@ -256,7 +256,7 @@ int testTransmit(struct node *node)
 	if (!(node->caps & CEC_CAP_TRANSMIT)) {
 		cec_msg_init(&msg, la, 0);
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg) != ENOTTY);
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	}
 
 	/* Check invalid messages */
@@ -490,7 +490,7 @@ int testReceive(struct node *node)
 
 	if (!(node->caps & CEC_CAP_TRANSMIT)) {
 		fail_on_test(doioctl(node, CEC_RECEIVE, &msg) != ENOTTY);
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	}
 
 	for (unsigned i = 0; i < 15; i++) {
@@ -502,7 +502,7 @@ int testReceive(struct node *node)
 	fail_on_test(flush_pending_msgs(node));
 
 	if (remote_la == 15)
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	cec_msg_init(&msg, la, remote_la);
 	cec_msg_give_physical_addr(&msg, false);
@@ -550,7 +550,7 @@ int testNonBlocking(struct node *node)
 	struct cec_msg msg;
 
 	if (!(node->caps & CEC_CAP_TRANSMIT))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 
 	for (unsigned i = 0; i < 15; i++) {
 		if (node->remote_la_mask & (1 << i))
@@ -794,7 +794,7 @@ int testNonBlocking(struct node *node)
 		fail_on_test(doioctl(node, CEC_S_MODE, &mode));
 	}
 	if (remote_la == 15 || invalid_remote == 15)
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	return 0;
 }
 

@@ -17,6 +17,7 @@
 #include <config.h>
 #include <sstream>
 #include <vector>
+#include <map>
 
 #include "cec-compliance.h"
 
@@ -49,7 +50,7 @@ int system_info_polling(struct node *node, unsigned me, unsigned la, bool intera
 			fail("Polling an invalid remote LA was successful\n");
 			return FAIL_CRITICAL;
 		}
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	}
 
 	return 0;
@@ -79,9 +80,9 @@ int system_info_version(struct node *node, unsigned me, unsigned la, bool intera
 	if (!transmit_timeout(node, &msg) || timed_out(&msg))
 		return fail_or_warn(node, "Get CEC Version timed out\n");
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 
 	/* This needs to be kept in sync with newer CEC versions */
 	fail_on_test(msg.msg[2] < CEC_OP_CEC_VERSION_1_3A ||
@@ -108,12 +109,12 @@ int system_info_get_menu_lang(struct node *node, unsigned me, unsigned la, bool 
 	if (unrecognized_op(&msg)) {
 		if (is_tv(la, node->remote[la].prim_type))
 			warn("TV did not respond to Get Menu Language.\n");
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	}
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	cec_ops_set_menu_language(&msg, language);
 	fail_on_test(strcmp(node->remote[la].language, language));
 
@@ -128,11 +129,11 @@ static int system_info_set_menu_lang(struct node *node, unsigned me, unsigned la
 	cec_msg_set_menu_language(&msg, "eng");
 	fail_on_test(!transmit_timeout(node, &msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 int system_info_give_features(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -145,11 +146,11 @@ int system_info_give_features(struct node *node, unsigned me, unsigned la, bool 
 		return fail_or_warn(node, "Give Features timed out\n");
 	if (unrecognized_op(&msg)) {
 		if (node->remote[la].cec_version < CEC_OP_CEC_VERSION_2_0)
-			return NOTSUPPORTED;
+			return OK_NOT_SUPPORTED;
 		fail_on_test_v2(node->remote[la].cec_version, true);
 	}
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (node->remote[la].cec_version < CEC_OP_CEC_VERSION_2_0)
 		info("Device has CEC Version < 2.0 but supports Give Features.\n");
 
@@ -260,11 +261,11 @@ int vendor_specific_commands_id(struct node *node, unsigned me, unsigned la, boo
 	if (!transmit(node, &msg))
 		return fail_or_warn(node, "Give Device Vendor ID timed out\n");
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	fail_on_test(node->remote[la].vendor_id !=
 		     (__u32)((msg.msg[2] << 16) | (msg.msg[3] << 8) | msg.msg[4]));
 
@@ -289,12 +290,12 @@ static int device_osd_transfer_set(struct node *node, unsigned me, unsigned la, 
 		if (is_tv(la, node->remote[la].prim_type) &&
 		    node->remote[la].cec_version >= CEC_OP_CEC_VERSION_2_0)
 			warn("TV feature aborted Set OSD Name\n");
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	}
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 int device_osd_transfer_give(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -309,11 +310,11 @@ int device_osd_transfer_give(struct node *node, unsigned me, unsigned la, bool i
 		return fail_or_warn(node, "Give OSD Name timed out\n");
 	fail_on_test(!is_tv(la, node->remote[la].prim_type) && unrecognized_op(&msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	char osd_name[15];
 	cec_ops_set_osd_name(&msg, osd_name);
 	fail_on_test(!osd_name[0]);
@@ -349,16 +350,16 @@ static int osd_string_set_default(struct node *node, unsigned me, unsigned la, b
 			unrecognized_op(&msg) &&
 			(node->remote[la].dev_features & CEC_OP_FEAT_DEV_HAS_SET_OSD_STRING));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	else if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	else if (cec_msg_status_is_abort(&msg)) {
 		warn("The device is in an unsuitable state or cannot display the complete message.\n");
 		unsuitable = true;
 	}
 	node->remote[la].has_osd = true;
 	if (!interactive)
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	/* The CEC 1.4b CTS specifies that one should wait at least 20 seconds for the
 	   string to be cleared on the remote device */
@@ -401,7 +402,7 @@ static int osd_string_set_until_clear(struct node *node, unsigned me, unsigned l
 	if (interactive)
 		return 0;
 	else
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 }
 
 static int osd_string_invalid(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -445,9 +446,9 @@ static int routing_control_inactive_source(struct node *node, unsigned me, unsig
 	cec_msg_inactive_source(&msg, node->phys_addr);
 	fail_on_test(!transmit(node, &msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	// It may take a bit of time for the Inactive Source message to take
 	// effect, so sleep a bit.
 	response = util_receive(node, CEC_LOG_ADDR_TV, 3000, &msg,
@@ -482,7 +483,7 @@ static int routing_control_active_source(struct node *node, unsigned me, unsigne
 	if (interactive)
 		return 0;
 	else
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 }
 
 static int routing_control_req_active_source(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -517,10 +518,10 @@ static int routing_control_set_stream_path(struct node *node, unsigned me, unsig
 	msg.reply = CEC_MSG_ACTIVE_SOURCE;
 	fail_on_test(!transmit_timeout(node, &msg, long_timeout * 1000));
 	if (timed_out(&msg) && is_tv(la, node->remote[la].prim_type))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (timed_out(&msg) && node->remote[la].cec_version < CEC_OP_CEC_VERSION_2_0) {
 		warn("Device did not respond to Set Stream Path.\n");
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	}
 	fail_on_test_v2(node->remote[la].cec_version, timed_out(&msg));
 	cec_ops_active_source(&msg, &phys_addr);
@@ -531,7 +532,7 @@ static int routing_control_set_stream_path(struct node *node, unsigned me, unsig
 	if (interactive || node->remote[la].cec_version >= CEC_OP_CEC_VERSION_2_0)
 		return 0;
 	else
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	return 0;
 }
 
@@ -558,11 +559,11 @@ static int rc_passthrough_user_ctrl_pressed(struct node *node, unsigned me, unsi
 	fail_on_test_v2(node->remote[la].cec_version,
 			unrecognized_op(&msg) && !(cec_is_unregistered(1 << la)));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 static int rc_passthrough_user_ctrl_released(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -575,12 +576,12 @@ static int rc_passthrough_user_ctrl_released(struct node *node, unsigned me, uns
 	fail_on_test_v2(node->remote[la].cec_version,
 			cec_msg_status_is_abort(&msg) && !(la & CEC_LOG_ADDR_MASK_UNREGISTERED));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	node->remote[la].has_remote_control_passthrough = true;
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 static struct remote_subtest rc_passthrough_subtests[] = {
@@ -603,11 +604,11 @@ static int dev_menu_ctl_request(struct node *node, unsigned me, unsigned la, boo
 	cec_msg_menu_request(&msg, true, CEC_OP_MENU_REQUEST_QUERY);
 	fail_on_test(!transmit_timeout(node, &msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	if (node->remote[la].cec_version >= CEC_OP_CEC_VERSION_2_0)
 		warn("The Device Menu Control feature is deprecated in CEC 2.0\n");
 
@@ -642,11 +643,11 @@ static int deck_ctl_give_status(struct node *node, unsigned me, unsigned la, boo
 				!node->remote[la].has_deck_ctl && !unrecognized_op(&msg));
 	}
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	return 0;
 }
@@ -659,11 +660,11 @@ static int deck_ctl_deck_status(struct node *node, unsigned me, unsigned la, boo
 	cec_msg_deck_status(&msg, CEC_OP_DECK_INFO_STOP);
 	fail_on_test(!transmit_timeout(node, &msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	return 0;
 }
@@ -682,13 +683,13 @@ static int deck_ctl_deck_ctl(struct node *node, unsigned me, unsigned la, bool i
 				!node->remote[la].has_deck_ctl && !unrecognized_op(&msg));
 	}
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 static int deck_ctl_play(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -705,13 +706,13 @@ static int deck_ctl_play(struct node *node, unsigned me, unsigned la, bool inter
 				!node->remote[la].has_deck_ctl && !unrecognized_op(&msg));
 	}
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 static struct remote_subtest deck_ctl_subtests[] = {
@@ -878,11 +879,11 @@ static int tuner_ctl_test(struct node *node, unsigned me, unsigned la, bool inte
 	fail_on_test(!transmit_timeout(node, &msg));
 	fail_on_test(!has_tuner && !timed_out_or_abort(&msg));
 	if (!has_tuner)
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (timed_out(&msg) || unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (cec_msg_status_is_abort(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 
 	printf("\t    Start Channel Scan\n");
 	cec_ops_tuner_device_status(&msg, &info);
@@ -1001,11 +1002,11 @@ static int one_touch_rec_tv_screen(struct node *node, unsigned me, unsigned la, 
 	fail_on_test_v2(node->remote[la].cec_version,
 			!node->remote[la].has_rec_tv && !unrecognized_op(&msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	return 0;
 }
@@ -1026,11 +1027,11 @@ static int one_touch_rec_on(struct node *node, unsigned me, unsigned la, bool in
 	fail_on_test(timed_out(&msg));
 	fail_on_test(cec_has_record(1 << la) && unrecognized_op(&msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	return 0;
 }
@@ -1044,13 +1045,13 @@ static int one_touch_rec_off(struct node *node, unsigned me, unsigned la, bool i
 	fail_on_test(!transmit_timeout(node, &msg));
 	fail_on_test(cec_has_record(1 << la) && unrecognized_op(&msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	if (timed_out(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	else
 		return 0;
 }
@@ -1063,11 +1064,11 @@ static int one_touch_rec_status(struct node *node, unsigned me, unsigned la, boo
 	cec_msg_record_status(&msg, CEC_OP_RECORD_STATUS_DIG_SERVICE);
 	fail_on_test(!transmit_timeout(node, &msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	return 0;
 }
@@ -1100,14 +1101,14 @@ static int timer_prog_set_analog_timer(struct node *node, unsigned me, unsigned 
 	fail_on_test(!transmit_timeout(node, &msg, 10000));
 	if (timed_out(&msg)) {
 		warn("Timed out waiting for Timer Status. Assuming timer was set.\n");
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	}
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	return 0;
 }
@@ -1129,14 +1130,14 @@ static int timer_prog_set_digital_timer(struct node *node, unsigned me, unsigned
 	fail_on_test(!transmit_timeout(node, &msg, 10000));
 	if (timed_out(&msg)) {
 		warn("Timed out waiting for Timer Status. Assuming timer was set.\n");
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	}
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	return 0;
 }
@@ -1153,14 +1154,14 @@ static int timer_prog_set_ext_timer(struct node *node, unsigned me, unsigned la,
 	fail_on_test(!transmit_timeout(node, &msg, 10000));
 	if (timed_out(&msg)) {
 		warn("Timed out waiting for Timer Status. Assuming timer was set.\n");
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	}
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	return 0;
 }
@@ -1179,14 +1180,14 @@ static int timer_prog_clear_analog_timer(struct node *node, unsigned me, unsigne
 	fail_on_test(!transmit_timeout(node, &msg, 10000));
 	if (timed_out(&msg)) {
 		warn("Timed out waiting for Timer Cleared Status. Assuming timer was cleared.\n");
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	}
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	return 0;
 }
@@ -1208,14 +1209,14 @@ static int timer_prog_clear_digital_timer(struct node *node, unsigned me, unsign
 	fail_on_test(!transmit_timeout(node, &msg, 10000));
 	if (timed_out(&msg)) {
 		warn("Timed out waiting for Timer Cleared Status. Assuming timer was cleared.\n");
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	}
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	return 0;
 }
@@ -1232,14 +1233,14 @@ static int timer_prog_clear_ext_timer(struct node *node, unsigned me, unsigned l
 	fail_on_test(!transmit_timeout(node, &msg, 10000));
 	if (timed_out(&msg)) {
 		warn("Timed out waiting for Timer Cleared Status. Assuming timer was cleared.\n");
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 	}
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
-		return PRESUMED_OK;
+		return OK_PRESUMED;
 
 	return 0;
 }
@@ -1252,11 +1253,11 @@ static int timer_prog_set_prog_title(struct node *node, unsigned me, unsigned la
 	cec_msg_set_timer_program_title(&msg, "Super-Hans II");
 	fail_on_test(!transmit_timeout(node, &msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 static int timer_prog_timer_status(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -1270,11 +1271,11 @@ static int timer_prog_timer_status(struct node *node, unsigned me, unsigned la, 
 			     0, 0, 0);
 	fail_on_test(!transmit_timeout(node, &msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 static int timer_prog_timer_clear_status(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -1285,11 +1286,11 @@ static int timer_prog_timer_clear_status(struct node *node, unsigned me, unsigne
 	cec_msg_timer_cleared_status(&msg, CEC_OP_TIMER_CLR_STAT_CLEARED);
 	fail_on_test(!transmit_timeout(node, &msg));
 	if (unrecognized_op(&msg))
-		return NOTSUPPORTED;
+		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
-		return REFUSED;
+		return OK_REFUSED;
 
-	return PRESUMED_OK;
+	return OK_PRESUMED;
 }
 
 static struct remote_subtest timer_prog_subtests[] = {
@@ -1392,7 +1393,7 @@ static int cdc_hec_discover(struct node *node, unsigned me, unsigned la, bool pr
 
 	if (has_cdc)
 		return 0;
-	return NOTSUPPORTED;
+	return OK_NOT_SUPPORTED;
 }
 
 static struct remote_subtest cdc_subtests[] = {
@@ -1493,6 +1494,55 @@ static struct remote_test tests[] = {
 
 static const unsigned num_tests = sizeof(tests) / sizeof(struct remote_test);
 
+static std::map<std::string, int> mapTests;
+
+void collectTests(void)
+{
+	std::map<std::string, __u64> mapTestFuncs;
+
+	for (unsigned i = 0; i < num_tests; i++) {
+		for (unsigned j = 0; j < tests[i].num_subtests; j++) {
+			std::string name = safename(tests[i].subtests[j].name);
+			__u64 func = (__u64)tests[i].subtests[j].test_fn;
+
+			if (mapTestFuncs.find(name) != mapTestFuncs.end() &&
+			    mapTestFuncs[name] != func) {
+				fprintf(stderr, "Duplicate subtest name, but different tests: %s\n",
+					tests[i].subtests[j].name);
+				exit(-1);
+			}
+			mapTestFuncs[name] = func;
+			mapTests[name] = DONT_CARE;
+		}
+	}
+}
+
+void listTests(void)
+{
+	for (unsigned i = 0; i < num_tests; i++) {
+		printf("%s:\n", tests[i].name);
+		for (unsigned j = 0; j < tests[i].num_subtests; j++) {
+			std::string name = safename(tests[i].subtests[j].name);
+
+			printf("\t%s\n", name.c_str());
+		}
+	}
+}
+
+int setExpectedResult(char *optarg)
+{
+	char *equal = strchr(optarg, '=');
+
+	if (!equal || equal == optarg || !isdigit(equal[1]))
+		return 1;
+	*equal = 0;
+	std::string name = safename(optarg);
+	if (mapTests.find(name) == mapTests.end())
+		return 1;
+	mapTests[name] = strtoul(equal + 1, NULL, 0);
+	return 0;
+}
+
 void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 		bool interactive)
 {
@@ -1518,6 +1568,8 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 
 		printf("\t%s:\n", tests[i].name);
 		for (unsigned j = 0; j < tests[i].num_subtests; j++) {
+			const char *name = tests[i].subtests[j].name;
+
 			if (tests[i].subtests[j].in_standby) {
 				struct cec_log_addrs laddrs = { };
 				doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
@@ -1527,12 +1579,19 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 			}
 			node->in_standby = tests[i].subtests[j].in_standby;
 			ret = tests[i].subtests[j].test_fn(node, me, la, interactive);
-			if (!(tests[i].subtests[j].la_mask & (1 << la)) && !ret) {
-				printf("\t    %s: OK (Unexpected)\n",
-				       tests[i].subtests[j].name);
-			}
-			else if (ret != NOTAPPLICABLE)
-				printf("\t    %s: %s\n", tests[i].subtests[j].name, ok(ret));
+			if (!(tests[i].subtests[j].la_mask & (1 << la)) && !ret)
+				ret = OK_UNEXPECTED;
+
+			if (mapTests[safename(name)] != DONT_CARE) {
+				if (ret != mapTests[safename(name)])
+					printf("\t    %s: %s (Expected %d, got %d)\n",
+					       name, ok(FAIL), mapTests[safename(name)], ret);
+				else if (ret == FAIL)
+					printf("\t    %s: %s\n", name, ok(OK_EXPECTED_FAIL));
+				else
+					printf("\t    %s: %s\n", name, ok(ret));
+			} else if (ret != NOTAPPLICABLE)
+				printf("\t    %s: %s\n", name, ok(ret));
 			if (ret == FAIL_CRITICAL)
 				return;
 		}
