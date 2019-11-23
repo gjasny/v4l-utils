@@ -1809,7 +1809,7 @@ msgstr ""
 
 #: utils/dvb/dvbv5-zap.c:128
 msgid ""
-"sets DVB low traffic traffic threshold. PIDs with less than this amount of "
+"sets DVB low traffic threshold. PIDs with less than this amount of "
 "packets per second will be ignored. Default: 1 packet per second"
 msgstr ""
 

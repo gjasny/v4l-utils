@@ -1955,9 +1955,8 @@ msgid "packets_per_sec"
 msgstr "packets_per_sec"
 
 #: utils/dvb/dvbv5-zap.c:128
-# FIXME s/traffic traffic/traffic/
 msgid ""
-"sets DVB low traffic traffic threshold. PIDs with less than this amount of "
+"sets DVB low traffic threshold. PIDs with less than this amount of "
 "packets per second will be ignored. Default: 1 packet per second"
 msgstr ""
 "setzt die untere Schwelle für DVB-Datenaufkommen. PIDs mit einem kleineren "

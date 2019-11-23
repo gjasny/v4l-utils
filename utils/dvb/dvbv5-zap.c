@@ -125,7 +125,7 @@ static const struct argp_option options[] = {
 	{"video_pid",	'V', N_("video_pid#"),		0, N_("video pid program to use (default 0)"), 0},
 	{"wait",	'W', N_("time"),		0, N_("adds additional wait time for DISEqC command completion"), 0},
 	{"exit",	'x', NULL,			0, N_("exit after tuning"), 0},
-	{"low_traffic",	'X', N_("packets_per_sec"),	0, N_("sets DVB low traffic traffic threshold. PIDs with less than this amount of packets per second will be ignored. Default: 1 packet per second"), 0},
+	{"low_traffic",	'X', N_("packets_per_sec"),	0, N_("sets DVB low traffic threshold. PIDs with less than this amount of packets per second will be ignored. Default: 1 packet per second"), 0},
 	{"cc",		'C', N_("country_code"),	0, N_("Set the default country to be used (in ISO 3166-1 two letter code)"), 0},
 	{"non-numan",	'N', NULL,			0, N_("Non-human formatted stats (useful for scripts)"), 0},
 	{"server",	'H', N_("SERVER"),		0, N_("dvbv5-daemon host IP address"), 0},
