@@ -358,3 +358,21 @@ void vidcap_list(cv4l_fd &fd)
 		}
 	}
 }
+
+void print_touch_buffer(FILE *f, cv4l_buffer &buf, cv4l_fmt &fmt, cv4l_queue &q)
+{
+	__s16 *vbuf = NULL;
+	__u32 x, y;
+
+	switch (fmt.g_pixelformat()) {
+	case V4L2_TCH_FMT_DELTA_TD16:
+		vbuf = (__s16 *)q.g_dataptr(buf.g_index(), 0);
+		for (y = 0; y < fmt.g_height(); y++) {
+			fprintf(f, "TD16:");
+			for (x = 0; x < fmt.g_width(); x++, vbuf++)
+				fprintf(f, "% 4d", (__s16)le16toh(*vbuf));
+			fprintf(f, "\n");
+		}
+		break;
+	}
+}
