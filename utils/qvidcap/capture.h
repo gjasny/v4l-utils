@@ -132,7 +132,7 @@ private:
 	void cycleMenu(__u32 &overrideVal, __u32 &origVal,
 		       const __u32 values[], bool hasShift, bool hasCtrl);
 
-	bool supportedFmt(__u32 fnt);
+	bool supportedFmt(__u32 fmt);
 	void checkError(const char *msg);
 	void configureTexture(size_t idx);
 	void initImageFormat();
