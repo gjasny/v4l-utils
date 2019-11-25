@@ -678,6 +678,19 @@ int main(int argc, char **argv)
 		}
 		fd.g_fmt(fmt);
 
+		if (!overridePixelFormat) {
+			bool found = false;
+
+			for (unsigned i = 0; formats[i]; i++) {
+				if (fmt.g_pixelformat() == formats[i]) {
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+				overridePixelFormat = V4L2_PIX_FMT_RGB24;
+		}
+
 		if (overridePixelFormat) {
 			fmt.s_pixelformat(overridePixelFormat);
 			fd.s_fmt(fmt);
