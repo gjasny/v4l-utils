@@ -361,16 +361,32 @@ void vidcap_list(cv4l_fd &fd)
 
 void print_touch_buffer(FILE *f, cv4l_buffer &buf, cv4l_fmt &fmt, cv4l_queue &q)
 {
-	__s16 *vbuf = NULL;
+	static const char img[16] = {
+		'.', ',', ':', ';', '!', '|', 'i', 'c',
+		'n', 'o', 'm', 'I', 'C', 'N', 'O', 'M',
+	};
+	__s16 *vbuf = (__s16 *)q.g_dataptr(buf.g_index(), 0);
 	__u32 x, y;
 
 	switch (fmt.g_pixelformat()) {
 	case V4L2_TCH_FMT_DELTA_TD16:
-		vbuf = (__s16 *)q.g_dataptr(buf.g_index(), 0);
 		for (y = 0; y < fmt.g_height(); y++) {
-			fprintf(f, "TD16:");
-			for (x = 0; x < fmt.g_width(); x++, vbuf++)
-				fprintf(f, "% 4d", (__s16)le16toh(*vbuf));
+			fprintf(f, "TD16: ");
+
+			for (x = 0; x < fmt.g_width(); x++, vbuf++) {
+				__s16 v = (__s16)le16toh(*vbuf);
+
+				if (!options[OptConcise])
+					fprintf(f, "% 4d", v);
+				else if (v > 255)
+					fprintf(f, "*");
+				else if (v < -32)
+					fprintf(f, "-");
+				else if (v < 0)
+					fprintf(f, "%c", img[0]);
+				else
+					fprintf(f, "%c", img[v / 16]);
+			}
 			fprintf(f, "\n");
 		}
 		break;
