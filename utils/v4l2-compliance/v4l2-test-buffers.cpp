@@ -1015,7 +1015,10 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 				buf.s_request_fd(buf_req_fds[req_idx]);
 			}
 			fail_on_test(buf.qbuf(node, q));
-			fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
+			// This is not necessarily wrong (v4l-touch drivers can do this),
+			// but it is certainly unusual enough to warn about this.
+			if (buf.g_flags() & V4L2_BUF_FLAG_DONE)
+				warn_once("QBUF returned the buffer as DONE.\n");
 			if (buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD) {
 				fail_on_test(doioctl_fd(buf_req_fds[req_idx],
 							MEDIA_REQUEST_IOC_QUEUE, 0));
