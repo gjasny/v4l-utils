@@ -369,7 +369,7 @@ void CaptureWin::showCurrentOverrides()
 		printf("%sHSV Encoding: %s\n", prefix, ycbcr_enc2s(m_origHSVEnc).c_str());
 	else if (!m_is_rgb)
 		printf("%sY'CbCr Encoding: %s\n", prefix, ycbcr_enc2s(m_origYCbCrEnc).c_str());
-	printf("%sQuantization Range: %s\n", prefix, quantization2s(m_origQuantization).c_str());
+	printf("%sQuantization: %s\n", prefix, quantization2s(m_origQuantization).c_str());
 	firstTime = false;
 }
 
@@ -1062,7 +1062,7 @@ bool CaptureWin::setV4LFormat(cv4l_fmt &fmt)
 		}
 		printf("Width x Height:    %ux%u\n", m_v4l_fmt.g_width(), m_v4l_fmt.g_height());
 		printf("Field:             %s\n", field2s(m_v4l_fmt.g_field()).c_str());
-		printf("Pixelformat:       %s ('%s')\n", fmt.description, fcc2s(m_v4l_fmt.g_pixelformat()).c_str());
+		printf("Pixel Format:      %s ('%s')\n", fmt.description, fcc2s(m_v4l_fmt.g_pixelformat()).c_str());
 		printf("Colorspace:        %s\n", colorspace2s(m_v4l_fmt.g_colorspace()).c_str());
 		if (m_is_hsv)
 			printf("HSV Encoding:      %s\n", ycbcr_enc2s(m_v4l_fmt.g_hsv_enc()).c_str());
