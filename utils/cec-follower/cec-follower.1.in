@@ -81,6 +81,11 @@ Show state changes from the emulated device.
 .TP
 \fB\-\-service\-by\-dig\-id\fR
 Report digital services by digital ID instead of by channel.
+.TP
+\fB\-i\fR, \fB\-\-ignore\fR \fI<la>,<opcode>\fR
+Ignore messages from logical address \fI<la>\fR and opcode
+\fI<opcode>\fR. 'all' can be used for \fI<la>\fR or \fI<opcode>\fR to match
+all logical addresses or opcodes.
 
 .SH EXIT STATUS
 On success, it returns 0. Otherwise, it will return the error code.

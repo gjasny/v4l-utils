@@ -76,6 +76,9 @@ struct node {
 	bool has_deck_ctl;
 	bool has_rec_tv;
 	bool has_osd_string;
+
+	bool ignore_la[16];
+	unsigned short ignore_opcode[256];
 };
 
 struct la_info {

@@ -940,6 +940,11 @@ void testProcessing(struct node *node, bool wallclock)
 			__u8 to = cec_msg_destination(&msg);
 			__u8 opcode = cec_msg_opcode(&msg);
 
+			if (node->ignore_la[from])
+				continue;
+			if (node->ignore_opcode[msg.msg[1]] & (1 << from))
+				continue;
+
 			if (from != CEC_LOG_ADDR_UNREGISTERED &&
 			    la_info[from].feature_aborted[opcode].ts &&
 			    ts_to_ms(get_ts() - la_info[from].feature_aborted[opcode].ts) < 200) {

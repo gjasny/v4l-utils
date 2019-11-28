@@ -35,6 +35,7 @@ enum Option {
 	OptSetDevice = 'd',
 	OptSetDriver = 'D',
 	OptHelp = 'h',
+	OptIgnore = 'i',
 	OptNoWarnings = 'n',
 	OptTrace = 'T',
 	OptVerbose = 'v',
@@ -65,6 +66,7 @@ static struct option long_options[] = {
 	{ "show-state", no_argument, 0, OptShowState },
 	{ "wall-clock", no_argument, 0, OptWallClock },
 	{ "service-by-dig-id", no_argument, 0, OptServiceByDigID },
+	{ "ignore", required_argument, 0, OptIgnore },
 
 	{ 0, 0, 0, 0 }
 };
@@ -84,6 +86,10 @@ static void usage(void)
 	       "  -m, --show-msgs     Show received messages\n"
 	       "  -s, --show-state    Show state changes from the emulated device\n"
 	       "  --service-by-dig-id Report digital services by digital ID instead of by channel\n"
+	       "  -i, --ignore <la>,<opcode>\n"
+	       "                      Ignore messages from logical address <la> and opcode\n"
+	       "                      <opcode>. 'all' can be used for <la> or <opcode> to match\n"
+	       "                      all logical addresses or opcodes.\n"
 	       );
 }
 
@@ -305,6 +311,7 @@ void state_init(struct node &node)
 int main(int argc, char **argv)
 {
 	std::string device;
+	struct node node = { };
 	const char *driver = NULL;
 	const char *adapter = NULL;
 	char short_options[26 * 2 * 2 + 1];
@@ -374,6 +381,42 @@ int main(int argc, char **argv)
 		case OptShowState:
 			show_state = true;
 			break;
+		case OptIgnore: {
+			bool all_la = !strncmp(optarg, "all", 3);
+			bool all_opcodes = true;
+			const char *sep = strchr(optarg, ',');
+			unsigned la_mask = 0xffff, opcode, la = 0;
+
+			if (sep)
+				all_opcodes = !strncmp(sep + 1, "all", 3);
+			if (!all_la) {
+				la = strtoul(optarg, NULL, 0);
+
+				if (la > 15) {
+					fprintf(stderr, "invalid logical address (> 15)\n");
+					usage();
+					return 1;
+				}
+				la_mask = 1 << la;
+			}
+			if (!all_opcodes) {
+				opcode = strtoul(sep + 1, NULL, 0);
+				if (opcode > 255) {
+					fprintf(stderr, "invalid opcode (> 255)\n");
+					usage();
+					return 1;
+				}
+				node.ignore_opcode[opcode] |= la_mask;
+				break;
+			}
+			if (all_la && all_opcodes) {
+				fprintf(stderr, "all,all is invalid\n");
+				usage();
+				return 1;
+			}
+			node.ignore_la[la] = true;
+			break;
+		}
 		case OptWallClock:
 		case OptVerbose:
 			show_info = true;
@@ -418,7 +461,6 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	struct node node = { };
 	struct cec_caps caps = { };
 
 	node.fd = fd;
