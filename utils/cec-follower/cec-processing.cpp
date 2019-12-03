@@ -47,6 +47,8 @@ struct la_info la_info[15];
 
 static struct timespec start_monotonic;
 static struct timeval start_timeofday;
+static const time_t time_to_transient = 1;
+static const time_t time_to_stable = 8;
 
 static const char *get_ui_cmd_string(__u8 ui_cmd)
 {
@@ -229,14 +231,25 @@ static bool pa_is_upstream_from(__u16 pa1, __u16 pa2)
 	return false;
 }
 
+static __u8 current_power_state(struct node *node)
+{
+	time_t t = time(NULL);
+
+	if (t - node->state.power_status_changed_time <= time_to_transient)
+		return node->state.old_power_status;
+	if (t - node->state.power_status_changed_time >= time_to_stable)
+		return node->state.power_status;
+	if (node->state.power_status == CEC_OP_POWER_STATUS_ON)
+		return CEC_OP_POWER_STATUS_TO_ON;
+	return CEC_OP_POWER_STATUS_TO_STANDBY;
+}
+
 static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 {
 	__u8 to = cec_msg_destination(&msg);
 	__u8 from = cec_msg_initiator(&msg);
 	bool is_bcast = cec_msg_is_broadcast(&msg);
 	__u16 remote_pa = (from < 15) ? node->remote_phys_addr[from] : CEC_PHYS_ADDR_INVALID;
-	const time_t time_to_transient = 4;
-	const time_t time_to_stable = 8;
 
 	switch (msg.msg[1]) {
 
@@ -266,23 +279,12 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 
 		/* Give Device Power Status */
 
-	case CEC_MSG_GIVE_DEVICE_POWER_STATUS: {
-		__u8 report_status;
-
-		if (time(NULL) - node->state.power_status_changed_time <= time_to_transient)
-			report_status = node->state.old_power_status;
-		else if (time(NULL) - node->state.power_status_changed_time >= time_to_stable)
-			report_status = node->state.power_status;
-		else if (node->state.power_status == CEC_OP_POWER_STATUS_ON)
-			report_status = CEC_OP_POWER_STATUS_TO_ON;
-		else
-			report_status = CEC_OP_POWER_STATUS_TO_STANDBY;
-
+	case CEC_MSG_GIVE_DEVICE_POWER_STATUS:
 		cec_msg_set_reply_to(&msg, &msg);
-		cec_msg_report_power_status(&msg, report_status);
+		cec_msg_report_power_status(&msg, current_power_state(node));
 		transmit(node, &msg);
 		return;
-	}
+
 	case CEC_MSG_REPORT_POWER_STATUS:
 		// Nothing to do here for now.
 		return;
@@ -877,6 +879,7 @@ void testProcessing(struct node *node, bool wallclock)
 	__u32 mode = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
 	unsigned me;
 	unsigned last_poll_la = 15;
+	__u8 last_pwr_state = current_power_state(node);
 
 	clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
 	gettimeofday(&start_timeofday, NULL);
@@ -964,6 +967,18 @@ void testProcessing(struct node *node, bool wallclock)
 			}
 			if (node->adap_la_mask)
 				processMsg(node, msg, me);
+		}
+
+		__u8 pwr_state = current_power_state(node);
+		if (node->cec_version >= CEC_OP_CEC_VERSION_2_0 &&
+		    last_pwr_state != pwr_state &&
+		    (time_to_stable > 2 || pwr_state < CEC_OP_POWER_STATUS_TO_ON)) {
+			struct cec_msg msg = {};
+
+			cec_msg_init(&msg, me, CEC_LOG_ADDR_BROADCAST);
+			cec_msg_report_power_status(&msg, pwr_state);
+			transmit(node, &msg);
+			last_pwr_state = pwr_state;
 		}
 
 		__u64 ts_now = get_ts();
