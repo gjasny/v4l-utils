@@ -607,11 +607,10 @@ static int sac_util_send_user_control_press(struct node *node, unsigned me, unsi
 	   It is recommended for devices to not send Report Audio Status back
 	   more often than once every 500ms. We therefore sleep a second before
 	   each User Control Pressed is sent. */
-	__u32 mode = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
 	bool got_response;
 
 	sleep(1);
-	doioctl(node, CEC_S_MODE, &mode);
+	mode_set_follower(node);
 	cec_msg_init(&msg, me, la);
 	rc_press.ui_cmd = ui_cmd;
 	cec_msg_user_control_pressed(&msg, &rc_press);
@@ -621,8 +620,6 @@ static int sac_util_send_user_control_press(struct node *node, unsigned me, unsi
 	fail_on_test(!transmit_timeout(node, &msg));
 	got_response = util_receive(node, la, 1000, &msg,
 				    CEC_MSG_USER_CONTROL_PRESSED, CEC_MSG_REPORT_AUDIO_STATUS) >= 0;
-	mode = CEC_MODE_INITIATOR;
-	doioctl(node, CEC_S_MODE, &mode);
 
 	fail_on_test_v2(node->remote[la].cec_version, !got_response &&
 			cec_has_audiosystem(1 << la));

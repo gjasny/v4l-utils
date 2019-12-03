@@ -556,6 +556,67 @@ static int standby_resume_wakeup_text_view_on(struct node *node, unsigned me, un
 	return standby_resume_wakeup_view_on(node, me, la, interactive, CEC_MSG_TEXT_VIEW_ON);
 }
 
+static int power_state_transitions(struct node *node, unsigned me, unsigned la, bool interactive)
+{
+	struct cec_msg msg = {};
+
+	mode_set_follower(node);
+	msg.timeout = 1000;
+	doioctl(node, CEC_RECEIVE, &msg);
+	cec_msg_init(&msg, me, la);
+	cec_msg_standby(&msg);
+	fail_on_test(!transmit_timeout(node, &msg));
+	time_t start = time(NULL);
+	int res = util_receive(node, la, long_timeout * 1000, &msg, CEC_MSG_STANDBY,
+			       CEC_MSG_REPORT_POWER_STATUS);
+	fail_on_test(!res);
+	if (res < 0) {
+		warn("No Report Power Status seen when going to standby. Probably due to this bug: https://patchwork.linuxtv.org/patch/60444\n");
+		return 0;
+	}
+	if (time(NULL) - start > 3)
+		warn("The first Report Power Status broadcast arrived > 3s after sending <Standby>\n");
+	if (msg.msg[2] == CEC_OP_POWER_STATUS_STANDBY)
+		return 0;
+	fail_on_test(msg.msg[2] != CEC_OP_POWER_STATUS_TO_STANDBY);
+	fail_on_test(util_receive(node, la, long_timeout * 1000, &msg, CEC_MSG_STANDBY,
+		     CEC_MSG_REPORT_POWER_STATUS) <= 0);
+	fail_on_test(msg.msg[2] != CEC_OP_POWER_STATUS_STANDBY);
+
+	cec_msg_init(&msg, me, la);
+	__u8 opcode;
+	if (is_tv(la, node->remote[la].prim_type)) {
+		cec_msg_image_view_on(&msg);
+		opcode = msg.msg[2];
+
+		int res = doioctl(node, CEC_TRANSMIT, &msg);
+
+		if (res == ENONET && la == CEC_LOG_ADDR_TV) {
+			msg.msg[0] = (CEC_LOG_ADDR_UNREGISTERED << 4) | la;
+			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
+		}
+	} else {
+		cec_msg_set_stream_path(&msg, node->remote[la].phys_addr);
+		opcode = msg.msg[2];
+		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
+	}
+	fail_on_test(!(msg.tx_status & CEC_TX_STATUS_OK));
+	start = time(NULL);
+	fail_on_test(util_receive(node, la, long_timeout * 1000, &msg, opcode,
+		     CEC_MSG_REPORT_POWER_STATUS) <= 0);
+	if (time(NULL) - start > 3)
+		warn("The first Report Power Status broadcast arrived > 3s after sending <%s>\n",
+		     opcode == CEC_MSG_IMAGE_VIEW_ON ? "Image View On" : "Set Stream Path");
+	if (msg.msg[2] == CEC_OP_POWER_STATUS_ON)
+		return 0;
+	fail_on_test(msg.msg[2] != CEC_OP_POWER_STATUS_TO_ON);
+	fail_on_test(util_receive(node, la, long_timeout * 1000, &msg, opcode,
+		     CEC_MSG_REPORT_POWER_STATUS) <= 0);
+	fail_on_test(msg.msg[2] != CEC_OP_POWER_STATUS_ON);
+
+	return 0;
+}
+
 struct remote_subtest standby_resume_subtests[] = {
 	{ "Standby", CEC_LOG_ADDR_MASK_ALL, standby_resume_standby },
 	{ "Repeated Standby message does not wake up", CEC_LOG_ADDR_MASK_ALL, standby_resume_standby_toggle },
@@ -573,6 +634,7 @@ struct remote_subtest standby_resume_subtests[] = {
 	{ "Wake up", CEC_LOG_ADDR_MASK_ALL, standby_resume_wakeup},
 	{ "Wake up TV on Image View On", CEC_LOG_ADDR_MASK_TV, standby_resume_wakeup_image_view_on },
 	{ "Wake up TV on Text View On", CEC_LOG_ADDR_MASK_TV, standby_resume_wakeup_text_view_on },
+	{ "Power State Transitions", CEC_LOG_ADDR_MASK_TV, power_state_transitions, false, true },
 };
 
 const unsigned standby_resume_subtests_size = ARRAY_SIZE(standby_resume_subtests);

@@ -159,7 +159,6 @@ struct node {
 	int fd;
 	const char *device;
 	bool has_cec20;
-	bool test_cec20;
 	unsigned caps;
 	unsigned available_log_addrs;
 	unsigned num_log_addrs;
@@ -176,6 +175,7 @@ struct remote_subtest {
 	const __u16 la_mask;
 	int (*const test_fn)(struct node *node, unsigned me, unsigned la, bool interactive);
 	bool in_standby;
+	bool for_cec20;
 };
 
 #define FAIL			1
@@ -369,6 +369,20 @@ bool transmit_timeout(struct node *node, struct cec_msg *msg,
 static inline bool transmit(struct node *node, struct cec_msg *msg)
 {
 	return transmit_timeout(node, msg, 0);
+}
+
+static inline void mode_set_follower(struct node *node)
+{
+	__u32 mode = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
+
+	doioctl(node, CEC_S_MODE, &mode);
+}
+
+static inline void mode_set_initiator(struct node *node)
+{
+	__u32 mode = CEC_MODE_INITIATOR;
+
+	doioctl(node, CEC_S_MODE, &mode);
 }
 
 static inline unsigned get_ts_ms()

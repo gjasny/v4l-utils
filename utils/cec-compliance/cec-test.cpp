@@ -436,12 +436,11 @@ static struct remote_subtest osd_string_subtests[] = {
 
 static int routing_control_inactive_source(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	__u32 mode = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
 	struct cec_msg msg = {};
 	int response;
 
-	doioctl(node, CEC_S_MODE, &mode);
 	interactive_info(true, "Please make sure that the TV is currently viewing this source.");
+	mode_set_follower(node);
 	cec_msg_init(&msg, me, la);
 	cec_msg_inactive_source(&msg, node->phys_addr);
 	fail_on_test(!transmit(node, &msg));
@@ -454,8 +453,6 @@ static int routing_control_inactive_source(struct node *node, unsigned me, unsig
 	response = util_receive(node, CEC_LOG_ADDR_TV, 3000, &msg,
 				CEC_MSG_INACTIVE_SOURCE,
 				CEC_MSG_ACTIVE_SOURCE, CEC_MSG_SET_STREAM_PATH);
-	mode = CEC_MODE_INITIATOR;
-	doioctl(node, CEC_S_MODE, &mode);
 	if (me == CEC_LOG_ADDR_TV) {
 		// Inactive Source should be ignored by all other devices
 		if (response >= 0)
@@ -1570,6 +1567,11 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 		for (unsigned j = 0; j < tests[i].num_subtests; j++) {
 			const char *name = tests[i].subtests[j].name;
 
+			if (tests[i].subtests[j].for_cec20 &&
+			    (node->remote[la].cec_version < CEC_OP_CEC_VERSION_2_0 ||
+			     !node->has_cec20))
+				continue;
+
 			if (tests[i].subtests[j].in_standby) {
 				struct cec_log_addrs laddrs = { };
 				doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
@@ -1578,6 +1580,7 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 					continue;
 			}
 			node->in_standby = tests[i].subtests[j].in_standby;
+			mode_set_initiator(node);
 			ret = tests[i].subtests[j].test_fn(node, me, la, interactive);
 			if (!(tests[i].subtests[j].la_mask & (1 << la)) && !ret)
 				ret = OK_UNEXPECTED;
