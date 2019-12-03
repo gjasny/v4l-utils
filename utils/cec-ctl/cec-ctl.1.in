@@ -68,6 +68,15 @@ Parse the given EDID file (in raw binary format) and extract the physical
 address. If the EDID file does not exist or does not contain a physical
 address, then invalidate the physical address.
 .TP
+\fB\-E\fR, \fB\-\-phys\-addr\-from\-edid\-poll\fR \fI<path>\fR
+Parse the given EDID file (in raw binary format) and extract the physical
+address. If the EDID file does not exist or does not contain a physical
+address, then invalidate the physical address. Poll for changes in this
+EDID file every 100 ms and, if changed, update the physical address.
+
+This provides a way for Pulse-Eight (or similar) USB CEC dongles to become
+aware of HDMI disconnect and reconnect events.
+.TP
 \fB\-o\fR, \fB\-\-osd\-name\fR \fI<name>\fR
 Use this OSD name. The maximum length is 14 characters.
 .TP

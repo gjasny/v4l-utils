@@ -67,6 +67,7 @@ enum Option {
 	OptSetDevice = 'd',
 	OptSetDriver = 'D',
 	OptPhysAddrFromEDID = 'e',
+	OptPhysAddrFromEDIDPoll = 'E',
 	OptFrom = 'f',
 	OptHelp = 'h',
 	OptLogicalAddress = 'l',
@@ -158,6 +159,7 @@ static struct option long_options[] = {
 	{ "verbose", no_argument, 0, OptVerbose },
 	{ "wall-clock", no_argument, 0, OptWallClock },
 	{ "osd-name", required_argument, 0, OptOsdName },
+	{ "phys-addr-from-edid-daemon", required_argument, 0, OptPhysAddrFromEDIDPoll },
 	{ "phys-addr-from-edid", required_argument, 0, OptPhysAddrFromEDID },
 	{ "phys-addr", required_argument, 0, OptPhysAddr },
 	{ "vendor-id", required_argument, 0, OptVendorID },
@@ -235,7 +237,11 @@ static void usage(void)
 	       "  -D, --driver <driver>    Use a cec device with this driver name\n"
 	       "  -a, --adapter <adapter>  Use a cec device with this adapter name\n"
 	       "  -p, --phys-addr <addr>   Use this physical address\n"
-	       "  -e, --phys-addr-from-edid <path>   Set physical address from this EDID file\n"
+	       "  -e, --phys-addr-from-edid <path>\n"
+	       "                           Set physical address from this EDID file\n"
+	       "  -E, --phys-addr-from-edid-poll <path>\n"
+	       "                           Continuously poll the EDID file for changes, and update the\n"
+	       "                           physical address whenever there is a change\n"
 	       "  -o, --osd-name <name>    Use this OSD name\n"
 	       "  -V, --vendor-id <id>     Use this vendor ID\n"
 	       "  -l, --logical-address    Show first configured logical address\n"
@@ -1665,6 +1671,7 @@ int main(int argc, char **argv)
 	__u8 rc_tv = 0;
 	__u8 rc_src = 0;
 	const char *osd_name = "";
+	const char *edid_path = NULL;
 	const char *store_pin = NULL;
 	const char *analyze_pin = NULL;
 	bool reply = true;
@@ -1784,6 +1791,9 @@ int main(int argc, char **argv)
 		case OptPhysAddr:
 			phys_addr = cec_parse_phys_addr(optarg);
 			break;
+		case OptPhysAddrFromEDIDPoll:
+			edid_path = optarg;
+			/* fall-through */
 		case OptPhysAddrFromEDID:
 			phys_addr = parse_phys_addr_from_edid(optarg);
 			break;
@@ -2161,7 +2171,8 @@ int main(int argc, char **argv)
 	node.caps = caps.capabilities;
 	node.available_log_addrs = caps.available_log_addrs;
 
-	bool set_phys_addr = options[OptPhysAddr] || options[OptPhysAddrFromEDID];
+	bool set_phys_addr = options[OptPhysAddr] || options[OptPhysAddrFromEDID] ||
+			     options[OptPhysAddrFromEDIDPoll];
 
 	if (set_phys_addr && !(node.caps & CEC_CAP_PHYS_ADDR))
 		fprintf(stderr, "The CEC adapter doesn't allow setting the physical address manually, ignore this option.\n\n");
@@ -2404,6 +2415,41 @@ int main(int argc, char **argv)
 		test_power_cycle(node);
 	if (options[OptStressTestPowerCycle])
 		stress_test_power_cycle(node, pwr_cycle_cnt, max_sleep);
+
+	if (options[OptPhysAddrFromEDIDPoll]) {
+		bool has_edid;
+		char dummy;
+		int fd;
+
+		fd = open(edid_path, O_RDONLY);
+		if (fd < 0)
+			exit(1);
+		lseek(fd, 0, SEEK_SET);
+		has_edid = read(fd, &dummy, 1) > 0;
+
+		if (!has_edid)
+			phys_addr = CEC_PHYS_ADDR_INVALID;
+		else
+			phys_addr = parse_phys_addr_from_edid(edid_path);
+		doioctl(&node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
+
+		for (;;) {
+			bool edid;
+
+			/* Poll every 100 ms */
+			usleep(100000);
+			lseek(fd, 0, SEEK_SET);
+			edid = read(fd, &dummy, 1) > 0;
+			if (has_edid != edid) {
+				has_edid = edid;
+				if (!edid)
+					phys_addr = CEC_PHYS_ADDR_INVALID;
+				else
+					phys_addr = parse_phys_addr_from_edid(edid_path);
+				doioctl(&node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
+			}
+		}
+	}
 skip_la:
 	if (options[OptMonitor] || options[OptMonitorAll] ||
 	    options[OptMonitorPin] || options[OptStorePin])
