@@ -571,7 +571,7 @@ static int power_state_transitions(struct node *node, unsigned me, unsigned la, 
 			       CEC_MSG_REPORT_POWER_STATUS);
 	fail_on_test(!res);
 	if (res < 0) {
-		warn("No Report Power Status seen when going to standby. Probably due to this bug: https://patchwork.linuxtv.org/patch/60444\n");
+		warn("No Report Power Status seen when going to standby. Probably due to this bug: https://patchwork.linuxtv.org/patch/60447\n");
 		return OK_PRESUMED;
 	}
 	if (time(NULL) - start > 3)
