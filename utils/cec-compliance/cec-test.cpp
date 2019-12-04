@@ -460,7 +460,7 @@ static int routing_control_inactive_source(struct node *node, unsigned me, unsig
 		fail_on_test(response >= 0);
 	} else {
 		if (response < 0)
-			return fail("Expected Active Source or Set Stream Path reply to Inactive Source\n");
+			warn("Expected Active Source or Set Stream Path reply to Inactive Source\n");
 		fail_on_test(interactive && !question("Did the TV switch away from or stop showing this source?"));
 	}
 
