@@ -506,7 +506,7 @@ int main(int argc, char **argv)
 				test = 2;
 			if (!pattern)
 				pattern = TPG_PAT_CSC_COLORBAR;
-		} else if (isOptArg(args[i], "--pixel-format", "-P")) {
+		} else if (isOptArg(args[i], "--pixelformat", "-P")) {
 			if (!processOption(args, i, s))
 				return 0;
 			overridePixelFormat = parse_pixel_format(s);
