@@ -451,8 +451,7 @@ static void log_event(struct cec_event &ev, bool show)
 		pa = ev.state_change.phys_addr;
 		if (show)
 			printf("Event: State Change: PA: %x.%x.%x.%x, LA mask: 0x%04x, Conn Info: %s\n",
-			       pa >> 12, (pa >> 8) & 0xf,
-			       (pa >> 4) & 0xf, pa & 0xf,
+			       cec_phys_addr_exp(pa),
 			       ev.state_change.log_addr_mask,
 			       ev.state_change.have_conn_info ? "yes" : "no");
 		break;
@@ -518,9 +517,7 @@ static int showTopologyDevice(struct node *node, unsigned i, unsigned la)
 	} else {
 		__u16 phys_addr = (msg.msg[2] << 8) | msg.msg[3];
 
-		printf("%x.%x.%x.%x\n",
-		       phys_addr >> 12, (phys_addr >> 8) & 0xf,
-		       (phys_addr >> 4) & 0xf, phys_addr & 0xf);
+		printf("%x.%x.%x.%x\n", cec_phys_addr_exp(phys_addr));
 		printf("\t\tPrimary Device Type        : %s\n",
 		       cec_prim_type2s(msg.msg[4]));
 		phys_addrs[i] = (phys_addr << 8) | i;
@@ -691,9 +688,7 @@ static int showTopology(struct node *node)
 		printf("\t");
 		for (unsigned j = 0; j < level; j++)
 			printf("    ");
-		printf("%x.%x.%x.%x: %s\n",
-		       pa >> 12, (pa >> 8) & 0xf,
-		       (pa >> 4) & 0xf, pa & 0xf,
+		printf("%x.%x.%x.%x: %s\n", cec_phys_addr_exp(pa),
 		       cec_la2s(la));
 	}
 	return 0;
@@ -863,8 +858,7 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 			start_timeofday.tv_sec, start_timeofday.tv_usec);
 		fprintf(fstore, "# log_addr_mask 0x%04x\n", node.log_addr_mask);
 		fprintf(fstore, "# phys_addr %x.%x.%x.%x\n",
-		       node.phys_addr >> 12, (node.phys_addr >> 8) & 0xf,
-		       (node.phys_addr >> 4) & 0xf, node.phys_addr & 0xf);
+			cec_phys_addr_exp(node.phys_addr));
 	}
 
 	if (fstore != stdout)
@@ -1230,7 +1224,9 @@ static void test_power_cycle(struct node &node)
 
 		if (tries > max_tries) {
 			wakeup_la = from;
-			printf("\nFAIL: never woke up, retry\n");
+			printf("\nFAIL: never woke up, sleep 5 secs, then retry\n");
+			fflush(stdout);
+			sleep(5);
 			printf("Wake up TV using Image View On from LA %s: ", cec_la2s(wakeup_la));
 			fflush(stdout);
 			cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
@@ -1316,7 +1312,9 @@ static void test_power_cycle(struct node &node)
 				break;
 			if (++tries > max_tries) {
 				if (first_standby) {
-					printf("\nFAIL: never went into standby, retry\n");
+					printf("\nFAIL: never went into standby, sleep 5 secs, then retry\n");
+					fflush(stdout);
+					sleep(5);
 					printf("Put TV in standby from LA %s: ", cec_la2s(from));
 					fflush(stdout);
 					first_standby = false;
@@ -2432,9 +2430,7 @@ int main(int argc, char **argv)
 		else
 			phys_addr = parse_phys_addr_from_edid(edid_path);
 		doioctl(&node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
-		printf("Physical Address: %x.%x.%x.%x\n",
-		       phys_addr >> 12, (phys_addr >> 8) & 0xf,
-		       (phys_addr >> 4) & 0xf, phys_addr & 0xf);
+		printf("Physical Address: %x.%x.%x.%x\n", cec_phys_addr_exp(phys_addr));
 
 		for (;;) {
 			bool edid;
@@ -2451,8 +2447,7 @@ int main(int argc, char **argv)
 					phys_addr = parse_phys_addr_from_edid(edid_path);
 				doioctl(&node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
 				printf("Physical Address: %x.%x.%x.%x\n",
-				       phys_addr >> 12, (phys_addr >> 8) & 0xf,
-				       (phys_addr >> 4) & 0xf, phys_addr & 0xf);
+				       cec_phys_addr_exp(phys_addr));
 			}
 		}
 	}
