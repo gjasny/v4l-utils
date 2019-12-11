@@ -223,7 +223,7 @@ static struct option long_options[] = {
 	{ "vendor-command", required_argument, 0, OptVendorCommand }, \
 	{ "custom-command", required_argument, 0, OptCustomCommand }, \
 
-	{ "test-power-cycle", no_argument, 0, OptTestPowerCycle }, \
+	{ "test-power-cycle", optional_argument, 0, OptTestPowerCycle }, \
 	{ "stress-test-power-cycle", required_argument, 0, OptStressTestPowerCycle }, \
 
 	{ 0, 0, 0, 0 }
@@ -310,7 +310,11 @@ static void usage(void)
 	       "                           Use - for stdout.\n"
 	       "  --analyze-pin <from>     Analyze the low-level CEC pin changes from the file <from>.\n"
 	       "                           Use - for stdin.\n"
-	       "  --test-power-cycle       Test power cycle behavior of the display.\n"
+	       "  --test-power-cycle [polls=<n>][,sleep=<secs>]\n"
+	       "                           Test power cycle behavior of the display. It polls up to\n"
+	       "                           <n> times (default 15), waiting for a state changes. If\n"
+	       "                           that fails it waits <secs> seconds (default 10) before\n"
+	       "                           retrying this.\n"
 	       "  --stress-test-power-cycle cnt=<count>[,max-sleep=<secs>]\n"
 	       "                           Power cycle display <count> times. If 0, then never stop.\n"
 	       "                           If <secs> is non-zero (0 is the default), then sleep for\n"
@@ -1167,13 +1171,14 @@ static int init_power_cycle_test(struct node &node)
 	return from;
 }
 
-static void test_power_cycle(struct node &node)
+static void test_power_cycle(struct node &node, unsigned int max_tries,
+			     unsigned int retry_sleep)
 {
 	struct cec_log_addrs laddrs = { };
 	struct cec_msg msg;
+	unsigned failures = 0;
 	unsigned from;
 	unsigned tries;
-	const unsigned max_tries = 30;
 	unsigned secs;
 	__u16 pa, prev_pa;
 	__u8 wakeup_la;
@@ -1224,9 +1229,11 @@ static void test_power_cycle(struct node &node)
 
 		if (tries > max_tries) {
 			wakeup_la = from;
-			printf("\nFAIL: never woke up, sleep 5 secs, then retry\n");
+			printf("\nFAIL: never woke up, sleep %u secs, then retry\n",
+			       retry_sleep);
+			failures++;
 			fflush(stdout);
-			sleep(5);
+			sleep(retry_sleep);
 			printf("Wake up TV using Image View On from LA %s: ", cec_la2s(wakeup_la));
 			fflush(stdout);
 			cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
@@ -1245,7 +1252,8 @@ static void test_power_cycle(struct node &node)
 					break;
 				if (++tries > max_tries) {
 					printf("\nFAIL: never woke up\n");
-					exit(1);
+					failures++;
+					break;
 				}
 				sleep(1);
 				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
@@ -1271,8 +1279,8 @@ static void test_power_cycle(struct node &node)
 			exit(1);
 		}
 		prev_pa = pa;
-		secs = i % 10;
-		printf("\tSleep %d seconds\n", secs);
+		secs = i <= 10 ? i : 10 + 10 * (i - 10);
+		printf("\tSleep %u second%s\n", secs, secs == 1 ? "" : "s");
 		sleep(secs);
 		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
 		if (pa != prev_pa) {
@@ -1312,9 +1320,11 @@ static void test_power_cycle(struct node &node)
 				break;
 			if (++tries > max_tries) {
 				if (first_standby) {
-					printf("\nFAIL: never went into standby, sleep 5 secs, then retry\n");
+					printf("\nFAIL: never went into standby, sleep %u secs, then retry\n",
+					       retry_sleep);
+					failures++;
 					fflush(stdout);
-					sleep(5);
+					sleep(retry_sleep);
 					printf("Put TV in standby from LA %s: ", cec_la2s(from));
 					fflush(stdout);
 					first_standby = false;
@@ -1328,7 +1338,8 @@ static void test_power_cycle(struct node &node)
 					exit(1);
 				}
 				printf("\nFAIL: never went into standby\n");
-				exit(1);
+				failures++;
+				break;
 			}
 			sleep(1);
 		}
@@ -1337,7 +1348,6 @@ static void test_power_cycle(struct node &node)
 		printf("\tPhysical Address: %x.%x.%x.%x\n",
 		       cec_phys_addr_exp(pa));
 		prev_pa = pa;
-		secs = i <= 10 ? i : 10 + 10 * (i - 10);
 		printf("\tSleep %d second%s\n", secs, secs == 1 ? "" : "s");
 		sleep(secs);
 		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
@@ -1346,6 +1356,8 @@ static void test_power_cycle(struct node &node)
 			       cec_phys_addr_exp(pa));
 		printf("\n");
 	}
+	if (failures)
+		printf("Test had %u failure%s\n", failures, failures == 1 ? "" : "s");
 }
 
 static void stress_test_power_cycle(struct node &node,
@@ -1660,8 +1672,10 @@ int main(int argc, char **argv)
 	__u32 timeout = 1000;
 	__u32 monitor_time = 0;
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
-	unsigned int pwr_cycle_cnt = 0;
-	unsigned int max_sleep = 0;
+	unsigned int stress_test_pwr_cycle_cnt = 0;
+	unsigned int stress_test_pwr_cycle_max_sleep = 0;
+	unsigned int test_pwr_cycle_polls = 15;
+	unsigned int test_pwr_cycle_sleep = 10;
 	bool warn_if_unconfigured = false;
 	__u16 phys_addr;
 	__u8 from = 0, to = 0, first_to = 0xff;
@@ -2031,9 +2045,32 @@ int main(int argc, char **argv)
 			list_devices();
 			break;
 
-		case OptTestPowerCycle:
+		case OptTestPowerCycle: {
+			static const char *arg_names[] = {
+				"polls",
+				"sleep",
+				NULL
+			};
+			char *value, *subs = optarg;
+
 			warn_if_unconfigured = true;
+			if (!optarg)
+				break;
+
+			while (*subs != '\0') {
+				switch (cec_parse_subopt(&subs, arg_names, &value)) {
+				case 0:
+					test_pwr_cycle_polls = strtoul(value, 0L, 0);
+					break;
+				case 1:
+					test_pwr_cycle_sleep = strtoul(value, 0L, 0);
+					break;
+				default:
+					exit(1);
+				}
+			}
 			break;
+		}
 
 		case OptStressTestPowerCycle: {
 			static const char *arg_names[] = {
@@ -2046,10 +2083,10 @@ int main(int argc, char **argv)
 			while (*subs != '\0') {
 				switch (cec_parse_subopt(&subs, arg_names, &value)) {
 				case 0:
-					pwr_cycle_cnt = strtoul(value, 0L, 0);
+					stress_test_pwr_cycle_cnt = strtoul(value, 0L, 0);
 					break;
 				case 1:
-					max_sleep = strtoul(value, 0L, 0);
+					stress_test_pwr_cycle_max_sleep = strtoul(value, 0L, 0);
 					break;
 				default:
 					exit(1);
@@ -2410,9 +2447,10 @@ int main(int argc, char **argv)
 		fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
 
 	if (options[OptTestPowerCycle])
-		test_power_cycle(node);
+		test_power_cycle(node, test_pwr_cycle_polls, test_pwr_cycle_sleep);
 	if (options[OptStressTestPowerCycle])
-		stress_test_power_cycle(node, pwr_cycle_cnt, max_sleep);
+		stress_test_power_cycle(node, stress_test_pwr_cycle_cnt,
+					stress_test_pwr_cycle_max_sleep);
 
 	if (options[OptPhysAddrFromEDIDPoll]) {
 		bool has_edid;

@@ -255,10 +255,12 @@ via the \fB\-\-analyze\-pin\fR option. Use \- to write to stdout instead of to a
 Read and analyze the CEC pin events from the given file. Use \- to read from stdin
 instead of from a file.
 .TP
-\fB\-\-test\-power\-cycle\fR
-This option tests the power cycle behavior of the display.
+\fB\-\-test\-power\-cycle\fR [\fIpolls\fR=\fI<n>\fR][,\fIsleep\fR=\fI<secs>\fR]
+This option tests the power cycle behavior of the display. It polls up to
+\fI<n>\fR times (default 15), waiting for a state changes. If that fails then it
+waits \fI<secs>\fR seconds (default 10) before retrying this.
 .TP
-\fB\-\-stress\-test\-power\-cycle\fR \fIcnt\fR=\fI<count>\fR \fImax-sleep\fR=\fI<secs>\fR
+\fB\-\-stress\-test\-power\-cycle\fR \fIcnt\fR=\fI<count>\fR[,\fImax-sleep\fR=\fI<secs>\fR]
 This option performs a stress test for a display: it power cycles the display \fI<count>\fR
 times using the CEC Standby and Image View On commands. If \fI<count>\fR is 0, then never stop.
 If \fI<secs>\fR is non-zero (0 is the default), then sleep for a random number of seconds
