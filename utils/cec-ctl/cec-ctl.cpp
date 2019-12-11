@@ -2432,6 +2432,9 @@ int main(int argc, char **argv)
 		else
 			phys_addr = parse_phys_addr_from_edid(edid_path);
 		doioctl(&node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
+		printf("Physical Address: %x.%x.%x.%x\n",
+		       phys_addr >> 12, (phys_addr >> 8) & 0xf,
+		       (phys_addr >> 4) & 0xf, phys_addr & 0xf);
 
 		for (;;) {
 			bool edid;
@@ -2447,6 +2450,9 @@ int main(int argc, char **argv)
 				else
 					phys_addr = parse_phys_addr_from_edid(edid_path);
 				doioctl(&node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
+				printf("Physical Address: %x.%x.%x.%x\n",
+				       phys_addr >> 12, (phys_addr >> 8) & 0xf,
+				       (phys_addr >> 4) & 0xf, phys_addr & 0xf);
 			}
 		}
 	}
