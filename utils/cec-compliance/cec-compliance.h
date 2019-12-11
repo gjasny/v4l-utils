@@ -193,9 +193,6 @@ struct remote_subtest {
 #define ARRAY_SIZE(a) \
 	(sizeof(a) / sizeof(*a))
 
-#define cec_phys_addr_exp(pa) \
-	((pa) >> 12), ((pa) >> 8) & 0xf, ((pa) >> 4) & 0xf, (pa) & 0xf
-
 #define COLOR_GREEN(s) "\033[32m" s "\033[0m"
 #define COLOR_RED(s) "\033[1;31m" s "\033[0m"
 #define COLOR_BOLD(s) "\033[1m" s "\033[0m"

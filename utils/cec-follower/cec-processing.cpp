@@ -91,8 +91,7 @@ static void log_event(struct cec_event &ev, bool wallclock)
 	case CEC_EVENT_STATE_CHANGE:
 		pa = ev.state_change.phys_addr;
 		printf("Event: State Change: PA: %x.%x.%x.%x, LA mask: 0x%04x\n",
-		       pa >> 12, (pa >> 8) & 0xf,
-		       (pa >> 4) & 0xf, pa & 0xf,
+		       cec_phys_addr_exp(pa),
 		       ev.state_change.log_addr_mask);
 		break;
 	case CEC_EVENT_LOST_MSGS:

@@ -153,9 +153,6 @@ struct short_audio_desc {
 #define SAD_EXT_TYPE_AC_4			12
 #define SAD_EXT_TYPE_LPCM_3D_AUDIO		13
 
-#define cec_phys_addr_exp(pa) \
-	((pa) >> 12), ((pa) >> 8) & 0xf, ((pa) >> 4) & 0xf, (pa) & 0xf
-
 #define info(fmt, args...) 					\
 	do {							\
 		if (show_info)					\
@@ -192,9 +189,6 @@ int cec_named_ioctl(int fd, const char *name,
 		    unsigned long int request, void *parm);
 
 #define doioctl(n, r, p) cec_named_ioctl((n)->fd, #r, r, p)
-
-#define cec_phys_addr_exp(pa) \
-        ((pa) >> 12), ((pa) >> 8) & 0xf, ((pa) >> 4) & 0xf, (pa) & 0xf
 
 #define transmit(n, m) (doioctl(n, CEC_TRANSMIT, m))
 

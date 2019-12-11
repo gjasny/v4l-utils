@@ -55,8 +55,7 @@ static void log_arg(const struct cec_arg *arg, const char *arg_name, __u32 val)
 		return;
 	case CEC_ARG_TYPE_U16:
 		if (strstr(arg_name, "phys-addr"))
-			printf("\t%s: %x.%x.%x.%x\n", arg_name,
-			       val >> 12, (val >> 8) & 0xf, (val >> 4) & 0xf, val & 0xf);
+			printf("\t%s: %x.%x.%x.%x\n", arg_name, cec_phys_addr_exp(val));
 		else
 			printf("\t%s: %u (0x%04x)\n", arg_name, val, val);
 		return;
