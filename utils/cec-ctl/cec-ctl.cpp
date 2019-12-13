@@ -159,7 +159,7 @@ static struct option long_options[] = {
 	{ "verbose", no_argument, 0, OptVerbose },
 	{ "wall-clock", no_argument, 0, OptWallClock },
 	{ "osd-name", required_argument, 0, OptOsdName },
-	{ "phys-addr-from-edid-daemon", required_argument, 0, OptPhysAddrFromEDIDPoll },
+	{ "phys-addr-from-edid-poll", required_argument, 0, OptPhysAddrFromEDIDPoll },
 	{ "phys-addr-from-edid", required_argument, 0, OptPhysAddrFromEDID },
 	{ "phys-addr", required_argument, 0, OptPhysAddr },
 	{ "vendor-id", required_argument, 0, OptVendorID },
@@ -2369,7 +2369,8 @@ int main(int argc, char **argv)
 
 	if (node.num_log_addrs == 0) {
 		if (options[OptMonitor] || options[OptMonitorAll] ||
-		    options[OptMonitorPin] || options[OptStorePin])
+		    options[OptMonitorPin] || options[OptStorePin] ||
+		    options[OptPhysAddrFromEDIDPoll])
 			goto skip_la;
 		if (warn_if_unconfigured)
 			fprintf(stderr, "\nAdapter is unconfigured, please configure it first.\n");
@@ -2452,6 +2453,7 @@ int main(int argc, char **argv)
 		stress_test_power_cycle(node, stress_test_pwr_cycle_cnt,
 					stress_test_pwr_cycle_max_sleep);
 
+skip_la:
 	if (options[OptPhysAddrFromEDIDPoll]) {
 		bool has_edid;
 		char dummy;
@@ -2489,7 +2491,7 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-skip_la:
+
 	if (options[OptMonitor] || options[OptMonitorAll] ||
 	    options[OptMonitorPin] || options[OptStorePin])
 		monitor(node, monitor_time, store_pin);
