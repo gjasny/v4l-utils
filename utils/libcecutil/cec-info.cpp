@@ -424,7 +424,7 @@ void cec_driver_info(const struct cec_caps &caps,
 	if (laddrs.vendor_id != CEC_VENDOR_ID_NONE)
 		printf("\tVendor ID                  : 0x%06x %s\n",
 		       laddrs.vendor_id, cec_vendor2s(laddrs.vendor_id));
-	printf("\tOSD Name                   : %s\n", laddrs.osd_name);
+	printf("\tOSD Name                   : '%s'\n", laddrs.osd_name);
 	printf("\tLogical Addresses          : %u %s\n",
 	       laddrs.num_log_addrs, laflags2s(laddrs.flags).c_str());
 	for (unsigned i = 0; i < laddrs.num_log_addrs; i++) {

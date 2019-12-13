@@ -542,8 +542,11 @@ static int showTopologyDevice(struct node *node, unsigned i, unsigned la)
 	cec_msg_give_osd_name(&msg, true);
 	doioctl(node, CEC_TRANSMIT, &msg);
 	cec_ops_set_osd_name(&msg, osd_name);
-	printf("\t\tOSD Name                   : %s\n",
-	       (!cec_msg_status_is_ok(&msg)) ? cec_status2s(msg).c_str() : osd_name);
+	printf("\t\tOSD Name                   : ");
+	if (cec_msg_status_is_ok(&msg))
+		printf("'%s'\n", osd_name);
+	else
+		printf("%s\n", cec_status2s(msg).c_str());
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_get_menu_language(&msg, true);
