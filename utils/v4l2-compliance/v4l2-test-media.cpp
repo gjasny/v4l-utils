@@ -153,16 +153,16 @@ int testMediaTopology(struct node *node)
 	topology.ptr_links = 0;
 	v2_ents = new media_v2_entity[topology.num_entities];
 	memset(v2_ents, 0xff, topology.num_entities * sizeof(*v2_ents));
-	topology.ptr_entities = (__u64)v2_ents;
+	topology.ptr_entities = (uintptr_t)v2_ents;
 	v2_ifaces = new media_v2_interface[topology.num_interfaces];
 	memset(v2_ifaces, 0xff, topology.num_interfaces * sizeof(*v2_ifaces));
-	topology.ptr_interfaces = (__u64)v2_ifaces;
+	topology.ptr_interfaces = (uintptr_t)v2_ifaces;
 	v2_pads = new media_v2_pad[topology.num_pads];
 	memset(v2_pads, 0xff, topology.num_pads * sizeof(*v2_pads));
-	topology.ptr_pads = (__u64)v2_pads;
+	topology.ptr_pads = (uintptr_t)v2_pads;
 	v2_links = new media_v2_link[topology.num_links];
 	memset(v2_links, 0xff, topology.num_links * sizeof(*v2_links));
-	topology.ptr_links = (__u64)v2_links;
+	topology.ptr_links = (uintptr_t)v2_links;
 	fail_on_test(doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology));
 	fail_on_test(v2_ents != (media_v2_entity *)topology.ptr_entities);
 	fail_on_test(v2_ifaces != (media_v2_interface *)topology.ptr_interfaces);
@@ -536,7 +536,7 @@ void walkTopology(struct node &node, struct node &expbuf_node,
 
 	media_v2_interface v2_ifaces[topology.num_interfaces];
 
-	topology.ptr_interfaces = (__u64)v2_ifaces;
+	topology.ptr_interfaces = (uintptr_t)v2_ifaces;
 	if (ioctl(node.g_fd(), MEDIA_IOC_G_TOPOLOGY, &topology))
 		return;
 

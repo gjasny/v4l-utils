@@ -860,11 +860,11 @@ static std::string make_devname(const char *device, const char *devname,
 	}
 
 	media_v2_entity *ents = new media_v2_entity[topology.num_entities];
-	topology.ptr_entities = (__u64)ents;
+	topology.ptr_entities = (uintptr_t)ents;
 	media_v2_link *links = new media_v2_link[topology.num_links];
-	topology.ptr_links = (__u64)links;
+	topology.ptr_links = (uintptr_t)links;
 	media_v2_interface *ifaces = new media_v2_interface[topology.num_interfaces];
-	topology.ptr_interfaces = (__u64)ifaces;
+	topology.ptr_interfaces = (uintptr_t)ifaces;
 
 	unsigned i, ent_id, iface_id = 0;
 

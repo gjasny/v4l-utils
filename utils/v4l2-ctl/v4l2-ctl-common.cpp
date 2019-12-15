@@ -225,7 +225,7 @@ static void list_media_devices(const std::string &media_bus_info)
 	}
 
 	media_v2_interface *ifaces = new media_v2_interface[topology.num_interfaces];
-	topology.ptr_interfaces = (__u64)ifaces;
+	topology.ptr_interfaces = (uintptr_t)ifaces;
 
 	if (!ioctl(media_fd, MEDIA_IOC_G_TOPOLOGY, &topology))
 		for (unsigned i = 0; i < topology.num_interfaces; i++) {

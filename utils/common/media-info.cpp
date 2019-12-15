@@ -428,10 +428,10 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
 	media_v2_pad v2_pads[topology.num_pads];
 	media_v2_link v2_links[topology.num_links];
 
-	topology.ptr_entities = (__u64)v2_ents;
-	topology.ptr_interfaces = (__u64)v2_ifaces;
-	topology.ptr_pads = (__u64)v2_pads;
-	topology.ptr_links = (__u64)v2_links;
+	topology.ptr_entities = (uintptr_t)v2_ents;
+	topology.ptr_interfaces = (uintptr_t)v2_ifaces;
+	topology.ptr_pads = (uintptr_t)v2_pads;
+	topology.ptr_links = (uintptr_t)v2_links;
 	if (ioctl(media_fd, MEDIA_IOC_G_TOPOLOGY, &topology))
 		return 0;
 	for (i = 0; i < topology.num_interfaces; i++)
