@@ -1458,11 +1458,12 @@ int main(int argc, char **argv)
 #ifdef SHA
 #define STR(x) #x
 #define STRING(x) STR(x)
-	printf("v4l2-compliance SHA: %s, %zd bits\n", STRING(SHA), sizeof(void *) * 8);
+	printf("v4l2-compliance SHA: %s", STRING(SHA));
 #else
-	printf("v4l2-compliance SHA: not available, %zd bits\n", sizeof(void *) * 8);
+	printf("v4l2-compliance SHA: not available\n");
 #endif
 
+	printf(", %zd bits, %u-bit time_t\n", sizeof(void *) * 8, sizeof(time_t) * 8);
 	uname(&uts);
 	sscanf(uts.release, "%d.%d.%d", &v1, &v2, &v3);
 	if (v1 == 2 && v2 == 6)
