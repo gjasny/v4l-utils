@@ -509,8 +509,9 @@ static void print_buffer(FILE *f, struct v4l2_buffer &buf)
 	fprintf(f, "\tSequence : %u\n", buf.sequence);
 	fprintf(f, "\tLength   : %u\n", buf.length);
 	fprintf(f, "\tBytesused: %u\n", buf.bytesused);
-	fprintf(f, "\tTimestamp: %lu.%06lus (%s, %s)\n", buf.timestamp.tv_sec, buf.timestamp.tv_usec,
-			timestamp_type2s(buf.flags).c_str(), timestamp_src2s(buf.flags).c_str());
+	fprintf(f, "\tTimestamp: %llu.%06llus (%s, %s)\n",
+		(__u64)buf.timestamp.tv_sec, (__u64)buf.timestamp.tv_usec,
+		timestamp_type2s(buf.flags).c_str(), timestamp_src2s(buf.flags).c_str());
 	if (buf.flags & V4L2_BUF_FLAG_TIMECODE) {
 		static const int fps_types[] = { 0, 24, 25, 30, 50, 60 };
 		int fps = buf.timecode.type;

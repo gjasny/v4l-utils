@@ -885,8 +885,8 @@ int parse_selection_target(const char *s, unsigned int &target)
 
 static void print_event(const struct v4l2_event *ev)
 {
-	printf("%ld.%06ld: event %u, pending %u: ",
-			ev->timestamp.tv_sec, ev->timestamp.tv_nsec / 1000,
+	printf("%lld.%06ld: event %u, pending %u: ",
+			(__u64)ev->timestamp.tv_sec, ev->timestamp.tv_nsec / 1000,
 			ev->sequence, ev->pending);
 	switch (ev->type) {
 	case V4L2_EVENT_VSYNC:

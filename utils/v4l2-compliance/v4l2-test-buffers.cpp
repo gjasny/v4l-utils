@@ -159,7 +159,7 @@ static bool fill_output_buffer(const cv4l_queue &q, cv4l_buffer &buf, bool first
 		if (!stream_use_hdr) {
 			ssize_t sz = read(stream_from_fd, q.g_dataptr(buf.g_index(), p), len);
 
-			if (sz < len) {
+			if (sz < (ssize_t)len) {
 				seek = true;
 				break;
 			}
@@ -181,7 +181,7 @@ static bool fill_output_buffer(const cv4l_queue &q, cv4l_buffer &buf, bool first
 
 		ssize_t sz = read(stream_from_fd, q.g_dataptr(buf.g_index(), p), bytesused);
 
-		if (sz < bytesused) {
+		if (sz < (ssize_t)bytesused) {
 			seek = true;
 			break;
 		}
@@ -978,12 +978,12 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 		if (ret != EAGAIN) {
 			fail_on_test(ret);
 			if (show_info)
-				printf("\t\t%s Buffer: %d Sequence: %d Field: %s Size: %d Flags: %s Timestamp: %ld.%06lds\n",
+				printf("\t\t%s Buffer: %d Sequence: %d Field: %s Size: %d Flags: %s Timestamp: %lld.%06llds\n",
 				       v4l_type_is_output(buf.g_type()) ? "Out" : "Cap",
 				       buf.g_index(), buf.g_sequence(),
 				       field2s(buf.g_field()).c_str(), buf.g_bytesused(),
 				       bufferflags2s(buf.g_flags()).c_str(),
-				       buf.g_timestamp().tv_sec, buf.g_timestamp().tv_usec);
+				       (__u64)buf.g_timestamp().tv_sec,  (__u64)buf.g_timestamp().tv_usec);
 			fail_on_test(buf.check(q, last_seq));
 			if (!show_info && !no_progress) {
 				printf("\r\t%s: Frame #%03d%s",
@@ -1058,12 +1058,12 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 		capture_count++;
 
 		if (show_info)
-			printf("\t\t%s Buffer: %d Sequence: %d Field: %s Size: %d Flags: %s Timestamp: %ld.%06lds\n",
+			printf("\t\t%s Buffer: %d Sequence: %d Field: %s Size: %d Flags: %s Timestamp: %lld.%06llds\n",
 			       v4l_type_is_output(buf.g_type()) ? "Out" : "Cap",
 			       buf.g_index(), buf.g_sequence(),
 			       field2s(buf.g_field()).c_str(), buf.g_bytesused(),
 			       bufferflags2s(buf.g_flags()).c_str(),
-			       buf.g_timestamp().tv_sec, buf.g_timestamp().tv_usec);
+			       (__u64)buf.g_timestamp().tv_sec, (__u64)buf.g_timestamp().tv_usec);
 		fail_on_test(ret);
 		if (v4l_type_is_capture(buf.g_type()) && buf.g_bytesused())
 			fail_on_test(buf.check(m2m_q, last_m2m_seq, true));
