@@ -1463,7 +1463,7 @@ int main(int argc, char **argv)
 	printf("v4l2-compliance SHA: not available\n");
 #endif
 
-	printf(", %zd bits, %u-bit time_t\n", sizeof(void *) * 8, sizeof(time_t) * 8);
+	printf(", %zd bits, %zd-bit time_t\n", sizeof(void *) * 8, sizeof(time_t) * 8);
 	uname(&uts);
 	sscanf(uts.release, "%d.%d.%d", &v1, &v2, &v3);
 	if (v1 == 2 && v2 == 6)
