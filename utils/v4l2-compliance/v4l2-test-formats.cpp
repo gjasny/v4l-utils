@@ -404,7 +404,7 @@ static void createInvalidFmt(struct v4l2_format &fmt, struct v4l2_clip &clip, un
 	if (type == V4L2_BUF_TYPE_VIDEO_OVERLAY ||
 	    type == V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY) {
 		memset(&clip, 0xff, sizeof(clip));
-		clip.next = (struct  v4l2_clip *)0xdeadbeef;
+		clip.next = (struct  v4l2_clip *)0x0eadbeef;
 		fmt.fmt.win.clipcount = 1;
 		fmt.fmt.win.clips = &clip;
 		fmt.fmt.win.bitmap = NULL;
@@ -539,7 +539,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 
 			fail_on_test(doioctl(node, VIDIOC_G_FBUF, &fb));
 			fail_on_test(!win.clips);
-			fail_on_test(win.clips->next != (void *)0xdeadbeef);
+			fail_on_test(win.clips->next != (void *)0x0eadbeef);
 			fail_on_test(win.clipcount != 1);
 			fail_on_test(r->left < 0 || r->top < 0);
 			fail_on_test((unsigned)r->left >= fb.fmt.width || (unsigned)r->top >= fb.fmt.height);

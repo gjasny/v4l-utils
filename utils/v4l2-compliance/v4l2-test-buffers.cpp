@@ -1486,7 +1486,7 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 			ret = buf.prepare_buf(node);
 			fail_on_test(!ret);
 			for (unsigned p = 0; p < buf.g_num_planes(); p++)
-				buf.s_userptr((char *)q.g_userptr(i, p) + 0xdeadbeef, p);
+				buf.s_userptr((char *)0x0eadb000 + buf.g_length(p), p);
 			ret = buf.prepare_buf(node);
 			fail_on_test(!ret);
 			for (unsigned p = 0; p < buf.g_num_planes(); p++)
@@ -1511,7 +1511,7 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 			fail_on_test(!ret);
 
 			for (unsigned p = 0; p < buf.g_num_planes(); p++)
-				buf.s_userptr((char *)q.g_userptr(i, p) + 0xdeadbeef, p);
+				buf.s_userptr((char *)0x0eadb000 + buf.g_length(p), p);
 			ret = buf.qbuf(node);
 			fail_on_test(!ret);
 

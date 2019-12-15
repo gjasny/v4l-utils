@@ -511,7 +511,7 @@ static int checkEdid(struct node *node, unsigned pad, bool is_input)
 	edid.pad = pad;
 	edid.start_block = 0;
 	edid.blocks = 0;
-	edid.edid = (__u8 *)0xdeadbeef;
+	edid.edid = (__u8 *)0x0eadbeef;
 	ret = doioctl(node, VIDIOC_G_EDID, &edid);
 	if (ret == ENOTTY) {
 		memset(&edid, 0, sizeof(edid));
@@ -588,7 +588,7 @@ static int checkEdid(struct node *node, unsigned pad, bool is_input)
 	edid.edid = NULL;
 	ret = doioctl(node, VIDIOC_S_EDID, &edid);
 	fail_on_test(ret != EFAULT);
-	edid.edid = (__u8 *)0xdeadbeef;
+	edid.edid = (__u8 *)0x0eadbeef;
 	ret = doioctl(node, VIDIOC_S_EDID, &edid);
 	fail_on_test(ret != EFAULT);
 	return 0;
