@@ -494,6 +494,5 @@ int testSubDevSelection(struct node *node, unsigned which, unsigned pad)
 		fail_on_test(s_sel.r.height != sel.r.height);
 	}
 
-	fail_on_test(!have_sel);
-	return 0;
+	return have_sel ? 0 : ENOTTY;
 }
