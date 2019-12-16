@@ -411,7 +411,7 @@ int testSubDevSelection(struct node *node, unsigned which, unsigned pad)
 	struct v4l2_subdev_selection s_sel;
 	struct v4l2_subdev_crop crop;
 	bool is_sink = node->pads[pad].flags & MEDIA_PAD_FL_SINK;
-	bool have_sel;
+	bool have_sel = false;
 	int ret;
 
 	targets[V4L2_SEL_TGT_NATIVE_SIZE].readonly = is_sink;
