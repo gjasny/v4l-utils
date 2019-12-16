@@ -80,6 +80,9 @@ Set width
 \fB\-H,-\-height\fR=\fI<height>\fR
 Set frame (not field!) height
 .TP
+\fB\-A,-\-padding\fR=\fI<bytes>\fR
+set additional horizontal padding (after width)
+.TP
 \fB--fps\fR=\fI<fps>\fR
 Set frames-per-second (default is 30)
 .TP

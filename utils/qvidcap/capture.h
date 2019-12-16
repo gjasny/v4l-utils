@@ -82,6 +82,7 @@ public:
 	bool updateV4LFormat(const cv4l_fmt &fmt);
 	void setOverrideWidth(__u32 w);
 	void setOverrideHeight(__u32 h);
+	void setOverrideHorPadding(__u32 p);
 	void setCount(unsigned cnt) { m_cnt = cnt; }
 	void setReportTimings(bool report) { m_reportTimings = report; }
 	void setVerbose(bool verbose) { m_verbose = verbose; }
@@ -192,6 +193,7 @@ private:
 	__u32 m_overridePixelFormat;
 	__u32 m_overrideWidth;
 	__u32 m_overrideHeight;
+	__u32 m_overrideHorPadding;
 	__u32 m_overrideField;
 	__u32 m_overrideColorspace;
 	__u32 m_overrideYCbCrEnc;

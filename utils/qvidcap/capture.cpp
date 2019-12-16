@@ -571,6 +571,7 @@ void CaptureWin::keyPressEvent(QKeyEvent *event)
 {
 	unsigned w = m_v4l_fmt.g_width();
 	unsigned h = m_v4l_fmt.g_frame_height();
+	unsigned p = m_overrideHorPadding;
 	bool hasShift = event->modifiers() & Qt::ShiftModifier;
 	bool hasCtrl = event->modifiers() & Qt::ControlModifier;
 	bool scalingEnabled = m_canOverrideResolution &&
@@ -587,12 +588,22 @@ void CaptureWin::keyPressEvent(QKeyEvent *event)
 		if (!m_scrollArea->isFullScreen())
 			return;
 	case Qt::Key_Left:
-		if (scalingEnabled && w > 16)
-			w -= 2;
+		if (hasShift) {
+			if (scalingEnabled && p >= 2)
+				p -= 2;
+		} else {
+			if (scalingEnabled && w > 16)
+				w -= 2;
+		}
 		break;
 	case Qt::Key_Right:
-		if (scalingEnabled && w < 10240)
-			w += 2;
+		if (hasShift) {
+			if (scalingEnabled && p < 10240)
+				p += 2;
+		} else {
+			if (scalingEnabled && w < 10240)
+				w += 2;
+		}
 		break;
 	case Qt::Key_Up:
 		if (scalingEnabled && h > 16)
@@ -675,6 +686,12 @@ void CaptureWin::keyPressEvent(QKeyEvent *event)
 			m_scrollArea->resize(w, h);
 		else
 			resize(w, h);
+
+		if ((w + p) != m_v4l_fmt.g_bytesperline()) {
+			printf("New horizontal resolution: %u + %u (%u)\n", w, p, w + p);
+			setOverrideHorPadding(p);
+			updateShader();
+		}
 	}
 }
 
@@ -744,6 +761,14 @@ void CaptureWin::setOverrideHeight(__u32 h)
 	m_overrideHeight = h;
 
 	if (!m_overrideHeight && m_canOverrideResolution)
+		m_resolutionOverride->setChecked(true);
+}
+
+void CaptureWin::setOverrideHorPadding(__u32 p)
+{
+	m_overrideHorPadding = p;
+
+	if (!m_overrideHorPadding && m_canOverrideResolution)
 		m_resolutionOverride->setChecked(true);
 }
 
@@ -953,6 +978,8 @@ bool CaptureWin::setV4LFormat(cv4l_fmt &fmt)
 	}
 	if (m_mode == AppModeFile && m_overrideWidth)
 		fmt.s_width(m_overrideWidth);
+	if (m_mode == AppModeFile && m_overrideHorPadding)
+		fmt.s_bytesperline(fmt.g_bytesperline() + m_overrideHorPadding);
 	if (m_mode == AppModeFile && m_overrideField != 0xffffffff)
 		fmt.s_field(m_overrideField);
 	if (m_mode == AppModeFile && m_overrideHeight)
@@ -1350,6 +1377,9 @@ void CaptureWin::initImageFormat()
 	tpg_s_quantization(&m_tpg, m_v4l_fmt.g_quantization());
 	m_v4l_fmt.s_num_planes(tpg_g_buffers(&m_tpg));
 	for (unsigned p = 0; p < m_v4l_fmt.g_num_planes(); p++) {
+		if (m_mode == AppModeFile && m_overrideHorPadding)
+			tpg_s_bytesperline(&m_tpg, p, tpg_g_bytesperline(&m_tpg, p) + m_overrideHorPadding);
+
 		m_v4l_fmt.s_bytesperline(tpg_g_bytesperline(&m_tpg, p), p);
 		m_v4l_fmt.s_sizeimage(tpg_calc_plane_size(&m_tpg, p), p);
 	}

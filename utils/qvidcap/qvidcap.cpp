@@ -72,6 +72,7 @@ static void usage()
 	       "\n"
 	       "  -W, --width=<width>      set width\n"
 	       "  -H, --height=<height>    set frame (not field!) height\n"
+	       "  -A, --padding=<bytes>    set additional horizontal padding (after width)\n"
 	       "  --fps=<fps>              set frames-per-second (default is 30)\n"
 	       "\n"
 	       "  The following option is only valid when reading from a file:\n"
@@ -446,6 +447,7 @@ int main(int argc, char **argv)
 	__u32 overridePixelFormat = 0;
 	__u32 overrideWidth = 0;
 	__u32 overrideHeight = 0;
+	__u32 overrideHorPadding = 0;
 	__u32 overrideField = 0xffffffff;
 	__u32 overrideColorspace = 0xffffffff;
 	__u32 overrideYCbCrEnc = 0xffffffff;
@@ -515,6 +517,9 @@ int main(int argc, char **argv)
 				return 0;
 		} else if (isOptArg(args[i], "--height", "-H")) {
 			if (!processOption(args, i, overrideHeight))
+				return 0;
+		} else if (isOptArg(args[i], "--padding", "-A")) {
+			if (!processOption(args, i, overrideHorPadding))
 				return 0;
 		} else if (isOptArg(args[i], "--field", "-F")) {
 			if (!processOption(args, i, s))
@@ -749,6 +754,7 @@ int main(int argc, char **argv)
 	}
 	win.setOverrideWidth(overrideWidth);
 	win.setOverrideHeight(overrideHeight);
+	win.setOverrideHorPadding(overrideHorPadding);
 	win.setFps(fps);
 	win.setFormat(format);
 	win.setReportTimings(report_timings);
