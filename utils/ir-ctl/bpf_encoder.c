@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#include <argp.h>
 
 #include "keymap.h"
 

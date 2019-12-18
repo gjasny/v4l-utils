@@ -9,6 +9,8 @@
 #include <string.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <argp.h>
 
 #include "keymap.h"
 #include "toml.h"
