@@ -131,7 +131,11 @@ class LircdParser:
             for s in a:
                 if s[0] == '#':
                     break
-                codes[int(s, 0)] = k
+                scancode = int(s, 0)
+                if scancode in codes:
+                    self.warning("scancode 0x{:x} has duplicate definition {} and {}".format(scancode, codes[scancode], k))
+
+                codes[scancode] = k
 
     def read_raw_codes(self):
         raw_codes = []
