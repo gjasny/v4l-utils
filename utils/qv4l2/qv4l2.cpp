@@ -60,10 +60,44 @@ extern "C" {
 #include "capture-win-qt.h"
 #include "capture-win-gl.h"
 
+#include <libv4l-plugin.h>
 #include <libv4lconvert.h>
 
 #define SDR_WIDTH 1024
 #define SDR_HEIGHT 512
+
+static void *rawDevInit(int fd)
+{
+	return NULL;
+}
+
+static void rawDevClose(void *dev_ops_priv)
+{
+}
+
+static int rawDevIoctl(void *dev_ops_priv, int fd, unsigned long cmd, void *arg)
+{
+	return ioctl(fd, cmd, arg);
+}
+
+static ssize_t rawDevRead(void *dev_ops_priv, int fd, void *buf, size_t len)
+{
+	return read(fd, buf, len);
+}
+
+static ssize_t rawDevWrite(void *dev_ops_priv, int fd, const void *buf,
+                         size_t len)
+{
+	return write(fd, buf, len);
+}
+
+static const struct libv4l_dev_ops rawDevOps = {
+	.init = rawDevInit,
+	.close = rawDevClose,
+	.ioctl = rawDevIoctl,
+	.read = rawDevRead,
+	.write = rawDevWrite,
+};
 
 static QAction *addSubMenuItem(QActionGroup *grp, QMenu *menu, const QString &text, int val)
 {
@@ -417,7 +451,10 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	statusBar()->clearMessage();
 	m_tabs->show();
 	m_tabs->setFocus();
-	m_convertData = v4lconvert_create(g_fd());
+	if (rawOpen)
+		m_convertData = v4lconvert_create_with_dev_ops(g_fd(), NULL, &rawDevOps);
+	else
+		m_convertData = v4lconvert_create(g_fd());
 	bool canStream = has_rw() || has_streaming();
 	bool isCapture = v4l_type_is_capture(g_type());
 	m_capStartAct->setEnabled(canStream);
