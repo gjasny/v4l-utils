@@ -407,15 +407,6 @@ int util_receive(struct node *node, unsigned la, unsigned timeout,
 std::string safename(const char *name);
 
 // CEC adapter tests
-int testCap(struct node *node);
-int testDQEvent(struct node *node);
-int testAdapPhysAddr(struct node *node);
-int testAdapLogAddrs(struct node *node);
-int testTransmit(struct node *node);
-int testReceive(struct node *node);
-int testNonBlocking(struct node *node);
-int testModes(struct node *node, struct node *node2);
-int testLostMsgs(struct node *node);
 void testAdapter(struct node &node, struct cec_log_addrs &laddrs,
 		 const char *device);
 

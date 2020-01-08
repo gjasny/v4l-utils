@@ -39,12 +39,12 @@ static int flush_pending_msgs(struct node *node)
 	return 0;
 }
 
-int testCap(struct node *node)
+static int testCap(struct node *node)
 {
 	struct cec_caps caps;
 
 	memset(&caps, 0xff, sizeof(caps));
-	// Must always be there
+	fail_on_test(doioctl(node, CEC_ADAP_G_CAPS, NULL) != EFAULT);
 	fail_on_test(doioctl(node, CEC_ADAP_G_CAPS, &caps));
 	fail_on_test(caps.available_log_addrs == 0 ||
 		     caps.available_log_addrs > CEC_MAX_LOG_ADDRS);
@@ -53,7 +53,28 @@ int testCap(struct node *node)
 	return 0;
 }
 
-int testDQEvent(struct node *node)
+static int testInvalidIoctls(struct node *node)
+{
+	const char type = 'a';
+	unsigned ioc = _IOC(_IOC_NONE, type, 0xff, 0);
+	unsigned char buf[0x4000] = {};
+
+	fail_on_test(doioctl(node, ioc, NULL) != ENOTTY);
+	ioc = _IOC(_IOC_NONE, type, 0, 0x3fff);
+	fail_on_test(doioctl(node, ioc, NULL) != ENOTTY);
+	ioc = _IOC(_IOC_READ, type, 0, 0x3fff);
+	fail_on_test(doioctl(node, ioc, buf) != ENOTTY);
+	fail_on_test(check_0(buf, sizeof(buf)));
+	ioc = _IOC(_IOC_WRITE, type, 0, 0x3fff);
+	fail_on_test(doioctl(node, ioc, buf) != ENOTTY);
+	fail_on_test(check_0(buf, sizeof(buf)));
+	ioc = _IOC(_IOC_READ | _IOC_WRITE, type, 0, 0x3fff);
+	fail_on_test(doioctl(node, ioc, buf) != ENOTTY);
+	fail_on_test(check_0(buf, sizeof(buf)));
+	return 0;
+}
+
+static int testDQEvent(struct node *node)
 {
 	struct cec_event ev;
 
@@ -69,7 +90,7 @@ int testDQEvent(struct node *node)
 	return 0;
 }
 
-int testAdapPhysAddr(struct node *node)
+static int testAdapPhysAddr(struct node *node)
 {
 	__u16 old_pa = 0xefff;
 	__u16 pa = 0x1000;
@@ -90,7 +111,7 @@ int testAdapPhysAddr(struct node *node)
 	return 0;
 }
 
-int testAdapLogAddrs(struct node *node)
+static int testAdapLogAddrs(struct node *node)
 {
 	static const __u8 la_types[] = {
 		CEC_LOG_ADDR_TYPE_TV,
@@ -244,7 +265,7 @@ int testAdapLogAddrs(struct node *node)
 	return 0;
 }
 
-int testTransmit(struct node *node)
+static int testTransmit(struct node *node)
 {
 	struct cec_msg msg = { };
 	unsigned i, la = node->log_addr[0];
@@ -483,7 +504,7 @@ int testTransmit(struct node *node)
 	return 0;
 }
 
-int testReceive(struct node *node)
+static int testReceive(struct node *node)
 {
 	unsigned la = node->log_addr[0], remote_la = 0;
 	struct cec_msg msg;
@@ -544,7 +565,7 @@ int testReceive(struct node *node)
 	return 0;
 }
 
-int testNonBlocking(struct node *node)
+static int testNonBlocking(struct node *node)
 {
 	unsigned la = node->log_addr[0], remote_la = 0, invalid_remote = 0xf;
 	struct cec_msg msg;
@@ -798,7 +819,7 @@ int testNonBlocking(struct node *node)
 	return 0;
 }
 
-int testModes(struct node *node, struct node *node2)
+static int testModes(struct node *node, struct node *node2)
 {
 	struct cec_msg msg;
 	__u8 me = node->log_addr[0];
@@ -997,7 +1018,7 @@ static void print_sfts(unsigned sft[12], const char *descr)
 		printf("\t\t%s: %s\n", descr, s.c_str());
 }
 
-int testLostMsgs(struct node *node)
+static int testLostMsgs(struct node *node)
 {
 	struct cec_msg msg;
 	struct cec_event ev;
@@ -1214,6 +1235,7 @@ void testAdapter(struct node &node, struct cec_log_addrs &laddrs,
 
 	printf("\nCEC API:\n");
 	printf("\tCEC_ADAP_G_CAPS: %s\n", ok(testCap(&node)));
+	printf("\tInvalid ioctls: %s\n", ok(testInvalidIoctls(&node)));
 	printf("\tCEC_DQEVENT: %s\n", ok(testDQEvent(&node)));
 	printf("\tCEC_ADAP_G/S_PHYS_ADDR: %s\n", ok(testAdapPhysAddr(&node)));
 	if (node.caps & CEC_CAP_PHYS_ADDR)
