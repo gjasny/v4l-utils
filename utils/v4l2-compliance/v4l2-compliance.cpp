@@ -613,6 +613,7 @@ static int testCap(struct node *node)
 
 	memset(&vcap, 0xff, sizeof(vcap));
 	// Must always be there
+	fail_on_test(doioctl(node, VIDIOC_QUERYCAP, NULL) != EFAULT);
 	fail_on_test(doioctl(node, VIDIOC_QUERYCAP, &vcap));
 	fail_on_test(check_ustring(vcap.driver, sizeof(vcap.driver)));
 	fail_on_test(check_ustring(vcap.card, sizeof(vcap.card)));
@@ -760,6 +761,26 @@ static int testPrio(struct node *node, struct node *node2)
 	// Changing it on the first node must work.
 	fail_on_test(doioctl(node, VIDIOC_S_PRIORITY, &prio));
 	fail_on_test(check_prio(node, node2, V4L2_PRIORITY_INTERACTIVE));
+	return 0;
+}
+
+static int testInvalidIoctls(struct node *node, char type)
+{
+	unsigned ioc = _IOC(_IOC_NONE, type, 0xff, 0);
+	unsigned char buf[0x4000] = {};
+
+	fail_on_test(doioctl(node, ioc, NULL) != ENOTTY);
+	ioc = _IOC(_IOC_NONE, type, 0, 0x3fff);
+	fail_on_test(doioctl(node, ioc, NULL) != ENOTTY);
+	ioc = _IOC(_IOC_READ, type, 0, 0x3fff);
+	fail_on_test(doioctl(node, ioc, buf) != ENOTTY);
+	fail_on_test(check_0(buf, sizeof(buf)));
+	ioc = _IOC(_IOC_WRITE, type, 0, 0x3fff);
+	fail_on_test(doioctl(node, ioc, buf) != ENOTTY);
+	fail_on_test(check_0(buf, sizeof(buf)));
+	ioc = _IOC(_IOC_READ | _IOC_WRITE, type, 0, 0x3fff);
+	fail_on_test(doioctl(node, ioc, buf) != ENOTTY);
+	fail_on_test(check_0(buf, sizeof(buf)));
 	return 0;
 }
 
@@ -1107,9 +1128,12 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 			       node.topology->num_links);
 		printf("\ttest MEDIA_IOC_ENUM_ENTITIES/LINKS: %s\n", ok(testMediaEnum(&node)));
 		printf("\ttest MEDIA_IOC_SETUP_LINK: %s\n", ok(testMediaSetupLink(&node)));
+		printf("\ttest invalid ioctls: %s\n", ok(testInvalidIoctls(&node, '|')));
 		printf("\n");
 		goto show_total;
 	}
+
+	printf("\ttest invalid ioctls: %s\n", ok(testInvalidIoctls(&node, 'V')));
 
 	/* Debug ioctls */
 

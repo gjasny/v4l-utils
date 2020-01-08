@@ -42,6 +42,7 @@ int testMediaDeviceInfo(struct node *node)
 	struct media_device_info mdinfo;
 
 	memset(&mdinfo, 0xff, sizeof(mdinfo));
+	fail_on_test(doioctl(node, MEDIA_IOC_DEVICE_INFO, NULL) != EFAULT);
 	fail_on_test(doioctl(node, MEDIA_IOC_DEVICE_INFO, &mdinfo));
 	fail_on_test(check_0(mdinfo.reserved, sizeof(mdinfo.reserved)));
 	fail_on_test(check_string(mdinfo.driver, sizeof(mdinfo.driver)));
