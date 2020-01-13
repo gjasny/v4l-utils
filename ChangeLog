@@ -1,3 +1,11 @@
+v4l-utils-1.16.8
+----------------
+
+Sean Young (2):
+      keytable: ensure we have enough memlock pages
+      ir-ctl: show user how scancodes should be presented
+
+
 v4l-utils-1.16.7
 ----------------
 
