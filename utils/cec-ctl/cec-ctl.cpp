@@ -1695,6 +1695,7 @@ int main(int argc, char **argv)
 	int ch;
 	int i;
 
+	srandom(time(NULL));
 	memset(phys_addrs, 0xff, sizeof(phys_addrs));
 
 	for (i = 0; long_options[i].name; i++) {

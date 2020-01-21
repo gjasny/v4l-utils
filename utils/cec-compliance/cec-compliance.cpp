@@ -1128,6 +1128,7 @@ int main(int argc, char **argv)
 	int i;
 	const char *env_media_apps_color = getenv("MEDIA_APPS_COLOR");
 
+	srandom(time(NULL));
 	if (!env_media_apps_color || !strcmp(env_media_apps_color, "auto"))
 		show_colors = isatty(STDOUT_FILENO);
 	else if (!strcmp(env_media_apps_color, "always"))
