@@ -101,7 +101,7 @@ with a possible inconsistent state.
 List all tests and the possible test results. This is used by the \fB\-\-expect\fR
 option.
 .TP
-\fB\-\-expect\fR \fI<test>\fR=\fI<result>\fR
+\fB\-e\fR, \fB\-\-expect\fR \fI<test>\fR=\fI<result>\fR
 Fail if the test gave a different result. The \fB\-\-list\-tests\fR option
 lists all the possible tests and what result values can be used.
 
