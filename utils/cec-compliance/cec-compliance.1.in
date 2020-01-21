@@ -102,7 +102,7 @@ List all tests and the possible test results. This is used by the \fB\-\-expect\
 option.
 .TP
 \fB\-e\fR, \fB\-\-expect\fR \fI<test>\fR=\fI<result>\fR
-\fB\-N\fR, \fB\-\-expect-with-no-warnings\fR \fI<test>\fR=\fI<result>\fR
+\fB\-n\fR, \fB\-\-expect-with-no-warnings\fR \fI<test>\fR=\fI<result>\fR
 Fail if the test gave a different result. The \fB\-\-list\-tests\fR option
 lists all the possible tests and what result values can be used.
 
@@ -139,7 +139,7 @@ Highlight OK/warn/fail/FAIL strings with colors. OK is marked green, warn is
 marked bold, and fail/FAIL are marked bright red if enabled. \fI<when>\fR can
 be \fIalways\fR, \fInever\fR, or \fIauto\fR (the default).
 .TP
-\fB\-n\fR, \fB\-\-no\-warnings\fR
+\fB\-N\fR, \fB\-\-no\-warnings\fR
 Turn off warning messages.
 .TP
 \fB\-r\fR, \fB\-\-remote\fR \fI<la>\fR
