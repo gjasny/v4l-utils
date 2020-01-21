@@ -197,14 +197,14 @@ struct remote_subtest {
 #define COLOR_RED(s) "\033[1;31m" s "\033[0m"
 #define COLOR_BOLD(s) "\033[1m" s "\033[0m"
 
-#define info(fmt, args...) 					\
-	do {							\
-		if (show_info)					\
-			printf("\t\tinfo: " fmt, ##args);	\
+#define info(fmt, args...) 						\
+	do {								\
+		if (show_info)						\
+			printf("\t\tinfo: " fmt, ##args);		\
 	} while (0)
 
-#define announce(fmt, args...) 					\
-	do {							\
+#define announce(fmt, args...) 						\
+	do {								\
 		printf("\t\t>>> " fmt "\n", ##args);			\
 	} while (0)
 
@@ -241,6 +241,12 @@ struct remote_subtest {
 		}							\
 	} while (0)
 
+#define warn_on_test(test) 						\
+	do {								\
+		if (test)						\
+			warn("%s\n", #test);				\
+	} while (0)
+
 #define fail(fmt, args...) 						\
 ({ 									\
 	printf("\t\t%s: %s(%d): " fmt, show_colors ?			\
@@ -250,19 +256,19 @@ struct remote_subtest {
 	FAIL;								\
 })
 
-#define fail_or_warn(node, fmt, args...)		\
-({							\
- 	if ((node)->in_standby)				\
-		warn(fmt, ##args);			\
-	else						\
-		fail(fmt, ##args);			\
-	(node)->in_standby ? 0 : FAIL;			\
+#define fail_or_warn(node, fmt, args...)				\
+({									\
+ 	if ((node)->in_standby)						\
+		warn(fmt, ##args);					\
+	else								\
+		fail(fmt, ##args);					\
+	(node)->in_standby ? 0 : FAIL;					\
 })
 
-#define fail_on_test(test) 				\
-	do {						\
-		if (test)				\
-			return fail("%s\n", #test);	\
+#define fail_on_test(test) 						\
+	do {								\
+		if (test)						\
+			return fail("%s\n", #test);			\
 	} while (0)
 
 #define fail_on_test_v2(version, test) fail_on_test(version >= CEC_OP_CEC_VERSION_2_0 && (test))
