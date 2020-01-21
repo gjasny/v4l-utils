@@ -437,7 +437,7 @@ int testProcessing(struct node *node, unsigned me);
 // CEC testing
 void collectTests(void);
 void listTests(void);
-int setExpectedResult(char *optarg);
+int setExpectedResult(char *optarg, bool no_warnings);
 void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 			     bool interactive);
 

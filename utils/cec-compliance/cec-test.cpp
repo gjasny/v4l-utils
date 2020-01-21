@@ -1492,6 +1492,7 @@ static struct remote_test tests[] = {
 static const unsigned num_tests = sizeof(tests) / sizeof(struct remote_test);
 
 static std::map<std::string, int> mapTests;
+static std::map<std::string, bool> mapTestsNoWarnings;
 
 void collectTests(void)
 {
@@ -1510,6 +1511,7 @@ void collectTests(void)
 			}
 			mapTestFuncs[name] = func;
 			mapTests[name] = DONT_CARE;
+			mapTestsNoWarnings[name] = false;
 		}
 	}
 }
@@ -1526,7 +1528,7 @@ void listTests(void)
 	}
 }
 
-int setExpectedResult(char *optarg)
+int setExpectedResult(char *optarg, bool no_warnings)
 {
 	char *equal = strchr(optarg, '=');
 
@@ -1537,6 +1539,7 @@ int setExpectedResult(char *optarg)
 	if (mapTests.find(name) == mapTests.end())
 		return 1;
 	mapTests[name] = strtoul(equal + 1, NULL, 0);
+	mapTestsNoWarnings[name] = no_warnings;
 	return 0;
 }
 
@@ -1581,7 +1584,9 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 			}
 			node->in_standby = tests[i].subtests[j].in_standby;
 			mode_set_initiator(node);
+			unsigned old_warnings = warnings;
 			ret = tests[i].subtests[j].test_fn(node, me, la, interactive);
+			bool has_warnings = old_warnings < warnings;
 			if (!(tests[i].subtests[j].la_mask & (1 << la)) && !ret)
 				ret = OK_UNEXPECTED;
 
@@ -1589,6 +1594,9 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 				if (ret != mapTests[safename(name)])
 					printf("\t    %s: %s (Expected %d, got %d)\n",
 					       name, ok(FAIL), mapTests[safename(name)], ret);
+				else if (has_warnings && mapTestsNoWarnings[safename(name)])
+					printf("\t    %s: %s (Expected no warnings, got %d)\n",
+					       name, ok(FAIL), warnings - old_warnings);
 				else if (ret == FAIL)
 					printf("\t    %s: %s\n", name, ok(OK_EXPECTED_FAIL));
 				else

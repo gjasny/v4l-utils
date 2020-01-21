@@ -44,6 +44,7 @@ enum Option {
 	OptInteractive = 'i',
 	OptListTests = 'l',
 	OptNoWarnings = 'n',
+	OptExpectWithNoWarnings = 'N',
 	OptRemote = 'r',
 	OptReplyThreshold = 'R',
 	OptSkipInfo = 's',
@@ -122,6 +123,7 @@ static struct option long_options[] = {
 	{"remote", optional_argument, 0, OptRemote},
 	{"list-tests", no_argument, 0, OptListTests},
 	{"expect", required_argument, 0, OptExpect},
+	{"expect-with-no-warnings", required_argument, 0, OptExpectWithNoWarnings},
 	{"timeout", required_argument, 0, OptTimeout},
 	{"trace", no_argument, 0, OptTrace},
 	{"verbose", no_argument, 0, OptVerbose},
@@ -221,6 +223,8 @@ static void usage(void)
 	       "  -l, --list-tests   List all tests.\n"
 	       "  -e, --expect <test>=<result>\n"
 	       "                     Fail if the test gave a different result.\n"
+	       "  -N, --expect-with-no-warnings <test>=<result>\n"
+	       "                     Fail if the test gave a different result or if the test generated warnings.\n"
 	       "  -h, --help         Display this help message\n"
 	       "  -C, --color <when> Highlight OK/warn/fail/FAIL strings with colors\n"
 	       "                     <when> can be set to always, never, or auto (the default)\n"
@@ -1223,7 +1227,8 @@ int main(int argc, char **argv)
 			exit_on_warn = true;
 			break;
 		case OptExpect:
-			if (setExpectedResult(optarg)) {
+		case OptExpectWithNoWarnings:
+			if (setExpectedResult(optarg, ch == OptExpectWithNoWarnings)) {
 				fprintf(stderr, "invalid -e argument %s\n", optarg);
 				usage();
 				return 1;
@@ -1430,6 +1435,19 @@ int main(int argc, char **argv)
 		cec_driver_info(caps, laddrs, node.phys_addr, conn_info);
 	}
 
+	if (options[OptListTests]) {
+		printf("\nAvailable Tests:\n\n");
+		listTests();
+		printf("\n");
+		printf("Possible test results:\n"
+		       "\t0 = OK                  Supported correctly by the device.\n"
+		       "\t1 = FAIL                Failed and was expected to be supported by this device.\n"
+		       "\t2 = OK (Presumed)       Presumably supported.  Manually check to confirm.\n"
+		       "\t3 = OK (Not Supported)  Not supported and not mandatory for the device.\n"
+		       "\t4 = OK (Refused)        Supported by the device, but was refused.\n"
+		       "\t5 = OK (Unexpected)     Supported correctly but is not expected to be supported for this device.\n");
+	}
+
 	bool missing_pa = node.phys_addr == CEC_PHYS_ADDR_INVALID && (node.caps & CEC_CAP_PHYS_ADDR);
 	bool missing_la = laddrs.num_log_addrs == 0 && (node.caps & CEC_CAP_LOG_ADDRS);
 
@@ -1453,19 +1471,6 @@ int main(int argc, char **argv)
 		       "        OK (Refused)          Supported by the device, but was refused.\n"
 		       "        OK (Expected Failure) Failed but this was expected (see -e option).\n"
 		       "        FAIL                  Failed and was expected to be supported by this device.\n\n");
-	}
-
-	if (options[OptListTests]) {
-		printf("\nAvailable Tests:\n\n");
-		listTests();
-		printf("\n");
-		printf("Possible test results:\n"
-		       "\t0 = OK                  Supported correctly by the device.\n"
-		       "\t1 = FAIL                Failed and was expected to be supported by this device.\n"
-		       "\t2 = OK (Presumed)       Presumably supported.  Manually check to confirm.\n"
-		       "\t3 = OK (Not Supported)  Not supported and not mandatory for the device.\n"
-		       "\t4 = OK (Refused)        Supported by the device, but was refused.\n"
-		       "\t5 = OK (Unexpected)     Supported correctly but is not expected to be supported for this device.\n\n");
 	}
 
 	node.has_cec20 = laddrs.cec_version >= CEC_OP_CEC_VERSION_2_0;

@@ -102,6 +102,7 @@ List all tests and the possible test results. This is used by the \fB\-\-expect\
 option.
 .TP
 \fB\-e\fR, \fB\-\-expect\fR \fI<test>\fR=\fI<result>\fR
+\fB\-N\fR, \fB\-\-expect-with-no-warnings\fR \fI<test>\fR=\fI<result>\fR
 Fail if the test gave a different result. The \fB\-\-list\-tests\fR option
 lists all the possible tests and what result values can be used.
 
@@ -111,6 +112,9 @@ supported, so an \fIOK\fR result instead of an \fIOK (Not Supported)\fR result i
 
 It can also be used to accept known failures. In that case the test will not
 fail, but return an \fIOK (Expected Failure)\fR result.
+
+The \fB\-\-expect-with-no-warnings\fR variant is more strict and will also
+check that the test produced no warnings.
 .TP
 \fB\-v\fR, \fB\-\-verbose\fR
 Turn on verbose reporting.
