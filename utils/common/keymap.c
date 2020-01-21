@@ -169,6 +169,11 @@ static error_t parse_plain_keymap(char *fname, struct keymap **keymap, bool verb
 	}
 	fclose(fin);
 
+	if (!map->protocol) {
+		fprintf(stderr, _("Missing protocol in %s\n"), fname);
+		return EINVAL;
+	}
+
 	*keymap = map;
 
 	return 0;
