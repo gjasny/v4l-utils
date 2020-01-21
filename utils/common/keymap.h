@@ -20,13 +20,13 @@ struct protocol_param {
 
 struct scancode_entry {
 	struct scancode_entry *next;
-	u_int32_t scancode;
+	u_int64_t scancode;
 	char *keycode;
 };
 
 struct raw_entry {
 	struct raw_entry *next;
-	u_int32_t scancode;
+	u_int64_t scancode;
 	u_int32_t raw_length;
 	char *keycode;
 	u_int32_t raw[1];

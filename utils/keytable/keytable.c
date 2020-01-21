@@ -76,7 +76,8 @@ struct input_keymap_entry_v2 {
 #endif
 
 struct keytable_entry {
-	u_int32_t scancode;
+	// 64 bit int which can printed with %llx
+	unsigned long long scancode;
 	u_int32_t keycode;
 	struct keytable_entry *next;
 };
@@ -400,7 +401,7 @@ static int add_keymap(struct keymap *map, const char *fname)
 			if (value == -1) {
 				value = strtol(se->keycode, &p, 0);
 				if (errno || *p) {
-					fprintf(stderr, _("%s: keycode `%s' not recognised, no mapping for scancode %d\n"), fname, se->keycode, se->scancode);
+					fprintf(stderr, _("%s: keycode `%s' not recognised, no mapping for scancode 0x04%llx\n"), fname, se->keycode, (unsigned long long)se->scancode);
 					continue;
 				}
 			}
@@ -589,7 +590,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 				return ENOMEM;
 			}
 
-			ke->scancode = strtoul(p, NULL, 0);
+			ke->scancode = strtoull(p, NULL, 0);
 			if (errno) {
 				free(ke);
 				argp_error(state, _("Invalid scancode: %s"), p);
@@ -616,7 +617,7 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 			ke->keycode = key;
 
 			if (debug)
-				fprintf(stderr, _("scancode 0x%04x=%u\n"),
+				fprintf(stderr, _("scancode 0x%04llx=%u\n"),
 					ke->scancode, ke->keycode);
 
 			ke->next = keytable;
@@ -722,21 +723,21 @@ static struct argp argp = {
 	.doc = doc,
 };
 
-static void prtcode(int *codes)
+static void prtcode(unsigned long long scancode, int keycode)
 {
 	struct parse_event *p;
 
 	for (p = key_events; p->name != NULL; p++) {
-		if (p->value == (unsigned)codes[1]) {
-			printf(_("scancode 0x%04x = %s (0x%02x)\n"), codes[0], p->name, codes[1]);
+		if (p->value == keycode) {
+			printf(_("scancode 0x%04llx = %s (0x%02x)\n"), scancode, p->name, keycode);
 			return;
 		}
 	}
 
-	if (isprint (codes[1]))
-		printf(_("scancode 0x%04x = '%c' (0x%02x)\n"), codes[0], codes[1], codes[1]);
+	if (isprint (keycode))
+		printf(_("scancode 0x%04llx = '%c' (0x%02x)\n"), scancode, keycode, keycode);
 	else
-		printf(_("scancode 0x%04x = 0x%02x\n"), codes[0], codes[1]);
+		printf(_("scancode 0x%04llx = 0x%02x\n"), scancode, keycode);
 }
 
 static void free_names(struct sysfs_names *names)
@@ -1399,17 +1400,34 @@ static int add_keys(int fd)
 	for (ke = keytable; ke; ke = ke->next) {
 		write_cnt++;
 		if (debug)
-			fprintf(stderr, "\t%04x=%04x\n",
+			fprintf(stderr, "\t%04llx=%04x\n",
 				ke->scancode, ke->keycode);
 
 		codes[0] = ke->scancode;
 		codes[1] = ke->keycode;
 
-		if (ioctl(fd, EVIOCSKEYCODE, codes)) {
-			fprintf(stderr,
-				_("Setting scancode 0x%04x with 0x%04x via "),
-				ke->scancode, ke->keycode);
-			perror("EVIOCSKEYCODE");
+		if (codes[0] != ke->scancode) {
+			// 64 bit scancode
+			struct input_keymap_entry_v2 entry = {
+				.keycode = ke->keycode,
+				.len = sizeof(ke->scancode)
+			};
+
+			memcpy(entry.scancode, &ke->scancode, sizeof(ke->scancode));
+
+			if (ioctl(fd, EVIOCSKEYCODE_V2, &entry)) {
+				fprintf(stderr,
+					_("Setting scancode 0x%04llx with 0x%04x via "),
+					ke->scancode, ke->keycode);
+				perror("EVIOCSKEYCODE");
+			}
+		} else {
+			if (ioctl(fd, EVIOCSKEYCODE, codes)) {
+				fprintf(stderr,
+					_("Setting scancode 0x%04llx with 0x%04x via "),
+					ke->scancode, ke->keycode);
+				perror("EVIOCSKEYCODE");
+			}
 		}
 	}
 
@@ -1596,7 +1614,7 @@ static void display_table_v1(struct rc_device *rc_dev, int fd)
 			if (ioctl(fd, EVIOCGKEYCODE, codes) == -1)
 				perror("EVIOCGKEYCODE");
 			else if (codes[1] != KEY_RESERVED)
-				prtcode(codes);
+				prtcode(codes[0], codes[1]);
 		}
 	}
 	display_proto(rc_dev);
@@ -1604,25 +1622,37 @@ static void display_table_v1(struct rc_device *rc_dev, int fd)
 
 static void display_table_v2(struct rc_device *rc_dev, int fd)
 {
+	struct input_keymap_entry_v2 entry = {};
+	unsigned long long scancode;
 	int i;
-	struct input_keymap_entry_v2 entry;
-	int codes[2];
 
-	memset(&entry, '\0', sizeof(entry));
 	i = 0;
 	do {
 		entry.flags = KEYMAP_BY_INDEX;
 		entry.index = i;
-		entry.len = sizeof(u_int32_t);
+		entry.len = sizeof(scancode);
 
 		if (ioctl(fd, EVIOCGKEYCODE_V2, &entry) == -1)
 			break;
 
-		/* FIXME: Extend it to support scancodes > 32 bits */
-		memcpy(&codes[0], entry.scancode, sizeof(codes[0]));
-		codes[1] = entry.keycode;
+		if (entry.len == sizeof(u_int32_t)) {
+			u_int32_t temp;
 
-		prtcode(codes);
+			memcpy(&temp, entry.scancode, sizeof(temp));
+
+			scancode = temp;
+		} else if (entry.len == sizeof(u_int64_t)) {
+			u_int64_t temp;
+
+			memcpy(&temp, entry.scancode, sizeof(temp));
+
+			scancode = temp;
+		} else {
+			printf("error: unknown scancode length %d\n", entry.len);
+			continue;
+		}
+
+		prtcode(scancode, entry.keycode);
 		i++;
 	} while (1);
 	display_proto(rc_dev);

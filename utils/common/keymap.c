@@ -162,7 +162,7 @@ static error_t parse_plain_keymap(char *fname, struct keymap **keymap, bool verb
 			return ENOMEM;
 		}
 
-		se->scancode = strtoul(scancode, NULL, 0);
+		se->scancode = strtoull(scancode, NULL, 0);
 		se->keycode = strdup(keycode);
 		se->next = map->scancode;
 		map->scancode = se;
@@ -447,7 +447,7 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 			return ENOMEM;
 		}
 
-		se->scancode = strtoul(scancode, NULL, 0);
+		se->scancode = strtoull(scancode, NULL, 0);
 		se->keycode = keycode;
 		*next = se;
 		next = &se->next;
