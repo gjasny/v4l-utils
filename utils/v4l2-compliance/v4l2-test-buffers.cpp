@@ -543,7 +543,7 @@ int testReqBufs(struct node *node)
 	bool dmabuf_valid;
 	int ret;
 	unsigned i, m;
-	
+
 	node->reopen();
 
 	cv4l_queue q(0, 0);
@@ -1118,7 +1118,7 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 	}
 	if (node->is_m2m)
 		printf("\t%s: Captured %d buffers\n", buftype2s(m2m_q.g_type()).c_str(), capture_count);
-	
+
 	return 0;
 }
 
@@ -1240,7 +1240,7 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 
 		cv4l_queue q(type, V4L2_MEMORY_MMAP);
 		cv4l_queue m2m_q(v4l_type_invert(type));
-	
+
 		if (testSetupVbi(node, type))
 			continue;
 
@@ -1707,7 +1707,7 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, struct node *node_m2
 			expbuf_type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		else if (expbuf_node->g_caps() & V4L2_CAP_VIDEO_OUTPUT_MPLANE)
 			expbuf_type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-		else 
+		else
 			expbuf_type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 
 		cv4l_queue q(type, V4L2_MEMORY_DMABUF);
@@ -1911,7 +1911,7 @@ int testRequests(struct node *node, bool test_streaming)
 		node->g_fmt(fmt, type);
 		node->s_fmt(fmt, type);
 	}
-	
+
 	if (!(node->valid_buftypes & (1 << type))) {
 		fail_on_test(node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS);
 		return ENOTTY;
@@ -2227,7 +2227,7 @@ int testBlockingWait(struct node *node)
 
 		cv4l_queue q(type, V4L2_MEMORY_MMAP);
 		cv4l_queue m2m_q(v4l_type_invert(type), V4L2_MEMORY_MMAP);
-	
+
 		if (testSetupVbi(node, type))
 			continue;
 
@@ -2337,7 +2337,7 @@ static int testStreaming(struct node *node, unsigned frame_count)
 
 		unsigned field = cur_fmt.g_first_field(std);
 		cv4l_buffer buf(q);
-	
+
 		if (is_output)
 			stream_for_fmt(cur_fmt.g_pixelformat());
 
@@ -2804,7 +2804,7 @@ void streamAllFormats(struct node *node, unsigned frame_count)
 						ss.max_width, ss.max_height,
 						frame_count);
 				restoreFormat(node);
-			}	
+			}
 			node->g_fmt(fmt);
 			if (fmt.g_width() != ss.min_width ||
 			    fmt.g_frame_height() != ss.min_height) {
@@ -2940,7 +2940,7 @@ void streamM2MAllFormats(struct node *node, unsigned frame_count)
 						   ss.max_width, ss.max_height,
 						   frame_count);
 				restoreFormat(node);
-			}	
+			}
 			streamM2MOutFormat(node, fmtdesc.pixelformat,
 					   fmt.g_width(), fmt.g_frame_height(),
 					   frame_count);

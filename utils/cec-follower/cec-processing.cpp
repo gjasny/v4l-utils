@@ -983,7 +983,7 @@ void testProcessing(struct node *node, bool wallclock)
 		__u64 ts_now = get_ts();
 		unsigned poll_la = ts_to_s(ts_now) % 16;
 
-		if (poll_la != me && 
+		if (poll_la != me &&
 		    poll_la != last_poll_la && poll_la < 15 && la_info[poll_la].ts &&
 		    ts_to_ms(ts_now - la_info[poll_la].ts) > POLL_PERIOD) {
 			struct cec_msg msg = {};

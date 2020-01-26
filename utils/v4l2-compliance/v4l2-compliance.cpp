@@ -920,7 +920,7 @@ static std::string make_devname(const char *device, const char *devname,
 		goto err;
 
 	result = mi_media_get_device(ifaces[i].devnode.major, ifaces[i].devnode.minor);
-	
+
 err:
 	delete [] ents;
 	delete [] links;
@@ -1046,7 +1046,7 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 			struct media_links_enum links_enum;
 
 			node.pads = new media_pad_desc[node.entity.pads];
-			node.links = new media_link_desc[node.entity.links];	
+			node.links = new media_link_desc[node.entity.links];
 			memset(&links_enum, 0, sizeof(links_enum));
 			links_enum.entity = ent_id;
 			links_enum.pads = node.pads;

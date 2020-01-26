@@ -537,7 +537,7 @@ static void print_buffer(FILE *f, struct v4l2_buffer &buf)
 			fprintf(f, "\t\tData Offset: %u\n", p->data_offset);
 		}
 	}
-			
+
 	fprintf(f, "\n");
 }
 
@@ -1407,7 +1407,7 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 		if (fd.qbuf(buf))
 			return QUEUE_ERROR;
 	}
-	
+
 	bool is_empty_frame = !buf.g_bytesused(0);
 	bool is_error_frame = buf.g_flags() & V4L2_BUF_FLAG_ERROR;
 
@@ -1766,7 +1766,7 @@ static void streaming_set_cap(cv4l_fd &fd, cv4l_fd &exp_fd)
 		}
 		break;
 	}
-	
+
 	subscribe_event(fd, V4L2_EVENT_EOS);
 	if (use_poll)
 		subscribe_event(fd, V4L2_EVENT_SOURCE_CHANGE);
@@ -2084,7 +2084,7 @@ static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 		if (q.reqbufs(&fd, reqbufs_count_out))
 			goto done;
 	}
-	
+
 	if (options[OptStreamOutDmaBuf]) {
 		if (exp_q.reqbufs(&exp_fd, reqbufs_count_out))
 			goto done;

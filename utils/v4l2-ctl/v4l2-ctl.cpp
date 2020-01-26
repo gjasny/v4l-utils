@@ -1090,7 +1090,7 @@ static const char *make_devname(const char *device, const char *devname,
 	sprintf(newdev, "/dev/char/%d:%d",
 		ifaces[i].devnode.major, ifaces[i].devnode.minor);
 	device = newdev;
-	
+
 err:
 	delete [] ents;
 	delete [] links;

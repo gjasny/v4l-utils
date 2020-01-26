@@ -199,7 +199,7 @@ static int checkTimings(struct node *node, bool has_timings, bool is_input)
 		fail_on_test(doioctl(node, VIDIOC_S_DV_TIMINGS, &enumtimings.timings));
 		fail_on_test(check_0(enumtimings.timings.bt.reserved,
 				     sizeof(enumtimings.timings.bt.reserved)));
-		
+
 		struct v4l2_dv_timings g_timings;
 		fail_on_test(doioctl(node, VIDIOC_G_DV_TIMINGS, &g_timings));
 		fail_on_test(g_timings.bt.width != enumtimings.timings.bt.width);

@@ -429,7 +429,7 @@ int testSimpleControls(struct node *node)
 			return fail("g_ctrl returned an error (%d)\n", ret);
 		else if (checkSimpleCtrl(ctrl, qctrl))
 			return fail("invalid control %08x\n", qctrl.id);
-		
+
 		// Try to set the current value (or the default value for write only controls)
 		ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
 		if (qctrl.flags & V4L2_CTRL_FLAG_READ_ONLY) {
@@ -492,7 +492,7 @@ int testSimpleControls(struct node *node)
 			for (i = qctrl.minimum; i <= max; i++) {
 				bool valid = qctrl.menu_mask & (1ULL << i);
 
-				ctrl.id = qctrl.id; 
+				ctrl.id = qctrl.id;
 				ctrl.value = i;
 				ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
 				if (valid && ret)
@@ -504,7 +504,7 @@ int testSimpleControls(struct node *node)
 			}
 		} else {
 			// at least min, max and default values should work
-			ctrl.id = qctrl.id; 
+			ctrl.id = qctrl.id;
 			ctrl.value = qctrl.minimum;
 			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
 			if (ret && ret != EIO && ret != EILSEQ)
@@ -664,7 +664,7 @@ int testExtendedControls(struct node *node)
 			if (checkExtendedCtrl(ctrl, qctrl))
 				return fail("invalid control %08x\n", qctrl.id);
 		}
-		
+
 		// Try the current value (or the default value for write only controls)
 		ret = doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls);
 		if (qctrl.flags & V4L2_CTRL_FLAG_READ_ONLY) {
@@ -675,7 +675,7 @@ int testExtendedControls(struct node *node)
 		} else if (ret) {
 			return fail("try_ext_ctrls returned an error (%d)\n", ret);
 		}
-		
+
 		// Try to set the current value (or the default value for write only controls)
 		ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
 		if (qctrl.flags & V4L2_CTRL_FLAG_READ_ONLY) {
@@ -693,7 +693,7 @@ int testExtendedControls(struct node *node)
 			}
 			if (ret)
 				return fail("s_ext_ctrls returned an error (%d)\n", ret);
-		
+
 			if (checkExtendedCtrl(ctrl, qctrl))
 				return fail("s_ext_ctrls returned invalid control contents (%08x)\n", qctrl.id);
 		}
@@ -922,7 +922,7 @@ int testJpegComp(struct node *node)
 		V4L2_JPEG_MARKER_DRI | V4L2_JPEG_MARKER_COM |
 		V4L2_JPEG_MARKER_APP;
 	int ret;
-	
+
 	memset(&jc, 0, sizeof(jc));
 	ret = doioctl(node, VIDIOC_G_JPEGCOMP, &jc);
 	if (ret != ENOTTY) {

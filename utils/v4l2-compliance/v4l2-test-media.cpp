@@ -76,7 +76,7 @@ static int checkDevice(__u32 major, __u32 minor, bool iface, __u32 id)
 	fail_on_test(snprintf(dev_path, sizeof(dev_path), "/sys/dev/char/%d:%d",
 			      major, minor) == -1);
 	DIR *dp = opendir(dev_path);
-	if (dp == NULL)	
+	if (dp == NULL)
 		return fail("couldn't find %s for %s %u\n",
 			    dev_path, iface ? "interface" : "entity", id);
 	closedir(dp);

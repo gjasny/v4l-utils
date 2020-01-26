@@ -228,7 +228,7 @@ int testTunerFreq(struct node *node)
 
 	for (t = 0; t < node->tuners; t++) {
 		struct v4l2_tuner tuner = { 0 };
-		
+
 		tuner.index = t;
 		ret = doioctl(node, VIDIOC_G_TUNER, &tuner);
 		if (ret)
@@ -317,7 +317,7 @@ int testTunerHwSeek(struct node *node)
 
 	for (t = 0; t < node->tuners; t++) {
 		struct v4l2_tuner tuner = { 0 };
-		
+
 		tuner.index = t;
 		ret = doioctl(node, VIDIOC_G_TUNER, &tuner);
 		if (ret)
@@ -674,7 +674,7 @@ int testModulatorFreq(struct node *node)
 
 	for (m = 0; m < node->modulators; m++) {
 		struct v4l2_modulator modulator;
-		
+
 		modulator.index = m;
 		memset(modulator.reserved, 0, sizeof(modulator.reserved));
 		ret = doioctl(node, VIDIOC_G_MODULATOR, &modulator);

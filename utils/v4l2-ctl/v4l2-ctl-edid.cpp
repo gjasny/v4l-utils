@@ -593,7 +593,7 @@ static void print_edid_mods(const struct v4l2_edid *e)
 
 		printf("\nHDMI Vendor-Specific Data Block\n");
 		if (v)
-			printf("  Max TMDS Clock:          %u MHz\n", v * 5); 
+			printf("  Max TMDS Clock:          %u MHz\n", v * 5);
 		printf("  Physical Address:        %x.%x.%x.%x\n",
 		       pa >> 12, (pa >> 8) & 0xf, (pa >> 4) & 0xf, pa & 0xf);
 		if (len >= 6) {
@@ -645,7 +645,7 @@ static void print_edid_mods(const struct v4l2_edid *e)
 
 		printf("\nHDMI Forum Vendor-Specific Data Block\n");
 		if (v)
-			printf("  Max TMDS Character Rate: %u MHz\n", v * 5); 
+			printf("  Max TMDS Character Rate: %u MHz\n", v * 5);
 		v = e->edid[loc + 1];
 		printf("  SCDC Present:            %s\n", (v & HF_VSDB_SCSD_PRESENT) ? "yes" : "no");
 	}

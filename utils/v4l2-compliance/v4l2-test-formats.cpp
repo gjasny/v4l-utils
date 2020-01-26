@@ -690,7 +690,7 @@ int testTryFormats(struct node *node)
 	int result = 0;
 	int type;
 	int ret;
-	
+
 	for (type = 0; type <= V4L2_BUF_TYPE_LAST; type++) {
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
@@ -1047,14 +1047,14 @@ int testSetFormats(struct node *node)
 	struct v4l2_format initial_fmts[V4L2_BUF_TYPE_LAST + 1];
 	int type;
 	int ret;
-	
+
 	for (type = 0; type <= V4L2_BUF_TYPE_LAST; type++) {
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
 
 		createInvalidFmt(fmt, clip, type);
 		doioctl(node, VIDIOC_G_FMT, &fmt);
-		
+
 		initial_fmts[type] = fmt;
 		createInvalidFmt(fmt_set, clip_set, type);
 		ret = doioctl(node, VIDIOC_S_FMT, &fmt_set);

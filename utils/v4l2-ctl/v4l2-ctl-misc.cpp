@@ -354,7 +354,7 @@ void misc_set(cv4l_fd &_fd)
 	if (options[OptSetJpegComp]) {
 		doioctl(fd, VIDIOC_S_JPEGCOMP, &jpegcomp);
 	}
-	
+
 	if (options[OptEncoderCmd])
 		doioctl(fd, VIDIOC_ENCODER_CMD, &enc_cmd);
 	if (options[OptTryEncoderCmd])

@@ -458,7 +458,7 @@ static int testTransmit(struct node *node)
 		time_t last_t = cur_t + 7;
 		unsigned max_cnt = 0;
 		unsigned cnt = 0;
-	
+
 		do {
 			t = time(NULL);
 			if (t != cur_t) {
@@ -482,7 +482,7 @@ static int testTransmit(struct node *node)
 		time_t last_t = cur_t + 7;
 		unsigned max_cnt = 0;
 		unsigned cnt = 0;
-	
+
 		do {
 			t = time(NULL);
 			if (t != cur_t) {

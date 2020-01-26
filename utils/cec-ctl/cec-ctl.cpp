@@ -683,7 +683,7 @@ static int showTopology(struct node *node)
 			break;
 
 		__u16 pa_mask = calc_mask(pa);
-	
+
 		while (last_pa_mask < pa_mask) {
 			last_pa_mask = (last_pa_mask >> 4) | 0xf000;
 			level++;
@@ -769,7 +769,7 @@ static void wait_for_msgs(struct node &node, __u32 monitor_time)
 	fd_set ex_fds;
 	int fd = node.fd;
 	time_t t;
-	
+
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 	t = time(NULL) + monitor_time;
 
@@ -816,7 +816,7 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 	int fd = node.fd;
 	FILE *fstore = NULL;
 	time_t t;
-	
+
 	if (options[OptMonitorAll])
 		monitor = CEC_MODE_MONITOR_ALL;
 	else if (options[OptMonitorPin] || options[OptStorePin])

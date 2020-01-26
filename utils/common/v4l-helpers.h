@@ -1738,7 +1738,7 @@ static inline void v4l_queue_buffer_update(const struct v4l_queue *q,
 					   struct v4l_buffer *buf, unsigned index)
 {
 	unsigned p;
-		
+
 	if (v4l_type_is_planar(q->type)) {
 		buf->buf.length = v4l_queue_g_num_planes(q);
 		buf->buf.m.planes = buf->planes;
