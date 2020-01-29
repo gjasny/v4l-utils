@@ -389,13 +389,6 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 		return EINVAL;
 	}
 
-	scancodes = toml_table_in(proot, "scancodes");
-	if (!scancodes) {
-		if (verbose)
-			fprintf(stderr, _("%s: no [protocols.scancodes] section\n"), fname);
-		return 0;
-	}
-
 	for (i = 0; (key = toml_key_in(proot, i)) != NULL; i++) {
 		int64_t value;
 
@@ -411,6 +404,13 @@ static error_t parse_toml_protocol(const char *fname, struct toml_table_t *proot
 			if (verbose)
 				fprintf(stderr, _("%s: protocol parameter %s=%ld\n"), fname, param->name, param->value);
 		}
+	}
+
+	scancodes = toml_table_in(proot, "scancodes");
+	if (!scancodes) {
+		if (verbose)
+			fprintf(stderr, _("%s: no [protocols.scancodes] section\n"), fname);
+		return 0;
 	}
 
 	struct scancode_entry **next = &map->scancode;
