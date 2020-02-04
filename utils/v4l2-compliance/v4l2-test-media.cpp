@@ -293,11 +293,15 @@ int testMediaTopology(struct node *node)
 			fail_on_test(v2_pads_set.find(link.source_id) == v2_pads_set.end());
 			fail_on_test(v2_pads_set.find(link.sink_id) == v2_pads_set.end());
 			fail_on_test(link.source_id == link.sink_id);
+			fail_on_test(!(v2_pad_map[link.source_id]->flags & MEDIA_PAD_FL_SOURCE));
+			fail_on_test(!(v2_pad_map[link.sink_id]->flags & MEDIA_PAD_FL_SINK));
 			num_data_links++;
 			if (show_info)
-				printf("\t\tLink: 0x%08x (%s -> %s, %s)\n", link.id,
+				printf("\t\tLink: 0x%08x (%s:%u -> %s:%u, %s)\n", link.id,
 				       v2_entity_map[v2_pad_map[link.source_id]->entity_id]->name,
+				       v2_pad_map[link.source_id]->index,
 				       v2_entity_map[v2_pad_map[link.sink_id]->entity_id]->name,
+				       v2_pad_map[link.sink_id]->index,
 				       mi_linkflags2s(link.flags).c_str());
 		}
 	}
