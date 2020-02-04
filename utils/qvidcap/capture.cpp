@@ -221,12 +221,11 @@ CaptureWin::CaptureWin(QScrollArea *sa, QWidget *parent) :
 	m_singleStepNext(false),
 	m_screenTextureCount(0),
 	m_program(0),
+	m_curSize(),
 	m_curIndex(-1),
 	m_nextIndex(-1),
 	m_scrollArea(sa)
 {
-	m_curSize[0] = 0;
-	m_curData[0] = 0;
 	m_canOverrideResolution = false;
 	m_pixelaspect.numerator = 1;
 	m_pixelaspect.denominator = 1;
