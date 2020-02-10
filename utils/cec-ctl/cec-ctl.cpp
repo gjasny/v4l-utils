@@ -315,11 +315,18 @@ static void usage(void)
 	       "                           <n> times (default 15), waiting for a state changes. If\n"
 	       "                           that fails it waits <secs> seconds (default 10) before\n"
 	       "                           retrying this.\n"
-	       "  --stress-test-power-cycle cnt=<count>[,max-sleep=<secs>]\n"
+	       "  --stress-test-power-cycle cnt=<count>[,max-sleep=<secs>][,seed=<seed>]\n"
+	       "                            [,sleep-before-on=<secs1>][,sleep-before-off=<secs2]\n"
 	       "                           Power cycle display <count> times. If 0, then never stop.\n"
 	       "                           If <secs> is non-zero (0 is the default), then sleep for\n"
 	       "                           a random number of seconds between 0 and <secs> before\n"
-	       "                           each Standby or Image View On message.\n"
+	       "                           each <Standby> or <Image View On> message.\n"
+	       "                           If <seed> is specified, then set the randomizer seed to\n"
+	       "                           that value instead of using the current time as seed.\n"
+	       "                           If <secs1> is specified, then sleep for <secs1> seconds\n"
+	       "                           before transmitting <Image View On>.\n"
+	       "                           If <secs2> is specified, then sleep for <secs2> seconds\n"
+	       "                           before transmitting <Standby>.\n"
 	       "\n"
 	       CEC_PARSE_USAGE
 	       "\n"
@@ -1388,7 +1395,9 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 }
 
 static void stress_test_power_cycle(struct node &node,
-				    unsigned cnt, unsigned max_sleep)
+				    unsigned cnt, unsigned max_sleep,
+				    bool has_seed, unsigned seed,
+				    double sleep_before_on, double sleep_before_off)
 {
 	struct cec_log_addrs laddrs = { };
 	struct cec_msg msg;
@@ -1403,11 +1412,19 @@ static void stress_test_power_cycle(struct node &node,
 	if (max_sleep)
 		mod_usleep = 1000000 * max_sleep + 1;
 
+	if (!has_seed)
+		seed = time(NULL);
+
+	if (mod_usleep)
+		printf("Randomizer seed: %u\n\n", seed);
+
 	unsigned from = init_power_cycle_test(node);
 
+	srandom(seed);
+
 	for (;;) {
-		unsigned usecs1 = mod_usleep ? random() % mod_usleep : 0;
-		unsigned usecs2 = mod_usleep ? random() % mod_usleep : 0;
+		unsigned usecs1 = mod_usleep ? random() % mod_usleep : sleep_before_on * 1000000;
+		unsigned usecs2 = mod_usleep ? random() % mod_usleep : sleep_before_off * 1000000;
 
 		iter++;
 
@@ -1417,7 +1434,7 @@ static void stress_test_power_cycle(struct node &node,
 		else
 			wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
 
-		if (mod_usleep)
+		if (usecs1)
 			printf("%s: Sleep %.2fs\n", ts2s(current_ts()).c_str(),
 			       usecs1 / 1000000.0);
 		fflush(stdout);
@@ -1471,7 +1488,7 @@ static void stress_test_power_cycle(struct node &node,
 		if (cnt && iter == cnt)
 			break;
 
-		if (mod_usleep)
+		if (usecs2)
 			printf("%s: Sleep %.2fs\n", ts2s(current_ts()).c_str(),
 			       usecs2 / 1000000.0);
 		fflush(stdout);
@@ -1702,6 +1719,10 @@ int main(int argc, char **argv)
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
 	unsigned int stress_test_pwr_cycle_cnt = 0;
 	unsigned int stress_test_pwr_cycle_max_sleep = 0;
+	bool stress_test_pwr_cycle_has_seed = false;
+	unsigned int stress_test_pwr_cycle_seed = 0;
+	double stress_test_pwr_cycle_sleep_before_on = 0;
+	double stress_test_pwr_cycle_sleep_before_off = 0;
 	unsigned int test_pwr_cycle_polls = 15;
 	unsigned int test_pwr_cycle_sleep = 10;
 	bool warn_if_unconfigured = false;
@@ -1720,7 +1741,6 @@ int main(int argc, char **argv)
 	int ch;
 	int i;
 
-	srandom(time(NULL));
 	memset(phys_addrs, 0xff, sizeof(phys_addrs));
 
 	for (i = 0; long_options[i].name; i++) {
@@ -2105,6 +2125,9 @@ int main(int argc, char **argv)
 			static const char *arg_names[] = {
 				"cnt",
 				"max-sleep",
+				"seed",
+				"sleep-before-on",
+				"sleep-before-off",
 				NULL
 			};
 			char *value, *subs = optarg;
@@ -2116,6 +2139,16 @@ int main(int argc, char **argv)
 					break;
 				case 1:
 					stress_test_pwr_cycle_max_sleep = strtoul(value, 0L, 0);
+					break;
+				case 2:
+					stress_test_pwr_cycle_has_seed = true;
+					stress_test_pwr_cycle_seed = strtoul(value, 0L, 0);
+					break;
+				case 3:
+					stress_test_pwr_cycle_sleep_before_on = strtod(value, NULL);
+					break;
+				case 4:
+					stress_test_pwr_cycle_sleep_before_off = strtod(value, NULL);
 					break;
 				default:
 					exit(1);
@@ -2480,7 +2513,11 @@ int main(int argc, char **argv)
 		test_power_cycle(node, test_pwr_cycle_polls, test_pwr_cycle_sleep);
 	if (options[OptStressTestPowerCycle])
 		stress_test_power_cycle(node, stress_test_pwr_cycle_cnt,
-					stress_test_pwr_cycle_max_sleep);
+					stress_test_pwr_cycle_max_sleep,
+					stress_test_pwr_cycle_has_seed,
+					stress_test_pwr_cycle_seed,
+					stress_test_pwr_cycle_sleep_before_on,
+					stress_test_pwr_cycle_sleep_before_off);
 
 skip_la:
 	if (options[OptPhysAddrFromEDIDPoll]) {

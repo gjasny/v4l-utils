@@ -175,6 +175,7 @@ Configure the CEC adapter as a CDC-only device.
 .TP
 \fB\-\-unregistered\fR
 Configure the CEC adapter as an unregistered device.
+.TP
 \fB\-\-feat\-record\-tv\-screen\fR
 Signal the Record TV Screen feature.
 .TP
@@ -260,11 +261,15 @@ This option tests the power cycle behavior of the display. It polls up to
 \fI<n>\fR times (default 15), waiting for a state changes. If that fails then it
 waits \fI<secs>\fR seconds (default 10) before retrying this.
 .TP
-\fB\-\-stress\-test\-power\-cycle\fR \fIcnt\fR=\fI<count>\fR[,\fImax-sleep\fR=\fI<secs>\fR]
+\fB\-\-stress\-test\-power\-cycle\fR \fIcnt\fR=\fI<count>\fR[,\fImax-sleep\fR=\fI<secs>\fR][,\fIseed\fR=\fI<seed>\fR][,\fIsleep-before-on\fR=\fI<secs1>\fR][,\fIsleep-before-off\fR=\fI<secs2>\fR]
 This option performs a stress test for a display: it power cycles the display \fI<count>\fR
 times using the CEC Standby and Image View On commands. If \fI<count>\fR is 0, then never stop.
 If \fI<secs>\fR is non-zero (0 is the default), then sleep for a random number of seconds
-between 0 and \fI<secs>\fR before each Standby or Image View On message.
+between 0 and \fI<secs>\fR before each <Standby> or <Image View On> message.
+If \fI<seed>\fR is specified, then set the randomizer seed to that value instead of
+using the current time as seed.
+If \fI<secs1>\fR is specified, then sleep for <secs1> seconds before transmitting <Image View On>.
+If \fI<secs2>\fR is specified, then sleep for <secs2> seconds before transmitting <Standby>.
 .TP
 \fB\-\-help\-all\fR
 Prints the help message for all options.
