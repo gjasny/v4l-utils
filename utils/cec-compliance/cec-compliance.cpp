@@ -756,40 +756,48 @@ int cec_named_ioctl(struct node *node, const char *name,
 	return retval == -1 ? e : (retval ? -1 : 0);
 }
 
+const char *result_name(int res, bool show_colors)
+{
+	switch (res) {
+	case OK_NOT_SUPPORTED:
+		return show_colors ? COLOR_GREEN("OK") " (Not Supported)" : "OK (Not Supported)";
+	case OK_PRESUMED:
+		return show_colors ? COLOR_GREEN("OK") " (Presumed)" : "OK (Presumed)";
+	case OK_REFUSED:
+		return show_colors ? COLOR_GREEN("OK") " (Refused)" : "OK (Refused)";
+	case OK_UNEXPECTED:
+		return show_colors ? COLOR_GREEN("OK") " (Unexpected)" : "OK (Unexpected)";
+	case OK_EXPECTED_FAIL:
+		return show_colors ? COLOR_GREEN("OK") " (Expected Failure)" : "OK (Expected Failure)";
+	case OK:
+		return show_colors ? COLOR_GREEN("OK") : "OK";
+	default:
+		return show_colors ? COLOR_RED("FAIL") : "FAIL";
+	}
+}
+
 const char *ok(int res)
 {
-	static char buf[100];
+	const char *res_name = result_name(res, show_colors);
 
-	if (res == OK_NOT_SUPPORTED) {
-		strcpy(buf, show_colors ? COLOR_GREEN("OK") " (Not Supported)" :
-		       "OK (Not Supported)");
-		res = 0;
-	} else if (res == OK_PRESUMED) {
-		strcpy(buf, show_colors ? COLOR_GREEN("OK") " (Presumed)" :
-		       "OK (Presumed)");
-		res = 0;
-	} else if (res == OK_REFUSED) {
-		strcpy(buf, show_colors ? COLOR_GREEN("OK") " (Refused)" :
-		       "OK (Refused)");
-		res = 0;
-	} else if (res == OK_UNEXPECTED) {
-		strcpy(buf, show_colors ? COLOR_GREEN("OK") " (Unexpected)" :
-		       "OK (Unexpected)");
-		res = 0;
-	} else if (res == OK_EXPECTED_FAIL) {
-		strcpy(buf, show_colors ? COLOR_GREEN("OK") " (Expected Failure)" :
-		       "OK (Expected Failure)");
-		res = 0;
-	} else
-		strcpy(buf, show_colors ? COLOR_GREEN("OK") : "OK");
-	tests_total++;
-	if (res) {
-		app_result = res;
-		strcpy(buf, show_colors ? COLOR_RED("FAIL") : "FAIL");
-	} else {
-		tests_ok++;
+	switch (res) {
+	case OK_NOT_SUPPORTED:
+	case OK_PRESUMED:
+	case OK_REFUSED:
+	case OK_UNEXPECTED:
+	case OK_EXPECTED_FAIL:
+	case OK:
+		res = OK;
+		break;
+	default:
+		break;
 	}
-	return buf;
+	tests_total++;
+	if (res)
+		app_result = res;
+	else
+		tests_ok++;
+	return res_name;
 }
 
 int check_0(const void *p, int len)

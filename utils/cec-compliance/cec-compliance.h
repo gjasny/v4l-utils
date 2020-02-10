@@ -178,6 +178,7 @@ struct remote_subtest {
 	bool for_cec20;
 };
 
+#define OK			0
 #define FAIL			1
 #define OK_PRESUMED		2
 #define OK_NOT_SUPPORTED	3
@@ -396,6 +397,7 @@ static inline unsigned get_ts_ms()
 	return timespec.tv_sec * 1000ull + timespec.tv_nsec / 1000000;
 }
 
+const char *result_name(int res, bool show_colors);
 const char *ok(int res);
 const char *power_status2s(__u8 power_status);
 std::string short_audio_desc2s(const struct short_audio_desc &sad);
