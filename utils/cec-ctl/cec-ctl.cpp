@@ -379,6 +379,14 @@ std::string ts2s(double ts)
 	return ts2s((__u64)(ts * 1000000000.0));
 }
 
+static __u64 current_ts()
+{
+	struct timespec ts;
+
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+}
+
 int cec_named_ioctl(int fd, const char *name,
 		    unsigned long int request, void *parm)
 {
@@ -1131,6 +1139,7 @@ static int init_power_cycle_test(struct node &node)
 		 * Some displays only accept Standby from the Active Source.
 		 * So make us the Active Source before sending Standby.
 		 */
+		printf("%s: ", ts2s(current_ts()).c_str());
 		printf("Transmit Active Source to TV: ");
 		fflush(stdout);
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
@@ -1140,7 +1149,9 @@ static int init_power_cycle_test(struct node &node)
 			printf("FAIL: %s\n", strerror(ret));
 			exit(1);
 		}
-		printf("OK\nTransmit Standby to TV: ");
+		printf("OK\n");
+		printf("%s: ", ts2s(current_ts()).c_str());
+		printf("Transmit Standby to TV: ");
 		fflush(stdout);
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_standby(&msg);
@@ -1165,10 +1176,13 @@ static int init_power_cycle_test(struct node &node)
 				exit(1);
 			}
 		}
-		printf(" OK\nTV is in Standby\n");
+		printf(" OK\n");
+		printf("%s: ", ts2s(current_ts()).c_str());
+		printf("TV is in Standby\n");
 		sleep(5);
 	}
 	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+	printf("%s: ", ts2s(current_ts()).c_str());
 	printf("Physical Address: %x.%x.%x.%x\n\n",
 	       cec_phys_addr_exp(pa));
 	return from;
@@ -1204,6 +1218,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 			wakeup_la = from = laddrs.log_addr[0];
 		else
 			wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
+		printf("%s: ", ts2s(current_ts()).c_str());
 		printf("Wake up TV using Image View On from LA %s: ", cec_la2s(wakeup_la));
 		fflush(stdout);
 		cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
@@ -1237,6 +1252,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 			failures++;
 			fflush(stdout);
 			sleep(retry_sleep);
+			printf("%s: ", ts2s(current_ts()).c_str());
 			printf("Wake up TV using Image View On from LA %s: ", cec_la2s(wakeup_la));
 			fflush(stdout);
 			cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
@@ -1275,7 +1291,8 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		}
 		from = laddrs.log_addr[0];
 		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
-		printf("\tPhysical Address: %x.%x.%x.%x LA: %s\n",
+		printf("%s: ", ts2s(current_ts()).c_str());
+		printf("Physical Address: %x.%x.%x.%x LA: %s\n",
 		       cec_phys_addr_exp(pa), cec_la2s(from));
 		if (pa == CEC_PHYS_ADDR_INVALID) {
 			printf("FAIL: invalid physical address\n");
@@ -1283,7 +1300,8 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		}
 		prev_pa = pa;
 		secs = i <= 10 ? i : 10 + 10 * (i - 10);
-		printf("\tSleep %u second%s\n", secs, secs == 1 ? "" : "s");
+		printf("%s: ", ts2s(current_ts()).c_str());
+		printf("Sleep %u second%s\n", secs, secs == 1 ? "" : "s");
 		sleep(secs);
 		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
 		if (pa != prev_pa) {
@@ -1292,7 +1310,8 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 			exit(1);
 		}
 
-		printf("\nPut TV in standby from LA %s: ", cec_la2s(from));
+		printf("\n%s: ", ts2s(current_ts()).c_str());
+		printf("Put TV in standby from LA %s: ", cec_la2s(from));
 		fflush(stdout);
 		/*
 		 * Some displays only accept Standby from the Active Source.
@@ -1328,6 +1347,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 					failures++;
 					fflush(stdout);
 					sleep(retry_sleep);
+					printf("%s: ", ts2s(current_ts()).c_str());
 					printf("Put TV in standby from LA %s: ", cec_la2s(from));
 					fflush(stdout);
 					first_standby = false;
@@ -1348,15 +1368,19 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		}
 		printf(" %d second%s\n", tries, tries == 1 ? "" : "s");
 		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
-		printf("\tPhysical Address: %x.%x.%x.%x\n",
+		printf("%s: ", ts2s(current_ts()).c_str());
+		printf("Physical Address: %x.%x.%x.%x\n",
 		       cec_phys_addr_exp(pa));
 		prev_pa = pa;
-		printf("\tSleep %d second%s\n", secs, secs == 1 ? "" : "s");
+		printf("%s: ", ts2s(current_ts()).c_str());
+		printf("Sleep %d second%s\n", secs, secs == 1 ? "" : "s");
 		sleep(secs);
 		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
-		if (pa != prev_pa)
-			printf("\tPhysical Address: %x.%x.%x.%x\n",
+		if (pa != prev_pa) {
+			printf("%s: ", ts2s(current_ts()).c_str());
+			printf("Physical Address: %x.%x.%x.%x\n",
 			       cec_phys_addr_exp(pa));
+		}
 		printf("\n");
 	}
 	if (failures)
@@ -1394,12 +1418,12 @@ static void stress_test_power_cycle(struct node &node,
 			wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
 
 		if (mod_usleep)
-			printf("Sleep %.2fs, then transmit Image View On ", usecs1 / 1000000.0);
-		else
-			printf("Transmit Image View On ");
-		printf("from LA %s (iteration %u): ", cec_la2s(wakeup_la), iter);
+			printf("%s: Sleep %.2fs\n", ts2s(current_ts()).c_str(),
+			       usecs1 / 1000000.0);
 		fflush(stdout);
 		usleep(usecs1);
+		printf("%s: ", ts2s(current_ts()).c_str());
+		printf("Transmit Image View On from LA %s (iteration %u): ", cec_la2s(wakeup_la), iter);
 
 		tries = 0;
 		cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
@@ -1436,7 +1460,8 @@ static void stress_test_power_cycle(struct node &node,
 		from = laddrs.log_addr[0];
 		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
 		prev_pa = pa;
-		printf("\tPhysical Address: %x.%x.%x.%x LA: %s\n",
+		printf("%s: ", ts2s(current_ts()).c_str());
+		printf("Physical Address: %x.%x.%x.%x LA: %s\n",
 		       cec_phys_addr_exp(pa), cec_la2s(from));
 		if (pa == CEC_PHYS_ADDR_INVALID) {
 			printf("FAIL: invalid physical address\n");
@@ -1447,12 +1472,12 @@ static void stress_test_power_cycle(struct node &node,
 			break;
 
 		if (mod_usleep)
-			printf("Sleep %.2fs, then transmit Standby ", usecs2 / 1000000.0);
-		else
-			printf("Transmit Standby ");
-		printf("(iteration %u): ", iter);
+			printf("%s: Sleep %.2fs\n", ts2s(current_ts()).c_str(),
+			       usecs2 / 1000000.0);
 		fflush(stdout);
 		usleep(usecs2);
+		printf("%s: ", ts2s(current_ts()).c_str());
+		printf("Transmit Standby (iteration %u): ", iter);
 		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
 		if (pa != prev_pa) {
 			printf("\tFAIL: PA is now %x.%x.%x.%x\n\n",
