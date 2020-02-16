@@ -419,6 +419,9 @@ sub output_arrays($$$$$)
     }
     printf OUT " %s[%i]", $name, $size;
   } else {
+    if ($decl) {
+      printf OUT "extern ";
+    }
     printf OUT "const %s%s[%i]", $type, $name, $size + 1;
   }
 
