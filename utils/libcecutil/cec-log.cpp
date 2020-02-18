@@ -47,11 +47,18 @@ static void log_arg(const struct cec_arg *arg, const char *arg_name, __u32 val)
 		/* fall through */
 	case CEC_ARG_TYPE_U8:
 		if (!strcmp(arg_name, "video-latency") ||
-		    !strcmp(arg_name, "audio-out-delay"))
+		    !strcmp(arg_name, "audio-out-delay")) {
 			printf("\t%s: %u (0x%02x, %d ms)\n", arg_name, val, val,
 			       (val - 1) * 2);
-		else
+		} else if (!strcmp(arg_name, "abort-msg")) {
+			if (cec_opcode2s(val))
+				printf("\t%s: %u (0x%02x, CEC_MSG_%s)\n",
+				       arg_name, val, val, cec_opcode2s(val));
+			else
+				printf("\t%s: %u (0x%02x)\n", arg_name, val, val);
+		} else {
 			printf("\t%s: %u (0x%02x)\n", arg_name, val, val);
+		}
 		return;
 	case CEC_ARG_TYPE_U16:
 		if (strstr(arg_name, "phys-addr"))
