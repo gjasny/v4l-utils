@@ -52,7 +52,7 @@ static void log_arg(const struct cec_arg *arg, const char *arg_name, __u32 val)
 			       (val - 1) * 2);
 		} else if (!strcmp(arg_name, "abort-msg")) {
 			if (cec_opcode2s(val))
-				printf("\t%s: %u (0x%02x, CEC_MSG_%s)\n",
+				printf("\t%s: %u (0x%02x, %s)\n",
 				       arg_name, val, val, cec_opcode2s(val));
 			else
 				printf("\t%s: %u (0x%02x)\n", arg_name, val, val);
@@ -247,7 +247,7 @@ static void log_htng_unknown_msg(const struct cec_msg *msg)
 	unsigned i;
 
 	cec_ops_vendor_command_with_id(msg, &vendor_id, &size, &bytes);
-	printf("CEC_MSG_VENDOR_COMMAND_WITH_ID (0x%02x):\n",
+	printf("VENDOR_COMMAND_WITH_ID (0x%02x):\n",
 	       CEC_MSG_VENDOR_COMMAND_WITH_ID);
 	log_arg(&arg_vendor_id, "vendor-id", vendor_id);
 	printf("\tvendor-specific-data:");
@@ -266,7 +266,7 @@ static void log_unknown_msg(const struct cec_msg *msg)
 
 	switch (msg->msg[1]) {
 	case CEC_MSG_VENDOR_COMMAND:
-		printf("CEC_MSG_VENDOR_COMMAND (0x%02x):\n",
+		printf("VENDOR_COMMAND (0x%02x):\n",
 		       CEC_MSG_VENDOR_COMMAND);
 		cec_ops_vendor_command(msg, &size, &bytes);
 		printf("\tvendor-specific-data:");
@@ -281,7 +281,7 @@ static void log_unknown_msg(const struct cec_msg *msg)
 			log_htng_msg(msg);
 			break;
 		default:
-			printf("CEC_MSG_VENDOR_COMMAND_WITH_ID (0x%02x):\n",
+			printf("VENDOR_COMMAND_WITH_ID (0x%02x):\n",
 			       CEC_MSG_VENDOR_COMMAND_WITH_ID);
 			log_arg(&arg_vendor_id, "vendor-id", vendor_id);
 			printf("\tvendor-specific-data:");
@@ -292,7 +292,7 @@ static void log_unknown_msg(const struct cec_msg *msg)
 		}
 		break;
 	case CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN:
-		printf("CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN (0x%02x):\n",
+		printf("VENDOR_REMOTE_BUTTON_DOWN (0x%02x):\n",
 		       CEC_MSG_VENDOR_REMOTE_BUTTON_DOWN);
 		cec_ops_vendor_remote_button_down(msg, &size, &bytes);
 		printf("\tvendor-specific-rc-code:");
@@ -303,7 +303,7 @@ static void log_unknown_msg(const struct cec_msg *msg)
 	case CEC_MSG_CDC_MESSAGE:
 		phys_addr = (msg->msg[2] << 8) | msg->msg[3];
 
-		printf("CEC_MSG_CDC_MESSAGE (0x%02x): 0x%02x:\n",
+		printf("CDC_MESSAGE (0x%02x): 0x%02x:\n",
 		       CEC_MSG_CDC_MESSAGE, msg->msg[4]);
 		log_arg(&arg_u16, "phys-addr", phys_addr);
 		printf("\tpayload:");
@@ -312,7 +312,7 @@ static void log_unknown_msg(const struct cec_msg *msg)
 		printf("\n");
 		break;
 	default:
-		printf("CEC_MSG (0x%02x)%s", msg->msg[1], msg->len > 2 ? ":\n\tpayload:" : "");
+		printf("UNKNOWN (0x%02x)%s", msg->msg[1], msg->len > 2 ? ":\n\tpayload:" : "");
 		for (i = 2; i < msg->len; i++)
 			printf(" 0x%02x", msg->msg[i]);
 		printf("\n");

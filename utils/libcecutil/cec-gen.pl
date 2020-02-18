@@ -88,7 +88,7 @@ sub process_func
 		}
 		if (@args == 0) {
 			$logswitch .= "\tcase $cec_msg:\n";
-			$logswitch .= "\t\tprintf(\"$cec_msg (0x%02x)\\n\", $cec_msg);\n";
+			$logswitch .= "\t\tprintf(\"$msg_name (0x%02x)\\n\", $cec_msg);\n";
 			$logswitch .= "\t\tbreak;\n\n";
 		} else {
 			$logswitch .= "\tcase $cec_msg: {\n";
@@ -132,7 +132,7 @@ sub process_func
 				}
 			}
 			$logswitch .= ");\n";
-			$logswitch .= "\t\tprintf(\"$cec_msg (0x%02x):\\n\", $cec_msg);\n";
+			$logswitch .= "\t\tprintf(\"$msg_name (0x%02x):\\n\", $cec_msg);\n";
 			if ($cdc_case) {
 				$logswitch .= "\t\tlog_arg(&arg_phys_addr, \"phys-addr\", phys_addr);\n";
 			}
@@ -475,7 +475,7 @@ print $fh <<'EOF';
 void cec_log_msg(const struct cec_msg *msg)
 {
 	if (msg->len == 1) {
-		printf("CEC_MSG_POLL\n");
+		printf("POLL\n");
 		goto status;
 	}
 
