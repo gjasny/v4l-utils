@@ -1464,8 +1464,6 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 
 static int setupUserPtr(struct node *node, cv4l_queue &q)
 {
-	fail_on_test(q.alloc_bufs(node));
-
 	for (unsigned i = 0; i < q.g_buffers(); i++) {
 		buffer buf(q);
 		int ret;
@@ -1540,6 +1538,7 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 		enum poll_mode pollmode)
 {
+	const __u32 filler = 0xdeadbeef;
 	bool can_stream = node->g_caps() & V4L2_CAP_STREAMING;
 	int type;
 	int ret;
@@ -1580,6 +1579,42 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 		if (v4l_type_is_output(type))
 			stream_for_fmt(cur_fmt.g_pixelformat());
 
+		__u32 *buffers[q.g_buffers()][q.g_num_planes()];
+
+		/*
+		 * The alignment malloc uses depends on the gcc version and
+		 * architecture. Applications compiled for 64-bit all use a
+		 * 16 byte alignment. Applications compiled for 32-bit will
+		 * use an 8 byte alignment if glibc was compiled with gcc
+		 * version 6 or older, and 16 bytes when compiled with a newer
+		 * gcc. This is due to the support for _float128 that gcc
+		 * added in version 7 and that required this alignment change.
+		 *
+		 * Bottom line, in order to test user pointers the assumption
+		 * has to be that the DMA can handle writing just 8 bytes to a
+		 * page, since that's the worst case scenario.
+		 */
+		for (unsigned i = 0; i < q.g_buffers(); i++) {
+			for (unsigned p = 0; p < q.g_num_planes(); p++) {
+				/* ensure that len is a multiple of 4 */
+				__u32 len = ((q.g_length(p) + 3) & ~0x3) + 4 * 4096;
+				__u32 *m = (__u32 *)malloc(len);
+
+				fail_on_test(!m);
+				fail_on_test((uintptr_t)m & 0x7);
+				for (__u32 *x = m; x < m + len / 4; x++)
+					*x = filler;
+				buffers[i][p] = m;
+				m = m + 2 * 4096 / 4;
+				/*
+				 * Put the start of the buffer at the last 8 bytes
+				 * of a page.
+				 */
+				m = (__u32 *)(((uintptr_t)m & ~0xfff) | 0xff8);
+				q.s_userptr(i, p, m);
+			}
+		}
+
 		fail_on_test(setupUserPtr(node, q));
 
 		if (node->codec_mask & STATEFUL_DECODER) {
@@ -1613,6 +1648,21 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 			m2m_q.munmap_bufs(node_m2m_cap);
 			fail_on_test(m2m_q.reqbufs(node_m2m_cap, 0));
 			fail_on_test(!capture_count);
+		}
+		for (unsigned i = 0; i < q.g_buffers(); i++) {
+			for (unsigned p = 0; p < q.g_num_planes(); p++) {
+				__u32 len = ((q.g_length(p) + 3) & ~0x3) + 4 * 4096;
+				__u32 *m = buffers[i][p];
+				__u32 *u = (__u32 *)q.g_userptr(i, p);
+
+				for (__u32 *x = m; x < u; x++)
+					fail_on_test(*x != filler);
+				fail_on_test(*u == filler);
+				for (__u32 *x = u + q.g_length(p); x < m + len / 4; x++)
+					fail_on_test(*x != filler);
+				free(m);
+				q.s_userptr(i, p, NULL);
+			}
 		}
 		stream_close();
 	}
