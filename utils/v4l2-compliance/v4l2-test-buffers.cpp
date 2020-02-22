@@ -52,6 +52,8 @@ static struct cv4l_fmt cur_fmt;
 static struct cv4l_fmt cur_m2m_fmt;
 static int stream_from_fd = -1;
 static bool stream_use_hdr;
+static unsigned max_bytesused[VIDEO_MAX_PLANES];
+static unsigned min_data_offset[VIDEO_MAX_PLANES];
 
 bool operator<(struct timeval const& n1, struct timeval const& n2)
 {
@@ -984,6 +986,13 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 				       field2s(buf.g_field()).c_str(), buf.g_bytesused(),
 				       bufferflags2s(buf.g_flags()).c_str(),
 				       (__u64)buf.g_timestamp().tv_sec,  (__u64)buf.g_timestamp().tv_usec);
+			for (unsigned p = 0; p < buf.g_num_planes(); p++) {
+				if (max_bytesused[p] < buf.g_bytesused(p))
+					max_bytesused[p] = buf.g_bytesused(p);
+				if (min_data_offset[p] > buf.g_data_offset(p))
+					min_data_offset[p] = buf.g_data_offset(p);
+			}
+
 			fail_on_test(buf.check(q, last_seq));
 			if (!show_info && !no_progress) {
 				printf("\r\t%s: Frame #%03d%s",
@@ -1614,6 +1623,9 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 				q.s_userptr(i, p, m);
 			}
 		}
+		// captureBufs() will update these values
+		memset(max_bytesused, 0, sizeof(max_bytesused));
+		memset(min_data_offset, 0xff, sizeof(min_data_offset));
 
 		fail_on_test(setupUserPtr(node, q));
 
@@ -1651,15 +1663,36 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 		}
 		for (unsigned i = 0; i < q.g_buffers(); i++) {
 			for (unsigned p = 0; p < q.g_num_planes(); p++) {
-				__u32 len = ((q.g_length(p) + 3) & ~0x3) + 4 * 4096;
+				__u32 len = ((q.g_length(p) + 3U) & ~3U) + 4 * 4096;
 				__u32 *m = buffers[i][p];
 				__u32 *u = (__u32 *)q.g_userptr(i, p);
 
 				for (__u32 *x = m; x < u; x++)
-					fail_on_test(*x != filler);
-				fail_on_test(*u == filler);
-				for (__u32 *x = u + q.g_length(p); x < m + len / 4; x++)
-					fail_on_test(*x != filler);
+					if (*x != filler)
+						fail("data at %ld bytes before start of the buffer was touched\n",
+						     (u - x) * 4);
+
+				unsigned data_offset = min_data_offset[p];
+				data_offset = (data_offset + 3U) & ~3U;
+				if (u[data_offset / 4] == filler)
+					fail("data at data_offset %u was untouched\n", data_offset);
+
+				unsigned used = max_bytesused[p];
+				// Should never happen
+				fail_on_test(!used);
+				used = (used + 3U) & ~3U;
+
+				for (__u32 *x = u + used / 4; x < u + len / 4; x++) {
+					if (*x == filler)
+						continue;
+					warn_once("data from max bytesused %u+%ld to length %u was touched in plane %u\n",
+						  used, (x - u) * 4 - used, len, p);
+					break;
+				}
+				for (__u32 *x = u + len / 4; x < m + len / 4; x++)
+					if (*x != filler)
+						fail("data at %ld bytes after the end of the buffer was touched\n",
+						     (x - (u + len / 4)) * 4);
 				free(m);
 				q.s_userptr(i, p, NULL);
 			}
