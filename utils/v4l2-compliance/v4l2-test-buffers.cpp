@@ -1663,7 +1663,8 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 		}
 		for (unsigned i = 0; i < q.g_buffers(); i++) {
 			for (unsigned p = 0; p < q.g_num_planes(); p++) {
-				__u32 len = ((q.g_length(p) + 3U) & ~3U) + 4 * 4096;
+				__u32 buflen = (q.g_length(p) + 3U) & ~3U;
+				__u32 memlen = buflen + 4 * 4096;
 				__u32 *m = buffers[i][p];
 				__u32 *u = (__u32 *)q.g_userptr(i, p);
 
@@ -1674,7 +1675,7 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 
 				unsigned data_offset = min_data_offset[p];
 				data_offset = (data_offset + 3U) & ~3U;
-				if (u[data_offset / 4] == filler)
+				if (!v4l_type_is_output(type) && u[data_offset / 4] == filler)
 					fail("data at data_offset %u was untouched\n", data_offset);
 
 				unsigned used = max_bytesused[p];
@@ -1682,17 +1683,17 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 				fail_on_test(!used);
 				used = (used + 3U) & ~3U;
 
-				for (__u32 *x = u + used / 4; x < u + len / 4; x++) {
+				for (__u32 *x = u + used / 4; x < u + buflen / 4; x++) {
 					if (*x == filler)
 						continue;
 					warn_once("data from max bytesused %u+%ld to length %u was touched in plane %u\n",
-						  used, (x - u) * 4 - used, len, p);
+						  used, (x - u) * 4 - used, buflen, p);
 					break;
 				}
-				for (__u32 *x = u + len / 4; x < m + len / 4; x++)
+				for (__u32 *x = u + buflen / 4; x < m + memlen / 4; x++)
 					if (*x != filler)
 						fail("data at %ld bytes after the end of the buffer was touched\n",
-						     (x - (u + len / 4)) * 4);
+						     (x - (u + buflen / 4)) * 4);
 				free(m);
 				q.s_userptr(i, p, NULL);
 			}
