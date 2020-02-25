@@ -749,6 +749,8 @@ int testExtendedControls(struct node *node)
 			multiple_classes = true;
 		total_vec.push_back(ctrl);
 	}
+	if (total_vec.empty())
+		return 0;
 
 	ctrls.count = total_vec.size();
 	ctrls.controls = &total_vec[0];
