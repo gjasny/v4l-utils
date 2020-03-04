@@ -160,25 +160,26 @@ int system_info_give_features(struct node *node, unsigned me, unsigned la, bool 
 	const __u8 *rc_profile, *dev_features;
 
 	cec_ops_report_features(&msg, &cec_version, &all_device_types, &rc_profile, &dev_features);
-	fail_on_test(cec_version != node->remote[la].cec_version);
 	fail_on_test(rc_profile == NULL || dev_features == NULL);
 	info("All Device Types: \t\t%s\n", cec_all_dev_types2s(all_device_types).c_str());
 	info("RC Profile: \t%s", cec_rc_src_prof2s(*rc_profile, "").c_str());
 	info("Device Features: \t%s", cec_dev_feat2s(*dev_features, "").c_str());
 
 	if (!(cec_has_playback(1 << la) || cec_has_record(1 << la) || cec_has_tuner(1 << la)) &&
-		node->remote[la].has_aud_rate) {
+	    (*dev_features & CEC_OP_FEAT_DEV_HAS_SET_AUDIO_RATE)) {
 		return fail("Only Playback, Recording or Tuner devices shall set the Set Audio Rate bit\n");
 	}
-	if (!(cec_has_playback(1 << la) || cec_has_record(1 << la)) && node->remote[la].has_deck_ctl)
+	if (!(cec_has_playback(1 << la) || cec_has_record(1 << la)) &&
+	    (*dev_features & CEC_OP_FEAT_DEV_HAS_DECK_CONTROL))
 		return fail("Only Playback and Recording devices shall set the Supports Deck Control bit\n");
 	if (!cec_has_tv(1 << la) && node->remote[la].has_rec_tv)
 		return fail("Only TVs shall set the Record TV Screen bit\n");
-	if (cec_has_playback(1 << la) && node->remote[la].sink_has_arc_tx)
+	if (cec_has_playback(1 << la) && (*dev_features & CEC_OP_FEAT_DEV_SINK_HAS_ARC_TX))
 		return fail("A Playback device cannot set the Sink Supports ARC Tx bit\n");
-	if (cec_has_tv(1 << la) && node->remote[la].source_has_arc_rx)
+	if (cec_has_tv(1 << la) && (*dev_features & CEC_OP_FEAT_DEV_SOURCE_HAS_ARC_RX))
 		return fail("A TV cannot set the Source Supports ARC Rx bit\n");
 
+	fail_on_test(cec_version != node->remote[la].cec_version);
 	fail_on_test(node->remote[la].rc_profile != *rc_profile);
 	fail_on_test(node->remote[la].dev_features != *dev_features);
 	fail_on_test(node->remote[la].all_device_types != all_device_types);
