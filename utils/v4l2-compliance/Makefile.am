@@ -2,8 +2,10 @@ bin_PROGRAMS = v4l2-compliance
 man_MANS = v4l2-compliance.1
 DEFS :=
 
-if WITH_V4L2_COMPLIANCE_32 && HAVE_M32
+if HAVE_M32
+if WITH_V4L2_COMPLIANCE_32
 bin_PROGRAMS += v4l2-compliance-32
+endif
 endif
 
 v4l2_compliance_SOURCES = v4l2-compliance.cpp v4l2-compliance.h \

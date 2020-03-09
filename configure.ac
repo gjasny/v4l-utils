@@ -347,13 +347,14 @@ CFLAGS="-m32"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[
   return 0;
 ]])], [
-   AC_DEFINE([HAVE_M32], [1], [gcc supports -m32])
    AC_MSG_RESULT([yes])
+   have_m32=yes
 ], [
-   AC_DEFINE([HAVE_M32], [0], [gcc does not support -m32])
    AC_MSG_RESULT([no])
+   have_m32=no
 ])
 CFLAGS=$safe_CFLAGS
+AM_CONDITIONAL([HAVE_M32], [test x$have_m32 = xyes])
 
 # directories
 

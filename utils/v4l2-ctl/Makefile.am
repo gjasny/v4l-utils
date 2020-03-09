@@ -2,8 +2,10 @@ bin_PROGRAMS = v4l2-ctl
 man_MANS = v4l2-ctl.1
 DEFS :=
 
-if WITH_V4L2_CTL_32 && HAVE_M32
+if HAVE_M32
+if WITH_V4L2_COMPLIANCE_32
 bin_PROGRAMS += v4l2-ctl-32
+endif
 endif
 
 v4l2_ctl_SOURCES = v4l2-ctl.cpp v4l2-ctl.h v4l2-ctl-common.cpp v4l2-ctl-tuner.cpp \
