@@ -906,6 +906,8 @@ struct v4l2_jpegcompression {
 /*
  *	M E M O R Y - M A P P I N G   B U F F E R S
  */
+
+
 struct v4l2_requestbuffers {
 	__u32			count;
 	__u32			type;		/* enum v4l2_buf_type */
