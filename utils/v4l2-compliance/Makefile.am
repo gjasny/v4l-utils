@@ -2,6 +2,10 @@ bin_PROGRAMS = v4l2-compliance
 man_MANS = v4l2-compliance.1
 DEFS :=
 
+if WITH_V4L2_COMPLIANCE_32 && HAVE_M32
+bin_PROGRAMS += v4l2-compliance-32
+endif
+
 v4l2_compliance_SOURCES = v4l2-compliance.cpp v4l2-compliance.h \
 	v4l2-test-debug.cpp v4l2-test-input-output.cpp \
 	v4l2-test-controls.cpp v4l2-test-io-config.cpp v4l2-test-formats.cpp v4l2-test-buffers.cpp \
@@ -27,6 +31,9 @@ version.h:
 	else \
 		touch $@ ; \
 	fi
+
+v4l2-compliance-32$(EXEEXT):
+	g++ -o $@ -static -m32 -DNO_LIBV4L2 -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/utils/common $(top_srcdir)/utils/v4l2-compliance/*.cpp
 
 clean-local:
 	-rm -vf version.h

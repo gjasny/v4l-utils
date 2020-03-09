@@ -340,6 +340,21 @@ AM_CONDITIONAL([HAVE_LINUX_I2C_DEV], [test x$linux_i2c_dev = xyes])
 
 AM_ICONV
 
+# does this compiler support -m32 ?
+AC_MSG_CHECKING([if gcc accepts -m32])
+safe_CFLAGS=$CFLAGS
+CFLAGS="-m32"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[
+  return 0;
+]])], [
+   AC_DEFINE([HAVE_M32], [1], [gcc supports -m32])
+   AC_MSG_RESULT([yes])
+], [
+   AC_DEFINE([HAVE_M32], [0], [gcc does not support -m32])
+   AC_MSG_RESULT([no])
+])
+CFLAGS=$safe_CFLAGS
+
 # directories
 
 AC_ARG_WITH(libv4l1subdir,
@@ -444,6 +459,14 @@ AC_ARG_ENABLE(v4l2-compliance-libv4l,
    esac]
 )
 
+AC_ARG_ENABLE(v4l2-compliance-32,
+  AS_HELP_STRING([--enable-v4l2-compliance-32], [enable v4l2-compliance-32 compilation (for debugging purposes only)]),
+  [case "${enableval}" in
+     yes | no ) ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --enable-v4l2-compliance-32) ;;
+   esac]
+)
+
 AC_ARG_ENABLE(v4l2-ctl-libv4l,
   AS_HELP_STRING([--disable-v4l2-ctl-libv4l], [disable use of libv4l in v4l2-ctl]),
   [case "${enableval}" in
@@ -460,11 +483,19 @@ AC_ARG_ENABLE(v4l2-ctl-stream-to,
    esac]
 )
 
+AC_ARG_ENABLE(v4l2-ctl-32,
+  AS_HELP_STRING([--enable-v4l2-ctl-32], [enable v4l2-ctl-32 compilation (for debugging purposes only)]),
+  [case "${enableval}" in
+     yes | no ) ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --enable-v4l2-ctl-32) ;;
+   esac]
+)
+
 AC_ARG_ENABLE(qv4l2,
   AS_HELP_STRING([--disable-qv4l2], [disable qv4l2 compilation]),
   [case "${enableval}" in
      yes | no ) ;;
-     *) AC_MSG_ERROR(bad value ${enableval} for --enable-qv4l2) ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --disable-qv4l2) ;;
    esac]
 )
 
@@ -472,7 +503,7 @@ AC_ARG_ENABLE(qvidcap,
   AS_HELP_STRING([--disable-qvidcap], [disable qvidcap compilation]),
   [case "${enableval}" in
      yes | no ) ;;
-     *) AC_MSG_ERROR(bad value ${enableval} for --enable-qvidcap) ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --disable-qvidcap) ;;
    esac]
 )
 
@@ -513,8 +544,10 @@ AM_CONDITIONAL([WITH_QTGL],	    [test x${qt_desktop_opengl} = xyes])
 AM_CONDITIONAL([WITH_GCONV],        [test x$enable_gconv = xyes -a x$enable_shared == xyes -a x$with_gconvdir != x -a -f $with_gconvdir/gconv-modules])
 AM_CONDITIONAL([WITH_V4L2_CTL_LIBV4L], [test x${enable_v4l2_ctl_libv4l} != xno])
 AM_CONDITIONAL([WITH_V4L2_CTL_STREAM_TO], [test x${enable_v4l2_ctl_stream_to} != xno])
+AM_CONDITIONAL([WITH_V4L2_CTL_32], [test x${enable_v4l2_ctl_32} == xyes])
 AM_CONDITIONAL([WITH_V4L2_COMPLIANCE], [test x$ac_cv_func_fork = xyes])
 AM_CONDITIONAL([WITH_V4L2_COMPLIANCE_LIBV4L], [test x$ac_cv_func_fork = xyes -a x${enable_v4l2_compliance_libv4l} != xno])
+AM_CONDITIONAL([WITH_V4L2_COMPLIANCE_32], [test x$ac_cv_func_fork = xyes -a x${enable_v4l2_compliance_32} == xyes])
 AM_CONDITIONAL([WITH_BPF],          [test x$enable_bpf != xno -a x$libelf_pkgconfig = xyes -a x$CLANG = xclang])
 
 # append -static to libtool compile and link command to enforce static libs
@@ -551,8 +584,10 @@ AM_COND_IF([WITH_V4L_PLUGINS], [USE_V4L_PLUGINS="yes"
 AM_COND_IF([WITH_V4L_WRAPPERS], [USE_V4L_WRAPPERS="yes"], [USE_V4L_WRAPPERS="no"])
 AM_COND_IF([WITH_GCONV], [USE_GCONV="yes"], [USE_GCONV="no"])
 AM_COND_IF([WITH_V4L2_CTL_LIBV4L], [USE_V4L2_CTL_LIBV4L="yes"], [USE_V4L2_CTL_LIBV4L="no"])
+AM_COND_IF([WITH_V4L2_CTL_32], [USE_V4L2_CTL_32="yes"], [USE_V4L2_CTL_32="no"])
 AM_COND_IF([WITH_V4L2_COMPLIANCE], [USE_V4L2_COMPLIANCE="yes"], [USE_V4L2_COMPLIANCE="no"])
 AM_COND_IF([WITH_V4L2_COMPLIANCE_LIBV4L], [USE_V4L2_COMPLIANCE_LIBV4L="yes"], [USE_V4L2_COMPLIANCE_LIBV4L="no"])
+AM_COND_IF([WITH_V4L2_COMPLIANCE_32], [USE_V4L2_COMPLIANCE_32="yes"], [USE_V4L2_COMPLIANCE_32="no"])
 AM_COND_IF([WITH_BPF],         [USE_BPF="yes"
                                 AC_DEFINE([HAVE_BPF], [1], [BPF IR decoder support enabled])],
 				[USE_BPF="no"])
@@ -599,7 +634,9 @@ compile time options summary
     qv4l2                      : $USE_QV4L2
     qvidcap                    : $USE_QVIDCAP
     v4l2-ctl uses libv4l       : $USE_V4L2_CTL_LIBV4L
+    v4l2-ctl-32                : $USE_V4L2_CTL_32
     v4l2-compliance            : $USE_V4L2_COMPLIANCE
     v4l2-compliance uses libv4l: $USE_V4L2_COMPLIANCE_LIBV4L
+    v4l2-compliance-32         : $USE_V4L2_COMPLIANCE_32
     BPF IR Decoders:           : $USE_BPF
 EOF

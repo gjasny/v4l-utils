@@ -2,6 +2,10 @@ bin_PROGRAMS = v4l2-ctl
 man_MANS = v4l2-ctl.1
 DEFS :=
 
+if WITH_V4L2_CTL_32 && HAVE_M32
+bin_PROGRAMS += v4l2-ctl-32
+endif
+
 v4l2_ctl_SOURCES = v4l2-ctl.cpp v4l2-ctl.h v4l2-ctl-common.cpp v4l2-ctl-tuner.cpp \
 	v4l2-ctl-io.cpp v4l2-ctl-stds.cpp v4l2-ctl-vidcap.cpp v4l2-ctl-vidout.cpp \
 	v4l2-ctl-overlay.cpp v4l2-ctl-vbi.cpp v4l2-ctl-selection.cpp v4l2-ctl-misc.cpp \
@@ -10,7 +14,7 @@ v4l2_ctl_SOURCES = v4l2-ctl.cpp v4l2-ctl.h v4l2-ctl-common.cpp v4l2-ctl-tuner.cp
 	media-info.cpp v4l2-info.cpp codec-fwht.c codec-v4l2-fwht.c
 v4l2_ctl_CPPFLAGS = -I$(top_srcdir)/utils/common
 
-media-bus-format-names.h: ../../include/linux/media-bus-format.h
+media-bus-format-names.h: $(top_srcdir)/include/linux/media-bus-format.h
 	sed -e '/#define MEDIA_BUS_FMT/ ! d; s/.*FMT_//; /FIXED/ d; s/\t.*//; s/.*/{ \"&\", MEDIA_BUS_FMT_& },/;' \
 	< $< > $@
 
@@ -26,5 +30,11 @@ endif
 if !WITH_V4L2_CTL_STREAM_TO
 DEFS += -DNO_STREAM_TO
 endif
+
+v4l2-ctl-32$(EXEEXT): media-bus-format-names.h
+	cat $(top_srcdir)/utils/v4l2-ctl/$(filter %.c,$(v4l2_ctl_SOURCES)) >$@.c
+	gcc -static -m32 -DNO_LIBV4L2 -c -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/utils/common $@.c
+	g++ -static -m32 -DNO_LIBV4L2 -o $@ -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/utils/common $(top_srcdir)/utils/v4l2-ctl/$(filter %.cpp,$(v4l2_ctl_SOURCES)) $@.o
+	rm -f $@.c $@.o
 
 EXTRA_DIST = Android.mk v4l2-ctl.1
