@@ -33,10 +33,10 @@ if !WITH_V4L2_CTL_STREAM_TO
 DEFS += -DNO_STREAM_TO
 endif
 
-v4l2-ctl-32$(EXEEXT): media-bus-format-names.h
-	cat $(top_srcdir)/utils/v4l2-ctl/$(filter %.c,$(v4l2_ctl_SOURCES)) >$@.c
-	gcc -static -m32 -DNO_LIBV4L2 -c -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/utils/common $@.c
-	g++ -static -m32 -DNO_LIBV4L2 -o $@ -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/utils/common $(top_srcdir)/utils/v4l2-ctl/$(filter %.cpp,$(v4l2_ctl_SOURCES)) $@.o
+v4l2-ctl-32$(EXEEXT): $(addprefix $(top_srcdir)/utils/v4l2-ctl/,$(v4l2_ctl_SOURCES)) media-bus-format-names.h
+	cat $(addprefix $(top_srcdir)/utils/v4l2-ctl/,$(filter %.c,$(v4l2_ctl_SOURCES))) >$@.c
+	$(COMPILE) -static -m32 -DNO_LIBV4L2 -c -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/utils/common $@.c
+	$(CXXCOMPILE) -static -m32 -DNO_LIBV4L2 -o $@ -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/utils/common $(addprefix $(top_srcdir)/utils/v4l2-ctl/,$(filter %.cpp,$(v4l2_ctl_SOURCES))) $@.o
 	rm -f $@.c $@.o
 
 EXTRA_DIST = Android.mk v4l2-ctl.1
