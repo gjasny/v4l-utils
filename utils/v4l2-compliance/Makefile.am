@@ -35,7 +35,7 @@ version.h:
 	fi
 
 v4l2-compliance-32$(EXEEXT): $(addprefix $(top_srcdir)/utils/v4l2-compliance/,$(v4l2_compliance_SOURCES))
-	$(CXXCOMPILE) -o $@ -static -m32 -DNO_LIBV4L2 -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/utils/common $(addprefix $(top_srcdir)/utils/v4l2-ctl/,$(filter %.cpp,$(v4l2_compliance_SOURCES)))
+	$(CXXCOMPILE) -o $@ -static -m32 -DNO_LIBV4L2 -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/utils/common $(addprefix $(top_srcdir)/utils/v4l2-compliance/,$(filter %.cpp,$(v4l2_compliance_SOURCES)))
 
 clean-local:
 	-rm -vf version.h
