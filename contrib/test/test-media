@@ -17,6 +17,8 @@ unbind_time=1
 reunbind_time=9
 rmmod_time=1
 kobj_rel=0
+v4l2_ctl=v4l2-ctl
+v4l2_compliance=v4l2-compliance
 
 if [ -f /proc/config.gz ]; then
 	if cat /proc/config.gz | gunzip |grep -q CONFIG_DEBUG_KOBJECT_RELEASE=y ; then
@@ -47,6 +49,7 @@ if [ -z "$1" ]; then
 	echo "-unload: unload any media modules before testing"
 	echo "-kmemleak: enable memory leak scan"
 	echo "-dmesg: run dmesg at the end"
+	echo "-32: use v4l2-ctl-32 and v4l2-compliance-32 to test the 32 bit compat layer"
 	echo
 	echo Test Targets:
 	echo "vivid: test the vivid driver"
@@ -77,6 +80,18 @@ while [ ! -z "$1" ]; do
 			kmemleak=1
 		else
 			echo /sys/kernel/debug/kmemleak not found, disable memleak testing
+		fi
+		;;
+	-32)
+		v4l2_ctl=v4l2-ctl-32
+		v4l2_compliance=v4l2-compliance-32
+		if ! which $v4l2_ctl >/dev/null ; then
+			echo v4l2-ctl-32 is not installed.
+			exit 0
+		fi
+		if ! which $v4l2_compliance >/dev/null ; then
+			echo v4l2-compliance-32 is not installed.
+			exit 0
 		fi
 		;;
 	all)
@@ -130,19 +145,19 @@ sleep 1
 
 tmp=`mktemp`
 
-if ! v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-cap ; then
+if ! $v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-cap ; then
 	echo "FAIL: the vivid module failed to load" | tee -a $tmp
 	echo "Grand Total for vivid: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
 	echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
 	exit 0
 fi
 
-v4l2-ctl -z platform:vivid-000 -d vivid-000-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
-v4l2-ctl -z platform:vivid-000 -d vivid-000-vid-out -o1 -x width=3840,height=2160,pixelformat=NV24
-v4l2-ctl -z platform:vivid-001 -d vivid-001-vid-cap -i3 -v width=3840,height=2160,pixelformat=NM16
-v4l2-ctl -z platform:vivid-001 -d vivid-001-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
-v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
-v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
+$v4l2_ctl -z platform:vivid-000 -d vivid-000-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
+$v4l2_ctl -z platform:vivid-000 -d vivid-000-vid-out -o1 -x width=3840,height=2160,pixelformat=NV24
+$v4l2_ctl -z platform:vivid-001 -d vivid-001-vid-cap -i3 -v width=3840,height=2160,pixelformat=NM16
+$v4l2_ctl -z platform:vivid-001 -d vivid-001-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
+$v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
+$v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
 
 echo
 
@@ -152,12 +167,12 @@ if [ $vivid -eq 1 ]; then
 	echo vivid compliance tests, contiguous planes
 	echo
 	date
-	stdbuf -oL v4l2-compliance -m platform:vivid-000 -z platform:vivid-002 -e vivid-002-vid-cap -P -s10 -a 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance -m platform:vivid-000 -z platform:vivid-002 -e vivid-002-vid-cap -P -s10 -a 2>&1 | tee -a $tmp
 	echo
 	echo vivid compliance tests, non-contiguous planes
 	echo
 	date
-	stdbuf -oL v4l2-compliance -m platform:vivid-001 -z platform:vivid-002 -e vivid-002-vid-out -P -s10 -a 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance -m platform:vivid-001 -z platform:vivid-002 -e vivid-002-vid-out -P -s10 -a 2>&1 | tee -a $tmp
 	echo
 	echo
 	echo
@@ -222,7 +237,7 @@ if [ $vivid -eq 1 ]; then
 	echo
 	echo second unbind vivid
 	echo
-	for i in `v4l2-ctl -z platform:vivid-000 --list-devices`; do
+	for i in `$v4l2_ctl -z platform:vivid-000 --list-devices`; do
 		let "t = 1 + $RANDOM / 4096"
 		echo $i: sleep ${t}s
 		sleep $t <$i &
@@ -251,8 +266,8 @@ if [ $vivid -eq 1 ]; then
 	modprobe vivid n_devs=3 multiplanar=1,2,2 #allocators=0,1,1
 	sleep 1
 
-	v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
-	v4l2-ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
+	$v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
+	$v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
 
 	if [ $kmemleak -eq 1 ]; then
 		echo clear >/sys/kernel/debug/kmemleak
@@ -274,7 +289,7 @@ if [ $vim2m -eq 1 ]; then
 	dmesg -n notice
 	echo
 
-	if ! v4l2-ctl -z platform:vim2m ; then
+	if ! $v4l2_ctl -z platform:vim2m ; then
 		echo "FAIL: the vim2m module failed to load" | tee -a $tmp
 		echo "Grand Total for vim2m: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
 		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
@@ -285,7 +300,7 @@ if [ $vim2m -eq 1 ]; then
 	echo vim2m compliance tests
 	echo
 	date
-	stdbuf -oL v4l2-compliance -m platform:vim2m -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance -m platform:vim2m -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
 	echo
 	echo
 	echo
@@ -307,7 +322,7 @@ if [ $vim2m -eq 1 ]; then
 	echo
 	echo second unbind vim2m
 	echo
-	for i in `v4l2-ctl -z platform:vim2m --list-devices`; do
+	for i in `$v4l2_ctl -z platform:vim2m --list-devices`; do
 		let "t = 1 + $RANDOM / 4096"
 		echo $i: sleep ${t}s
 		sleep $t <$i &
@@ -347,7 +362,7 @@ if [ $vimc -eq 1 ]; then
 	sleep 1
 	dmesg -n notice
 
-	if ! v4l2-ctl -z platform:vimc -d "Sensor A" ; then
+	if ! $v4l2_ctl -z platform:vimc -d "Sensor A" ; then
 		echo "FAIL: the vimc module failed to load" | tee -a $tmp
 		echo "Grand Total for vimc: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
 		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
@@ -359,15 +374,15 @@ if [ $vimc -eq 1 ]; then
 	media-ctl -d platform:vimc -V '"Debayer A":0[fmt:SBGGR8_1X8/640x480]'
 	media-ctl -d platform:vimc -V '"Sensor B":0[fmt:SBGGR8_1X8/640x480]'
 	media-ctl -d platform:vimc -V '"Debayer B":0[fmt:SBGGR8_1X8/640x480]'
-	v4l2-ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
-	v4l2-ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
-	v4l2-ctl -z platform:vimc -d "Raw Capture 1" -v pixelformat=BA81
+	$v4l2_ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
+	$v4l2_ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
+	$v4l2_ctl -z platform:vimc -d "Raw Capture 1" -v pixelformat=BA81
 	dmesg -n notice
 	echo
 	echo vimc compliance tests
 	echo
 	date
-	stdbuf -oL v4l2-compliance -m platform:vimc -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance -m platform:vimc -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
 	echo
 	echo
 	echo
@@ -391,19 +406,19 @@ if [ $vimc -eq 1 ]; then
 	media-ctl -d platform:vimc -V '"Debayer A":0[fmt:SBGGR8_1X8/640x480]'
 	media-ctl -d platform:vimc -V '"Sensor B":0[fmt:SBGGR8_1X8/640x480]'
 	media-ctl -d platform:vimc -V '"Debayer B":0[fmt:SBGGR8_1X8/640x480]'
-	v4l2-ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
-	v4l2-ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
-	v4l2-ctl -z platform:vimc -d "Raw Capture 1" -v pixelformat=BA81
+	$v4l2_ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
+	$v4l2_ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
+	$v4l2_ctl -z platform:vimc -d "Raw Capture 1" -v pixelformat=BA81
 	echo
 	echo second unbind vimc
 	echo
 	# Max sleep time is 6 + 8 = 14s
-	for i in `v4l2-ctl -z platform:vimc --list-devices`; do
+	for i in `$v4l2_ctl -z platform:vimc --list-devices`; do
 		let "t = 6 + $RANDOM / 4096"
 		echo $i: sleep ${t}s
 		sleep $t <$i &
 	done
-	v4l2-ctl -z platform:vimc -d "Raw Capture 0" --stream-mmap --sleep 5 &
+	$v4l2_ctl -z platform:vimc -d "Raw Capture 0" --stream-mmap --sleep 5 &
 	sleep 1
 	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/unbind
 	sleep 14
@@ -441,7 +456,7 @@ if [ $vicodec -eq 1 ]; then
 	dmesg -n notice
 	echo
 
-	if ! v4l2-ctl -z platform:vicodec ; then
+	if ! $v4l2_ctl -z platform:vicodec ; then
 		echo "FAIL: the vicodec module failed to load" | tee -a $tmp
 		echo "Grand Total for vicodec: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
 		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
@@ -452,30 +467,30 @@ if [ $vicodec -eq 1 ]; then
 	echo vicodec media controller compliance tests
 	echo
 	date
-	stdbuf -oL v4l2-compliance -M platform:vicodec 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance -M platform:vicodec 2>&1 | tee -a $tmp
 
 	echo
 	echo vicodec encoder compliance tests
 	echo
-	stdbuf -oL v4l2-compliance -z platform:vicodec -d stateful-encoder-source -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance -z platform:vicodec -d stateful-encoder-source -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
 
 	echo
 	echo vicodec create test files
 	echo
 
 	encful_opts='-z platform:vicodec -d stateful-encoder-source --stream-mmap --stream-out-mmap --stream-out-hor-speed=1'
-	v4l2-ctl $encful_opts --stream-count=24 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1280.24
-	v4l2-ctl $encful_opts --stream-count=24 --stream-to=$tmpdir/comp.yu12.1280.24
-	v4l2-ctl $encful_opts --stream-count=1 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1280.1
-	v4l2-ctl $encful_opts --stream-count=1 --stream-to=$tmpdir/comp.yu12.1280.1
-	v4l2-ctl $encful_opts --stream-count=2 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1280.2
-	v4l2-ctl $encful_opts --stream-count=2 --stream-to=$tmpdir/comp.yu12.1280.2
-	v4l2-ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=24 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1920.24
-	v4l2-ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=24 --stream-to=$tmpdir/comp.yu12.1920.24
-	v4l2-ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=1 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1920.1
-	v4l2-ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=1 --stream-to=$tmpdir/comp.yu12.1920.1
-	v4l2-ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=2 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1920.2
-	v4l2-ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=2 --stream-to=$tmpdir/comp.yu12.1920.2
+	$v4l2_ctl $encful_opts --stream-count=24 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1280.24
+	$v4l2_ctl $encful_opts --stream-count=24 --stream-to=$tmpdir/comp.yu12.1280.24
+	$v4l2_ctl $encful_opts --stream-count=1 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1280.1
+	$v4l2_ctl $encful_opts --stream-count=1 --stream-to=$tmpdir/comp.yu12.1280.1
+	$v4l2_ctl $encful_opts --stream-count=2 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1280.2
+	$v4l2_ctl $encful_opts --stream-count=2 --stream-to=$tmpdir/comp.yu12.1280.2
+	$v4l2_ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=24 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1920.24
+	$v4l2_ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=24 --stream-to=$tmpdir/comp.yu12.1920.24
+	$v4l2_ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=1 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1920.1
+	$v4l2_ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=1 --stream-to=$tmpdir/comp.yu12.1920.1
+	$v4l2_ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=2 --stream-to-hdr=$tmpdir/comp.hdr.yu12.1920.2
+	$v4l2_ctl $encful_opts -x width=1920,height=1080 --set-selection-output target=crop,height=1080 --stream-count=2 --stream-to=$tmpdir/comp.yu12.1920.2
 
 	cat $tmpdir/comp.hdr.yu12.1280.1 $tmpdir/comp.hdr.yu12.1920.1 >$tmpdir/comp.hdr.yu12.mix.2
 	cat $tmpdir/comp.yu12.1280.1 $tmpdir/comp.yu12.1920.1 >$tmpdir/comp.yu12.mix.2
@@ -490,39 +505,39 @@ if [ $vicodec -eq 1 ]; then
 	echo vicodec decoder compliance tests
 	echo
 	decful_opts='-z platform:vicodec -d stateful-decoder-source -z platform:vivid-002 -e vivid-002-vid-cap'
-	stdbuf -oL v4l2-compliance $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 -s24 -P -a 2>&1 | tee -a $tmp
-	stdbuf -oL v4l2-compliance $decful_opts --stream-from $tmpdir/comp.yu12.1280.24 -s24 -P -a 2>&1 | tee -a $tmp
-	stdbuf -oL v4l2-compliance $decful_opts --stream-from-hdr $tmpdir/comp.hdr.yu12.mix.4.6 -s24 -P -a 2>&1 | tee -a $tmp
-	stdbuf -oL v4l2-compliance $decful_opts --stream-from $tmpdir/comp.yu12.mix.4.6 -s24 -P -a 2>&1 | tee -a $tmp
-	stdbuf -oL v4l2-compliance $decful_opts --stream-from-hdr $tmpdir/comp.hdr.yu12.mix.2.12 -s24 -P -a 2>&1 | tee -a $tmp
-	stdbuf -oL v4l2-compliance $decful_opts --stream-from $tmpdir/comp.yu12.mix.2.12 -s24 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 -s24 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance $decful_opts --stream-from $tmpdir/comp.yu12.1280.24 -s24 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance $decful_opts --stream-from-hdr $tmpdir/comp.hdr.yu12.mix.4.6 -s24 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance $decful_opts --stream-from $tmpdir/comp.yu12.mix.4.6 -s24 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance $decful_opts --stream-from-hdr $tmpdir/comp.hdr.yu12.mix.2.12 -s24 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance $decful_opts --stream-from $tmpdir/comp.yu12.mix.2.12 -s24 -P -a 2>&1 | tee -a $tmp
 
 	decful_opts='-z platform:vicodec -d stateful-decoder-source --stream-mmap --stream-out-mmap'
 	decless_opts='-z platform:vicodec -d stateless-decoder-source --stream-mmap --stream-out-mmap'
 	echo
 	echo stateful decode
 	echo
-	v4l2-ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 --stream-to=$tmpdir/raw.yu12.1280.24
+	$v4l2_ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 --stream-to=$tmpdir/raw.yu12.1280.24
 	echo
 	echo stateless decode
 	echo
-	v4l2-ctl $decless_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 --stream-to=$tmpdir/raw.yu12.1280.24.stateless
+	$v4l2_ctl $decless_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 --stream-to=$tmpdir/raw.yu12.1280.24.stateless
 	cmp $tmpdir/raw.yu12.1280.24 $tmpdir/raw.yu12.1280.24.stateless
 
 	echo
 	echo stateful decode with dynamic resolution changes for every frame
 	echo
-	v4l2-ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.2.12 --stream-to=$tmpdir/raw.yu12.mix.2.12
+	$v4l2_ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.2.12 --stream-to=$tmpdir/raw.yu12.mix.2.12
 	# v4l2-ctl does not yet reallocate buffers if they are too small for the new format
-	v4l2-ctl $decless_opts -v width=1920,height=1088 --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.2.12 --stream-to=$tmpdir/raw.yu12.mix.2.12.stateless
+	$v4l2_ctl $decless_opts -v width=1920,height=1088 --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.2.12 --stream-to=$tmpdir/raw.yu12.mix.2.12.stateless
 	cmp $tmpdir/raw.yu12.mix.2.12 $tmpdir/raw.yu12.mix.2.12.stateless
 
 	echo
 	echo stateful decode with dynamic resolution changes for every other frame
 	echo
-	v4l2-ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.4.6 --stream-to=$tmpdir/raw.yu12.mix.4.6
+	$v4l2_ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.4.6 --stream-to=$tmpdir/raw.yu12.mix.4.6
 	# v4l2-ctl does not yet reallocate buffers if they are too small for the new format
-	v4l2-ctl $decless_opts -v width=1920,height=1088 --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.4.6 --stream-to=$tmpdir/raw.yu12.mix.4.6.stateless
+	$v4l2_ctl $decless_opts -v width=1920,height=1088 --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.4.6 --stream-to=$tmpdir/raw.yu12.mix.4.6.stateless
 	cmp $tmpdir/raw.yu12.mix.4.6 $tmpdir/raw.yu12.mix.4.6.stateless
 
 	rm -rf $tmpdir
@@ -547,7 +562,7 @@ if [ $vicodec -eq 1 ]; then
 	echo
 	echo second unbind vicodec
 	echo
-	for i in `v4l2-ctl -z platform:vicodec --list-devices`; do
+	for i in `$v4l2_ctl -z platform:vicodec --list-devices`; do
 		let "t = 1 + $RANDOM / 4096"
 		echo $i: sleep ${t}s
 		sleep $t <$i &
