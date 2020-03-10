@@ -1670,7 +1670,7 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 
 				for (__u32 *x = m; x < u; x++)
 					if (*x != filler)
-						fail("data at %ld bytes before start of the buffer was touched\n",
+						fail("data at %zd bytes before start of the buffer was touched\n",
 						     (u - x) * 4);
 
 				unsigned data_offset = min_data_offset[p];
@@ -1686,13 +1686,13 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 				for (__u32 *x = u + used / 4; x < u + buflen / 4; x++) {
 					if (*x == filler)
 						continue;
-					warn_once("data from max bytesused %u+%ld to length %u was touched in plane %u\n",
+					warn_once("data from max bytesused %u+%zd to length %u was touched in plane %u\n",
 						  used, (x - u) * 4 - used, buflen, p);
 					break;
 				}
 				for (__u32 *x = u + buflen / 4; x < m + memlen / 4; x++)
 					if (*x != filler)
-						fail("data at %ld bytes after the end of the buffer was touched\n",
+						fail("data at %zd bytes after the end of the buffer was touched\n",
 						     (x - (u + buflen / 4)) * 4);
 				free(m);
 				q.s_userptr(i, p, NULL);
