@@ -315,7 +315,7 @@ static void usage(void)
 	       "                           <n> times (default 15), waiting for a state changes. If\n"
 	       "                           that fails it waits <secs> seconds (default 10) before\n"
 	       "                           retrying this.\n"
-	       "  --stress-test-power-cycle cnt=<count>[,max-sleep=<secs>][,seed=<seed>]\n"
+	       "  --stress-test-power-cycle cnt=<count>[,max-sleep=<secs>][,seed=<seed>][,repeats=<reps>]\n"
 	       "                            [,sleep-before-on=<secs1>][,sleep-before-off=<secs2]\n"
 	       "                           Power cycle display <count> times. If 0, then never stop.\n"
 	       "                           If <secs> is non-zero (0 is the default), then sleep for\n"
@@ -323,6 +323,8 @@ static void usage(void)
 	       "                           each <Standby> or <Image View On> message.\n"
 	       "                           If <seed> is specified, then set the randomizer seed to\n"
 	       "                           that value instead of using the current time as seed.\n"
+	       "                           If <reps> is specified, then repeat the <Image View On> and\n"
+	       "                           <Standby> up to <reps> times. Note: should not be needed!\n"
 	       "                           If <secs1> is specified, then sleep for <secs1> seconds\n"
 	       "                           before transmitting <Image View On>.\n"
 	       "                           If <secs2> is specified, then sleep for <secs2> seconds\n"
@@ -1063,34 +1065,41 @@ static bool wait_for_pwr_state(struct node &node, unsigned from, bool on)
 			strerror(ret));
 		exit(1);
 	}
-	if (msg.rx_status & CEC_RX_STATUS_OK) {
-		cec_ops_report_power_status(&msg, &pwr);
-		switch (pwr) {
-		case CEC_OP_POWER_STATUS_ON:
-			printf("+");
-			break;
-		case CEC_OP_POWER_STATUS_STANDBY:
-			printf("-");
-			break;
-		case CEC_OP_POWER_STATUS_TO_ON:
-			printf("/");
-			break;
-		case CEC_OP_POWER_STATUS_TO_STANDBY:
-			printf("\\");
-			break;
-		default:
-			printf(" %d ", pwr);
-			break;
-		}
+	if ((msg.rx_status & CEC_RX_STATUS_OK) &&
+	    (msg.rx_status & CEC_RX_STATUS_FEATURE_ABORT)) {
+		printf("A");
 		fflush(stdout);
-		return pwr == (on ? CEC_OP_POWER_STATUS_ON : CEC_OP_POWER_STATUS_STANDBY);
+		return false;
 	}
-	printf("N");
+	if (!(msg.rx_status & CEC_RX_STATUS_OK)) {
+		printf("N");
+		fflush(stdout);
+		return false;
+	}
+
+	cec_ops_report_power_status(&msg, &pwr);
+	switch (pwr) {
+	case CEC_OP_POWER_STATUS_ON:
+		printf("+");
+		break;
+	case CEC_OP_POWER_STATUS_STANDBY:
+		printf("-");
+		break;
+	case CEC_OP_POWER_STATUS_TO_ON:
+		printf("/");
+		break;
+	case CEC_OP_POWER_STATUS_TO_STANDBY:
+		printf("\\");
+		break;
+	default:
+		printf(" %d ", pwr);
+		break;
+	}
 	fflush(stdout);
-	return false;
+	return pwr == (on ? CEC_OP_POWER_STATUS_ON : CEC_OP_POWER_STATUS_STANDBY);
 }
 
-static int init_power_cycle_test(struct node &node)
+static int init_power_cycle_test(struct node &node, unsigned repeats)
 {
 	struct cec_msg msg;
 	unsigned from;
@@ -1102,6 +1111,7 @@ static int init_power_cycle_test(struct node &node)
 	printf("Legend:\n\n"
 	       "X   No LA claimed (HPD is likely pulled low)\n"
 	       "N   No Report Power Status received\n"
+	       "A   Feature Abort of Give Device Power Status \n"
 	       "+   Reported On\n"
 	       "-   Reported In Standby\n"
 	       "/   Reported Transitioning to On\n"
@@ -1142,46 +1152,55 @@ static int init_power_cycle_test(struct node &node)
 		printf("No Logical Addresses claimed, assume TV is already in Standby\n\n");
 	} else {
 		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
-		/*
-		 * Some displays only accept Standby from the Active Source.
-		 * So make us the Active Source before sending Standby.
-		 */
-		printf("%s: ", ts2s(current_ts()).c_str());
-		printf("Transmit Active Source to TV: ");
-		fflush(stdout);
-		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
-		cec_msg_active_source(&msg, pa);
-		ret = doioctl(&node, CEC_TRANSMIT, &msg);
-		if (ret) {
-			printf("FAIL: %s\n", strerror(ret));
-			exit(1);
-		}
-		printf("OK\n");
-		printf("%s: ", ts2s(current_ts()).c_str());
-		printf("Transmit Standby to TV: ");
-		fflush(stdout);
-		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
-		cec_msg_standby(&msg);
-
-		tries = 0;
-		for (;;) {
-			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-			if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
-				break;
-
+		for (unsigned repeat = 0; repeat <= repeats; repeat++) {
+			/*
+			 * Some displays only accept Standby from the Active Source.
+			 * So make us the Active Source before sending Standby.
+			 */
+			printf("%s: ", ts2s(current_ts()).c_str());
+			printf("Transmit Active Source to TV: ");
+			fflush(stdout);
+			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+			cec_msg_active_source(&msg, pa);
 			ret = doioctl(&node, CEC_TRANSMIT, &msg);
 			if (ret) {
 				printf("FAIL: %s\n", strerror(ret));
 				exit(1);
 			}
+			printf("OK\n");
+			printf("%s: ", ts2s(current_ts()).c_str());
+			printf("Transmit Standby to TV: ");
+			fflush(stdout);
+			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+			cec_msg_standby(&msg);
 
-			if (wait_for_pwr_state(node, from, false))
-				break;
-			sleep(1);
-			if (++tries > max_tries) {
-				printf(" FAIL: never went into standby\n");
-				exit(1);
+			tries = 0;
+			for (;;) {
+				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+				if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
+					break;
+
+				ret = doioctl(&node, CEC_TRANSMIT, &msg);
+				if (ret) {
+					printf("FAIL: %s\n", strerror(ret));
+					exit(1);
+				}
+
+				if (wait_for_pwr_state(node, from, false))
+					break;
+				if (++tries > max_tries) {
+					if (repeat == repeats) {
+						printf(" FAIL: never went into standby\n");
+						exit(1);
+					}
+					break;
+				}
+				sleep(1);
 			}
+			if (tries <= max_tries)
+				break;
+
+			printf(" WARN: never went into standby during attempt %u\n", repeat + 1);
 		}
 		printf(" OK\n");
 		printf("%s: ", ts2s(current_ts()).c_str());
@@ -1208,7 +1227,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 	__u8 wakeup_la;
 	int ret;
 
-	from = init_power_cycle_test(node);
+	from = init_power_cycle_test(node, 2);
 
 	for (unsigned iter = 0; iter <= 2 * 12; iter++) {
 		unsigned i = iter / 2;
@@ -1396,7 +1415,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 
 static void stress_test_power_cycle(struct node &node,
 				    unsigned cnt, unsigned max_sleep,
-				    bool has_seed, unsigned seed,
+				    bool has_seed, unsigned seed, unsigned repeats,
 				    double sleep_before_on, double sleep_before_off)
 {
 	struct cec_log_addrs laddrs = { };
@@ -1418,7 +1437,7 @@ static void stress_test_power_cycle(struct node &node,
 	if (mod_usleep)
 		printf("Randomizer seed: %u\n\n", seed);
 
-	unsigned from = init_power_cycle_test(node);
+	unsigned from = init_power_cycle_test(node, repeats);
 
 	srandom(seed);
 
@@ -1439,34 +1458,42 @@ static void stress_test_power_cycle(struct node &node,
 			       usecs1 / 1000000.0);
 		fflush(stdout);
 		usleep(usecs1);
-		printf("%s: ", ts2s(current_ts()).c_str());
-		printf("Transmit Image View On from LA %s (iteration %u): ", cec_la2s(wakeup_la), iter);
+		for (unsigned repeat = 0; repeat <= repeats; repeat++) {
+			printf("%s: ", ts2s(current_ts()).c_str());
+			printf("Transmit Image View On from LA %s (iteration %u): ", cec_la2s(wakeup_la), iter);
 
-		tries = 0;
-		cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
-		cec_msg_image_view_on(&msg);
-		ret = doioctl(&node, CEC_TRANSMIT, &msg);
-		if (ret) {
-			printf("FAIL: %s\n", strerror(ret));
-			exit(1);
-		}
-
-		for (;;) {
-			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-			if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
-				from = laddrs.log_addr[0];
-			if (wait_for_pwr_state(node, from, true))
-				break;
-			if (++tries > max_tries) {
-				printf("\nFAIL: never woke up\n");
+			tries = 0;
+			cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
+			cec_msg_image_view_on(&msg);
+			ret = doioctl(&node, CEC_TRANSMIT, &msg);
+			if (ret) {
+				printf("FAIL: %s\n", strerror(ret));
 				exit(1);
 			}
-			sleep(1);
-			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-			if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
-				continue;
 
-			doioctl(&node, CEC_TRANSMIT, &msg);
+			for (;;) {
+				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+				if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+					from = laddrs.log_addr[0];
+				if (wait_for_pwr_state(node, from, true))
+					break;
+				if (++tries > max_tries) {
+					if (repeat == repeats) {
+						printf("\nFAIL: never woke up\n");
+						exit(1);
+					}
+					break;
+				}
+				sleep(1);
+				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+				if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+					continue;
+
+				doioctl(&node, CEC_TRANSMIT, &msg);
+			}
+			if (tries <= max_tries)
+				break;
+			printf("\nWARN: never woke up during attempt %u\n", repeat + 1);
 		}
 		printf(" %d second%s\n", tries, tries == 1 ? "" : "s");
 		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
@@ -1493,45 +1520,53 @@ static void stress_test_power_cycle(struct node &node,
 			       usecs2 / 1000000.0);
 		fflush(stdout);
 		usleep(usecs2);
-		printf("%s: ", ts2s(current_ts()).c_str());
-		printf("Transmit Standby (iteration %u): ", iter);
-		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
-		if (pa != prev_pa) {
-			printf("\tFAIL: PA is now %x.%x.%x.%x\n\n",
-			       cec_phys_addr_exp(pa));
-			exit(1);
-		}
-
-		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
-		/*
-		 * Some displays only accept Standby from the Active Source.
-		 * So make us the Active Source before sending Standby.
-		 */
-		cec_msg_active_source(&msg, pa);
-		ret = doioctl(&node, CEC_TRANSMIT, &msg);
-		if (ret) {
-			printf("FAIL: Active Source Transmit failed: %s\n", strerror(ret));
-			exit(1);
-		}
-		cec_msg_standby(&msg);
-		ret = doioctl(&node, CEC_TRANSMIT, &msg);
-		if (ret) {
-			printf("FAIL: %s\n", strerror(ret));
-			exit(1);
-		}
-
-		tries = 0;
-		for (;;) {
-			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-			if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
-				break;
-			if (wait_for_pwr_state(node, from, false))
-				break;
-			if (++tries > max_tries) {
-				printf("\nFAIL: never went into standby\n");
+		for (unsigned repeat = 0; repeat <= repeats; repeat++) {
+			printf("%s: ", ts2s(current_ts()).c_str());
+			printf("Transmit Standby (iteration %u): ", iter);
+			doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+			if (pa != prev_pa) {
+				printf("\tFAIL: PA is now %x.%x.%x.%x\n\n",
+				       cec_phys_addr_exp(pa));
 				exit(1);
 			}
-			sleep(1);
+
+			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+			/*
+			 * Some displays only accept Standby from the Active Source.
+			 * So make us the Active Source before sending Standby.
+			 */
+			cec_msg_active_source(&msg, pa);
+			ret = doioctl(&node, CEC_TRANSMIT, &msg);
+			if (ret) {
+				printf("FAIL: Active Source Transmit failed: %s\n", strerror(ret));
+				exit(1);
+			}
+			cec_msg_standby(&msg);
+			ret = doioctl(&node, CEC_TRANSMIT, &msg);
+			if (ret) {
+				printf("FAIL: %s\n", strerror(ret));
+				exit(1);
+			}
+
+			tries = 0;
+			for (;;) {
+				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+				if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
+					break;
+				if (wait_for_pwr_state(node, from, false))
+					break;
+				if (++tries > max_tries) {
+					if (repeat == repeats) {
+						printf("\nFAIL: never went into standby\n");
+						exit(1);
+					}
+					break;
+				}
+				sleep(1);
+			}
+			if (tries <= max_tries)
+				break;
+			printf("\nWARN: never went into standby during attempt %u\n", repeat + 1);
 		}
 		printf(" %d second%s\n", tries, tries == 1 ? "" : "s");
 	}
@@ -1721,6 +1756,7 @@ int main(int argc, char **argv)
 	unsigned int stress_test_pwr_cycle_max_sleep = 0;
 	bool stress_test_pwr_cycle_has_seed = false;
 	unsigned int stress_test_pwr_cycle_seed = 0;
+	unsigned int stress_test_pwr_cycle_repeats = 0;
 	double stress_test_pwr_cycle_sleep_before_on = 0;
 	double stress_test_pwr_cycle_sleep_before_off = 0;
 	unsigned int test_pwr_cycle_polls = 15;
@@ -2126,6 +2162,7 @@ int main(int argc, char **argv)
 				"cnt",
 				"max-sleep",
 				"seed",
+				"repeats",
 				"sleep-before-on",
 				"sleep-before-off",
 				NULL
@@ -2145,9 +2182,12 @@ int main(int argc, char **argv)
 					stress_test_pwr_cycle_seed = strtoul(value, 0L, 0);
 					break;
 				case 3:
-					stress_test_pwr_cycle_sleep_before_on = strtod(value, NULL);
+					stress_test_pwr_cycle_repeats = strtoul(value, 0L, 0);
 					break;
 				case 4:
+					stress_test_pwr_cycle_sleep_before_on = strtod(value, NULL);
+					break;
+				case 5:
 					stress_test_pwr_cycle_sleep_before_off = strtod(value, NULL);
 					break;
 				default:
@@ -2516,6 +2556,7 @@ int main(int argc, char **argv)
 					stress_test_pwr_cycle_max_sleep,
 					stress_test_pwr_cycle_has_seed,
 					stress_test_pwr_cycle_seed,
+					stress_test_pwr_cycle_repeats,
 					stress_test_pwr_cycle_sleep_before_on,
 					stress_test_pwr_cycle_sleep_before_off);
 
