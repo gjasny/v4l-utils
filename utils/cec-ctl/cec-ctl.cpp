@@ -312,12 +312,13 @@ static void usage(void)
 	       "                           Use - for stdin.\n"
 	       "  --test-power-cycle [polls=<n>][,sleep=<secs>]\n"
 	       "                           Test power cycle behavior of the display. It polls up to\n"
-	       "                           <n> times (default 15), waiting for a state changes. If\n"
+	       "                           <n> times (default 15), waiting for a state change. If\n"
 	       "                           that fails it waits <secs> seconds (default 10) before\n"
 	       "                           retrying this.\n"
-	       "  --stress-test-power-cycle cnt=<count>[,max-sleep=<secs>][,seed=<seed>][,repeats=<reps>]\n"
+	       "  --stress-test-power-cycle cnt=<count>[,polls=<n>][,max-sleep=<secs>][,seed=<seed>][,repeats=<reps>]\n"
 	       "                            [,sleep-before-on=<secs1>][,sleep-before-off=<secs2]\n"
 	       "                           Power cycle display <count> times. If 0, then never stop.\n"
+	       "                           It polls up to <n> times (default 30), waiting for a state change.\n"
 	       "                           If <secs> is non-zero (0 is the default), then sleep for\n"
 	       "                           a random number of seconds between 0 and <secs> before\n"
 	       "                           each <Standby> or <Image View On> message.\n"
@@ -1099,12 +1100,11 @@ static bool wait_for_pwr_state(struct node &node, unsigned from, bool on)
 	return pwr == (on ? CEC_OP_POWER_STATUS_ON : CEC_OP_POWER_STATUS_STANDBY);
 }
 
-static int init_power_cycle_test(struct node &node, unsigned repeats)
+static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned max_tries)
 {
 	struct cec_msg msg;
 	unsigned from;
 	unsigned tries;
-	const unsigned max_tries = 30;
 	__u16 pa;
 	int ret;
 
@@ -1227,7 +1227,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 	__u8 wakeup_la;
 	int ret;
 
-	from = init_power_cycle_test(node, 2);
+	from = init_power_cycle_test(node, 2, max_tries);
 
 	for (unsigned iter = 0; iter <= 2 * 12; iter++) {
 		unsigned i = iter / 2;
@@ -1414,13 +1414,12 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 }
 
 static void stress_test_power_cycle(struct node &node,
-				    unsigned cnt, unsigned max_sleep,
+				    unsigned cnt, unsigned max_sleep, unsigned max_tries,
 				    bool has_seed, unsigned seed, unsigned repeats,
 				    double sleep_before_on, double sleep_before_off)
 {
 	struct cec_log_addrs laddrs = { };
 	struct cec_msg msg;
-	const unsigned max_tries = 50;
 	unsigned tries = 0;
 	unsigned iter = 0;
 	unsigned mod_usleep = 0;
@@ -1437,7 +1436,7 @@ static void stress_test_power_cycle(struct node &node,
 	if (mod_usleep)
 		printf("Randomizer seed: %u\n\n", seed);
 
-	unsigned from = init_power_cycle_test(node, repeats);
+	unsigned from = init_power_cycle_test(node, repeats, max_tries);
 
 	srandom(seed);
 
@@ -1754,6 +1753,7 @@ int main(int argc, char **argv)
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
 	unsigned int stress_test_pwr_cycle_cnt = 0;
 	unsigned int stress_test_pwr_cycle_max_sleep = 0;
+	unsigned int stress_test_pwr_cycle_polls = 30;
 	bool stress_test_pwr_cycle_has_seed = false;
 	unsigned int stress_test_pwr_cycle_seed = 0;
 	unsigned int stress_test_pwr_cycle_repeats = 0;
@@ -2165,6 +2165,7 @@ int main(int argc, char **argv)
 				"repeats",
 				"sleep-before-on",
 				"sleep-before-off",
+				"polls",
 				NULL
 			};
 			char *value, *subs = optarg;
@@ -2189,6 +2190,9 @@ int main(int argc, char **argv)
 					break;
 				case 5:
 					stress_test_pwr_cycle_sleep_before_off = strtod(value, NULL);
+					break;
+				case 6:
+					stress_test_pwr_cycle_polls = strtoul(value, 0L, 0);
 					break;
 				default:
 					exit(1);
@@ -2554,6 +2558,7 @@ int main(int argc, char **argv)
 	if (options[OptStressTestPowerCycle])
 		stress_test_power_cycle(node, stress_test_pwr_cycle_cnt,
 					stress_test_pwr_cycle_max_sleep,
+					stress_test_pwr_cycle_polls,
 					stress_test_pwr_cycle_has_seed,
 					stress_test_pwr_cycle_seed,
 					stress_test_pwr_cycle_repeats,
