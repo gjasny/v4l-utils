@@ -407,6 +407,18 @@ int cec_named_ioctl(int fd, const char *name,
 	if (options[OptTrace])
 		printf("\t\t%s returned %d (%s)\n",
 			name, retval, strerror(e));
+	if (retval == -1 && e == ENONET) {
+		/*
+		 * The adapter is configuring itself,
+		 * so wait a little bit and retry.
+		 */
+		sleep(1);
+		retval = ioctl(fd, request, parm);
+		e = retval == 0 ? 0 : errno;
+		if (options[OptTrace])
+			printf("\t\t%s (repeat) returned %d (%s)\n",
+			       name, retval, strerror(e));
+	}
 
 	return retval == -1 ? e : (retval ? -1 : 0);
 }
