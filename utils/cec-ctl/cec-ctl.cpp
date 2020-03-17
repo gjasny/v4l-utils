@@ -1229,6 +1229,12 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 
 	from = init_power_cycle_test(node, 2, max_tries);
 
+	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+	if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+		wakeup_la = from = laddrs.log_addr[0];
+	else
+		wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
+
 	for (unsigned iter = 0; iter <= 2 * 12; iter++) {
 		unsigned i = iter / 2;
 
@@ -1239,18 +1245,18 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		if (i > 5 && (iter & 1))
 			continue;
 
-		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-		if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
-			wakeup_la = from = laddrs.log_addr[0];
-		else
-			wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
 		printf("%s: ", ts2s(current_ts()).c_str());
 		printf("Wake up TV using Image View On from LA %s: ", cec_la2s(wakeup_la));
 		fflush(stdout);
 		cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
 		cec_msg_image_view_on(&msg);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
-		if (ret) {
+		if (ret == ENONET) {
+			printf("(ENONET) ");
+		} else if (ret == EINVAL && wakeup_la == CEC_LOG_ADDR_UNREGISTERED) {
+			// Can happen if wakeup_la == 15 and CEC just started configuring
+			printf("(EINVAL) ");
+		} else if (ret) {
 			printf("FAIL: %s\n", strerror(ret));
 			exit(1);
 		}
@@ -1258,7 +1264,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		for (;;) {
 			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 			if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
-				from = laddrs.log_addr[0];
+				wakeup_la = from = laddrs.log_addr[0];
 			if (wait_for_pwr_state(node, from, true))
 				break;
 			if (++tries > max_tries)
@@ -1284,7 +1290,11 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 			cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
 			cec_msg_image_view_on(&msg);
 			ret = doioctl(&node, CEC_TRANSMIT, &msg);
-			if (ret) {
+			if (ret == ENONET) {
+				printf("(ENONET) ");
+			} else if (ret == EINVAL && wakeup_la == CEC_LOG_ADDR_UNREGISTERED) {
+				printf("(EINVAL) ");
+			} else if (ret) {
 				printf("FAIL: %s\n", strerror(ret));
 				exit(1);
 			}
@@ -1292,7 +1302,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 			for (;;) {
 				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 				if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
-					from = laddrs.log_addr[0];
+					wakeup_la = from = laddrs.log_addr[0];
 				if (wait_for_pwr_state(node, from, true))
 					break;
 				if (++tries > max_tries) {
@@ -1346,14 +1356,18 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_active_source(&msg, pa);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
-		if (ret) {
+		if (ret == ENONET) {
+			printf("(Active Source: ENONET) ");
+		} else if (ret) {
 			printf("FAIL: Active Source Transmit failed: %s\n", strerror(ret));
 			exit(1);
 		}
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_standby(&msg);
 		ret = doioctl(&node, CEC_TRANSMIT, &msg);
-		if (ret) {
+		if (ret == ENONET) {
+			printf("(Standby: ENONET) ");
+		} else if (ret) {
 			printf("FAIL: %s\n", strerror(ret));
 			exit(1);
 		}
@@ -1438,6 +1452,12 @@ static void stress_test_power_cycle(struct node &node,
 
 	unsigned from = init_power_cycle_test(node, repeats, max_tries);
 
+	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+	if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+		wakeup_la = from = laddrs.log_addr[0];
+	else
+		wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
+
 	srandom(seed);
 
 	for (;;) {
@@ -1445,12 +1465,6 @@ static void stress_test_power_cycle(struct node &node,
 		unsigned usecs2 = mod_usleep ? random() % mod_usleep : sleep_before_off * 1000000;
 
 		iter++;
-
-		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-		if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
-			wakeup_la = from = laddrs.log_addr[0];
-		else
-			wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
 
 		if (usecs1)
 			printf("%s: Sleep %.2fs\n", ts2s(current_ts()).c_str(),
@@ -1465,7 +1479,12 @@ static void stress_test_power_cycle(struct node &node,
 			cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
 			cec_msg_image_view_on(&msg);
 			ret = doioctl(&node, CEC_TRANSMIT, &msg);
-			if (ret) {
+			if (ret == ENONET) {
+				printf("(ENONET) ");
+			} else if (ret == EINVAL && wakeup_la == CEC_LOG_ADDR_UNREGISTERED) {
+				// Can happen if wakeup_la == 15 and CEC just started configuring
+				printf("(EINVAL) ");
+			} else if (ret) {
 				printf("FAIL: %s\n", strerror(ret));
 				exit(1);
 			}
@@ -1473,7 +1492,7 @@ static void stress_test_power_cycle(struct node &node,
 			for (;;) {
 				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 				if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
-					from = laddrs.log_addr[0];
+					wakeup_la = from = laddrs.log_addr[0];
 				if (wait_for_pwr_state(node, from, true))
 					break;
 				if (++tries > max_tries) {
@@ -1536,13 +1555,17 @@ static void stress_test_power_cycle(struct node &node,
 			 */
 			cec_msg_active_source(&msg, pa);
 			ret = doioctl(&node, CEC_TRANSMIT, &msg);
-			if (ret) {
+			if (ret == ENONET) {
+				printf("(Active Source: ENONET) ");
+			} else if (ret) {
 				printf("FAIL: Active Source Transmit failed: %s\n", strerror(ret));
 				exit(1);
 			}
 			cec_msg_standby(&msg);
 			ret = doioctl(&node, CEC_TRANSMIT, &msg);
-			if (ret) {
+			if (ret == ENONET) {
+				printf("(Standby: ENONET) ");
+			} else if (ret) {
 				printf("FAIL: %s\n", strerror(ret));
 				exit(1);
 			}
