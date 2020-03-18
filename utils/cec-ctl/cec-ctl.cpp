@@ -1270,11 +1270,6 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 			if (++tries > max_tries)
 				break;
 			sleep(1);
-			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-			if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
-				continue;
-
-			doioctl(&node, CEC_TRANSMIT, &msg);
 		}
 
 		if (tries > max_tries) {
@@ -1311,11 +1306,6 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 					break;
 				}
 				sleep(1);
-				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-				if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
-					continue;
-
-				doioctl(&node, CEC_TRANSMIT, &msg);
 			}
 		}
 		printf(" %d second%s\n", tries, tries == 1 ? "" : "s");
@@ -1503,11 +1493,6 @@ static void stress_test_power_cycle(struct node &node,
 					break;
 				}
 				sleep(1);
-				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-				if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
-					continue;
-
-				doioctl(&node, CEC_TRANSMIT, &msg);
 			}
 			if (tries <= max_tries)
 				break;
