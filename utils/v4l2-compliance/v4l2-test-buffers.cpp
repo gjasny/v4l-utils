@@ -2566,9 +2566,7 @@ static void streamFmtRun(struct node *node, cv4l_fmt &fmt, unsigned frame_count,
 				compose.r.width, compose.r.height,
 				compose.r.left, compose.r.top);
 	}
-	if (!no_progress)
-		printf("\r");
-	printf("\t\t%s%sStride %u, Field %s%s: %s   \n",
+	printf("\r\t\t%s%sStride %u, Field %s%s: %s   \n",
 			s_crop, s_compose,
 			fmt.g_bytesperline(),
 			field2s(fmt.g_field()).c_str(),
