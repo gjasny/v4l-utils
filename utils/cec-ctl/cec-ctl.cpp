@@ -1100,6 +1100,23 @@ static bool wait_for_pwr_state(struct node &node, unsigned from, bool on)
 	return pwr == (on ? CEC_OP_POWER_STATUS_ON : CEC_OP_POWER_STATUS_STANDBY);
 }
 
+static int transmit_msg_retry(struct node &node, struct cec_msg &msg)
+{
+	bool from_unreg = cec_msg_initiator(&msg) == CEC_LOG_ADDR_UNREGISTERED;
+	unsigned cnt = 0;
+	bool repeat;
+	int ret;
+
+	// Can happen if wakeup_la == 15 and CEC just started configuring
+	do {
+		ret = doioctl(&node, CEC_TRANSMIT, &msg);
+		repeat = ret == ENONET || (ret == EINVAL && from_unreg);
+		if (repeat)
+			usleep(100000);
+	} while (repeat && cnt++ < 10);
+	return ret;
+}
+
 static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned max_tries)
 {
 	struct cec_msg msg;
@@ -1162,7 +1179,7 @@ static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned m
 			fflush(stdout);
 			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 			cec_msg_active_source(&msg, pa);
-			ret = doioctl(&node, CEC_TRANSMIT, &msg);
+			ret = transmit_msg_retry(node, msg);
 			if (ret) {
 				printf("FAIL: %s\n", strerror(ret));
 				exit(1);
@@ -1180,7 +1197,7 @@ static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned m
 				if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
 					break;
 
-				ret = doioctl(&node, CEC_TRANSMIT, &msg);
+				ret = transmit_msg_retry(node, msg);
 				if (ret) {
 					printf("FAIL: %s\n", strerror(ret));
 					exit(1);
@@ -1250,13 +1267,8 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		fflush(stdout);
 		cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
 		cec_msg_image_view_on(&msg);
-		ret = doioctl(&node, CEC_TRANSMIT, &msg);
-		if (ret == ENONET) {
-			printf("(ENONET) ");
-		} else if (ret == EINVAL && wakeup_la == CEC_LOG_ADDR_UNREGISTERED) {
-			// Can happen if wakeup_la == 15 and CEC just started configuring
-			printf("(EINVAL) ");
-		} else if (ret) {
+		ret = transmit_msg_retry(node, msg);
+		if (ret) {
 			printf("FAIL: %s\n", strerror(ret));
 			exit(1);
 		}
@@ -1345,19 +1357,15 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		 */
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_active_source(&msg, pa);
-		ret = doioctl(&node, CEC_TRANSMIT, &msg);
-		if (ret == ENONET) {
-			printf("(Active Source: ENONET) ");
-		} else if (ret) {
+		ret = transmit_msg_retry(node, msg);
+		if (ret) {
 			printf("FAIL: Active Source Transmit failed: %s\n", strerror(ret));
 			exit(1);
 		}
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_standby(&msg);
-		ret = doioctl(&node, CEC_TRANSMIT, &msg);
-		if (ret == ENONET) {
-			printf("(Standby: ENONET) ");
-		} else if (ret) {
+		ret = transmit_msg_retry(node, msg);
+		if (ret) {
 			printf("FAIL: %s\n", strerror(ret));
 			exit(1);
 		}
@@ -1468,10 +1476,8 @@ static void stress_test_power_cycle(struct node &node,
 			tries = 0;
 			cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
 			cec_msg_image_view_on(&msg);
-			ret = doioctl(&node, CEC_TRANSMIT, &msg);
-			if (ret == ENONET) {
-				printf("(ENONET) ");
-			} else if (ret == EINVAL && wakeup_la == CEC_LOG_ADDR_UNREGISTERED) {
+			ret = transmit_msg_retry(node, msg);
+			if (ret == EINVAL && wakeup_la == CEC_LOG_ADDR_UNREGISTERED) {
 				// Can happen if wakeup_la == 15 and CEC just started configuring
 				printf("(EINVAL) ");
 			} else if (ret) {
@@ -1539,18 +1545,14 @@ static void stress_test_power_cycle(struct node &node,
 			 * So make us the Active Source before sending Standby.
 			 */
 			cec_msg_active_source(&msg, pa);
-			ret = doioctl(&node, CEC_TRANSMIT, &msg);
-			if (ret == ENONET) {
-				printf("(Active Source: ENONET) ");
-			} else if (ret) {
+			ret = transmit_msg_retry(node, msg);
+			if (ret) {
 				printf("FAIL: Active Source Transmit failed: %s\n", strerror(ret));
 				exit(1);
 			}
 			cec_msg_standby(&msg);
-			ret = doioctl(&node, CEC_TRANSMIT, &msg);
-			if (ret == ENONET) {
-				printf("(Standby: ENONET) ");
-			} else if (ret) {
+			ret = transmit_msg_retry(node, msg);
+			if (ret) {
 				printf("FAIL: %s\n", strerror(ret));
 				exit(1);
 			}
