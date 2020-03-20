@@ -248,6 +248,12 @@ struct remote_subtest {
 			warn("%s\n", #test);				\
 	} while (0)
 
+#define warn_once_on_test(test) 					\
+	do {								\
+		if (test)						\
+			warn_once("%s\n", #test);			\
+	} while (0)
+
 #define fail(fmt, args...) 						\
 ({ 									\
 	printf("\t\t%s: %s(%d): " fmt, show_colors ?			\
