@@ -1087,10 +1087,10 @@ static bool wait_for_pwr_state(struct node &node, unsigned from, bool on)
 		printf("-");
 		break;
 	case CEC_OP_POWER_STATUS_TO_ON:
-		printf("/");
+		printf("%c", on ? '/' : 'e');
 		break;
 	case CEC_OP_POWER_STATUS_TO_STANDBY:
-		printf("\\");
+		printf("%c", on ? 'E' : '\\');
 		break;
 	default:
 		printf(" %d ", pwr);
@@ -1132,7 +1132,9 @@ static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned m
 	       "+   Reported On\n"
 	       "-   Reported In Standby\n"
 	       "/   Reported Transitioning to On\n"
-	       "\\   Reported Transitioning to Standby\n\n");
+	       "\\   Reported Transitioning to Standby\n"
+	       "e   Reported Transitioning to On when 'to Standby' was expected\n"
+	       "E   Reported Transitioning to Standby when 'to On' was expected\n\n");
 
 	struct cec_log_addrs laddrs = { };
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
