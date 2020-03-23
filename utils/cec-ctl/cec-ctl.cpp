@@ -315,13 +315,13 @@ static void usage(void)
 	       "                           <n> times (default 15), waiting for a state change. If\n"
 	       "                           that fails it waits <secs> seconds (default 10) before\n"
 	       "                           retrying this.\n"
-	       "  --stress-test-power-cycle cnt=<count>[,polls=<n>][,max-sleep=<secs>][,seed=<seed>][,repeats=<reps>]\n"
-	       "                            [,sleep-before-on=<secs1>][,sleep-before-off=<secs2]\n"
+	       "  --stress-test-power-cycle cnt=<count>[,polls=<n>][,max-sleep=<maxsecs>][,min-sleep=<minsecs>][,seed=<seed>][,repeats=<reps>]\n"
+	       "                            [,sleep-before-on=<secs1>][,sleep-before-off=<secs2>]\n"
 	       "                           Power cycle display <count> times. If 0, then never stop.\n"
 	       "                           It polls up to <n> times (default 30), waiting for a state change.\n"
-	       "                           If <secs> is non-zero (0 is the default), then sleep for\n"
-	       "                           a random number of seconds between 0 and <secs> before\n"
-	       "                           each <Standby> or <Image View On> message.\n"
+	       "                           If <maxsecs> is non-zero (0 is the default), then sleep for\n"
+	       "                           a random number of seconds between <minsecs> (0 is the default) and <maxsecs>\n"
+	       "                           before each <Standby> or <Image View On> message.\n"
 	       "                           If <seed> is specified, then set the randomizer seed to\n"
 	       "                           that value instead of using the current time as seed.\n"
 	       "                           If <reps> is specified, then repeat the <Image View On> and\n"
@@ -1427,8 +1427,8 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		printf("Test had %u failure%s\n", failures, failures == 1 ? "" : "s");
 }
 
-static void stress_test_power_cycle(struct node &node,
-				    unsigned cnt, unsigned max_sleep, unsigned max_tries,
+static void stress_test_power_cycle(struct node &node, unsigned cnt,
+				    unsigned min_sleep, unsigned max_sleep, unsigned max_tries,
 				    bool has_seed, unsigned seed, unsigned repeats,
 				    double sleep_before_on, double sleep_before_off)
 {
@@ -1436,13 +1436,14 @@ static void stress_test_power_cycle(struct node &node,
 	struct cec_msg msg;
 	unsigned tries = 0;
 	unsigned iter = 0;
+	unsigned min_usleep = 1000000 * (max_sleep ? min_sleep : 0);
 	unsigned mod_usleep = 0;
 	unsigned wakeup_la;
 	__u16 pa, prev_pa;
 	int ret;
 
 	if (max_sleep)
-		mod_usleep = 1000000 * max_sleep + 1;
+		mod_usleep = 1000000 * (max_sleep - min_sleep) + 1;
 
 	if (!has_seed)
 		seed = time(NULL);
@@ -1463,6 +1464,9 @@ static void stress_test_power_cycle(struct node &node,
 	for (;;) {
 		unsigned usecs1 = mod_usleep ? random() % mod_usleep : sleep_before_on * 1000000;
 		unsigned usecs2 = mod_usleep ? random() % mod_usleep : sleep_before_off * 1000000;
+
+		usecs1 += min_usleep;
+		usecs2 += min_usleep;
 
 		iter++;
 
@@ -1764,6 +1768,7 @@ int main(int argc, char **argv)
 	__u32 monitor_time = 0;
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
 	unsigned int stress_test_pwr_cycle_cnt = 0;
+	unsigned int stress_test_pwr_cycle_min_sleep = 0;
 	unsigned int stress_test_pwr_cycle_max_sleep = 0;
 	unsigned int stress_test_pwr_cycle_polls = 30;
 	bool stress_test_pwr_cycle_has_seed = false;
@@ -2172,6 +2177,7 @@ int main(int argc, char **argv)
 		case OptStressTestPowerCycle: {
 			static const char *arg_names[] = {
 				"cnt",
+				"min-sleep",
 				"max-sleep",
 				"seed",
 				"repeats",
@@ -2188,27 +2194,34 @@ int main(int argc, char **argv)
 					stress_test_pwr_cycle_cnt = strtoul(value, 0L, 0);
 					break;
 				case 1:
-					stress_test_pwr_cycle_max_sleep = strtoul(value, 0L, 0);
+					stress_test_pwr_cycle_min_sleep = strtoul(value, 0L, 0);
 					break;
 				case 2:
+					stress_test_pwr_cycle_max_sleep = strtoul(value, 0L, 0);
+					break;
+				case 3:
 					stress_test_pwr_cycle_has_seed = true;
 					stress_test_pwr_cycle_seed = strtoul(value, 0L, 0);
 					break;
-				case 3:
+				case 4:
 					stress_test_pwr_cycle_repeats = strtoul(value, 0L, 0);
 					break;
-				case 4:
+				case 5:
 					stress_test_pwr_cycle_sleep_before_on = strtod(value, NULL);
 					break;
-				case 5:
+				case 6:
 					stress_test_pwr_cycle_sleep_before_off = strtod(value, NULL);
 					break;
-				case 6:
+				case 7:
 					stress_test_pwr_cycle_polls = strtoul(value, 0L, 0);
 					break;
 				default:
 					exit(1);
 				}
+			}
+			if (stress_test_pwr_cycle_min_sleep > stress_test_pwr_cycle_max_sleep) {
+				fprintf(stderr, "min-sleep > max-sleep\n");
+				exit(1);
 			}
 			warn_if_unconfigured = true;
 			break;
@@ -2569,6 +2582,7 @@ int main(int argc, char **argv)
 		test_power_cycle(node, test_pwr_cycle_polls, test_pwr_cycle_sleep);
 	if (options[OptStressTestPowerCycle])
 		stress_test_power_cycle(node, stress_test_pwr_cycle_cnt,
+					stress_test_pwr_cycle_min_sleep,
 					stress_test_pwr_cycle_max_sleep,
 					stress_test_pwr_cycle_polls,
 					stress_test_pwr_cycle_has_seed,
