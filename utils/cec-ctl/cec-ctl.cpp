@@ -1073,7 +1073,10 @@ static bool wait_for_pwr_state(struct node &node, unsigned from, bool on)
 		return false;
 	}
 	if (!(msg.rx_status & CEC_RX_STATUS_OK)) {
-		printf("N");
+		if (msg.tx_status & CEC_TX_STATUS_OK)
+			printf("T");
+		else
+			printf("N");
 		fflush(stdout);
 		return false;
 	}
@@ -1127,7 +1130,8 @@ static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned m
 
 	printf("Legend:\n\n"
 	       "X   No LA claimed (HPD is likely pulled low)\n"
-	       "N   No Report Power Status received\n"
+	       "N   Give Device Power Status was Nacked\n"
+	       "T   Time out waiting for Report Power Status reply\n"
 	       "A   Feature Abort of Give Device Power Status \n"
 	       "+   Reported On\n"
 	       "-   Reported In Standby\n"
