@@ -519,7 +519,9 @@ int main(int argc, char **argv)
 	}
 	printf("\n");
 
-	bool missing_pa = node.phys_addr == CEC_PHYS_ADDR_INVALID && (node.caps & CEC_CAP_PHYS_ADDR);
+	bool missing_pa = node.phys_addr == CEC_PHYS_ADDR_INVALID &&
+		(node.caps & CEC_CAP_PHYS_ADDR) &&
+		!(node.caps & CEC_CAP_CONNECTOR_INFO);
 	bool missing_la = laddrs.num_log_addrs == 0 && (node.caps & CEC_CAP_LOG_ADDRS);
 
 	if (missing_la || missing_pa)
