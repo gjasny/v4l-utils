@@ -1261,6 +1261,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 	unsigned tries;
 	unsigned secs;
 	__u16 pa, prev_pa;
+	__u16 display_pa = CEC_PHYS_ADDR_INVALID;
 	__u8 wakeup_la;
 	int ret;
 
@@ -1357,11 +1358,18 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		printf("%s: ", ts2s(current_ts()).c_str());
 		printf("Physical Address: %x.%x.%x.%x LA: %s\n",
 		       cec_phys_addr_exp(pa), cec_la2s(from));
-		if (pa == CEC_PHYS_ADDR_INVALID) {
+		if (pa == CEC_PHYS_ADDR_INVALID || !pa) {
 			printf("FAIL: invalid physical address\n");
 			exit(1);
 		}
 		prev_pa = pa;
+		if (display_pa == CEC_PHYS_ADDR_INVALID)
+			display_pa = pa;
+		if (pa != display_pa) {
+			printf("FAIL: physical address changed from %x.%x.%x.%x to %x.%x.%x.%x\n",
+			       cec_phys_addr_exp(display_pa), cec_phys_addr_exp(pa));
+			exit(1);
+		}
 		secs = i <= 10 ? i : 10 + 10 * (i - 10);
 		printf("%s: ", ts2s(current_ts()).c_str());
 		printf("Sleep %u second%s\n", secs, secs == 1 ? "" : "s");
@@ -1447,6 +1455,11 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 			printf("Physical Address: %x.%x.%x.%x\n",
 			       cec_phys_addr_exp(pa));
 		}
+		if (pa != CEC_PHYS_ADDR_INVALID && pa != display_pa) {
+			printf("FAIL: physical address changed from %x.%x.%x.%x to %x.%x.%x.%x\n",
+			       cec_phys_addr_exp(display_pa), cec_phys_addr_exp(pa));
+			exit(1);
+		}
 		printf("\n");
 	}
 	if (failures)
@@ -1466,6 +1479,7 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 	unsigned mod_usleep = 0;
 	unsigned wakeup_la;
 	__u16 pa, prev_pa;
+	__u16 display_pa = CEC_PHYS_ADDR_INVALID;
 	int ret;
 
 	if (max_sleep)
@@ -1553,8 +1567,15 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 		printf("%s: ", ts2s(current_ts()).c_str());
 		printf("Physical Address: %x.%x.%x.%x LA: %s\n",
 		       cec_phys_addr_exp(pa), cec_la2s(from));
-		if (pa == CEC_PHYS_ADDR_INVALID) {
+		if (pa == CEC_PHYS_ADDR_INVALID || !pa) {
 			printf("FAIL: invalid physical address\n");
+			exit(1);
+		}
+		if (display_pa == CEC_PHYS_ADDR_INVALID)
+			display_pa = pa;
+		if (pa != display_pa) {
+			printf("FAIL: physical address changed from %x.%x.%x.%x to %x.%x.%x.%x\n",
+			       cec_phys_addr_exp(display_pa), cec_phys_addr_exp(pa));
 			exit(1);
 		}
 
@@ -1573,6 +1594,11 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 			if (pa != prev_pa) {
 				printf("\tFAIL: PA is now %x.%x.%x.%x\n\n",
 				       cec_phys_addr_exp(pa));
+				exit(1);
+			}
+			if (pa != CEC_PHYS_ADDR_INVALID && pa != display_pa) {
+				printf("FAIL: physical address changed from %x.%x.%x.%x to %x.%x.%x.%x\n",
+				       cec_phys_addr_exp(display_pa), cec_phys_addr_exp(pa));
 				exit(1);
 			}
 
