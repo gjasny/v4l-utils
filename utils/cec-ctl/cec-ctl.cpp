@@ -1047,7 +1047,8 @@ err:
 	exit(1);
 }
 
-static bool wait_for_pwr_state(struct node &node, unsigned from, bool on)
+static bool wait_for_pwr_state(struct node &node, unsigned from,
+			       unsigned &hpd_is_low_cnt, bool on)
 {
 	struct cec_msg msg;
 	__u8 pwr;
@@ -1059,8 +1060,10 @@ static bool wait_for_pwr_state(struct node &node, unsigned from, bool on)
 	if (ret == ENONET) {
 		printf("X");
 		fflush(stdout);
-		return !on;
+		hpd_is_low_cnt++;
+		return hpd_is_low_cnt <= 2 ? false : !on;
 	}
+	hpd_is_low_cnt = 0;
 	if (ret) {
 		fprintf(stderr, "Give Device Power Status Transmit failed: %s\n",
 			strerror(ret));
@@ -1101,6 +1104,17 @@ static bool wait_for_pwr_state(struct node &node, unsigned from, bool on)
 	}
 	fflush(stdout);
 	return pwr == (on ? CEC_OP_POWER_STATUS_ON : CEC_OP_POWER_STATUS_STANDBY);
+}
+
+static bool wait_for_power_on(struct node &node, unsigned from)
+{
+	unsigned hpd_is_low_cnt = 0;
+	return wait_for_pwr_state(node, from, hpd_is_low_cnt, true);
+}
+
+static bool wait_for_power_off(struct node &node, unsigned from, unsigned &hpd_is_low_cnt)
+{
+	return wait_for_pwr_state(node, from, hpd_is_low_cnt, false);
 }
 
 static int transmit_msg_retry(struct node &node, struct cec_msg &msg)
@@ -1197,6 +1211,7 @@ static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned m
 			cec_msg_standby(&msg);
 
 			tries = 0;
+			unsigned hpd_is_low_cnt = 0;
 			for (;;) {
 				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 				if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
@@ -1208,7 +1223,7 @@ static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned m
 					exit(1);
 				}
 
-				if (wait_for_pwr_state(node, from, false))
+				if (wait_for_power_off(node, from, hpd_is_low_cnt))
 					break;
 				if (++tries > max_tries) {
 					if (repeat == repeats) {
@@ -1257,6 +1272,11 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 	else
 		wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
 
+	bool hpd_is_low = wakeup_la == CEC_LOG_ADDR_UNREGISTERED;
+
+	printf("The Hotplug Detect pin %s when in Standby\n\n",
+	       hpd_is_low ? "is pulled low" : "remains high");
+
 	for (unsigned iter = 0; iter <= 2 * 12; iter++) {
 		unsigned i = iter / 2;
 
@@ -1282,7 +1302,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 			if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
 				wakeup_la = from = laddrs.log_addr[0];
-			if (wait_for_pwr_state(node, from, true))
+			if (wait_for_power_on(node, from))
 				break;
 			if (++tries > max_tries)
 				break;
@@ -1315,7 +1335,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 				if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
 					wakeup_la = from = laddrs.log_addr[0];
-				if (wait_for_pwr_state(node, from, true))
+				if (wait_for_power_on(node, from))
 					break;
 				if (++tries > max_tries) {
 					printf("\nFAIL: never woke up\n");
@@ -1377,11 +1397,14 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 
 		tries = 0;
 		bool first_standby = true;
+		unsigned hpd_is_low_cnt = 0;
 		for (;;) {
 			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 			if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
 				break;
-			if (wait_for_pwr_state(node, from, false))
+			if (!hpd_is_low)
+				hpd_is_low_cnt = 0;
+			if (wait_for_power_off(node, from, hpd_is_low_cnt))
 				break;
 			if (++tries > max_tries) {
 				if (first_standby) {
@@ -1462,6 +1485,11 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 	else
 		wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
 
+	bool hpd_is_low = wakeup_la == CEC_LOG_ADDR_UNREGISTERED;
+
+	printf("The Hotplug Detect pin %s when in Standby\n\n",
+	       hpd_is_low ? "is pulled low" : "remains high");
+
 	srandom(seed);
 
 	for (;;) {
@@ -1498,7 +1526,7 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 				if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
 					wakeup_la = from = laddrs.log_addr[0];
-				if (wait_for_pwr_state(node, from, true))
+				if (wait_for_power_on(node, from))
 					break;
 				if (++tries > max_tries) {
 					if (repeat == repeats) {
@@ -1567,11 +1595,14 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 			}
 
 			tries = 0;
+			unsigned hpd_is_low_cnt = 0;
 			for (;;) {
 				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 				if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
 					break;
-				if (wait_for_pwr_state(node, from, false))
+				if (!hpd_is_low)
+					hpd_is_low_cnt = 0;
+				if (wait_for_power_off(node, from, hpd_is_low_cnt))
 					break;
 				if (++tries > max_tries) {
 					if (repeat == repeats) {
