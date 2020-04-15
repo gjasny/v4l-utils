@@ -48,8 +48,8 @@
 #define VIVID_CID_QUEUE_ERROR		(VIVID_CID_VIVID_BASE + 70)
 #define VIVID_CID_REQ_VALIDATE_ERROR	(VIVID_CID_VIVID_BASE + 72)
 
-static struct cv4l_fmt cur_fmt;
-static struct cv4l_fmt cur_m2m_fmt;
+static cv4l_fmt cur_fmt;
+static cv4l_fmt cur_m2m_fmt;
 static int stream_from_fd = -1;
 static bool stream_use_hdr;
 static unsigned max_bytesused[VIDEO_MAX_PLANES];
@@ -356,7 +356,7 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 	unsigned timestamp_src = g_timestamp_src();
 	unsigned frame_types = 0;
 	unsigned buf_states = 0;
-	const struct cv4l_fmt &fmt = is_m2m ? cur_m2m_fmt : cur_fmt;
+	const cv4l_fmt &fmt = is_m2m ? cur_m2m_fmt : cur_fmt;
 
 	fail_on_test(g_type() != type);
 	fail_on_test(g_memory() == 0);
