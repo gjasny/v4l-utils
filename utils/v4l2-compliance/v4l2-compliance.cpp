@@ -1039,7 +1039,7 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 	else if (media_fd >= 0)
 		ent_id = mi_media_info_for_fd(media_fd, node.g_fd(), &is_invalid);
 
-	if (ent_id && ent_id != MEDIA_ENT_F_UNKNOWN) {
+	if (ent_id != MEDIA_ENT_F_UNKNOWN) {
 		memset(&node.entity, 0, sizeof(node.entity));
 		node.entity.id = ent_id;
 		if (!ioctl(media_fd, MEDIA_IOC_ENUM_ENTITIES, &node.entity)) {

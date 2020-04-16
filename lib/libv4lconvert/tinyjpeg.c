@@ -2048,7 +2048,7 @@ static int parse_JFIF(struct jdec_private *priv, const unsigned char *stream)
 		error("Sampling other than 1x1 for Cr and Cb is not supported\n");
 	if ((priv->flags & TINYJPEG_FLAGS_PLANAR_JPEG) &&
 			((priv->component_infos[cY].Hfactor != 2)
-			    || (priv->component_infos[cY].Hfactor != 2)))
+			    || (priv->component_infos[cY].Vfactor != 2)))
 		error("Sampling other than 2x2 for Y is not supported with planar JPEG\n");
 #endif
 
