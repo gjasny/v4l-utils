@@ -870,7 +870,7 @@ static std::string make_devname(const char *device, const char *devname,
 		return device;
 	if (is_media) {
 		close(media_fd);
-		return media_devname.c_str();
+		return media_devname;
 	}
 
 	media_v2_topology topology;
