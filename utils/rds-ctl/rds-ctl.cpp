@@ -992,7 +992,7 @@ int main(int argc, char **argv)
 	if (!params.options[OptSetDevice]) {
 		/* check the system for RDS capable devices */
 		dev_vec devices = list_devices();
-		if (devices.size() == 0) {
+		if (devices.empty()) {
 			fprintf(stderr, "No RDS-capable device found\n");
 			exit(1);
 		}

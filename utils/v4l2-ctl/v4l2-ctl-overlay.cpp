@@ -395,9 +395,9 @@ static void do_try_set_overlay(struct v4l2_format &fmt, int fd)
 	if (((set_overlay_fmt & FmtWidth) && win.w.width != overlay_fmt.fmt.win.w.width) ||
 	    ((set_overlay_fmt & FmtHeight) && win.w.height != overlay_fmt.fmt.win.w.height))
 		keep_old_bitmap = keep_old_clip = false;
-	if (options[OptClearBitmap] || bitmap_rects.size())
+	if (options[OptClearBitmap] || !bitmap_rects.empty())
 		keep_old_bitmap = false;
-	if (options[OptClearClips] || clips.size())
+	if (options[OptClearClips] || !clips.empty())
 		keep_old_clip = false;
 
 	win.bitmap = NULL;
@@ -428,11 +428,11 @@ static void do_try_set_overlay(struct v4l2_format &fmt, int fd)
 		win.w.height = overlay_fmt.fmt.win.w.height;
 	if (set_overlay_fmt & FmtField)
 		win.field = overlay_fmt.fmt.win.field;
-	if (clips.size()) {
+	if (!clips.empty()) {
 		win.clipcount = clips.size();
 		win.clips = &clips[0];
 	}
-	if (bitmap_rects.size()) {
+	if (!bitmap_rects.empty()) {
 		free(bitmap);
 		stride = (win.w.width + 7) / 8;
 		bitmap = (unsigned char *)calloc(1, stride * win.w.height);
@@ -471,7 +471,7 @@ void overlay_set(cv4l_fd &_fd)
 
 	if ((options[OptSetOverlayFormat] || options[OptTryOverlayFormat]) &&
 			(set_overlay_fmt || options[OptClearClips] || options[OptClearBitmap] ||
-			 bitmap_rects.size() || clips.size())) {
+			 !bitmap_rects.empty() || !clips.empty())) {
 		struct v4l2_format fmt;
 
 		memset(&fmt, 0, sizeof(fmt));

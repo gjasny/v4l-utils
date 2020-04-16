@@ -2309,7 +2309,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	if (msgs.size())
+	if (!msgs.empty())
 		warn_if_unconfigured = true;
 
 	if (store_pin && analyze_pin) {

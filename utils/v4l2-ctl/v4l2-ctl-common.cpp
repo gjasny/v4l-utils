@@ -1007,7 +1007,7 @@ void common_set(cv4l_fd &_fd)
 				}
 				continue;
 			}
-			if (iter->second.size()) {
+			if (!iter->second.empty()) {
 				ctrls.which = iter->first;
 				ctrls.count = iter->second.size();
 				ctrls.controls = &iter->second[0];
@@ -1133,7 +1133,7 @@ void common_get(cv4l_fd &_fd)
 				}
 				continue;
 			}
-			if (iter->second.size()) {
+			if (!iter->second.empty()) {
 				ctrls.which = iter->first;
 				ctrls.count = iter->second.size();
 				ctrls.controls = &iter->second[0];
