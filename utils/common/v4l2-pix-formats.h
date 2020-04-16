@@ -40,6 +40,7 @@
 	case V4L2_PIX_FMT_Y6: return "6-bit Greyscale";
 	case V4L2_PIX_FMT_Y10: return "10-bit Greyscale";
 	case V4L2_PIX_FMT_Y12: return "12-bit Greyscale";
+	case V4L2_PIX_FMT_Y14: return "14-bit Greyscale";
 	case V4L2_PIX_FMT_Y16: return "16-bit Greyscale";
 	case V4L2_PIX_FMT_Y16_BE: return "16-bit Greyscale BE";
 	case V4L2_PIX_FMT_Y10BPACK: return "10-bit Greyscale (Packed)";
@@ -124,6 +125,10 @@
 	case V4L2_PIX_FMT_SGBRG12P: return "12-bit Bayer GBGB/RGRG Packed";
 	case V4L2_PIX_FMT_SGRBG12P: return "12-bit Bayer GRGR/BGBG Packed";
 	case V4L2_PIX_FMT_SRGGB12P: return "12-bit Bayer RGRG/GBGB Packed";
+	case V4L2_PIX_FMT_SBGGR14: return "14-bit Bayer BGBG/GRGR";
+	case V4L2_PIX_FMT_SGBRG14: return "14-bit Bayer GBGB/RGRG";
+	case V4L2_PIX_FMT_SGRBG14: return "14-bit Bayer GRGR/BGBG";
+	case V4L2_PIX_FMT_SRGGB14: return "14-bit Bayer RGRG/GBGB";
 	case V4L2_PIX_FMT_SBGGR14P: return "14-bit Bayer BGBG/GRGR Packed";
 	case V4L2_PIX_FMT_SGBRG14P: return "14-bit Bayer GBGB/RGRG Packed";
 	case V4L2_PIX_FMT_SGRBG14P: return "14-bit Bayer GRGR/BGBG Packed";
