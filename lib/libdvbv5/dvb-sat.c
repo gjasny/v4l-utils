@@ -715,7 +715,7 @@ int dvb_sat_set_parms(struct dvb_v5_fe_parms *p)
 
 	rc = dvbsat_diseqc_set_input(parms, t);
 
-	freq = abs(freq - parms->freq_offset);
+	freq = freq - parms->freq_offset;
 
 	if (parms->p.verbose)
 		dvb_log("L-Band frequency: %.2f MHz (offset = %.2f MHz)", freq / 1000., parms->freq_offset/1000.);
