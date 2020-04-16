@@ -81,35 +81,35 @@ static void encode_pulse_length(struct keymap *map, uint32_t scancode, int *buf,
 	*length = len;
 }
 
+static void manchester_advance_space(int *buf, int *len, unsigned length)
+{
+	if (*len % 2)
+		buf[*len] += length;
+	else
+		buf[++(*len)] = length;
+}
+
+static void manchester_advance_pulse(int *buf, int *len, unsigned length)
+{
+	if (*len % 2)
+		buf[++(*len)] = length;
+	else
+		buf[*len] += length;
+}
+
 static void encode_manchester(struct keymap *map, uint32_t scancode, int *buf, int *length)
 {
 	int len = 0, bits, i;
-
-	void advance_space(unsigned length)
-	{
-		if (len % 2)
-			buf[len] += length;
-		else
-			buf[++len] = length;
-	}
-
-	void advance_pulse(unsigned length)
-	{
-		if (len % 2)
-			buf[++len] = length;
-		else
-			buf[len] += length;
-	}
 
 	bits = keymap_param(map, "bits", 14);
 
 	for (i = bits - 1; i >= 0; i--) {
 		if (scancode & (1 << i)) {
-			advance_pulse(keymap_param(map, "one_pulse", 888));
-			advance_space(keymap_param(map, "one_space", 888));
+			manchester_advance_pulse(buf, &len, keymap_param(map, "one_pulse", 888));
+			manchester_advance_space(buf, &len, keymap_param(map, "one_space", 888));
 		} else {
-			advance_space(keymap_param(map, "zero_space", 888));
-			advance_pulse(keymap_param(map, "zero_pulse", 888));
+			manchester_advance_space(buf, &len, keymap_param(map, "zero_space", 888));
+			manchester_advance_pulse(buf, &len, keymap_param(map, "zero_pulse", 888));
 		}
 	}
 
