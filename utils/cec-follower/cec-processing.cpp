@@ -214,9 +214,7 @@ static bool pa_are_adjacent(__u16 pa1, __u16 pa2)
 		return false;
 	if ((pa1 & trail_mask) || (pa2 & trail_mask))
 		return false;
-	if (!((pa1 & ~mask) && (pa2 & ~mask)))
-		return true;
-	return false;
+	return !((pa1 & ~mask) && (pa2 & ~mask));
 }
 
 static bool pa_is_upstream_from(__u16 pa1, __u16 pa2)
@@ -225,9 +223,7 @@ static bool pa_is_upstream_from(__u16 pa1, __u16 pa2)
 
 	if (pa1 == CEC_PHYS_ADDR_INVALID || pa2 == CEC_PHYS_ADDR_INVALID)
 		return false;
-	if (!(pa1 & ~mask) && (pa2 & ~mask))
-		return true;
-	return false;
+	return !(pa1 & ~mask) && (pa2 & ~mask);
 }
 
 static __u8 current_power_state(struct node *node)
