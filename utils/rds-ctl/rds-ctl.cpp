@@ -28,6 +28,7 @@
 #include <libv4l2rds.h>
 
 #include <cctype>
+#include <cmath>
 #include <ctime>
 #include <list>
 #include <vector>
@@ -916,8 +917,8 @@ static void get_options(const int fd, const int capabilities, struct v4l2_freque
 			else
 				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
 					 vt.rangelow / 16.0, vt.rangehigh / 16.0);
-			printf("\tSignal strength/AFC  : %d%%/%d\n",
-				(int)((vt.signal / 655.35)+0.5), vt.afc);
+			printf("\tSignal strength/AFC  : %ld%%/%d\n",
+				std::lround(vt.signal / 655.35), vt.afc);
 			printf("\tCurrent audio mode   : %s\n", audmode2s(vt.audmode));
 			printf("\tAvailable subchannels: %s\n",
 					rxsubchans2s(vt.rxsubchans).c_str());

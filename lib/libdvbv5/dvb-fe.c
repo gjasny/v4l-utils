@@ -1639,7 +1639,7 @@ static int __dvb_fe_snprintf_eng(char *buf, int len, float val, int metric)
 	 * Converts the number into an expoent and a
 	 * value between 0 and 1000, exclusive
 	 */
-	exp = (int)log10(val);
+	exp = (int)log10f(val);
 	if (exp > 0)
 		exp = (exp / 3) * 3;
 	else
