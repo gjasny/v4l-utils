@@ -692,8 +692,8 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 			   signalize that we support SAC. */
 			if (cec_has_tv(1 << me))
 				return;
-			else
-				break;
+
+			break;
 		}
 		cec_ops_set_system_audio_mode(&msg, &system_audio_status);
 		if (system_audio_status == CEC_OP_SYS_AUD_STATUS_ON)

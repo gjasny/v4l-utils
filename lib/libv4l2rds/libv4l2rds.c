@@ -306,7 +306,7 @@ static bool rds_add_tmc_af(struct rds_private_state *priv_state)
 	}
 
 	/* mapped frequency pair */
-	else if (variant == 7) {
+	if (variant == 7) {
 		/* check if there's already a frequency mapped to the new tuning
 		 * frequency, update the mapped frequency in this case */
 		for (int i = 0; i < afi->mapped_af_size; i++) {

@@ -352,9 +352,9 @@ static int osd_string_set_default(struct node *node, unsigned me, unsigned la, b
 			(node->remote[la].dev_features & CEC_OP_FEAT_DEV_HAS_SET_OSD_STRING));
 	if (unrecognized_op(&msg))
 		return OK_NOT_SUPPORTED;
-	else if (refused(&msg))
+	if (refused(&msg))
 		return OK_REFUSED;
-	else if (cec_msg_status_is_abort(&msg)) {
+	if (cec_msg_status_is_abort(&msg)) {
 		warn("The device is in an unsuitable state or cannot display the complete message.\n");
 		unsuitable = true;
 	}
@@ -402,8 +402,8 @@ static int osd_string_set_until_clear(struct node *node, unsigned me, unsigned l
 
 	if (interactive)
 		return 0;
-	else
-		return OK_PRESUMED;
+
+	return OK_PRESUMED;
 }
 
 static int osd_string_invalid(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -480,8 +480,8 @@ static int routing_control_active_source(struct node *node, unsigned me, unsigne
 
 	if (interactive)
 		return 0;
-	else
-		return OK_PRESUMED;
+
+	return OK_PRESUMED;
 }
 
 static int routing_control_req_active_source(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -529,9 +529,8 @@ static int routing_control_set_stream_path(struct node *node, unsigned me, unsig
 
 	if (interactive || node->remote[la].cec_version >= CEC_OP_CEC_VERSION_2_0)
 		return 0;
-	else
-		return OK_PRESUMED;
-	return 0;
+
+	return OK_PRESUMED;
 }
 
 static struct remote_subtest routing_control_subtests[] = {
@@ -900,10 +899,10 @@ static int tuner_ctl_test(struct node *node, unsigned me, unsigned la, bool inte
 			if (abort_reason(&msg) == CEC_OP_ABORT_REFUSED) {
 				warn("Tuner step increment does not wrap.\n");
 				break;
-			} else {
-				warn("Tuner at end of service list did not receive feature abort refused.\n");
-				break;
 			}
+
+			warn("Tuner at end of service list did not receive feature abort refused.\n");
+			break;
 		}
 		cec_msg_init(&msg, me, la);
 		cec_msg_give_tuner_device_status(&msg, true, CEC_OP_STATUS_REQ_ONCE);
@@ -1050,8 +1049,8 @@ static int one_touch_rec_off(struct node *node, unsigned me, unsigned la, bool i
 		return OK_PRESUMED;
 	if (timed_out(&msg))
 		return OK_PRESUMED;
-	else
-		return 0;
+
+	return 0;
 }
 
 static int one_touch_rec_status(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -1332,8 +1331,8 @@ static int cdc_hec_discover(struct node *node, unsigned me, unsigned la, bool pr
 		if (msg.msg[1] == CEC_MSG_FEATURE_ABORT) {
 			if (from == la)
 				return fail("Device replied Feature Abort to broadcast message\n");
-			else
-				warn("Device %d replied Feature Abort to broadcast message\n", cec_msg_initiator(&msg));
+
+			warn("Device %d replied Feature Abort to broadcast message\n", cec_msg_initiator(&msg));
 		}
 		if (msg.msg[1] != CEC_MSG_CDC_MESSAGE)
 			continue;

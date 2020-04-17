@@ -640,9 +640,9 @@ const char *dvb_cmd_name(int cmd)
 {
 	if (cmd >= 0 && cmd < ARRAY_SIZE(dvb_v5_name))
 		return dvb_v5_name[cmd];
-	else if (cmd >= DTV_USER_COMMAND_START && cmd <= DTV_MAX_USER_COMMAND)
+	if (cmd >= DTV_USER_COMMAND_START && cmd <= DTV_MAX_USER_COMMAND)
 		return dvb_user_name[cmd - DTV_USER_COMMAND_START];
-	else if (cmd >= DTV_STAT_COMMAND_START && cmd <= DTV_MAX_STAT_COMMAND)
+	if (cmd >= DTV_STAT_COMMAND_START && cmd <= DTV_MAX_STAT_COMMAND)
 		return dvb_stat_name[cmd - DTV_STAT_COMMAND_START];
 	return NULL;
 }
@@ -1169,10 +1169,11 @@ static enum dvb_quality cnr_arr_to_qual(uint32_t modulation,
 		if (modulation == arr[i].modulation) {
 			if (cnr < arr[i].cnr_ok)
 				return DVB_QUAL_POOR;
-			else if (cnr < arr[i].cnr_good)
+
+			if (cnr < arr[i].cnr_good)
 				return DVB_QUAL_OK;
-			else
-				return DVB_QUAL_GOOD;
+
+			return DVB_QUAL_GOOD;
 
 		}
 	}
@@ -1367,10 +1368,11 @@ enum dvb_quality dvb_fe_retrieve_quality(struct dvb_v5_fe_parms *p,
 
 		if (ber > 1e-3)	/* FIXME: good enough???? */
 			return DVB_QUAL_POOR;
+
 		if (ber <= 2e-4)		/* BER = 10^-11 at TS */
 			return DVB_QUAL_GOOD;
-		else
-			qual = DVB_QUAL_OK;	/* OK or good */
+
+		qual = DVB_QUAL_OK;	/* OK or good */
 	}
 
 	cnr = dvb_fe_retrieve_stats_layer(&parms->p, DTV_STAT_CNR, layer);
@@ -1665,15 +1667,15 @@ static int __dvb_fe_snprintf_eng(char *buf, int len, float val, int metric)
 		if (signal > 0)
 			return snprintf(buf, len, " %.*fx10^%d", digits - 1,
 					val, exp);
-		else
-			return snprintf(buf, len, " -%.*fx10^%d", digits - 1,
+
+		return snprintf(buf, len, " -%.*fx10^%d", digits - 1,
 					val, exp);
-	} else {
-		if (signal > 0)
-			return snprintf(buf, len, " %.*f", digits - 1, val);
-		else
-			return snprintf(buf, len, " -%.*f", digits - 1, val);
 	}
+
+	if (signal > 0)
+		return snprintf(buf, len, " %.*f", digits - 1, val);
+
+	return snprintf(buf, len, " -%.*f", digits - 1, val);
 }
 
 int dvb_fe_snprintf_eng(char *buf, int len, float val)

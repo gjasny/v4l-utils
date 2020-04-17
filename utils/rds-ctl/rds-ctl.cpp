@@ -691,7 +691,8 @@ static void read_rds(struct v4l2_rds *handle, const int fd, const int wait_limit
 			if (byte_cnt == 0) {
 				printf("\nEnd of input file reached \n");
 				break;
-			} else if(++error_cnt > 2) {
+			}
+			if (++error_cnt > 2) {
 				fprintf(stderr, "\nError reading from "
 					"device (no RDS data available)\n");
 				break;

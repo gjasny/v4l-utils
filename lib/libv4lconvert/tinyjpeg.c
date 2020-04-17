@@ -393,7 +393,7 @@ static void process_Huffman_data_unit(struct jdec_private *priv, int component)
 		if (size_val == 0) { /* RLE */
 			if (count_0 == 0)
 				break;	/* EOB found, go out */
-			else if (count_0 == 0xF)
+			if (count_0 == 0xF)
 				j += 16;	/* skip 16 zeros */
 		} else {
 			j += count_0;	/* skip count_0 zeroes */

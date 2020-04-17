@@ -266,7 +266,7 @@ static int parse_relo_and_apply(struct bpf_file *bpf_file, GElf_Shdr *shdr,
 			       insn_idx);
 			return 1;
 		}
-		else if (sym.st_shndx == bpf_file->dataidx || sym.st_shndx == bpf_file->bssidx) {
+		if (sym.st_shndx == bpf_file->dataidx || sym.st_shndx == bpf_file->bssidx) {
 			const char *raw = NULL;
 			int value = 0;
 
@@ -310,10 +310,10 @@ static int cmp_symbols(const void *l, const void *r)
 
 	if (lsym->st_value < rsym->st_value)
 		return -1;
-	else if (lsym->st_value > rsym->st_value)
+	if (lsym->st_value > rsym->st_value)
 		return 1;
-	else
-		return 0;
+
+	return 0;
 }
 
 static int load_elf_maps_section(struct bpf_file *bpf_file)

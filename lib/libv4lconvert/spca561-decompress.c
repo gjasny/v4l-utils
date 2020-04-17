@@ -110,8 +110,8 @@ static int fun_C(int *bitfill, int gkw)
 	if (gkw == 0xfe) {
 		if (nbits(bitfill, 1) == 0)
 			return 7;
-		else
-			return -8;
+
+		return -8;
 	}
 
 	if (gkw != 0xff)

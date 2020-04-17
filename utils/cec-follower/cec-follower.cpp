@@ -227,7 +227,7 @@ std::string audio_format_id_code2s(__u8 audio_format_id, __u8 audio_format_code)
 {
 	if (audio_format_id == 0)
 		return audio_format_code2s(audio_format_code);
-	else if (audio_format_id == 1)
+	if (audio_format_id == 1)
 		return extension_type_code2s(audio_format_code);
 	return "Invalid";
 }

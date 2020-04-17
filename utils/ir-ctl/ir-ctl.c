@@ -1159,9 +1159,8 @@ int lirc_receive(struct arguments *args, int fd, unsigned features)
 			// is meaningless, maybe fix the kernel?
 			if (leading_space && msg == LIRC_MODE2_SPACE)
 				continue;
-			else
-				leading_space = false;
 
+			leading_space = false;
 			if (args->oneshot &&
 				(msg == LIRC_MODE2_TIMEOUT ||
 				(msg == LIRC_MODE2_SPACE && val > 19000))) {

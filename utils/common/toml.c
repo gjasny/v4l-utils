@@ -1697,7 +1697,8 @@ int toml_rtots(const char* src_, toml_timestamp_t* ret)
         for (i = 0; i < 10; i++, p++) {
             int xx = *p;
             if (xx == '-') {
-                if (i == 4 || i == 7) continue; else return -1;
+                if (i == 4 || i == 7) continue;
+                return -1;
             }
             if (! ('0' <= xx && xx <= '9')) return -1;
             val = val * 10 + (xx - '0');
@@ -1724,7 +1725,8 @@ int toml_rtots(const char* src_, toml_timestamp_t* ret)
     for (i = 0; i < 8; i++, p++) {
         int xx = *p;
         if (xx == ':') {
-            if (i == 2 || i == 5) continue; else return -1;
+            if (i == 2 || i == 5) continue;
+            return -1;
         }
         if (! ('0' <= xx && xx <= '9')) return -1;
         val = val * 10 + (xx - '0');

@@ -287,9 +287,8 @@ static void print_regs(int fd, struct v4l2_dbg_register *reg, unsigned long min,
 		if (ioctl(fd, VIDIOC_DBG_G_REGISTER, reg) < 0) {
 			perror("ioctl: VIDIOC_DBG_G_REGISTER failed\n");
 			break;
-		} else {
-			printf("%0*llx ", 2 * stride, reg->val);
 		}
+		printf("%0*llx ", 2 * stride, reg->val);
 		usleep(1);
 	}
 	printf("\n");

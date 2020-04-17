@@ -88,7 +88,8 @@ void rle_decompress(__u8 *b, unsigned size, unsigned rle_size, unsigned bpl)
 			i += 4;
 			next_line = dst + bpl / 4;
 			continue;
-		} else if (v == magic_x) {
+		}
+		if (v == magic_x) {
 			v = *++p;
 			n = ntohl(*++p);
 			i += 8;

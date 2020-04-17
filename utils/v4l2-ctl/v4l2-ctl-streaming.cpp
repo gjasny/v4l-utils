@@ -2490,7 +2490,8 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		if (rc == 0) {
 			fprintf(stderr, "Timeout when waiting for media request\n");
 			return;
-		} else if (rc < 0) {
+		}
+		if (rc < 0) {
 			fprintf(stderr, "Unable to select media request: %s\n",
 				strerror(errno));
 			return;
@@ -2654,7 +2655,8 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 			      V4L2_CAP_VIDEO_M2M_MPLANE))) {
 		fprintf(stderr, "unsupported capture stream type\n");
 		return;
-	} else if (!(out_capabilities & (V4L2_CAP_VIDEO_OUTPUT |
+	}
+	if (!(out_capabilities & (V4L2_CAP_VIDEO_OUTPUT |
 					 V4L2_CAP_VIDEO_OUTPUT_MPLANE |
 					 V4L2_CAP_VIDEO_M2M |
 					 V4L2_CAP_VIDEO_M2M_MPLANE))) {

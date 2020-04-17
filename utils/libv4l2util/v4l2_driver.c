@@ -436,7 +436,8 @@ int v4l2_gettryset_fmt_cap (struct v4l2_driver *drv, enum v4l2_direction dir,
 			perror("VIDIOC_G_FMT failed\n");
 		}
 		return ret;
-	} else if (dir & (~(V4L2_TRY|V4L2_SET)) ) {
+	}
+	if (dir & (~(V4L2_TRY | V4L2_SET)) ) {
 		perror ("Invalid direction\n");
 		return EINVAL;
 	}

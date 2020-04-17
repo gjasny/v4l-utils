@@ -240,7 +240,8 @@ static int add_snd_class(struct media_device_entry *md)
 	if (strstr(md->node, "timer")) {
 		md->type = MEDIA_SND_TIMER;
 		return 0;
-	} else if (strstr(md->node, "seq")) {
+	}
+	if (strstr(md->node, "seq")) {
 		md->type = MEDIA_SND_SEQ;
 		return 0;
 	} if (strstr(md->node, "card")) {

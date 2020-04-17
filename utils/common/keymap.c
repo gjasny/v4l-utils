@@ -527,8 +527,8 @@ error_t parse_keymap(char *fname, struct keymap **keymap, bool verbose)
 
 	if (len >= 5 && strcasecmp(fname + len - 5, ".toml") == 0)
 		return parse_toml_keymap(fname, keymap, verbose);
-	else
-		return parse_plain_keymap(fname, keymap, verbose);
+
+	return parse_plain_keymap(fname, keymap, verbose);
 }
 
 int keymap_param(struct keymap *map, const char *name, int fallback)

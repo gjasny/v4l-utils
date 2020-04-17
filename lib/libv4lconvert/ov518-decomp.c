@@ -653,7 +653,8 @@ huffmanDecoderY(int *C, int *pIn, struct comp_info *cinfo)
 
 		if (skip == -1) {
 			break;
-		} else if (skip == 0) {
+		}
+		if (skip == 0) {
 			C[i++] = coeff;
 		} else if (skip == 16) {
 			k = 16;
@@ -697,7 +698,8 @@ huffmanDecoderUV(int *C, int *pIn, struct comp_info *cinfo)
 
 		if (skip == -1) {
 			break;
-		} else if (skip == 0) {
+		}
+		if (skip == 0) {
 			C[i++] = coeff;
 		} else if (skip == 16) {
 			k = 16;
@@ -1327,8 +1329,8 @@ decompress420NoMMXOV518(unsigned char	 *pIn,
 	/* Did we decode enough? */
 	if (cinfo->bytes >= cinfo->rawLen - (897 + 64))
 		return 0;
-	else
-		return 1;
+
+	return 1;
 }
 
 /* Get quantization tables from input

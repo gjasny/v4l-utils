@@ -224,11 +224,11 @@ static int arc_initiate_rx(struct node *node, unsigned me, unsigned la, bool int
 			announce("The device supports ARC but is not ready to initiate.");
 			return 0;
 		}
-		else {
-			warn("Device responded Feature Abort with unexpected abort reason. Assuming no ARC support.\n");
-			unsupported = true;
-		}
+
+		warn("Device responded Feature Abort with unexpected abort reason. Assuming no ARC support.\n");
+		unsupported = true;
 	}
+
 	if (unsupported) {
 		fail_on_test_v2(node->remote[la].cec_version, node->remote[la].source_has_arc_rx);
 		return OK_NOT_SUPPORTED;

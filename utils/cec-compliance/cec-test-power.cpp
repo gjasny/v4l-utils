@@ -166,8 +166,8 @@ static int one_touch_play_view_on_wakeup(struct node *node, unsigned me, unsigne
 
 	if (interactive)
 		return 0;
-	else
-		return OK_PRESUMED;
+
+	return OK_PRESUMED;
 }
 
 static int one_touch_play_image_view_on_wakeup(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -203,8 +203,8 @@ static int one_touch_play_view_on_change(struct node *node, unsigned me, unsigne
 
 	if (interactive)
 		return 0;
-	else
-		return OK_PRESUMED;
+
+	return OK_PRESUMED;
 }
 
 static int one_touch_play_image_view_on_change(struct node *node, unsigned me, unsigned la, bool interactive)
