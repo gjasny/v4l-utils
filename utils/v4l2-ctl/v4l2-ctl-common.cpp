@@ -924,7 +924,7 @@ void common_set(cv4l_fd &_fd)
 			    qc.flags & V4L2_CTRL_FLAG_UPDATE)
 				use_ext_ctrls = true;
 			if (qc.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD) {
-				struct v4l2_ext_controls ctrls = { 0, 1 };
+				struct v4l2_ext_controls ctrls = { { 0 }, 1 };
 				unsigned divide[V4L2_CTRL_MAX_DIMS] = { 0 };
 				ctrl_subset subset;
 				long long v;
