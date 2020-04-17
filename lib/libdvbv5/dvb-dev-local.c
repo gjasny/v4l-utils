@@ -748,7 +748,7 @@ static int dvb_local_dmx_get_pmt_pid(struct dvb_open_descriptor *open_dev, int s
 
 		section_length = ((buf[1] & 0x0f) << 8) | buf[2];
 		if (count != section_length + 3)
-		continue;
+			continue;
 
 		buf += 8;
 		section_length -= 8;

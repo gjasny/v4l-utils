@@ -428,7 +428,8 @@ static void restoreState()
 	if (node->has_outputs) {
 		node->s_output(state.output.index);
 		if (state.output.audioset)
-		node->s_audout(state.aoutput.index);
+			node->s_audout(state.aoutput.index);
+
 		if (node->g_caps() & V4L2_CAP_MODULATOR) {
 			node->s_modulator(state.modulator);
 			node->s_frequency(state.freq);

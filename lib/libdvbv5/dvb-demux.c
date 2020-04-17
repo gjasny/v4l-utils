@@ -178,15 +178,16 @@ int dvb_get_pmt_pid(int patfd, int sid)
 
 	while (!patread){
 		if (((count = read(patfd, buf, sizeof(buft))) < 0) && errno == EOVERFLOW)
-		count = read(patfd, buf, sizeof(buft));
+			count = read(patfd, buf, sizeof(buft));
+
 		if (count < 0) {
-		perror("read_sections: read error");
-		return -1;
+			perror("read_sections: read error");
+			return -1;
 		}
 
 		section_length = ((buf[1] & 0x0f) << 8) | buf[2];
 		if (count != section_length + 3)
-		continue;
+			continue;
 
 		buf += 8;
 		section_length -= 8;
