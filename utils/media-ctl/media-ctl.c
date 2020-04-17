@@ -213,7 +213,7 @@ static void v4l2_subdev_print_dv_timings(const struct v4l2_dv_timings *timings,
 
 		printf(" %ux%u%s%llu (%ux%u)",
 		       bt->width, bt->height, bt->interlaced ? "i" : "p",
-		       (htotal * vtotal) > 0 ? (bt->pixelclock / (htotal * vtotal)) : 0,
+		       (htotal * vtotal) > 0 ? (bt->pixelclock / (htotal * vtotal)) : 0ULL,
 		       htotal, vtotal);
 
 		printf(" stds:");
