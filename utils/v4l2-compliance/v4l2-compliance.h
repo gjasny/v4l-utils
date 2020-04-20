@@ -263,7 +263,7 @@ int check_0(const void *p, int len);
 int restoreFormat(struct node *node);
 void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_node, media_type type,
 	      unsigned frame_count, unsigned all_fmt_frame_count);
-std::string stream_from(std::string pixelformat, bool &use_hdr);
+std::string stream_from(const std::string &pixelformat, bool &use_hdr);
 
 // Media Controller ioctl tests
 int testMediaDeviceInfo(struct node *node);

@@ -301,7 +301,7 @@ int check_0(const void *p, int len)
 static std::map<std::string, std::string> stream_from_map;
 static std::map<std::string, bool> stream_hdr_map;
 
-std::string stream_from(std::string pixelformat, bool &use_hdr)
+std::string stream_from(const std::string &pixelformat, bool &use_hdr)
 {
 	if (stream_from_map.find(pixelformat) == stream_from_map.end()) {
 		if (pixelformat.empty())
