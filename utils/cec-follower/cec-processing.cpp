@@ -885,7 +885,7 @@ void testProcessing(struct node *node, bool wallclock)
 
 	poll_remote_devs(node, me);
 
-	while (1) {
+	while (true) {
 		int res;
 		struct timeval timeval = {};
 

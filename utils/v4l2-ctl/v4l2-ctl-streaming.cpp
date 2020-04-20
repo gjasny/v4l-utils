@@ -2742,7 +2742,7 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 	if (use_poll)
 		fcntl(fd.g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
 
-	while (1) {
+	while (true) {
 		struct timeval tv = { use_poll ? 2 : 0, 0 };
 		int r = 0;
 

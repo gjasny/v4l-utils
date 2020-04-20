@@ -442,7 +442,7 @@ int main(int argc, char **argv)
 			short_options[idx++] = ':';
 		}
 	}
-	while (1) {
+	while (true) {
 		int option_index = 0;
 
 		short_options[idx] = 0;

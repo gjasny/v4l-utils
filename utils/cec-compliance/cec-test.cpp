@@ -889,7 +889,7 @@ static int tuner_ctl_test(struct node *node, unsigned me, unsigned la, bool inte
 	if (ret)
 		return ret;
 
-	while (1) {
+	while (true) {
 		cec_msg_init(&msg, me, la);
 		cec_msg_tuner_step_increment(&msg);
 		fail_on_test(!transmit(node, &msg));

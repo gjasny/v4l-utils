@@ -1145,7 +1145,7 @@ int main(int argc, char **argv)
 			short_options[idx++] = ':';
 		}
 	}
-	while (1) {
+	while (true) {
 		int option_index = 0;
 
 		short_options[idx] = 0;
@@ -1531,7 +1531,7 @@ int main(int argc, char **argv)
 			__u32 seq = 0;
 
 			fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
-			while (1) {
+			while (true) {
 				int res;
 
 				FD_ZERO(&fds);
@@ -1572,7 +1572,7 @@ int main(int argc, char **argv)
 
 			fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 			epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &epoll_ev);
-			while (1) {
+			while (true) {
 				int res;
 
 				res = epoll_wait(epollfd, &epoll_ev, 1, -1);

@@ -1863,7 +1863,7 @@ int main(int argc, char **argv)
 		if (long_options[i].has_arg == required_argument)
 			short_options[idx++] = ':';
 	}
-	while (1) {
+	while (true) {
 		int option_index = 0;
 		struct cec_msg msg;
 
