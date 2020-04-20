@@ -224,7 +224,7 @@ bool calc_cvt_modeline(int image_width, int image_height,
 		if (ideal_blank_duty_cycle < 20 * HV_FACTOR)
 			ideal_blank_duty_cycle = 20 * HV_FACTOR;
 
-		h_blank = active_h_pixel * (long long)ideal_blank_duty_cycle /
+		h_blank = active_h_pixel * static_cast<long long>(ideal_blank_duty_cycle) /
 			 (100 * HV_FACTOR - ideal_blank_duty_cycle);
 		h_blank -= h_blank % (2 * CVT_CELL_GRAN);
 
@@ -238,7 +238,7 @@ bool calc_cvt_modeline(int image_width, int image_height,
 		h_bp = h_blank / 2;
 		h_fp = h_blank - h_bp - h_sync;
 
-		pixel_clock =  ((long long)total_h_pixel * HV_FACTOR * 1000000)
+		pixel_clock =  (static_cast<long long>(total_h_pixel) * HV_FACTOR * 1000000)
 				/ h_period;
 		pixel_clock -= pixel_clock  % clk_gran;
 	} else {
@@ -468,10 +468,10 @@ bool calc_gtf_modeline(int image_width, int image_height,
 	v_blank = v_sync + v_bp + v_fp;
 	total_v_lines = active_v_lines + v_blank;
 
-	v_refresh_est = (2 * HV_FACTOR * (long long)1000000) /
+	v_refresh_est = (2 * HV_FACTOR * static_cast<long long>(1000000)) /
 			(h_period_est * (2 * total_v_lines + interlace) / HV_FACTOR);
 
-	h_period = ((long long)h_period_est * v_refresh_est) /
+	h_period = (static_cast<long long>(h_period_est) * v_refresh_est) /
 		   (v_refresh * HV_FACTOR);
 
 	if (!reduced_blanking)
@@ -481,7 +481,7 @@ bool calc_gtf_modeline(int image_width, int image_height,
 		ideal_blank_duty_cycle = (GTF_S_C_PRIME * HV_FACTOR) -
 				      GTF_S_M_PRIME * h_period / 1000;
 
-	h_blank = active_h_pixel * (long long)ideal_blank_duty_cycle /
+	h_blank = active_h_pixel * static_cast<long long>(ideal_blank_duty_cycle) /
 			 (100 * HV_FACTOR - ideal_blank_duty_cycle);
 	h_blank = ((h_blank + GTF_CELL_GRAN) / (2 * GTF_CELL_GRAN))
 			  * (2 * GTF_CELL_GRAN);
@@ -493,7 +493,7 @@ bool calc_gtf_modeline(int image_width, int image_height,
 	h_fp = h_blank / 2 - h_sync;
 	h_bp = h_fp + h_sync;
 
-	pixel_clock = ((long long)total_h_pixel * HV_FACTOR * 1000000)
+	pixel_clock = (static_cast<long long>(total_h_pixel) * HV_FACTOR * 1000000)
 					/ h_period;
 	/* Not sure if clock value needs to be truncated to multiple
 	 * of 25000. The formula given in standard does not indicate

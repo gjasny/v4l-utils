@@ -379,7 +379,7 @@ static void print_dv_timings(const struct v4l2_dv_timings *t)
 		if (options[OptConcise]) {
 			printf("\t%dx%d%c%.2f %s\n", bt->width, bt->height,
 				bt->interlaced ? 'i' : 'p',
-				(double)bt->pixelclock /
+				static_cast<double>(bt->pixelclock) /
 					(tot_width * (tot_height / (bt->interlaced ? 2 : 1))),
 				dvflags2s(bt->vsync, bt->flags).c_str());
 			break;
@@ -399,10 +399,10 @@ static void print_dv_timings(const struct v4l2_dv_timings *t)
 		printf("\tPixelclock: %lld Hz", bt->pixelclock);
 		if (bt->width && bt->height) {
 			if (bt->interlaced)
-				printf(" (%.2f fields per second)", (double)bt->pixelclock /
+				printf(" (%.2f fields per second)", static_cast<double>(bt->pixelclock) /
 					(tot_width * (tot_height / 2)));
 			else
-				printf(" (%.2f frames per second)", (double)bt->pixelclock /
+				printf(" (%.2f frames per second)", static_cast<double>(bt->pixelclock) /
 					(tot_width * tot_height));
 		}
 		printf("\n");
@@ -495,7 +495,7 @@ void stds_set(cv4l_fd &_fd)
 			}
 		}
 		if (doioctl(fd, VIDIOC_S_STD, &standard) == 0)
-			printf("Standard set to %08llx\n", (unsigned long long)standard);
+			printf("Standard set to %08llx\n", static_cast<unsigned long long>(standard));
 	}
 
 	if (options[OptSetDvBtTimings]) {
@@ -585,7 +585,7 @@ void stds_get(cv4l_fd &_fd)
 
 	if (options[OptGetStandard]) {
 		if (doioctl(fd, VIDIOC_G_STD, &standard) == 0) {
-			printf("Video Standard = 0x%08llx\n", (unsigned long long)standard);
+			printf("Video Standard = 0x%08llx\n", static_cast<unsigned long long>(standard));
 			printf("\t%s\n", std2s(standard, "\n\t").c_str());
 		}
 	}
@@ -624,7 +624,7 @@ void stds_get(cv4l_fd &_fd)
 
         if (options[OptQueryStandard]) {
 		if (doioctl(fd, VIDIOC_QUERYSTD, &standard) == 0) {
-			printf("Video Standard = 0x%08llx\n", (unsigned long long)standard);
+			printf("Video Standard = 0x%08llx\n", static_cast<unsigned long long>(standard));
 			printf("\t%s\n", std2s(standard, "\n\t").c_str());
 		}
 	}
@@ -647,12 +647,12 @@ void stds_list(cv4l_fd &_fd)
 		while (test_ioctl(fd, VIDIOC_ENUMSTD, &vs) >= 0) {
 			if (options[OptConcise]) {
 				printf("\t%2d: 0x%016llX %s\n", vs.index,
-						(unsigned long long)vs.id, vs.name);
+						static_cast<unsigned long long>(vs.id), vs.name);
 			} else {
 				if (vs.index)
 					printf("\n");
 				printf("\tIndex       : %d\n", vs.index);
-				printf("\tID          : 0x%016llX\n", (unsigned long long)vs.id);
+				printf("\tID          : 0x%016llX\n", static_cast<unsigned long long>(vs.id));
 				printf("\tName        : %s\n", vs.name);
 				printf("\tFrame period: %d/%d\n",
 						vs.frameperiod.numerator,

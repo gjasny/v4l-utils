@@ -147,7 +147,7 @@ void dvb_table_pmt_free(struct dvb_table_pmt *pmt)
 		stream = stream->next;
 		free(tmp);
 	}
-	dvb_desc_free((struct dvb_desc **) &pmt->descriptor);
+	dvb_desc_free(&pmt->descriptor);
 	free(pmt);
 }
 

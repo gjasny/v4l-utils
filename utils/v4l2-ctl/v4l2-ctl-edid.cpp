@@ -235,7 +235,7 @@ static void edid_add_block(struct v4l2_edid *e)
 		e->edid = NULL;
 		exit(1);
 	}
-	e->edid = (unsigned char *)realloc(e->edid, e->blocks * 128);
+	e->edid = static_cast<unsigned char *>(realloc(e->edid, e->blocks * 128));
 }
 
 static void read_edid_file(FILE *f, struct v4l2_edid *e)
@@ -1332,7 +1332,7 @@ void edid_get(cv4l_fd &_fd)
 				exit(1);
 			}
 		}
-		gedid.edid = (unsigned char *)malloc(gedid.blocks * 128);
+		gedid.edid = static_cast<unsigned char *>(malloc(gedid.blocks * 128));
 		if (doioctl(fd, VIDIOC_G_EDID, &gedid) == 0) {
 			if (options[OptFixEdidChecksums])
 				fix_edid(&gedid);
@@ -1344,7 +1344,7 @@ void edid_get(cv4l_fd &_fd)
 	}
 	if (options[OptInfoEdid]) {
 		info_edid.blocks = 2;
-		info_edid.edid = (unsigned char *)malloc(info_edid.blocks * 128);
+		info_edid.edid = static_cast<unsigned char *>(malloc(info_edid.blocks * 128));
 		if (doioctl(fd, VIDIOC_G_EDID, &info_edid) == 0)
 			print_edid_mods(&info_edid);
 		free(info_edid.edid);

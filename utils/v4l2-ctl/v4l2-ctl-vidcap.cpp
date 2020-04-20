@@ -365,7 +365,7 @@ void print_touch_buffer(FILE *f, cv4l_buffer &buf, cv4l_fmt &fmt, cv4l_queue &q)
 		'.', ',', ':', ';', '!', '|', 'i', 'c',
 		'n', 'o', 'm', 'I', 'C', 'N', 'O', 'M',
 	};
-	__s16 *vbuf = (__s16 *)q.g_dataptr(buf.g_index(), 0);
+	__s16 *vbuf = static_cast<__s16 *>(q.g_dataptr(buf.g_index(), 0));
 	__u32 x, y;
 
 	switch (fmt.g_pixelformat()) {
@@ -374,7 +374,7 @@ void print_touch_buffer(FILE *f, cv4l_buffer &buf, cv4l_fmt &fmt, cv4l_queue &q)
 			fprintf(f, "TD16: ");
 
 			for (x = 0; x < fmt.g_width(); x++, vbuf++) {
-				__s16 v = (__s16)le16toh(*vbuf);
+				__s16 v = static_cast<__s16>(le16toh(*vbuf));
 
 				if (!options[OptConcise])
 					fprintf(f, "% 4d", v);

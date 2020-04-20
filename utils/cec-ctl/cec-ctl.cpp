@@ -386,7 +386,7 @@ std::string ts2s(double ts)
 		sprintf(buf, "%10.06f", ts);
 		return buf;
 	}
-	return ts2s((__u64)(ts * 1000000000.0));
+	return ts2s(static_cast<__u64>(ts * 1000000000.0));
 }
 
 static __u64 current_ts()
@@ -1875,7 +1875,7 @@ int main(int argc, char **argv)
 
 		cec_msg_init(&msg, 0, 0);
 		msg.msg[0] = options[OptTo] ? to : 0xf0;
-		options[(int)ch] = 1;
+		options[ch] = 1;
 
 		switch (ch) {
 		case OptHelp:

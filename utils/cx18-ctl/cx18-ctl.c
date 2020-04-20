@@ -255,7 +255,7 @@ int main(int argc, char **argv)
 		if (ch == -1)
 			break;
 
-		options[(int)ch] = 1;
+		options[ch] = 1;
 		switch (ch) {
 		case OptHelp:
 			usage();
@@ -344,22 +344,22 @@ int main(int argc, char **argv)
 		reg.match.type = V4L2_CHIP_MATCH_HOST;
 		reg.match.addr = 0;
 		reg.reg = CX18_REG_GPIO_DIR1;
-		reg.val = (unsigned)((gpio_dir & 0xffff) << 16);
+		reg.val = ((gpio_dir & 0xffff) << 16);
 		if (gpio_set_dir && doioctl(fd, VIDIOC_DBG_S_REGISTER, &reg,
 			"VIDIOC_DBG_S_REGISTER") == 0)
 			printf("GPIO dir 1 set to 0x%08llx\n", reg.val);
 		reg.reg = CX18_REG_GPIO_DIR2;
-		reg.val = (unsigned)(gpio_dir & 0xffff0000);
+		reg.val = (gpio_dir & 0xffff0000);
 		if (gpio_set_dir && doioctl(fd, VIDIOC_DBG_S_REGISTER, &reg,
 			"VIDIOC_DBG_S_REGISTER") == 0)
 			printf("GPIO dir 2 set to 0x%08llx\n", reg.val);
 		reg.reg = CX18_REG_GPIO_OUT1;
-		reg.val = (unsigned)((gpio_dir & 0xffff) << 16) | (gpio_out & 0xffff);
+		reg.val = ((gpio_dir & 0xffff) << 16) | (gpio_out & 0xffff);
 		if (doioctl(fd, VIDIOC_DBG_S_REGISTER, &reg,
 			"VIDIOC_DBG_S_REGISTER") == 0)
 			printf("GPIO out 1 set to 0x%08llx\n", reg.val);
 		reg.reg = CX18_REG_GPIO_OUT2;
-		reg.val = (unsigned)(gpio_dir & 0xffff0000) | (gpio_out >> 16);
+		reg.val = (gpio_dir & 0xffff0000) | (gpio_out >> 16);
 		if (doioctl(fd, VIDIOC_DBG_S_REGISTER, &reg,
 			"VIDIOC_DBG_S_REGISTER") == 0)
 			printf("GPIO out 2 set to 0x%08llx\n", reg.val);

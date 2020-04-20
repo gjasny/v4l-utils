@@ -402,7 +402,7 @@ static bool digital_update_tuner_dev_info(struct node *node, int idx,
 	default:
 		break;
 	}
-	if (node->state.service_idx != (unsigned)idx && node->state.tuner_report_changes) {
+	if (node->state.service_idx != static_cast<unsigned>(idx) && node->state.tuner_report_changes) {
 		cec_msg_set_reply_to(msg, msg);
 		cec_msg_tuner_device_status(msg, &node->state.tuner_dev_info);
 		transmit(node, msg);

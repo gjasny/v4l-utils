@@ -310,7 +310,7 @@ int main(int argc, char **argv)
 		if (ch == -1)
 			break;
 
-		options[(int)ch] = 1;
+		options[ch] = 1;
 		switch (ch) {
 		case OptSetYuvMode:
 		    {

@@ -133,9 +133,9 @@ ssize_t dvb_table_nit_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 void dvb_table_nit_free(struct dvb_table_nit *nit)
 {
 	struct dvb_table_nit_transport *transport = nit->transport;
-	dvb_desc_free((struct dvb_desc **) &nit->descriptor);
+	dvb_desc_free(&nit->descriptor);
 	while (transport) {
-		dvb_desc_free((struct dvb_desc **) &transport->descriptor);
+		dvb_desc_free(&transport->descriptor);
 		struct dvb_table_nit_transport *tmp = transport;
 		transport = transport->next;
 		free(tmp);

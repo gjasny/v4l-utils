@@ -244,7 +244,7 @@ std::string opcode2s(const struct cec_msg *msg)
 
 		if (name)
 			return name;
-		oss << "CDC: 0x" << std::hex << (unsigned)cdc_opcode;
+		oss << "CDC: 0x" << std::hex << static_cast<unsigned>(cdc_opcode);
 		return oss.str();
 	}
 
@@ -252,7 +252,7 @@ std::string opcode2s(const struct cec_msg *msg)
 
 	if (name)
 		return name;
-	oss << "0x" << std::hex << (unsigned)opcode;
+	oss << "0x" << std::hex << static_cast<unsigned>(opcode);
 	return oss.str();
 }
 
@@ -270,7 +270,7 @@ int cec_named_ioctl(int fd, const char *name,
 			name, retval, strerror(e));
 
 	if (!retval) {
-		const struct cec_msg *msg = (const struct cec_msg *)parm;
+		const struct cec_msg *msg = static_cast<const struct cec_msg *>(parm);
 
 		/* Update the timestamp whenever we successfully transmit to an LA,
 		   or whenever we receive something from the LA */
@@ -340,7 +340,7 @@ int main(int argc, char **argv)
 		if (ch == -1)
 			break;
 
-		options[(int)ch] = 1;
+		options[ch] = 1;
 		if (!option_index) {
 			for (i = 0; long_options[i].val; i++) {
 				if (long_options[i].val == ch) {

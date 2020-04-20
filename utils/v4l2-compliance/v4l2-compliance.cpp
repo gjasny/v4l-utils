@@ -285,12 +285,12 @@ int check_string(const char *s, size_t len)
 
 int check_ustring(const __u8 *s, int len)
 {
-	return check_string((const char *)s, len);
+	return check_string(reinterpret_cast<const char *>(s), len);
 }
 
 int check_0(const void *p, int len)
 {
-	const __u8 *q = (const __u8 *)p;
+	const __u8 *q = static_cast<const __u8 *>(p);
 
 	while (len--)
 		if (*q++)
@@ -630,7 +630,7 @@ static int testCap(struct node *node)
 	    memcmp(vcap.bus_info, "rmi4:", 5))
 		return fail("missing bus_info prefix ('%s')\n", vcap.bus_info);
 	if (!node->media_bus_info.empty() &&
-	    node->media_bus_info != std::string((const char *)vcap.bus_info))
+	    node->media_bus_info != std::string(reinterpret_cast<const char *>(vcap.bus_info)))
 		warn("media bus_info '%s' differs from V4L2 bus_info '%s'\n",
 		     node->media_bus_info.c_str(), vcap.bus_info);
 	fail_on_test((vcap.version >> 16) < 3);
@@ -808,7 +808,7 @@ static void streamingSetup(struct node *node)
 
 static int parse_subopt(char **subs, const char * const *subopts, char **value)
 {
-	int opt = getsubopt(subs, (char * const *)subopts, value);
+	int opt = getsubopt(subs, const_cast<char * const *>(subopts), value);
 
 	if (opt == -1) {
 		fprintf(stderr, "Invalid suboptions specified\n");
@@ -947,10 +947,10 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 
 	if (node.is_v4l2()) {
 		doioctl(&node, VIDIOC_QUERYCAP, &vcap);
-		driver = (const char *)vcap.driver;
+		driver = reinterpret_cast<const char *>(vcap.driver);
 		is_vivid = driver == "vivid";
 		if (is_vivid)
-			node.bus_info = (const char *)vcap.bus_info;
+			node.bus_info = reinterpret_cast<const char *>(vcap.bus_info);
 		determine_codec_mask(node);
 	} else {
 		memset(&vcap, 0, sizeof(vcap));
@@ -1528,7 +1528,7 @@ int main(int argc, char **argv)
 		if (ch == -1)
 			break;
 
-		options[(int)ch] = 1;
+		options[ch] = 1;
 		if (!option_index) {
 			for (i = 0; long_options[i].val; i++) {
 				if (long_options[i].val == ch) {

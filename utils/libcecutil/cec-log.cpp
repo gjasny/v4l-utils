@@ -187,7 +187,7 @@ static void log_features(const struct cec_arg *arg,
 			 const char *arg_name, const __u8 *p)
 {
 	do {
-		log_arg(arg, arg_name, (__u32)((*p) & ~CEC_OP_FEAT_EXT));
+		log_arg(arg, arg_name, static_cast<__u32>((*p) & ~CEC_OP_FEAT_EXT));
 	} while ((*p++) & CEC_OP_FEAT_EXT);
 }
 

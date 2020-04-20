@@ -233,7 +233,7 @@ int testTunerFreq(struct node *node)
 		ret = doioctl(node, VIDIOC_G_TUNER, &tuner);
 		if (ret)
 			return fail("could not get tuner %d\n", t);
-		last_type = (enum v4l2_tuner_type)tuner.type;
+		last_type = static_cast<enum v4l2_tuner_type>(tuner.type);
 		memset(&freq, 0, sizeof(freq));
 		freq.tuner = t;
 		ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
@@ -259,7 +259,7 @@ int testTunerFreq(struct node *node)
 			warn("returned tuner %d frequency out of range (%d not in [%d...%d])\n",
 					t, freq.frequency, tuner.rangelow, tuner.rangehigh);
 
-		freq.type = (enum v4l2_tuner_type)0;
+		freq.type = static_cast<enum v4l2_tuner_type>(0);
 		ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
 		if (ret != EINVAL)
 			return fail("did not return EINVAL when passed tuner type 0\n");

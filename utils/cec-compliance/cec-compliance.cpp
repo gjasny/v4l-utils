@@ -378,7 +378,7 @@ std::string short_audio_desc2s(const struct short_audio_desc &sad)
 		oss << audio_format_code2s(sad.format_code);
 	else
 		oss << extension_type_code2s(sad.extension_type_code);
-	oss << ", " << (int)sad.num_channels << " channels";
+	oss << ", " << static_cast<int>(sad.num_channels) << " channels";
 
 	oss << ", sampling rates (kHz): ";
 	if (sad.sample_freq_mask & SAD_SAMPLE_FREQ_MASK_32)
@@ -631,7 +631,7 @@ std::string opcode2s(const struct cec_msg *msg)
 
 		if (name)
 			return name;
-		oss << "CDC: 0x" << std::hex << (unsigned)cdc_opcode;
+		oss << "CDC: 0x" << std::hex << static_cast<unsigned>(cdc_opcode);
 		return oss.str();
 	}
 
@@ -639,7 +639,7 @@ std::string opcode2s(const struct cec_msg *msg)
 
 	if (name)
 		return name;
-	oss << "0x" << std::hex << (unsigned)opcode;
+	oss << "0x" << std::hex << static_cast<unsigned>(opcode);
 	return oss.str();
 }
 
@@ -648,7 +648,7 @@ int cec_named_ioctl(struct node *node, const char *name,
 {
 	int retval;
 	int e;
-	struct cec_msg *msg = (struct cec_msg *)parm;
+	struct cec_msg *msg = static_cast<struct cec_msg *>(parm);
 	__u8 opcode = 0;
 	std::string opname;
 
@@ -802,7 +802,7 @@ const char *ok(int res)
 
 int check_0(const void *p, int len)
 {
-	const __u8 *q = (const __u8 *)p;
+	const __u8 *q = static_cast<const __u8 *>(p);
 
 	while (len--)
 		if (*q++)
@@ -1175,7 +1175,7 @@ int main(int argc, char **argv)
 		if (ch == -1)
 			break;
 
-		options[(int)ch] = 1;
+		options[ch] = 1;
 		if (!option_index) {
 			for (i = 0; long_options[i].val; i++) {
 				if (long_options[i].val == ch) {

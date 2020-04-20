@@ -256,7 +256,7 @@ int testMediaTopology(struct node *node)
 			fail_on_test(pad.index == ~0U);
 			fail_on_test(v2_entity_pad_idx_set.find((__u64)pad.entity_id << 32 | pad.index) !=
 				     v2_entity_pad_idx_set.end());
-			v2_entity_pad_idx_set.insert((__u64)pad.entity_id << 32 | pad.index);
+			v2_entity_pad_idx_set.insert(static_cast<__u64>(pad.entity_id) << 32 | pad.index);
 		} else {
 			fail_on_test(pad.index);
 		}
@@ -429,7 +429,7 @@ int testMediaEnum(struct node *node)
 				     (MEDIA_PAD_FL_SINK | MEDIA_PAD_FL_SOURCE));
 			if (node->topology &&
 			    MEDIA_V2_PAD_HAS_INDEX(node->media_version)) {
-				__u64 key = (__u64)ent.id << 32 | links.pads[i].index;
+				__u64 key = static_cast<__u64>(ent.id) << 32 | links.pads[i].index;
 
 				fail_on_test(v2_entity_pad_idx_set.find(key) ==
 					     v2_entity_pad_idx_set.end());

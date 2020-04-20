@@ -253,7 +253,7 @@ double fps_timestamps::fps()
 	double period = sum / cnt;
 	double fps = 1.0 / period;
 
-	first += (unsigned)(ts[prev_idx] - first);
+	first += static_cast<unsigned>(ts[prev_idx] - first);
 	return fps;
 };
 
@@ -510,7 +510,7 @@ static void print_buffer(FILE *f, struct v4l2_buffer &buf)
 	fprintf(f, "\tLength   : %u\n", buf.length);
 	fprintf(f, "\tBytesused: %u\n", buf.bytesused);
 	fprintf(f, "\tTimestamp: %llu.%06llus (%s, %s)\n",
-		(__u64)buf.timestamp.tv_sec, (__u64)buf.timestamp.tv_usec,
+		static_cast<__u64>(buf.timestamp.tv_sec), static_cast<__u64>(buf.timestamp.tv_usec),
 		timestamp_type2s(buf.flags).c_str(), timestamp_src2s(buf.flags).c_str());
 	if (buf.flags & V4L2_BUF_FLAG_TIMECODE) {
 		static const int fps_types[] = { 0, 24, 25, 30, 50, 60 };
@@ -721,9 +721,9 @@ void streaming_cmd(int ch, char *optarg)
 		if (speed > 3)
 			speed = 3;
 		if (ch == OptStreamOutHorSpeed)
-			stream_out_hor_mode = (tpg_move_mode)(speed + 3);
+			stream_out_hor_mode = static_cast<tpg_move_mode>(speed + 3);
 		else
-			stream_out_vert_mode = (tpg_move_mode)(speed + 3);
+			stream_out_vert_mode = static_cast<tpg_move_mode>(speed + 3);
 		break;
 	case OptStreamOutPercFill:
 		stream_out_perc_fill = strtoul(optarg, 0L, 0);
@@ -1023,7 +1023,7 @@ static bool fill_buffer_from_file(cv4l_fd &fd, cv4l_queue &q, cv4l_buffer &b,
 		read_u32(fin);  // ignore field
 		read_u32(fin);  // ignore flags
 		for (unsigned j = 0; j < q.g_num_planes(); j++) {
-			__u8 *buf = (__u8 *)q.g_dataptr(b.g_index(), j);
+			__u8 *buf = static_cast<__u8 *>(q.g_dataptr(b.g_index(), j));
 
 			sz = read_u32(fin);
 			if (sz != V4L_STREAM_PACKET_FRAME_VIDEO_SIZE_PLANE_HDR) {
@@ -1052,7 +1052,7 @@ static bool fill_buffer_from_file(cv4l_fd &fd, cv4l_queue &q, cv4l_buffer &b,
 					fprintf(stderr, "error reading %d bytes\n", sz);
 					return false;
 				}
-				if ((__u32)n == sz)
+				if (static_cast<__u32>(n) == sz)
 					break;
 				offset += n;
 				sz -= n;
@@ -1108,10 +1108,10 @@ restart:
 		}
 
 		if (fmt.g_pixelformat() == V4L2_PIX_FMT_FWHT_STATELESS)
-			res = read_fwht_frame(fmt, (unsigned char *)buf, fin,
+			res = read_fwht_frame(fmt, static_cast<unsigned char *>(buf), fin,
 					      sz, expected_len, buf_len);
 		else if (support_out_crop && v4l2_fwht_find_pixfmt(fmt.g_pixelformat()))
-			res = read_write_padded_frame(fmt, (unsigned char *)buf,
+			res = read_write_padded_frame(fmt, static_cast<unsigned char *>(buf),
 						      fin, sz, expected_len, buf_len, true);
 		else
 			sz = fread(buf, 1, expected_len, fin);
@@ -1197,7 +1197,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 		for (p = 0; p < fmt.g_num_planes(); p++)
 			tpg_s_bytesperline(&tpg, p,
 					   fmt.g_bytesperline(p));
-		tpg_s_pattern(&tpg, (tpg_pattern)stream_pat);
+		tpg_s_pattern(&tpg, static_cast<tpg_pattern>(stream_pat));
 		tpg_s_mv_hor_mode(&tpg, stream_out_hor_mode);
 		tpg_s_mv_vert_mode(&tpg, stream_out_vert_mode);
 		tpg_s_show_square(&tpg, stream_out_square);
@@ -1215,7 +1215,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 			tpg_s_pixel_aspect(&tpg, aspect);
 			break;
 		default:
-			tpg_s_pixel_aspect(&tpg, (tpg_pixel_aspect)stream_out_pixel_aspect);
+			tpg_s_pixel_aspect(&tpg, static_cast<tpg_pixel_aspect>(stream_out_pixel_aspect));
 			break;
 		}
 		field = output_field;
@@ -1245,7 +1245,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 
 			if (can_fill) {
 				for (unsigned j = 0; j < q.g_num_planes(); j++)
-					tpg_fillbuffer(&tpg, stream_out_std, j, (u8 *)q.g_dataptr(i, j));
+					tpg_fillbuffer(&tpg, stream_out_std, j, static_cast<u8 *>(q.g_dataptr(i, j)));
 			}
 		}
 		if (is_meta)
@@ -1318,7 +1318,7 @@ static void write_buffer_to_file(cv4l_fd &fd, cv4l_queue &q, cv4l_buffer &buf,
 		for (unsigned j = 0; j < buf.g_num_planes(); j++) {
 			__u32 used = buf.g_bytesused(j);
 			unsigned offset = buf.g_data_offset(j);
-			u8 *p = (u8 *)q.g_dataptr(buf.g_index(), j) + offset;
+			u8 *p = static_cast<u8 *>(q.g_dataptr(buf.g_index(), j)) + offset;
 
 			if (ctx) {
 				comp_ptr[j] = fwht_compress(ctx, p,
@@ -1365,10 +1365,10 @@ static void write_buffer_to_file(cv4l_fd &fd, cv4l_queue &q, cv4l_buffer &buf,
 		if (host_fd_to >= 0)
 			sz = fwrite(comp_ptr[j] + offset, 1, used, fout);
 		else if (support_cap_compose && v4l2_fwht_find_pixfmt(fmt.g_pixelformat()))
-			read_write_padded_frame(fmt, (u8 *)q.g_dataptr(buf.g_index(), j) + offset,
+			read_write_padded_frame(fmt, static_cast<u8 *>(q.g_dataptr(buf.g_index(), j)) + offset,
 						fout, sz, used, used, false);
 		else
-			sz = fwrite((u8 *)q.g_dataptr(buf.g_index(), j) + offset, 1, used, fout);
+			sz = fwrite(static_cast<u8 *>(q.g_dataptr(buf.g_index(), j)) + offset, 1, used, fout);
 
 		if (sz != used)
 			fprintf(stderr, "%u != %u\n", sz, used);
@@ -1500,7 +1500,7 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 			unsigned data_offset = cap->g_data_offset(j);
 
 			if (q.g_memory() == V4L2_MEMORY_USERPTR) {
-				buf.s_userptr((u8 *)cap->g_userptr(j) + data_offset, j);
+				buf.s_userptr(static_cast<u8 *>(cap->g_userptr(j)) + data_offset, j);
 				buf.s_bytesused(cap->g_bytesused(j) - data_offset, j);
 				buf.s_data_offset(0, j);
 			} else if (q.g_memory() == V4L2_MEMORY_DMABUF) {
@@ -1551,7 +1551,7 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 	if (!fin && stream_out_refresh) {
 		for (unsigned j = 0; j < buf.g_num_planes(); j++)
 			tpg_fillbuffer(&tpg, stream_out_std, j,
-				       (u8 *)q.g_dataptr(buf.g_index(), j));
+				       static_cast<u8 *>(q.g_dataptr(buf.g_index(), j)));
 	}
 	if (is_meta)
 		meta_fillbuffer(buf, fmt, q);
@@ -1683,13 +1683,13 @@ static FILE *open_output_file(cv4l_fd &fd)
 		fprintf(stderr, "no such host %s\n", host_to);
 		exit(0);
 	}
-	memset((char *)&serv_addr, 0, sizeof(serv_addr));
+	memset(reinterpret_cast<char *>(&serv_addr), 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
-	memcpy((char *)&serv_addr.sin_addr.s_addr,
-	       (char *)server->h_addr,
+	memcpy(reinterpret_cast<char *>(&serv_addr.sin_addr.s_addr),
+	       server->h_addr,
 	       server->h_length);
 	serv_addr.sin_port = htons(host_port_to);
-	if (connect(host_fd_to, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+	if (connect(host_fd_to, reinterpret_cast<struct sockaddr *>(&serv_addr), sizeof(serv_addr)) < 0) {
 		fprintf(stderr, "could not connect\n");
 		exit(0);
 	}
@@ -1941,13 +1941,13 @@ static FILE *open_input_file(cv4l_fd &fd, __u32 type)
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(host_port_from);
-	if (bind(listen_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+	if (bind(listen_fd, reinterpret_cast<struct sockaddr *>(&serv_addr), sizeof(serv_addr)) < 0) {
 		fprintf(stderr, "could not bind\n");
 		exit(1);
 	}
 	listen(listen_fd, 1);
 	clilen = sizeof(cli_addr);
-	host_fd_from = accept(listen_fd, (struct sockaddr *)&cli_addr, &clilen);
+	host_fd_from = accept(listen_fd, reinterpret_cast<struct sockaddr *>(&cli_addr), &clilen);
 	if (host_fd_from < 0) {
 		fprintf(stderr, "could not accept\n");
 		exit(1);

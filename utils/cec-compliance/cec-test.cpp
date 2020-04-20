@@ -613,7 +613,7 @@ static int dev_menu_ctl_request(struct node *node, unsigned me, unsigned la, boo
 }
 
 static struct remote_subtest dev_menu_ctl_subtests[] = {
-	{ "Menu Request", (__u16)~CEC_LOG_ADDR_MASK_TV, dev_menu_ctl_request },
+	{ "Menu Request", static_cast<__u16>(~CEC_LOG_ADDR_MASK_TV), dev_menu_ctl_request },
 	{ "User Control Pressed", CEC_LOG_ADDR_MASK_ALL, rc_passthrough_user_ctrl_pressed },
 	{ "User Control Released", CEC_LOG_ADDR_MASK_ALL, rc_passthrough_user_ctrl_released },
 };

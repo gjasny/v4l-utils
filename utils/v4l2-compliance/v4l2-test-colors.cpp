@@ -505,7 +505,7 @@ static int testColorsFmt(struct node *node, unsigned component,
 		}
 		fail_on_test(skip);
 		for (unsigned i = 0; i < fmt.g_num_planes(); i++)
-			planes[i] = (__u8 *)q.g_dataptr(buf.g_index(), i);
+			planes[i] = static_cast<__u8 *>(q.g_dataptr(buf.g_index(), i));
 
 	} else {
 		fail_on_test(!(node->g_caps() & V4L2_CAP_READWRITE));
@@ -519,7 +519,7 @@ static int testColorsFmt(struct node *node, unsigned component,
 			ret = node->read(tmp, size);
 			fail_on_test(ret != size);
 		}
-		planes[0] = (__u8 *)tmp;
+		planes[0] = static_cast<__u8 *>(tmp);
 	}
 
 	setupPlanes(fmt, planes);

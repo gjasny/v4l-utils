@@ -396,7 +396,7 @@ static std::string printfmtname(int fd, __u32 type, __u32 pixfmt)
 	fmt.type = type;
 	while (test_ioctl(fd, VIDIOC_ENUM_FMT, &fmt) >= 0) {
 		if (fmt.pixelformat == pixfmt)
-			return s + (const char *)fmt.description + ")";
+			return s + reinterpret_cast<const char *>(fmt.description) + ")";
 		fmt.index++;
 	}
 	return "";
@@ -476,7 +476,7 @@ void printfmt(int fd, const struct v4l2_format &vfmt)
 			}
 		printf("\tClip Bitmap : %s", vfmt.fmt.win.bitmap ? "Yes, " : "No\n");
 		if (vfmt.fmt.win.bitmap) {
-			unsigned char *bitmap = (unsigned char *)vfmt.fmt.win.bitmap;
+			unsigned char *bitmap = static_cast<unsigned char *>(vfmt.fmt.win.bitmap);
 			unsigned stride = (vfmt.fmt.win.w.width + 7) / 8;
 			unsigned cnt = 0;
 
@@ -493,7 +493,7 @@ void printfmt(int fd, const struct v4l2_format &vfmt)
 		printf("\tSampling Rate   : %u Hz\n", vfmt.fmt.vbi.sampling_rate);
 		printf("\tOffset          : %u samples (%g secs after leading edge)\n",
 				vfmt.fmt.vbi.offset,
-				(double)vfmt.fmt.vbi.offset / (double)vfmt.fmt.vbi.sampling_rate);
+				static_cast<double>(vfmt.fmt.vbi.offset) / static_cast<double>(vfmt.fmt.vbi.sampling_rate));
 		printf("\tSamples per Line: %u\n", vfmt.fmt.vbi.samples_per_line);
 		printf("\tSample Format   : '%s'\n", fcc2s(vfmt.fmt.vbi.sample_format).c_str());
 		printf("\tStart 1st Field : %u\n", vfmt.fmt.vbi.start[0]);
@@ -657,7 +657,7 @@ void print_video_formats_ext(cv4l_fd &fd, __u32 type)
 
 int parse_subopt(char **subs, const char * const *subopts, char **value)
 {
-	int opt = getsubopt(subs, (char * const *)subopts, value);
+	int opt = getsubopt(subs, const_cast<char * const *>(subopts), value);
 
 	if (opt == -1) {
 		fprintf(stderr, "Invalid suboptions specified\n");
@@ -886,7 +886,7 @@ int parse_selection_target(const char *s, unsigned int &target)
 static void print_event(const struct v4l2_event *ev)
 {
 	printf("%lld.%06ld: event %u, pending %u: ",
-			(__u64)ev->timestamp.tv_sec, ev->timestamp.tv_nsec / 1000,
+			static_cast<__u64>(ev->timestamp.tv_sec), ev->timestamp.tv_nsec / 1000,
 			ev->sequence, ev->pending);
 	switch (ev->type) {
 	case V4L2_EVENT_VSYNC:
@@ -1154,7 +1154,7 @@ int main(int argc, char **argv)
 		if (ch == -1)
 			break;
 
-		options[(int)ch] = 1;
+		options[ch] = 1;
 		if (!option_index) {
 			for (i = 0; long_options[i].val; i++) {
 				if (long_options[i].val == ch) {

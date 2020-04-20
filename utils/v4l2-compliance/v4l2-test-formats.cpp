@@ -174,7 +174,7 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 				return ret;
 			if (ret == 0 && !(node->g_caps() & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE)))
 				return fail("found discrete framesizes when no video capture is supported\n");
-			cookie = ((__u64)pixfmt << 32) |
+			cookie = (static_cast<__u64>(pixfmt) << 32) |
 				 (frmsize.discrete.width << 16) |
 				 frmsize.discrete.height;
 			node->frmsizes.insert(cookie);
@@ -1727,7 +1727,7 @@ static int testBasicScaling(struct node *node, const struct v4l2_format &cur)
 		compose_is_crop = compose_w == crop_w &&
 				  compose_h == crop_h;
 
-	cookie = ((__u64)v4l_format_g_pixelformat(&fmt) << 32) |
+	cookie = (static_cast<__u64>(v4l_format_g_pixelformat(&fmt)) << 32) |
 		  (v4l_format_g_width(&fmt) << 16) |
 		  v4l_format_g_height(&fmt);
 	if (node->can_output) {
@@ -1767,7 +1767,7 @@ static int testBasicScaling(struct node *node, const struct v4l2_format &cur)
 	if (compose_is_crop)
 		compose_is_crop = sel_compose.r.width == sel_crop.r.width &&
 				  sel_compose.r.height == sel_crop.r.height;
-	cookie = ((__u64)v4l_format_g_pixelformat(&fmt) << 32) |
+	cookie = (static_cast<__u64>(v4l_format_g_pixelformat(&fmt)) << 32) |
 		  (v4l_format_g_width(&fmt) << 16) |
 		  v4l_format_g_height(&fmt);
 	if (node->can_output) {

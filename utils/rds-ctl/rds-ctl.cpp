@@ -314,9 +314,9 @@ static void print_devices(dev_vec files)
 			continue;
 		doioctl(fd, VIDIOC_QUERYCAP, &vcap);
 		close(fd);
-		bus_info = (const char *)vcap.bus_info;
+		bus_info = reinterpret_cast<const char *>(vcap.bus_info);
 	if (cards[bus_info].empty())
-			cards[bus_info] += std::string((char *)vcap.card)
+			cards[bus_info] += std::string(reinterpret_cast<char *>(vcap.card))
 				+ " (" + bus_info + "):\n";
 		cards[bus_info] += "\t" + (*iter);
 		cards[bus_info] += "\n";
@@ -375,7 +375,7 @@ static dev_vec list_devices(void)
 
 static int parse_subopt(char **subs, const char * const *subopts, char **value)
 {
-	int opt = getsubopt(subs, (char * const *)subopts, value);
+	int opt = getsubopt(subs, const_cast<char * const *>(subopts), value);
 
 	if (opt == -1) {
 		fprintf(stderr, "Invalid suboptions specified\n");
@@ -525,7 +525,7 @@ static void print_rds_statistics(const struct v4l2_rds_statistics *statistics)
 
 	if (statistics->block_cnt)
 		block_error_percentage =
-			((float)statistics->block_error_cnt / statistics->block_cnt) * 100.0;
+			(static_cast<float>(statistics->block_error_cnt) / statistics->block_cnt) * 100.0;
 	printf("block errors / group errors: %u (%3.2f%%) / %u \n",
 		statistics->block_error_cnt,
 		block_error_percentage, statistics->group_error_cnt);
@@ -534,7 +534,7 @@ static void print_rds_statistics(const struct v4l2_rds_statistics *statistics)
 
 	if (statistics->block_cnt)
 		block_corrected_percentage = (
-			(float)statistics->block_corrected_cnt / statistics->block_cnt) * 100.0;
+			static_cast<float>(statistics->block_corrected_cnt) / statistics->block_cnt) * 100.0;
 	printf("corrected blocks: %u (%3.2f%%)\n",
 		statistics->block_corrected_cnt, block_corrected_percentage);
 	for (int i = 0; i < 16; i++)
@@ -766,7 +766,7 @@ static int parse_cl(int argc, char **argv)
 		if (opt == -1)
 			break;
 
-		params.options[(int)opt] = 1;
+		params.options[opt] = 1;
 		switch (opt) {
 		case OptSetDevice:
 			strncpy(params.fd_name, optarg, sizeof(params.fd_name) - 1);

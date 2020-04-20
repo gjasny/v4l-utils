@@ -314,8 +314,8 @@ static void list_devices()
 					card = mdi.driver;
 			}
 		} else {
-			bus_info = (const char *)vcap.bus_info;
-			card = (const char *)vcap.card;
+			bus_info = reinterpret_cast<const char *>(vcap.bus_info);
+			card = reinterpret_cast<const char *>(vcap.card);
 		}
 		close(fd);
 		if (err)
@@ -385,7 +385,7 @@ static std::string safename(const unsigned char *name)
 
 static std::string safename(const char *name)
 {
-	return safename((const unsigned char *)name);
+	return safename(reinterpret_cast<const unsigned char *>(name));
 }
 
 static void print_qctrl(int fd, struct v4l2_query_ext_ctrl *queryctrl,
@@ -543,7 +543,7 @@ static int print_control(int fd, struct v4l2_query_ext_ctrl &qctrl, int show_men
 	     qctrl.id < V4L2_CID_PRIVATE_BASE)) {
 		if (qctrl.type == V4L2_CTRL_TYPE_STRING) {
 		    ext_ctrl.size = qctrl.maximum + 1;
-		    ext_ctrl.string = (char *)malloc(ext_ctrl.size);
+		    ext_ctrl.string = static_cast<char *>(malloc(ext_ctrl.size));
 		    ext_ctrl.string[0] = 0;
 		}
 		if (test_ioctl(fd, VIDIOC_G_EXT_CTRLS, &ctrls)) {
@@ -584,8 +584,8 @@ static int query_ext_ctrl_ioctl(int fd, struct v4l2_query_ext_ctrl &qctrl)
 		memcpy(qctrl.name, qc.name, sizeof(qctrl.name));
 		qctrl.minimum = qc.minimum;
 		if (qc.type == V4L2_CTRL_TYPE_BITMASK) {
-			qctrl.maximum = (__u32)qc.maximum;
-			qctrl.default_value = (__u32)qc.default_value;
+			qctrl.maximum = static_cast<__u32>(qc.maximum);
+			qctrl.default_value = static_cast<__u32>(qc.default_value);
 		} else {
 			qctrl.maximum = qc.maximum;
 			qctrl.default_value = qc.default_value;
@@ -840,7 +840,7 @@ void common_cmd(const std::string &media_bus_info, int ch, char *optarg)
 		}
 		break;
 	case OptSetPriority:
-		prio = (enum v4l2_priority)strtoul(optarg, 0L, 0);
+		prio = static_cast<enum v4l2_priority>(strtoul(optarg, 0L, 0));
 		break;
 	case OptListDevices:
 		if (media_bus_info.empty())
@@ -1064,7 +1064,7 @@ static void print_array(const struct v4l2_query_ext_ctrl &qc, void *p)
 		switch (qc.type) {
 		case V4L2_CTRL_TYPE_U8:
 			for (i = from; i <= to; i++) {
-				printf("%4d", ((__u8 *)p)[idx + i]);
+				printf("%4d", (static_cast<__u8 *>(p))[idx + i]);
 				if (i < to)
 					printf(", ");
 			}
@@ -1072,7 +1072,7 @@ static void print_array(const struct v4l2_query_ext_ctrl &qc, void *p)
 			break;
 		case V4L2_CTRL_TYPE_U16:
 			for (i = from; i <= to; i++) {
-				printf("%6d", ((__u16 *)p)[idx + i]);
+				printf("%6d", (static_cast<__u16 *>(p))[idx + i]);
 				if (i < to)
 					printf(", ");
 			}
@@ -1080,7 +1080,7 @@ static void print_array(const struct v4l2_query_ext_ctrl &qc, void *p)
 			break;
 		case V4L2_CTRL_TYPE_U32:
 			for (i = from; i <= to; i++) {
-				printf("%6d", ((__u32 *)p)[idx + i]);
+				printf("%6d", (static_cast<__u32 *>(p))[idx + i]);
 				if (i < to)
 					printf(", ");
 			}

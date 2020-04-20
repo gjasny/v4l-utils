@@ -161,7 +161,7 @@ static bool fill_output_buffer(const cv4l_queue &q, cv4l_buffer &buf, bool first
 		if (!stream_use_hdr) {
 			ssize_t sz = read(stream_from_fd, q.g_dataptr(buf.g_index(), p), len);
 
-			if (sz < (ssize_t)len) {
+			if (sz < static_cast<ssize_t>(len)) {
 				seek = true;
 				break;
 			}
@@ -183,7 +183,7 @@ static bool fill_output_buffer(const cv4l_queue &q, cv4l_buffer &buf, bool first
 
 		ssize_t sz = read(stream_from_fd, q.g_dataptr(buf.g_index(), p), bytesused);
 
-		if (sz < (ssize_t)bytesused) {
+		if (sz < static_cast<ssize_t>(bytesused)) {
 			seek = true;
 			break;
 		}
@@ -432,26 +432,26 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 				fail_on_test(g_field() == seq.last_field);
 				seq.field_nr ^= 1;
 				if (seq.field_nr) {
-					if ((int)g_sequence() != seq.last_seq)
+					if (static_cast<int>(g_sequence()) != seq.last_seq)
 						warn("got sequence number %u, expected %u\n",
 							g_sequence(), seq.last_seq);
 				} else {
 					fail_on_test((int)g_sequence() == seq.last_seq + 1);
-					if ((int)g_sequence() != seq.last_seq + 1)
+					if (static_cast<int>(g_sequence()) != seq.last_seq + 1)
 						warn("got sequence number %u, expected %u\n",
 							g_sequence(), seq.last_seq + 1);
 				}
 			} else {
 				fail_on_test(g_field() != fmt.g_field());
-				if ((int)g_sequence() != seq.last_seq + 1)
+				if (static_cast<int>(g_sequence()) != seq.last_seq + 1)
 					warn("got sequence number %u, expected %u\n",
 							g_sequence(), seq.last_seq + 1);
 			}
-		} else if ((int)g_sequence() != seq.last_seq + 1) {
+		} else if (static_cast<int>(g_sequence()) != seq.last_seq + 1) {
 			warn("got sequence number %u, expected %u\n",
 					g_sequence(), seq.last_seq + 1);
 		}
-		seq.last_seq = (int)g_sequence();
+		seq.last_seq = static_cast<int>(g_sequence());
 		seq.last_field = g_field();
 	} else {
 		fail_on_test(g_sequence());
@@ -985,7 +985,7 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 				       buf.g_index(), buf.g_sequence(),
 				       field2s(buf.g_field()).c_str(), buf.g_bytesused(),
 				       bufferflags2s(buf.g_flags()).c_str(),
-				       (__u64)buf.g_timestamp().tv_sec,  (__u64)buf.g_timestamp().tv_usec);
+				       static_cast<__u64>(buf.g_timestamp().tv_sec),  static_cast<__u64>(buf.g_timestamp().tv_usec));
 			for (unsigned p = 0; p < buf.g_num_planes(); p++) {
 				if (max_bytesused[p] < buf.g_bytesused(p))
 					max_bytesused[p] = buf.g_bytesused(p);
@@ -1072,7 +1072,7 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 			       buf.g_index(), buf.g_sequence(),
 			       field2s(buf.g_field()).c_str(), buf.g_bytesused(),
 			       bufferflags2s(buf.g_flags()).c_str(),
-			       (__u64)buf.g_timestamp().tv_sec, (__u64)buf.g_timestamp().tv_usec);
+			       static_cast<__u64>(buf.g_timestamp().tv_sec), static_cast<__u64>(buf.g_timestamp().tv_usec));
 		fail_on_test(ret);
 		if (v4l_type_is_capture(buf.g_type()) && buf.g_bytesused())
 			fail_on_test(buf.check(m2m_q, last_m2m_seq, true));
@@ -1607,7 +1607,7 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 			for (unsigned p = 0; p < q.g_num_planes(); p++) {
 				/* ensure that len is a multiple of 4 */
 				__u32 len = ((q.g_length(p) + 3) & ~0x3) + 4 * 4096;
-				__u32 *m = (__u32 *)malloc(len);
+				__u32 *m = static_cast<__u32 *>(malloc(len));
 
 				fail_on_test(!m);
 				fail_on_test((uintptr_t)m & 0x7);
@@ -1666,7 +1666,7 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 				__u32 buflen = (q.g_length(p) + 3U) & ~3U;
 				__u32 memlen = buflen + 4 * 4096;
 				__u32 *m = buffers[i][p];
-				__u32 *u = (__u32 *)q.g_userptr(i, p);
+				__u32 *u = static_cast<__u32 *>(q.g_userptr(i, p));
 
 				for (__u32 *x = m; x < u; x++)
 					if (*x != filler)

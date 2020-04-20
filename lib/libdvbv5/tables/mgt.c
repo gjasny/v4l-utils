@@ -121,7 +121,7 @@ void atsc_table_mgt_free(struct atsc_table_mgt *mgt)
 {
 	struct atsc_table_mgt_table *table = mgt->table;
 
-	dvb_desc_free((struct dvb_desc **) &mgt->descriptor);
+	dvb_desc_free(&mgt->descriptor);
 	while (table) {
 		struct atsc_table_mgt_table *tmp = table;
 

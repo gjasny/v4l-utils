@@ -82,7 +82,7 @@ static int checkQCtrl(struct node *node, struct test_query_ext_ctrl &qctrl)
 			return fail("step == 0\n");
 		if (qctrl.step < 0)
 			return fail("step < 0\n");
-		if ((unsigned)qctrl.step > (unsigned)(qctrl.maximum - qctrl.minimum) &&
+		if (static_cast<unsigned>(qctrl.step) > static_cast<unsigned>(qctrl.maximum - qctrl.minimum) &&
 		    qctrl.maximum != qctrl.minimum)
 			return fail("step > max - min\n");
 		if ((qctrl.maximum - qctrl.minimum) % qctrl.step) {
@@ -162,7 +162,7 @@ static int checkQCtrl(struct node *node, struct test_query_ext_ctrl &qctrl)
 			continue;
 		if (i < qctrl.minimum || i > qctrl.maximum)
 			return fail("can get menu for out-of-range index\n");
-		if (qmenu.index != (__u32)i || qmenu.id != qctrl.id)
+		if (qmenu.index != static_cast<__u32>(i) || qmenu.id != qctrl.id)
 			return fail("id or index changed\n");
 		if (qctrl.type == V4L2_CTRL_TYPE_MENU &&
 		    check_ustring(qmenu.name, sizeof(qmenu.name)))
@@ -369,7 +369,7 @@ static int checkSimpleCtrl(struct v4l2_control &ctrl, struct test_query_ext_ctrl
 		}
 		break;
 	case V4L2_CTRL_TYPE_BITMASK:
-		if ((__u32)ctrl.value & ~qctrl.maximum)
+		if (static_cast<__u32>(ctrl.value) & ~qctrl.maximum)
 			return fail("returned control value out of range\n");
 		break;
 	case V4L2_CTRL_TYPE_BUTTON:
@@ -556,7 +556,7 @@ static int checkExtendedCtrl(struct v4l2_ext_control &ctrl, struct test_query_ex
 		}
 		break;
 	case V4L2_CTRL_TYPE_BITMASK:
-		if ((__u32)ctrl.value & ~qctrl.maximum)
+		if (static_cast<__u32>(ctrl.value) & ~qctrl.maximum)
 			return fail("returned control value out of range\n");
 		break;
 	case V4L2_CTRL_TYPE_BUTTON:
@@ -932,9 +932,9 @@ int testJpegComp(struct node *node)
 		if (ret)
 			return fail("VIDIOC_G_JPEGCOMP gave an error\n");
 		have_jpegcomp = true;
-		if (jc.COM_len < 0 || jc.COM_len > (int)sizeof(jc.COM_data))
+		if (jc.COM_len < 0 || jc.COM_len > static_cast<int>(sizeof(jc.COM_data)))
 			return fail("invalid COM_len value\n");
-		if (jc.APP_len < 0 || jc.APP_len > (int)sizeof(jc.APP_data))
+		if (jc.APP_len < 0 || jc.APP_len > static_cast<int>(sizeof(jc.APP_data)))
 			return fail("invalid APP_len value\n");
 		if (jc.quality < 0 || jc.quality > 100)
 			warn("weird quality value: %d\n", jc.quality);

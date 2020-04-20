@@ -402,12 +402,12 @@ static void do_try_set_overlay(struct v4l2_format &fmt, int fd)
 
 	win.bitmap = NULL;
 	if (keep_old_bitmap) {
-		bitmap = (unsigned char *)calloc(1, stride * win.w.height);
+		bitmap = static_cast<unsigned char *>(calloc(1, stride * win.w.height));
 		win.bitmap = bitmap;
 	}
 	if (keep_old_clip) {
 		if (win.clipcount)
-			cliplist = (struct v4l2_clip *)malloc(win.clipcount * sizeof(*cliplist));
+			cliplist = static_cast<struct v4l2_clip *>(malloc(win.clipcount * sizeof(*cliplist)));
 		win.clips = cliplist;
 	}
 	if (keep_old_clip || keep_old_bitmap)
@@ -435,7 +435,7 @@ static void do_try_set_overlay(struct v4l2_format &fmt, int fd)
 	if (!bitmap_rects.empty()) {
 		free(bitmap);
 		stride = (win.w.width + 7) / 8;
-		bitmap = (unsigned char *)calloc(1, stride * win.w.height);
+		bitmap = static_cast<unsigned char *>(calloc(1, stride * win.w.height));
 		win.bitmap = bitmap;
 		for (unsigned i = 0; i < bitmap_rects.size(); i++) {
 			const v4l2_rect &r = bitmap_rects[i];
@@ -518,8 +518,8 @@ void overlay_get(cv4l_fd &_fd)
 			unsigned stride = (fmt.fmt.win.w.width + 7) / 8;
 
 			if (fmt.fmt.win.clipcount)
-				fmt.fmt.win.clips = (struct v4l2_clip *)malloc(fmt.fmt.win.clipcount * sizeof(clips[0]));
-			bitmap = (unsigned char *)calloc(1, stride * fmt.fmt.win.w.height);
+				fmt.fmt.win.clips = static_cast<struct v4l2_clip *>(malloc(fmt.fmt.win.clipcount * sizeof(clips[0])));
+			bitmap = static_cast<unsigned char *>(calloc(1, stride * fmt.fmt.win.w.height));
 			fmt.fmt.win.bitmap = bitmap;
 			doioctl(fd, VIDIOC_G_FMT, &fmt);
 			printfmt(fd, fmt);

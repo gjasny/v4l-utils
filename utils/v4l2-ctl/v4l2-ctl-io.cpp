@@ -184,7 +184,7 @@ void io_list(cv4l_fd &_fd)
 			printf("\tType        : 0x%08X (%s)\n", vin.type, inputtype2s(vin.type));
 			printf("\tAudioset    : 0x%08X\n", vin.audioset);
 			printf("\tTuner       : 0x%08X\n", vin.tuner);
-			printf("\tStandard    : 0x%016llX (%s)\n", (unsigned long long)vin.std,
+			printf("\tStandard    : 0x%016llX (%s)\n", static_cast<unsigned long long>(vin.std),
 				std2s(vin.std).c_str());
 			printf("\tStatus      : 0x%08X (%s)\n", vin.status, in_status2s(vin.status).c_str());
 			printf("\tCapabilities: 0x%08X (%s)\n", vin.capabilities, input_cap2s(vin.capabilities).c_str());
@@ -204,7 +204,7 @@ void io_list(cv4l_fd &_fd)
 			printf("\tName        : %s\n", vout.name);
 			printf("\tType        : 0x%08X (%s)\n", vout.type, outputtype2s(vout.type));
 			printf("\tAudioset    : 0x%08X\n", vout.audioset);
-			printf("\tStandard    : 0x%016llX (%s)\n", (unsigned long long)vout.std,
+			printf("\tStandard    : 0x%016llX (%s)\n", static_cast<unsigned long long>(vout.std),
 					std2s(vout.std).c_str());
 			printf("\tCapabilities: 0x%08X (%s)\n", vout.capabilities, output_cap2s(vout.capabilities).c_str());
 			vout.index++;

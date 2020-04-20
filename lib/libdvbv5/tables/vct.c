@@ -160,7 +160,7 @@ void atsc_table_vct_free(struct atsc_table_vct *vct)
 		channel = channel->next;
 		free(tmp);
 	}
-	dvb_desc_free((struct dvb_desc **) &vct->descriptor);
+	dvb_desc_free(&vct->descriptor);
 
 	free(vct);
 }
