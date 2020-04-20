@@ -12,7 +12,7 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <dirent.h>
-#include <math.h>
+#include <cmath>
 
 #include "v4l2-ctl.h"
 
