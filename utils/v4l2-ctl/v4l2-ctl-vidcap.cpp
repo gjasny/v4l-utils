@@ -23,7 +23,7 @@ static __u32 width, height, pixfmt, field, flags;
 static __u32 bytesperline[VIDEO_MAX_PLANES];
 static __u32 sizeimage[VIDEO_MAX_PLANES];
 
-void vidcap_usage(void)
+void vidcap_usage()
 {
 	printf("\nVideo Capture Formats options:\n"
 	       "  --list-formats     display supported video formats [VIDIOC_ENUM_FMT]\n"

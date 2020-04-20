@@ -122,7 +122,7 @@ static __u8 toggle_hdr_md_flags;
 #define HDR_MD_SMPTE_2084	(1 << 2)
 #define HDR_MD_HLG		(1 << 3)
 
-void edid_usage(void)
+void edid_usage()
 {
 	printf("\nEDID options:\n"
 	       "  --set-edid pad=<pad>[,type=<type>|file=<file>][,format=<fmt>][modifiers]\n"

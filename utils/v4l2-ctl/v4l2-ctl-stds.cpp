@@ -25,7 +25,7 @@ static unsigned set_dv_timing_opts;
 static __u32 list_dv_timings_pad;
 static __u32 dv_timings_cap_pad;
 
-void stds_usage(void)
+void stds_usage()
 {
 	printf("\nStandards/Timings options:\n"
 	       "  --list-standards   display supported video standards [VIDIOC_ENUMSTD]\n"

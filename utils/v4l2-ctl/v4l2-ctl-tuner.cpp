@@ -26,7 +26,7 @@ static struct v4l2_hw_freq_seek freq_seek; /* freq-seek */
 static double low, high;		/* freq-seek frequency range */
 static int mode = V4L2_TUNER_MODE_STEREO;  /* set audio mode */
 
-void tuner_usage(void)
+void tuner_usage()
 {
 	printf("\nTuner/Modulator options:\n"
 	       "  -F, --get-freq     query the frequency [VIDIOC_G_FREQUENCY]\n"

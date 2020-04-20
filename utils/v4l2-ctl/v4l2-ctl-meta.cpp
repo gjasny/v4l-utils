@@ -18,7 +18,7 @@
 
 static struct v4l2_format vfmt;	/* set_format/get_format */
 
-void meta_usage(void)
+void meta_usage()
 {
 	printf("\nMetadata Formats options:\n"
 	       "  --list-formats-meta display supported metadata capture formats [VIDIOC_ENUM_FMT]\n"

@@ -28,7 +28,7 @@ static const char *fb_device;
 static std::vector<struct v4l2_clip> clips;
 static std::vector<struct v4l2_rect> bitmap_rects;
 
-void overlay_usage(void)
+void overlay_usage()
 {
 	printf("\nVideo Overlay options:\n"
 	       "  --list-formats-overlay\n"

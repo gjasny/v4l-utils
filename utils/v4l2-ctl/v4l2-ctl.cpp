@@ -287,7 +287,7 @@ static struct option long_options[] = {
 	{0, 0, 0, 0}
 };
 
-static void usage_all(void)
+static void usage_all()
 {
        common_usage();
        tuner_usage();

@@ -1494,7 +1494,7 @@ static const unsigned num_tests = sizeof(tests) / sizeof(struct remote_test);
 static std::map<std::string, int> mapTests;
 static std::map<std::string, bool> mapTestsNoWarnings;
 
-void collectTests(void)
+void collectTests()
 {
 	std::map<std::string, __u64> mapTestFuncs;
 
@@ -1516,7 +1516,7 @@ void collectTests(void)
 	}
 }
 
-void listTests(void)
+void listTests()
 {
 	for (unsigned i = 0; i < num_tests; i++) {
 		printf("%s:\n", tests[i].name);

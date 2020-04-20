@@ -49,7 +49,7 @@ static struct v4l2_subdev_frame_interval_enum frmival;
 static __u32 set_fps_pad;
 static double set_fps;
 
-void subdev_usage(void)
+void subdev_usage()
 {
 	printf("\nSub-Device options:\n"
 	       "  --list-subdev-mbus-codes <pad>\n"

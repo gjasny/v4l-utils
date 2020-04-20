@@ -21,7 +21,7 @@ static struct v4l2_audioout vaudout;   	/* audio outputs */
 static int input;			/* set_input/get_input */
 static int output;			/* set_output/get_output */
 
-void io_usage(void)
+void io_usage()
 {
 	printf("\nInput/Output options:\n"
 	       "  -I, --get-input    query the video input [VIDIOC_G_INPUT]\n"

@@ -21,7 +21,7 @@ static __u32 width, height, pixfmt, field, colorspace, xfer_func, ycbcr, quantiz
 static __u32 bytesperline[VIDEO_MAX_PLANES];
 static __u32 sizeimage[VIDEO_MAX_PLANES];
 
-void vidout_usage(void)
+void vidout_usage()
 {
 	printf("\nVideo Output Formats options:\n"
 	       "  --list-formats-out display supported video output formats [VIDIOC_ENUM_FMT]\n"

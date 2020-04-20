@@ -155,7 +155,7 @@ static struct option long_options[] = {
 	{0, 0, 0, 0}
 };
 
-static void usage(void)
+static void usage()
 {
 	printf("Usage:\n");
 	printf("Common options:\n");

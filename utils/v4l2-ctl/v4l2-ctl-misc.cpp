@@ -23,7 +23,7 @@ static struct v4l2_streamparm parm;	/* get/set parm */
 static double fps = 0;			/* set framerate speed, in fps */
 static double output_fps = 0;		/* set framerate speed, in fps */
 
-void misc_usage(void)
+void misc_usage()
 {
 	printf("\nMiscellaneous options:\n"
 	       "  --wait-for-event <event>\n"

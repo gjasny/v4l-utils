@@ -44,7 +44,7 @@ static struct v4l2_rect vcrop_out_overlay; 	/* crop rect */
 static struct v4l2_selection vselection; 	/* capture selection */
 static struct v4l2_selection vselection_out;	/* output selection */
 
-void selection_usage(void)
+void selection_usage()
 {
 	printf("\nSelection/Cropping options:\n"
 	       "  --get-cropcap      query the crop capabilities [VIDIOC_CROPCAP]\n"

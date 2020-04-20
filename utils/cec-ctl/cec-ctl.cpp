@@ -229,7 +229,7 @@ static struct option long_options[] = {
 	{ 0, 0, 0, 0 }
 };
 
-static void usage(void)
+static void usage()
 {
 	printf("Usage:\n"
 	       "  -d, --device <dev>       Use device <dev> instead of /dev/cec0\n"

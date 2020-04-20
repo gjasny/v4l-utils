@@ -257,7 +257,7 @@ double fps_timestamps::fps()
 	return fps;
 };
 
-void streaming_usage(void)
+void streaming_usage()
 {
 	printf("\nVideo Streaming options:\n"
 	       "  --stream-count <count>\n"

@@ -108,12 +108,12 @@ static struct option long_options[] = {
 	{0, 0, 0, 0}
 };
 
-static void usage_hint(void)
+static void usage_hint()
 {
 	fprintf(stderr, "Try 'rds-ctl --help' for more information.\n");
 }
 
-static void usage_common(void)
+static void usage_common()
 {
 	printf("\nGeneral/Common options:\n"
 	       "  --all              display all device information available\n"
@@ -127,7 +127,7 @@ static void usage_common(void)
 	       );
 }
 
-static void usage_tuner(void)
+static void usage_tuner()
 {
 	printf("\nTuner/Modulator options:\n"
 	       "  -F, --get-freq     query the frequency [VIDIOC_G_FREQUENCY]\n"
@@ -145,7 +145,7 @@ static void usage_tuner(void)
 	       );
 }
 
-static void usage_rds(void)
+static void usage_rds()
 {
 	printf("\nRDS options: \n"
 	       "  -b, --rbds         parse the RDS data according to the RBDS standard\n"
@@ -164,7 +164,7 @@ static void usage_rds(void)
 	       );
 }
 
-static void usage(void)
+static void usage()
 {
 	printf("Usage:\n");
 	usage_common();
@@ -326,7 +326,7 @@ static void print_devices(dev_vec files)
 		printf("%s\n", iter->second.c_str());
 	}
 }
-static dev_vec list_devices(void)
+static dev_vec list_devices()
 {
 	DIR *dp;
 	struct dirent *ep;

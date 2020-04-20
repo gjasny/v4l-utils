@@ -55,7 +55,7 @@ static enum v4l2_priority prio = V4L2_PRIORITY_UNSET;
 
 static bool have_query_ext_ctrl;
 
-void common_usage(void)
+void common_usage()
 {
 	printf("\nGeneral/Common options:\n"
 	       "  --all              display all information available\n"

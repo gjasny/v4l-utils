@@ -21,7 +21,7 @@ static struct v4l2_format sliced_fmt_out; /* set_format/get_format for sliced VB
 static struct v4l2_format raw_fmt;	  /* set_format/get_format for VBI */
 static struct v4l2_format raw_fmt_out;	  /* set_format/get_format for VBI output */
 
-void vbi_usage(void)
+void vbi_usage()
 {
 	printf("\nVBI Formats options:\n"
 	       "  --get-sliced-vbi-cap\n"

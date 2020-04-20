@@ -18,7 +18,7 @@
 
 static struct v4l2_format vfmt;	/* set_format/get_format */
 
-void sdr_usage(void)
+void sdr_usage()
 {
 	printf("\nSDR Formats options:\n"
 	       "  --list-formats-sdr display supported SDR capture formats [VIDIOC_ENUM_FMT]\n"

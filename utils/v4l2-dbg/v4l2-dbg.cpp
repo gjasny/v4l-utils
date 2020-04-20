@@ -162,7 +162,7 @@ static struct option long_options[] = {
 	{0, 0, 0, 0}
 };
 
-static void usage(void)
+static void usage()
 {
 	printf("Usage: v4l2-dbg [options] [values]\n"
 	       "  -D, --info         Show driver info [VIDIOC_QUERYCAP]\n"
