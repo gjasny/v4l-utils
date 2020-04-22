@@ -1752,7 +1752,7 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 
 		fail_on_test(buf.qbuf(node, false));
 		for (unsigned p = 0; p < buf.g_num_planes(); p++) {
-			fail_on_test(buf.g_fd(p) != q.g_fd(i, p));;
+			fail_on_test(buf.g_fd(p) != q.g_fd(i, p));
 			fail_on_test(buf.g_length(p) != q.g_length(p));
 			if (v4l_type_is_output(q.g_type()))
 				fail_on_test(!buf.g_bytesused(p));

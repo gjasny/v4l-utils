@@ -336,7 +336,7 @@ static std::string audio_format_code2s(__u8 format_code)
 		return "Extended";
 	default:
 		return "Illegal";
-	};
+	}
 }
 
 std::string extension_type_code2s(__u8 type_code)
