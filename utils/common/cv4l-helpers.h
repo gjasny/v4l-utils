@@ -830,6 +830,10 @@ public:
 	{
 		init(b);
 	}
+	cv4l_buffer operator= (const cv4l_buffer &b)
+	{
+		return *this;
+	}
 	virtual ~cv4l_buffer() {}
 
 	void init(unsigned type = 0, unsigned memory = 0, unsigned index = 0)
