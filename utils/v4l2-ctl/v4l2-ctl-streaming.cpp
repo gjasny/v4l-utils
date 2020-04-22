@@ -154,7 +154,7 @@ void fps_timestamps::determine_field(int fd, unsigned type)
 
 bool fps_timestamps::add_ts(double ts_secs, unsigned sequence, unsigned field)
 {
-	if (ts_secs == 0) {
+	if (ts_secs <= 0) {
 		struct timespec ts_cur;
 
 		clock_gettime(CLOCK_MONOTONIC, &ts_cur);
