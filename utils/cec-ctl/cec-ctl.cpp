@@ -2091,7 +2091,7 @@ int main(int argc, char **argv)
 			};
 			char *value, *endptr, *subs = optarg;
 			bool have_cmd = false;
-			__u8 cmd;
+			__u8 cmd = 0;
 			__u8 size = 0;
 			__u8 bytes[14];
 
