@@ -187,7 +187,6 @@ static void usage()
 	       "		     Sets step between two registers\n"
 	       "  --list-symbols     List the symbolic register names you can use, if any\n"
 	       "  --log-status       Log the board status in the kernel log [VIDIOC_LOG_STATUS]\n");
-	exit(0);
 }
 
 static std::string cap2s(unsigned cap)
@@ -429,7 +428,7 @@ int main(int argc, char **argv)
 
 	if (argc == 1) {
 		usage();
-		return 0;
+		exit(0);
 	}
 	for (i = 0; long_options[i].name; i++) {
 		if (!isalpha(long_options[i].val))
@@ -467,7 +466,7 @@ int main(int argc, char **argv)
 		switch (ch) {
 		case OptHelp:
 			usage();
-			return 0;
+			exit(0);
 
 		case OptSetDevice:
 			device = optarg;
@@ -595,8 +594,10 @@ int main(int argc, char **argv)
 
 	if (options[OptSetRegister]) {
 		set_reg.match = match;
-		if (optind >= argc)
+		if (optind >= argc) {
 			usage();
+			exit(1);
+		}
 		set_reg.reg = parse_reg(curr_bd, reg_set_arg);
 		while (optind < argc) {
 			unsigned size = 0;

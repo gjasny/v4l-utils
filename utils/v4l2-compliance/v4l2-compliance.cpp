@@ -247,7 +247,6 @@ static void usage()
 	printf("  -w, --wrapper      Use the libv4l2 wrapper library.\n");
 #endif
 	printf("  -W, --exit-on-warn Exit on the first warning.\n");
-	exit(0);
 }
 
 const char *ok(int res)
@@ -482,6 +481,7 @@ static void restoreState()
 	node->reopen();
 }
 
+__attribute__((noreturn))
 static void signal_handler_interrupt(int signum)
 {
 	restoreState();
@@ -1544,7 +1544,7 @@ int main(int argc, char **argv)
 		switch (ch) {
 		case OptHelp:
 			usage();
-			return 0;
+			exit(0);
 		case OptSetDevice:
 			device = make_devname(optarg, "video", media_bus_info);
 			break;
@@ -1669,13 +1669,13 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Option `%s' requires a value\n",
 				argv[optind]);
 			usage();
-			return 1;
+			exit(1);
 		case '?':
 			if (argv[optind])
 				fprintf(stderr, "Unknown argument `%s'\n",
 					argv[optind]);
 			usage();
-			return 1;
+			exit(1);
 		}
 	}
 	if (optind < argc) {
@@ -1684,7 +1684,7 @@ int main(int argc, char **argv)
 			fprintf(stderr, "%s ", argv[optind++]);
 		fprintf(stderr, "\n");
 		usage();
-		return 1;
+		exit(1);
 	}
 	bool direct = !options[OptUseWrapper];
 	int fd;
