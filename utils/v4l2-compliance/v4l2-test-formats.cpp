@@ -237,6 +237,7 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 		memset(&fmtdesc, 0xff, sizeof(fmtdesc));
 		fmtdesc.type = type;
 		fmtdesc.index = f;
+		fmtdesc.mbus_code = 0;
 
 		ret = doioctl(node, VIDIOC_ENUM_FMT, &fmtdesc);
 		if (ret == ENOTTY)
