@@ -908,7 +908,7 @@ static int tuner_ctl_test(struct node *node, unsigned me, unsigned la, bool inte
 		cec_msg_give_tuner_device_status(&msg, true, CEC_OP_STATUS_REQ_ONCE);
 		fail_on_test(!transmit_timeout(node, &msg));
 		fail_on_test(timed_out_or_abort(&msg));
-		info = {};
+		memset(&info, 0, sizeof(info));
 		cec_ops_tuner_device_status(&msg, &info);
 		if (!memcmp(&info, &info_vec[0], sizeof(info)))
 			break;
@@ -935,7 +935,7 @@ static int tuner_ctl_test(struct node *node, unsigned me, unsigned la, bool inte
 		cec_msg_give_tuner_device_status(&msg, true, CEC_OP_STATUS_REQ_ONCE);
 		fail_on_test(!transmit_timeout(node, &msg));
 		fail_on_test(timed_out_or_abort(&msg));
-		info = {};
+		memset(&info, 0, sizeof(info));
 		cec_ops_tuner_device_status(&msg, &info);
 		if (memcmp(&info, &(*iter), sizeof(info))) {
 			log_tuner_service(info);

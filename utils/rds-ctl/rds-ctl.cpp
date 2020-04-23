@@ -918,7 +918,7 @@ static void get_options(const int fd, const int capabilities, struct v4l2_freque
 				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",
 					 vt.rangelow / 16.0, vt.rangehigh / 16.0);
 			printf("\tSignal strength/AFC  : %ld%%/%d\n",
-				std::lround(vt.signal / 655.35), vt.afc);
+				lround(vt.signal / 655.25), vt.afc);
 			printf("\tCurrent audio mode   : %s\n", audmode2s(vt.audmode));
 			printf("\tAvailable subchannels: %s\n",
 					rxsubchans2s(vt.rxsubchans).c_str());

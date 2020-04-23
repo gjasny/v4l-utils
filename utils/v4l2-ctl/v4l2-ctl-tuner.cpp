@@ -423,7 +423,7 @@ void tuner_get(cv4l_fd &_fd)
 
 			if (vt.type != V4L2_TUNER_SDR && vt.type != V4L2_TUNER_RF) {
 				printf("\tSignal strength/AFC  : %ld%%/%d\n",
-				       std::lround(vt.signal / 655.35), vt.afc);
+				       lround(vt.signal / 655.35), vt.afc);
 				printf("\tCurrent audio mode   : %s\n", audmode2s(vt.audmode));
 				printf("\tAvailable subchannels: %s\n", rxsubchans2s(vt.rxsubchans).c_str());
 			}
