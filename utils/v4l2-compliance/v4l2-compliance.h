@@ -97,6 +97,7 @@ struct base_node {
 	bool is_meta;
 	bool is_touch;
 	bool is_m2m;
+	bool is_io_mc;
 	bool is_planar;
 	bool can_capture;
 	bool can_output;

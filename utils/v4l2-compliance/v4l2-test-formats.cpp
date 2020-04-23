@@ -450,7 +450,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		fail_on_test(pix.bytesperline && pix.bytesperline < pix.width);
 		fail_on_test(!pix.sizeimage);
 		if (!node->is_m2m)
-			fail_on_test(testColorspace(node->has_inputs || node->has_outputs,
+			fail_on_test(testColorspace(!node->is_io_mc,
 						    pix.pixelformat, pix.colorspace,
 						    pix.ycbcr_enc, pix.quantization));
 		fail_on_test(pix.field == V4L2_FIELD_ANY);
@@ -466,7 +466,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 			return fail("pixelformat %08x (%s) for buftype %d not reported by ENUM_FMT\n",
 					pix_mp.pixelformat, fcc2s(pix_mp.pixelformat).c_str(), type);
 		if (!node->is_m2m)
-			fail_on_test(testColorspace(node->has_inputs || node->has_outputs,
+			fail_on_test(testColorspace(!node->is_io_mc,
 						    pix_mp.pixelformat, pix_mp.colorspace,
 						    pix_mp.ycbcr_enc, pix_mp.quantization));
 		fail_on_test(pix_mp.field == V4L2_FIELD_ANY);

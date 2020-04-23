@@ -1004,6 +1004,8 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		node.is_video = false;
 		node.is_meta = true;
 	}
+	if (node.g_caps() & V4L2_CAP_IO_MC)
+		node.is_io_mc = true;
 
 	/* Information Opts */
 
