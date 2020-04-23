@@ -521,7 +521,7 @@ static void print_rds_statistics(const struct v4l2_rds_statistics *statistics)
 	printf("received blocks / received groups: %u / %u\n",
 		statistics->block_cnt, statistics->group_cnt);
 
-	float block_error_percentage = 0;
+	double block_error_percentage = 0;
 
 	if (statistics->block_cnt)
 		block_error_percentage =
@@ -530,7 +530,7 @@ static void print_rds_statistics(const struct v4l2_rds_statistics *statistics)
 		statistics->block_error_cnt,
 		block_error_percentage, statistics->group_error_cnt);
 
-	float block_corrected_percentage = 0;
+	double block_corrected_percentage = 0;
 
 	if (statistics->block_cnt)
 		block_corrected_percentage = (

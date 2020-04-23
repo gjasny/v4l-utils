@@ -2597,7 +2597,7 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h,
 	char hz[32] = "";
 
 	if (!frame_count)
-		frame_count = f ? static_cast<unsigned>(1.0f / fract2f(f)) : 10;
+		frame_count = f ? static_cast<unsigned>(1.0 / fract2f(f)) : 10;
 	node->g_fmt(fmt);
 	fmt.s_pixelformat(pixelformat);
 	fmt.s_width(w);
