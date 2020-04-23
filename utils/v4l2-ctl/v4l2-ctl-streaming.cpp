@@ -569,7 +569,7 @@ static void print_concise_buffer(FILE *f, cv4l_buffer &buf, cv4l_fmt &fmt,
 	if (!skip_ts && (buf.g_flags() & V4L2_BUF_FLAG_TIMESTAMP_MASK) != V4L2_BUF_FLAG_TIMESTAMP_COPY) {
 		double ts = buf.g_timestamp().tv_sec + buf.g_timestamp().tv_usec / 1000000.0;
 		fprintf(f, " ts: %.06f", ts);
-		if (last_ts)
+		if (last_ts <= 0.0)
 			fprintf(f, " delta: %.03f ms", (ts - last_ts) * 1000.0);
 		last_ts = ts;
 

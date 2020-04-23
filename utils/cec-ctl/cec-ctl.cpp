@@ -1507,8 +1507,8 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 	srandom(seed);
 
 	for (;;) {
-		unsigned usecs1 = mod_usleep ? random() % mod_usleep : sleep_before_on * 1000000;
-		unsigned usecs2 = mod_usleep ? random() % mod_usleep : sleep_before_off * 1000000;
+		unsigned usecs1 = mod_usleep ? random() % mod_usleep : static_cast<unsigned>(sleep_before_on * 1000000);
+		unsigned usecs2 = mod_usleep ? random() % mod_usleep : static_cast<unsigned>(sleep_before_off * 1000000);
 
 		usecs1 += min_usleep;
 		usecs2 += min_usleep;

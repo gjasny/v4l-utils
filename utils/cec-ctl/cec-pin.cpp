@@ -261,7 +261,7 @@ static void cec_pin_rx_data_bit_was_low(__u64 ev_ts, __u64 usecs, __u64 usecs_mi
 	 * If the low drive starts at the end of a 0 bit, then the actual
 	 * maximum time that the bus can be low is the two summed.
 	 */
-	const unsigned max_low_drive = CEC_TIM_LOW_DRIVE_ERROR_MAX +
+	const unsigned max_low_drive = static_cast<unsigned>(CEC_TIM_LOW_DRIVE_ERROR_MAX) +
 		CEC_TIM_DATA_BIT_0_LOW_MAX + CEC_TIM_MARGIN;
 
 	low_usecs = usecs;

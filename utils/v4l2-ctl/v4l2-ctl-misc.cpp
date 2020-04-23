@@ -320,7 +320,7 @@ void misc_set(cv4l_fd &_fd)
 		parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		parm.parm.capture.timeperframe.numerator = 1000;
 		parm.parm.capture.timeperframe.denominator =
-			fps * parm.parm.capture.timeperframe.numerator;
+			static_cast<uint32_t>(fps * parm.parm.capture.timeperframe.numerator);
 
 		if (doioctl(fd, VIDIOC_S_PARM, &parm) == 0) {
 			struct v4l2_fract *tf = &parm.parm.capture.timeperframe;
@@ -338,7 +338,7 @@ void misc_set(cv4l_fd &_fd)
 		parm.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 		parm.parm.output.timeperframe.numerator = 1000;
 		parm.parm.output.timeperframe.denominator =
-			output_fps * parm.parm.output.timeperframe.numerator;
+			static_cast<uint32_t>(output_fps * parm.parm.output.timeperframe.numerator);
 
 		if (doioctl(fd, VIDIOC_S_PARM, &parm) == 0) {
 			struct v4l2_fract *tf = &parm.parm.output.timeperframe;

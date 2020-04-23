@@ -487,7 +487,7 @@ void subdev_set(cv4l_fd &_fd)
 			exit(1);
 		}
 		fival.interval.numerator = 1000;
-		fival.interval.denominator = set_fps * fival.interval.numerator;
+		fival.interval.denominator = static_cast<uint32_t>(set_fps * fival.interval.numerator);
 		printf("Note: --set-subdev-fps is only for testing.\n"
 		       "Normally media-ctl is used to configure the video pipeline.\n");
 		printf("ioctl: VIDIOC_SUBDEV_S_FRAME_INTERVAL (pad=%u)\n", fival.pad);
