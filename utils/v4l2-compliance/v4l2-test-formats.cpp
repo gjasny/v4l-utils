@@ -30,6 +30,8 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <assert.h>
+
+#include "compiler.h"
 #include "v4l2-compliance.h"
 
 static const __u32 buftype2cap[] = {
@@ -97,7 +99,7 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt,
 		case V4L2_FRMIVAL_TYPE_CONTINUOUS:
 			if (sw->step.numerator != 1 || sw->step.denominator != 1)
 				return fail("invalid step for continuous frameinterval\n");
-			/* fallthrough */
+			fallthrough;
 		case V4L2_FRMIVAL_TYPE_STEPWISE:
 			if (frmival.index)
 				return fail("index must be 0 for stepwise/continuous frameintervals\n");
@@ -183,7 +185,7 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 		case V4L2_FRMSIZE_TYPE_CONTINUOUS:
 			if (frmsize.stepwise.step_width != 1 || frmsize.stepwise.step_height != 1)
 				return fail("invalid step_width/height for continuous framesize\n");
-			/* fallthrough */
+			fallthrough;
 		case V4L2_FRMSIZE_TYPE_STEPWISE:
 			if (frmsize.index)
 				return fail("index must be 0 for stepwise/continuous framesizes\n");

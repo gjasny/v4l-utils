@@ -14,6 +14,7 @@
 #include "cec-htng-funcs.h"
 #include "cec-info.h"
 #include "cec-log.h"
+#include "compiler.h"
 
 static const struct cec_arg arg_u8 = {
 	CEC_ARG_TYPE_U8,
@@ -44,7 +45,7 @@ static void log_arg(const struct cec_arg *arg, const char *arg_name, __u32 val)
 				return;
 			}
 		}
-		/* fall through */
+		fallthrough;
 	case CEC_ARG_TYPE_U8:
 		if (!strcmp(arg_name, "video-latency") ||
 		    !strcmp(arg_name, "audio-out-delay")) {

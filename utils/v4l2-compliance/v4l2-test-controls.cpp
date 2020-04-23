@@ -30,6 +30,8 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <vector>
+
+#include "compiler.h"
 #include "v4l2-compliance.h"
 
 #define V4L2_CTRL_CLASS_VIVID 0x00f00000
@@ -61,20 +63,20 @@ static int checkQCtrl(struct node *node, struct test_query_ext_ctrl &qctrl)
 	case V4L2_CTRL_TYPE_BOOLEAN:
 		if (qctrl.maximum > 1)
 			return fail("invalid boolean max value\n");
-		/* fall through */
+		fallthrough;
 	case V4L2_CTRL_TYPE_MENU:
 	case V4L2_CTRL_TYPE_INTEGER_MENU:
 		if (qctrl.step != 1)
 			return fail("invalid step value %lld\n", qctrl.step);
 		if (qctrl.minimum < 0)
 			return fail("min < 0\n");
-		/* fall through */
+		fallthrough;
 	case V4L2_CTRL_TYPE_INTEGER:
 	case V4L2_CTRL_TYPE_INTEGER64:
 		if (qctrl.default_value < qctrl.minimum ||
 		    qctrl.default_value > qctrl.maximum)
 			return fail("def < min || def > max\n");
-		/* fall through */
+		fallthrough;
 	case V4L2_CTRL_TYPE_STRING:
 		if (qctrl.minimum > qctrl.maximum)
 			return fail("min > max\n");
@@ -116,7 +118,7 @@ static int checkQCtrl(struct node *node, struct test_query_ext_ctrl &qctrl)
 	case V4L2_CTRL_TYPE_BUTTON:
 		if ((fl & rw_mask) != V4L2_CTRL_FLAG_WRITE_ONLY)
 			return fail("button control not write only\n");
-		/* fall through */
+		fallthrough;
 	case V4L2_CTRL_TYPE_BOOLEAN:
 	case V4L2_CTRL_TYPE_MENU:
 	case V4L2_CTRL_TYPE_INTEGER_MENU:
@@ -124,7 +126,7 @@ static int checkQCtrl(struct node *node, struct test_query_ext_ctrl &qctrl)
 	case V4L2_CTRL_TYPE_BITMASK:
 		if (fl & V4L2_CTRL_FLAG_SLIDER)
 			return fail("slider makes only sense for integer controls\n");
-		/* fall through */
+		fallthrough;
 	case V4L2_CTRL_TYPE_INTEGER64:
 	case V4L2_CTRL_TYPE_INTEGER:
 		if ((fl & rw_mask) == rw_mask)

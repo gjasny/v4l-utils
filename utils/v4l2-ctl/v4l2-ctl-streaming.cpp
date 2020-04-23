@@ -19,6 +19,7 @@
 #include <math.h>
 #include <linux/media.h>
 
+#include "compiler.h"
 #include "v4l2-ctl.h"
 #include "v4l-stream.h"
 #include <media-info.h>
@@ -763,7 +764,7 @@ void streaming_cmd(int ch, char *optarg)
 		break;
 	case OptStreamUser:
 		memory = V4L2_MEMORY_USERPTR;
-		/* fall through */
+		fallthrough;
 	case OptStreamMmap:
 		if (optarg) {
 			reqbufs_count_cap = strtoul(optarg, 0L, 0);
@@ -776,7 +777,7 @@ void streaming_cmd(int ch, char *optarg)
 		break;
 	case OptStreamOutUser:
 		out_memory = V4L2_MEMORY_USERPTR;
-		/* fall through */
+		fallthrough;
 	case OptStreamOutMmap:
 		if (optarg) {
 			reqbufs_count_out = strtoul(optarg, 0L, 0);

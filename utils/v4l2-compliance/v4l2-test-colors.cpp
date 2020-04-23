@@ -28,6 +28,8 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <math.h>
+
+#include "compiler.h"
 #include "v4l2-compliance.h"
 
 static void setupPlanes(const cv4l_fmt &fmt, __u8 *planes[3])
@@ -328,7 +330,7 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 	case V4L2_PIX_FMT_RGBA444:
 	case V4L2_PIX_FMT_BGRA444:
 		c.a = (v16 >> 12) / 15.0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_RGB444:
 	case V4L2_PIX_FMT_XRGB444:
 	case V4L2_PIX_FMT_XBGR444:
@@ -345,7 +347,7 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 	case V4L2_PIX_FMT_ABGR555:
 	case V4L2_PIX_FMT_BGRA555:
 		c.a = v16 >> 15;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_YUV555:
 	case V4L2_PIX_FMT_RGB555:
 	case V4L2_PIX_FMT_XRGB555:
@@ -376,7 +378,7 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 	case V4L2_PIX_FMT_RGBA32:
 	case V4L2_PIX_FMT_BGRA32:
 		c.a = ((v32 >> 24) & 0xff) / 255.0;
-		/* fall through */
+		fallthrough;
 	default:
 		c.r = ((v32 >> 16) & 0xff) / 255.0;
 		c.g = ((v32 >> 8) & 0xff) / 255.0;
@@ -444,7 +446,7 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 		Y = (Y - 16.0 / 255.0) * 255.0 / 219.0;
 		cb *= 255.0 / 224.0;
 		cr *= 255.0 / 224.0;
-		/* fall through */
+		fallthrough;
 	case V4L2_YCBCR_ENC_601:
 	default:
 		ycbcr2rgb(bt601, Y, cb, cr, c);
@@ -453,7 +455,7 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 		Y = (Y - 16.0 / 255.0) * 255.0 / 219.0;
 		cb *= 255.0 / 224.0;
 		cr *= 255.0 / 224.0;
-		/* fall through */
+		fallthrough;
 	case V4L2_YCBCR_ENC_709:
 		ycbcr2rgb(rec709, Y, cb, cr, c);
 		break;

@@ -18,6 +18,7 @@
 #include <config.h>
 
 #include "cec-follower.h"
+#include "compiler.h"
 
 #define VOLUME_MAX 0x64
 #define VOLUME_MIN 0
@@ -352,7 +353,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		if (cec_has_tv(1 << la) && la_info[la].phys_addr == 0)
 			warn("TV (0) at 0.0.0.0 sent Routing Information.");
 	}
-
+	fallthrough;
 
 		/* System Information */
 
@@ -708,6 +709,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		cec_msg_system_audio_mode_status(&msg, node->state.sac_active ? CEC_OP_SYS_AUD_STATUS_ON :
 						 CEC_OP_SYS_AUD_STATUS_OFF);
 		transmit(node, &msg);
+		fallthrough;
 	case CEC_MSG_GIVE_AUDIO_STATUS:
 		if (!cec_has_audiosystem(1 << me))
 			break;

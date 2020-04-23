@@ -19,6 +19,7 @@
 #include <sstream>
 
 #include "cec-follower.h"
+#include "compiler.h"
 #ifndef ANDROID
 #include "version.h"
 #endif
@@ -142,6 +143,7 @@ void sad_encode(const struct short_audio_desc *sad, __u32 *descriptor)
 		case SAD_EXT_TYPE_MPEG_H_3D_AUDIO:
 		case SAD_EXT_TYPE_AC_4:
 			b3 |= sad->format_dependent & 0x07;
+			fallthrough;
 		case SAD_EXT_TYPE_LPCM_3D_AUDIO:
 			b3 |= sad->bit_depth_mask & 0x07;
 			break;

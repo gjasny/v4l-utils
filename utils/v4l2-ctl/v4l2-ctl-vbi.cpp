@@ -14,6 +14,7 @@
 #include <dirent.h>
 #include <math.h>
 
+#include "compiler.h"
 #include "v4l2-ctl.h"
 
 static struct v4l2_format sliced_fmt;	  /* set_format/get_format for sliced VBI */
@@ -87,7 +88,7 @@ void vbi_cmd(int ch, char *optarg)
 	case OptSetSlicedVbiOutFormat:
 	case OptTrySlicedVbiOutFormat:
 		sliced = &sliced_fmt_out;
-		/* fall through */
+		fallthrough;
 	case OptSetSlicedVbiFormat:
 	case OptTrySlicedVbiFormat:
 		sliced->fmt.sliced.service_set = 0;
@@ -130,7 +131,7 @@ void vbi_cmd(int ch, char *optarg)
 	case OptSetVbiOutFormat:
 	case OptTryVbiOutFormat:
 		raw = &raw_fmt_out;
-		/* fall through */
+		fallthrough;
 	case OptSetVbiFormat:
 	case OptTryVbiFormat:
 		subs = optarg;

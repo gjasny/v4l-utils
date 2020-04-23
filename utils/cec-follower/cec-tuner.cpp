@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "cec-follower.h"
+#include "compiler.h"
 
 #define NUM_ANALOG_FREQS 3
 #define NUM_DIGITAL_CHANS 3
@@ -303,21 +304,21 @@ static int digital_get_service_idx(struct cec_op_digital_service_id *digital)
 	switch (digital->dig_bcast_system) {
 	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_T:
 		is_terrestrial = true;
-		/* fall through */
+		fallthrough;
 	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_BS:
 		info = &digital_arib_data[is_terrestrial][0];
 		offset = is_terrestrial * NUM_DIGITAL_CHANS;
 		break;
 	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_T:
 		is_terrestrial = true;
-		/* fall through */
+		fallthrough;
 	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_SAT:
 		info = &digital_atsc_data[is_terrestrial][0];
 		offset = (2 + is_terrestrial) * NUM_DIGITAL_CHANS;
 		break;
 	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_T:
 		is_terrestrial = true;
-		/* fall through */
+		fallthrough;
 	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S2:
 		info = &digital_dvb_data[is_terrestrial][0];
 		offset = (4 + is_terrestrial) * NUM_DIGITAL_CHANS;

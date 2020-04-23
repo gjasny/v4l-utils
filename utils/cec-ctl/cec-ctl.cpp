@@ -36,6 +36,7 @@
 #endif
 
 #include "cec-ctl.h"
+#include "compiler.h"
 
 static struct timespec start_monotonic;
 static struct timeval start_timeofday;
@@ -1967,7 +1968,7 @@ int main(int argc, char **argv)
 			break;
 		case OptPhysAddrFromEDIDPoll:
 			edid_path = optarg;
-			/* fall-through */
+			fallthrough;
 		case OptPhysAddrFromEDID:
 			phys_addr = parse_phys_addr_from_edid(optarg);
 			break;
