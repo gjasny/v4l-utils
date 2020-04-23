@@ -45,7 +45,7 @@ static int checkQCtrl(struct node *node, struct test_query_ext_ctrl &qctrl)
 	qctrl.menu_mask = 0;
 	if (check_string(qctrl.name, sizeof(qctrl.name)))
 		return fail("invalid name\n");
-	info("checking v4l2_queryctrl of control '%s' (0x%08x)\n", qctrl.name, qctrl.id);
+	info("checking v4l2_query_ext_ctrl of control '%s' (0x%08x)\n", qctrl.name, qctrl.id);
 	if (qctrl.id & V4L2_CTRL_FLAG_NEXT_CTRL)
 		return fail("V4L2_CTRL_FLAG_NEXT_CTRL not cleared\n");
 	if (check_0(qctrl.reserved, sizeof(qctrl.reserved)))
@@ -80,8 +80,6 @@ static int checkQCtrl(struct node *node, struct test_query_ext_ctrl &qctrl)
 			return fail("min > max\n");
 		if (qctrl.step == 0)
 			return fail("step == 0\n");
-		if (qctrl.step < 0)
-			return fail("step < 0\n");
 		if (static_cast<unsigned>(qctrl.step) > static_cast<unsigned>(qctrl.maximum - qctrl.minimum) &&
 		    qctrl.maximum != qctrl.minimum)
 			return fail("step > max - min\n");
@@ -316,6 +314,7 @@ int testQueryControls(struct node *node)
 			break;
 		id = qctrl.id;
 		fail_on_test(node->controls.find(qctrl.id) == node->controls.end());
+		fail_on_test(qctrl.step < 0);
 		controls++;
 	}
 	fail_on_test(node->controls.size() !=
@@ -332,6 +331,7 @@ int testQueryControls(struct node *node)
 		if (qctrl.id != id)
 			return fail("qctrl.id (%08x) != id (%08x)\n",
 					qctrl.id, id);
+		fail_on_test(qctrl.step < 0);
 	}
 
 	for (id = V4L2_CID_PRIVATE_BASE; ; id++) {
@@ -345,6 +345,7 @@ int testQueryControls(struct node *node)
 		if (qctrl.id != id)
 			return fail("qctrl.id (%08x) != id (%08x)\n",
 					qctrl.id, id);
+		fail_on_test(qctrl.step < 0);
 	}
 	return 0;
 }
