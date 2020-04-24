@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/sysmacros.h>
 #include "libv4lconvert.h"
 #include "libv4lconvert-priv.h"
 #include "libv4lsyscall-priv.h"
