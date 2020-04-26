@@ -8,6 +8,7 @@
 #ifndef _CEC_COMPLIANCE_H_
 #define _CEC_COMPLIANCE_H_
 
+#include <ctime>
 #include <string>
 
 #include <linux/cec-funcs.h>
