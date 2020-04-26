@@ -99,7 +99,7 @@ void vidout_cmd(int ch, char *optarg)
 				sizeimage);
 		if (!set_fmts_out) {
 			vidcap_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		break;
 	}
@@ -202,7 +202,7 @@ void vidout_set(cv4l_fd &_fd)
 						fcc2s(pixfmt).c_str());
 				else
 					fprintf(stderr, "The pixelformat index was invalid\n");
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 
 			if (options[OptSetVideoOutFormat])

@@ -128,7 +128,7 @@ void subdev_cmd(int ch, char *optarg)
 				break;
 			default:
 				subdev_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		break;
@@ -158,7 +158,7 @@ void subdev_cmd(int ch, char *optarg)
 				break;
 			default:
 				subdev_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		break;
@@ -184,13 +184,13 @@ void subdev_cmd(int ch, char *optarg)
 				if (parse_selection_target(value, target)) {
 					fprintf(stderr, "Unknown selection target\n");
 					subdev_usage();
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 				get_sel_target = target;
 				break;
 			default:
 				subdev_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		break;
@@ -263,7 +263,7 @@ void subdev_cmd(int ch, char *optarg)
 			default:
 				fprintf(stderr, "Unknown option\n");
 				subdev_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		break;
@@ -288,7 +288,7 @@ void subdev_cmd(int ch, char *optarg)
 				if (parse_selection_target(value, vsel.target)) {
 					fprintf(stderr, "Unknown selection target\n");
 					subdev_usage();
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 				break;
 			case 1:
@@ -317,7 +317,7 @@ void subdev_cmd(int ch, char *optarg)
 			default:
 				fprintf(stderr, "Unknown option\n");
 				subdev_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		break;
@@ -341,7 +341,7 @@ void subdev_cmd(int ch, char *optarg)
 			default:
 				fprintf(stderr, "Unknown option\n");
 				subdev_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		break;
@@ -484,7 +484,7 @@ void subdev_set(cv4l_fd &_fd)
 		if (set_fps <= 0) {
 			fprintf(stderr, "invalid fps %f\n", set_fps);
 			subdev_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		fival.interval.numerator = 1000;
 		fival.interval.denominator = static_cast<uint32_t>(set_fps * fival.interval.numerator);

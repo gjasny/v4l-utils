@@ -319,7 +319,7 @@ __u32 read_u32(int fd)
 	n = read(fd, &v, sizeof(v));
 	if (n != sizeof(v)) {
 		fprintf(stderr, "could not read __u32\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	return ntohl(v);
 }
@@ -336,7 +336,7 @@ int initSocket(int port, cv4l_fmt &fmt, v4l2_fract &pixelaspect)
 		listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 		if (listen_fd < 0) {
 			fprintf(stderr, "could not opening socket\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(int));
 
@@ -345,7 +345,7 @@ int initSocket(int port, cv4l_fmt &fmt, v4l2_fract &pixelaspect)
 		serv_addr.sin_port = htons(port);
 		if (bind(listen_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
 			fprintf(stderr, "could not bind: %s\n", strerror(errno));
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	}
 	listen(listen_fd, 1);
@@ -353,17 +353,17 @@ int initSocket(int port, cv4l_fmt &fmt, v4l2_fract &pixelaspect)
 	sock_fd = accept(listen_fd, (struct sockaddr *)&cli_addr, &clilen);
 	if (sock_fd < 0) {
 		fprintf(stderr, "could not accept\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	if (read_u32(sock_fd) != V4L_STREAM_ID) {
 		fprintf(stderr, "unknown protocol ID\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	__u32 version = read_u32(sock_fd);
 
 	if (!version || version > V4L_STREAM_VERSION) {
 		fprintf(stderr, "unknown protocol version %u\n", version);
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	for (;;) {
 		__u32 packet = read_u32(sock_fd);
@@ -371,7 +371,7 @@ int initSocket(int port, cv4l_fmt &fmt, v4l2_fract &pixelaspect)
 
 		if (packet == V4L_STREAM_PACKET_END) {
 			fprintf(stderr, "END packet read\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 
 		if (packet == V4L_STREAM_PACKET_FMT_VIDEO)
@@ -385,7 +385,7 @@ int initSocket(int port, cv4l_fmt &fmt, v4l2_fract &pixelaspect)
 			n = read(sock_fd, buf, rdsize);
 			if (n < 0) {
 				fprintf(stderr, "error reading %d bytes\n", sz);
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			sz -= n;
 		}
@@ -396,7 +396,7 @@ int initSocket(int port, cv4l_fmt &fmt, v4l2_fract &pixelaspect)
 
 	if (sz != V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT) {
 		fprintf(stderr, "unsupported FMT_VIDEO size\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	fmt.s_num_planes(read_u32(sock_fd));
 	fmt.s_pixelformat(read_u32(sock_fd));
@@ -416,7 +416,7 @@ int initSocket(int port, cv4l_fmt &fmt, v4l2_fract &pixelaspect)
 
 		if (sz != V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT_PLANE) {
 			fprintf(stderr, "unsupported FMT_VIDEO plane size\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		fmt.s_sizeimage(read_u32(sock_fd), i);
 		fmt.s_bytesperline(read_u32(sock_fd), i);
@@ -675,11 +675,11 @@ int main(int argc, char **argv)
 		video_device = getDeviceName("/dev/video", video_device);
 		if (fd.open(video_device.toUtf8().data(), true) < 0) {
 			perror((QString("could not open ") + video_device).toUtf8().data());
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		if (!fd.has_vid_cap()) {
 			fprintf(stderr, "%s is not a video capture device\n", video_device.toUtf8().data());
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		fd.g_fmt(fmt);
 
@@ -787,7 +787,7 @@ int main(int argc, char **argv)
 			fcc2s(fmt.g_pixelformat()).c_str(),
 			pixfmt2s(fmt.g_pixelformat()).c_str());
 		if (mode != AppModeSocket)
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		sock_fd = initSocket(port, fmt, pixelaspect);
 	}
 	win.setPixelAspect(pixelaspect);
@@ -813,7 +813,7 @@ int main(int argc, char **argv)
 		q.queue_all(&fd);
 		win.setQueue(&q);
 		if (fd.streamon())
-			exit(1);
+			std::exit(EXIT_FAILURE);
 	} else {
 		struct tpg_data *tpg = win.getTPG();
 

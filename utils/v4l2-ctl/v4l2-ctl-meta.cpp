@@ -49,7 +49,7 @@ void meta_cmd(int ch, char *optarg)
 	case OptTryMetaOutFormat:
 		if (strlen(optarg) == 0) {
 			meta_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		} else if (strlen(optarg) == 4) {
 			vfmt.fmt.meta.dataformat = v4l2_fourcc(optarg[0],
 					optarg[1], optarg[2], optarg[3]);

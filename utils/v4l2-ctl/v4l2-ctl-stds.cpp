@@ -102,7 +102,7 @@ static v4l2_std_id parse_pal(const char *pal)
 	}
 	fprintf(stderr, "pal specifier not recognised\n");
 	stds_usage();
-	exit(1);
+	std::exit(EXIT_FAILURE);
 }
 
 static v4l2_std_id parse_secam(const char *secam)
@@ -124,7 +124,7 @@ static v4l2_std_id parse_secam(const char *secam)
 	}
 	fprintf(stderr, "secam specifier not recognised\n");
 	stds_usage();
-	exit(1);
+	std::exit(EXIT_FAILURE);
 }
 
 static v4l2_std_id parse_ntsc(const char *ntsc)
@@ -141,7 +141,7 @@ static v4l2_std_id parse_ntsc(const char *ntsc)
 	}
 	fprintf(stderr, "ntsc specifier not recognised\n");
 	stds_usage();
-	exit(1);
+	std::exit(EXIT_FAILURE);
 }
 
 enum timing_opts {
@@ -204,13 +204,13 @@ static int parse_timing_subopt(char **subopt_str, int *value)
 	if (opt == -1) {
 		fprintf(stderr, "Invalid suboptions specified\n");
 		stds_usage();
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	if (opt_str == NULL && opt != CVT && opt != GTF && opt != CLEAR) {
 		fprintf(stderr, "No value given to suboption <%s>\n",
 				subopt_list[opt]);
 		stds_usage();
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	if (opt_str)
@@ -269,7 +269,7 @@ static void get_cvt_gtf_timings(char *subopt, int standard,
 
 	if (!timings_valid) {
 		stds_usage();
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 }
 
@@ -356,7 +356,7 @@ static void parse_dv_bt_timings(char *optarg, struct v4l2_dv_timings *dv_timings
 			break;
 		default:
 			stds_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		set_dv_timing_opts |= 1 << opt;
 	}
@@ -464,7 +464,7 @@ void stds_cmd(int ch, char *optarg)
 		} else {
 			fprintf(stderr, "Unknown standard '%s'\n", optarg);
 			stds_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		break;
 	case OptSetDvBtTimings:

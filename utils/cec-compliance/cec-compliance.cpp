@@ -878,7 +878,7 @@ retry:
 	res = doioctl(node, CEC_TRANSMIT, msg);
 	if (res == ENODEV) {
 		printf("Device was disconnected.\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	if (res == ENONET) {
 		if (retried) {
@@ -1224,7 +1224,7 @@ int main(int argc, char **argv)
 				show_colors = isatty(STDOUT_FILENO);
 			else {
 				usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			break;
 		case OptNoWarnings:
@@ -1285,7 +1285,7 @@ int main(int argc, char **argv)
 		if (device.empty()) {
 			fprintf(stderr,
 				"Could not find a CEC device for the given driver/adapter combination\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	}
 	if (device.empty())
@@ -1294,7 +1294,7 @@ int main(int argc, char **argv)
 	if ((fd = open(device.c_str(), O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device.c_str(),
 			strerror(errno));
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	struct node node = { };
@@ -1468,7 +1468,7 @@ int main(int argc, char **argv)
 	if (missing_la)
 		fprintf(stderr, "FAIL: missing logical address(es), use cec-ctl to configure this\n");
 	if (missing_la || missing_pa)
-		exit(-1);
+		std::exit(EXIT_FAILURE);
 
 	if (!options[OptSkipInfo]) {
 		printf("\nCompliance test for %s device %s:\n\n",
@@ -1493,7 +1493,7 @@ int main(int argc, char **argv)
 
 	if (!node.remote_la_mask) {
 		printf("\nFAIL: No remote devices found, exiting.\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	if (options[OptTestAdapter])
@@ -1507,7 +1507,7 @@ int main(int argc, char **argv)
 	printf("\n");
 
 	if (options[OptTestFuzzing] && remote_la >= 0)
-		exit(testFuzzing(node, laddrs.log_addr[0], remote_la));
+		std::exit(testFuzzing(node, laddrs.log_addr[0], remote_la));
 
 	unsigned remote_la_mask = node.remote_la_mask;
 
@@ -1533,5 +1533,5 @@ int main(int argc, char **argv)
 	printf("Total for %s device %s: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
 	       caps.driver, device.c_str(),
 	       tests_total, tests_ok, tests_total - tests_ok, warnings);
-	exit(app_result);
+	std::exit(app_result);
 }

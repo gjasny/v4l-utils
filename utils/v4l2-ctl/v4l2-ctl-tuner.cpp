@@ -198,7 +198,7 @@ static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
 			break;
 		default:
 			tuner_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	}
 }
@@ -223,7 +223,7 @@ void tuner_cmd(int ch, char *optarg)
 		else {
 			fprintf(stderr, "Unknown audio mode\n");
 			tuner_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		break;
 	case OptSetModulator:
@@ -245,7 +245,7 @@ void tuner_cmd(int ch, char *optarg)
 		else {
 			fprintf(stderr, "Unknown txsubchans value\n");
 			tuner_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		break;
 	case OptFreqSeek:

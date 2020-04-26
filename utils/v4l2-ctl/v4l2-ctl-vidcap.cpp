@@ -113,7 +113,7 @@ void vidcap_cmd(int ch, char *optarg)
 		if (!set_fmts ||
 		    (set_fmts & (FmtColorspace | FmtYCbCr | FmtQuantization | FmtXferFunc))) {
 			vidcap_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		break;
 	case OptListFrameSizes:
@@ -127,7 +127,7 @@ void vidcap_cmd(int ch, char *optarg)
 			frmsize.pixel_format = strtol(optarg, 0L, 0);
 		} else {
 			fprintf(stderr, "The pixelformat '%s' is invalid\n", optarg);
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		break;
 	case OptListFrameIntervals:
@@ -159,12 +159,12 @@ void vidcap_cmd(int ch, char *optarg)
 					frmival.pixel_format = strtol(value, 0L, 0);
 				} else {
 					fprintf(stderr, "The pixelformat '%s' is invalid\n", optarg);
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 				break;
 			default:
 				vidcap_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		break;
@@ -317,14 +317,14 @@ void vidcap_list(cv4l_fd &fd)
 						  false, is_multiplanar);
 			if (!frmsize.pixel_format) {
 				fprintf(stderr, "The pixelformat index was invalid\n");
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		if (!valid_pixel_format(fd.g_fd(), frmsize.pixel_format, false, is_multiplanar) &&
 		    !valid_pixel_format(fd.g_fd(), frmsize.pixel_format, true, is_multiplanar)) {
 			fprintf(stderr, "The pixelformat '%s' is invalid\n",
 				fcc2s(frmsize.pixel_format).c_str());
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 
 		printf("ioctl: VIDIOC_ENUM_FRAMESIZES\n");
@@ -342,13 +342,13 @@ void vidcap_list(cv4l_fd &fd)
 						  false, is_multiplanar);
 			if (!frmival.pixel_format) {
 				fprintf(stderr, "The pixelformat index was invalid\n");
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		if (!valid_pixel_format(fd.g_fd(), frmival.pixel_format, false, is_multiplanar)) {
 			fprintf(stderr, "The pixelformat '%s' is invalid\n",
 				fcc2s(frmival.pixel_format).c_str());
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 
 		printf("ioctl: VIDIOC_ENUM_FRAMEINTERVALS\n");

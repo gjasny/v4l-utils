@@ -695,13 +695,13 @@ void common_process_controls(cv4l_fd &fd)
 	for (ctrl_get_list::iterator iter = get_ctrls.begin(); iter != get_ctrls.end(); ++iter) {
 	    if (ctrl_str2q.find(*iter) == ctrl_str2q.end()) {
 		fprintf(stderr, "unknown control '%s'\n", iter->c_str());
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	    }
 	}
 	for (ctrl_set_map::iterator iter = set_ctrls.begin(); iter != set_ctrls.end(); ++iter) {
 	    if (ctrl_str2q.find(iter->first) == ctrl_str2q.end()) {
 		fprintf(stderr, "unknown control '%s'\n", iter->first.c_str());
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	    }
 	}
 }
@@ -806,11 +806,11 @@ void common_cmd(const std::string &media_bus_info, int ch, char *optarg)
 		while (*subs != '\0') {
 			if (parse_next_subopt(&subs, &value)) {
 				common_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			if (strchr(value, '=')) {
 				common_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			else {
 				get_ctrls.push_back(value);
@@ -822,21 +822,21 @@ void common_cmd(const std::string &media_bus_info, int ch, char *optarg)
 		while (*subs != '\0') {
 			if (parse_next_subopt(&subs, &value)) {
 				common_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			if (const char *equal = strchr(value, '=')) {
 				set_ctrls[std::string(value, (equal - value))] = equal + 1;
 			}
 			else {
 				fprintf(stderr, "control '%s' without '='\n", value);
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		break;
 	case OptSubset:
 		if (parse_subset(optarg)) {
 			common_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		break;
 	case OptSetPriority:

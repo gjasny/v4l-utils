@@ -1507,7 +1507,7 @@ void collectTests()
 			    mapTestFuncs[name] != func) {
 				fprintf(stderr, "Duplicate subtest name, but different tests: %s\n",
 					tests[i].subtests[j].name);
-				exit(-1);
+				std::exit(EXIT_FAILURE);
 			}
 			mapTestFuncs[name] = func;
 			mapTests[name] = DONT_CARE;

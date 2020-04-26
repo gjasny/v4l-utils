@@ -593,7 +593,7 @@ __u32 mi_media_info_for_fd(int media_fd, int fd, bool *is_invalid)
 
 	if (fstat(fd, &sb) == -1) {
 		fprintf(stderr, "failed to stat file\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	ent_id = read_topology(media_fd, major(sb.st_rdev), minor(sb.st_rdev),

@@ -1677,12 +1677,12 @@ static FILE *open_output_file(cv4l_fd &fd)
 	host_fd_to = socket(AF_INET, SOCK_STREAM, 0);
 	if (host_fd_to < 0) {
 		fprintf(stderr, "cannot open socket");
-		exit(0);
+		std::exit(EXIT_SUCCESS);
 	}
 	server = gethostbyname(host_to);
 	if (server == NULL) {
 		fprintf(stderr, "no such host %s\n", host_to);
-		exit(0);
+		std::exit(EXIT_SUCCESS);
 	}
 	memset(reinterpret_cast<char *>(&serv_addr), 0, sizeof(serv_addr));
 	serv_addr.sin_family = AF_INET;
@@ -1692,7 +1692,7 @@ static FILE *open_output_file(cv4l_fd &fd)
 	serv_addr.sin_port = htons(host_port_to);
 	if (connect(host_fd_to, reinterpret_cast<struct sockaddr *>(&serv_addr), sizeof(serv_addr)) < 0) {
 		fprintf(stderr, "could not connect\n");
-		exit(0);
+		std::exit(EXIT_SUCCESS);
 	}
 	fout = fdopen(host_fd_to, "a");
 	write_u32(fout, V4L_STREAM_ID);
@@ -1937,30 +1937,30 @@ static FILE *open_input_file(cv4l_fd &fd, __u32 type)
 	listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (listen_fd < 0) {
 		fprintf(stderr, "could not opening socket\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(host_port_from);
 	if (bind(listen_fd, reinterpret_cast<struct sockaddr *>(&serv_addr), sizeof(serv_addr)) < 0) {
 		fprintf(stderr, "could not bind\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	listen(listen_fd, 1);
 	clilen = sizeof(cli_addr);
 	host_fd_from = accept(listen_fd, reinterpret_cast<struct sockaddr *>(&cli_addr), &clilen);
 	if (host_fd_from < 0) {
 		fprintf(stderr, "could not accept\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	fin = fdopen(host_fd_from, "r");
 	if (read_u32(fin) != V4L_STREAM_ID) {
 		fprintf(stderr, "unknown protocol ID\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	if (read_u32(fin) != V4L_STREAM_VERSION) {
 		fprintf(stderr, "unknown protocol version\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	for (;;) {
 		__u32 packet = read_u32(fin);
@@ -1968,7 +1968,7 @@ static FILE *open_input_file(cv4l_fd &fd, __u32 type)
 
 		if (packet == V4L_STREAM_PACKET_END) {
 			fprintf(stderr, "END packet read\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 
 		if (packet == V4L_STREAM_PACKET_FMT_VIDEO)
@@ -1982,7 +1982,7 @@ static FILE *open_input_file(cv4l_fd &fd, __u32 type)
 			n = fread(buf, 1, rdsize, fin);
 			if (n < 0) {
 				fprintf(stderr, "error reading %d bytes\n", sz);
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			sz -= n;
 		}
@@ -1995,7 +1995,7 @@ static FILE *open_input_file(cv4l_fd &fd, __u32 type)
 
 	if (sz != V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT) {
 		fprintf(stderr, "unsupported FMT_VIDEO size\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	cfmt.s_num_planes(read_u32(fin));
 	cfmt.s_pixelformat(read_u32(fin));
@@ -2023,7 +2023,7 @@ static FILE *open_input_file(cv4l_fd &fd, __u32 type)
 
 		if (sz != V4L_STREAM_PACKET_FMT_VIDEO_SIZE_FMT_PLANE) {
 			fprintf(stderr, "unsupported FMT_VIDEO plane size\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		cfmt.s_sizeimage(read_u32(fin), i);
 		cfmt.s_bytesperline(read_u32(fin), i);
@@ -2031,7 +2031,7 @@ static FILE *open_input_file(cv4l_fd &fd, __u32 type)
 	}
 	if (fd.s_fmt(cfmt)) {
 		fprintf(stderr, "failed to set new format\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	return fin;
 }

@@ -848,7 +848,7 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 	if (!(node.caps & CEC_CAP_MONITOR_PIN) && monitor == CEC_MODE_MONITOR_PIN) {
 		fprintf(stderr, "Monitor Pin mode is not supported\n");
 		usage();
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	if (doioctl(&node, CEC_S_MODE, &monitor)) {
@@ -874,7 +874,7 @@ static void monitor(struct node &node, __u32 monitor_time, const char *store_pin
 		if (fstore == NULL) {
 			fprintf(stderr, "Failed to open %s: %s\n", store_pin,
 				strerror(errno));
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		fprintf(fstore, "# cec-ctl --store-pin\n");
 		fprintf(fstore, "# version 1\n");
@@ -973,7 +973,7 @@ static void analyze(const char *analyze_pin)
 	if (fanalyze == NULL) {
 		fprintf(stderr, "Failed to open %s: %s\n", analyze_pin,
 			strerror(errno));
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	if (!fgets(s, sizeof(s), fanalyze) ||
 	    strcmp(s, "# cec-ctl --store-pin\n"))
@@ -1045,7 +1045,7 @@ static void analyze(const char *analyze_pin)
 
 err:
 	fprintf(stderr, "Not a pin store file: malformed data at line %d\n", line);
-	exit(1);
+	std::exit(EXIT_FAILURE);
 }
 
 static bool wait_for_pwr_state(struct node &node, unsigned from,
@@ -1068,7 +1068,7 @@ static bool wait_for_pwr_state(struct node &node, unsigned from,
 	if (ret) {
 		fprintf(stderr, "Give Device Power Status Transmit failed: %s\n",
 			strerror(ret));
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	if ((msg.rx_status & CEC_RX_STATUS_OK) &&
 	    (msg.rx_status & CEC_RX_STATUS_FEATURE_ABORT)) {
@@ -1162,7 +1162,7 @@ static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned m
 		switch (laddrs.log_addr_type[0]) {
 		case CEC_LOG_ADDR_TYPE_TV:
 			fprintf(stderr, "A TV can't run the power cycle test.\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		case CEC_LOG_ADDR_TYPE_RECORD:
 			from = CEC_LOG_ADDR_RECORD_1;
 			break;
@@ -1202,7 +1202,7 @@ static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned m
 			ret = transmit_msg_retry(node, msg);
 			if (ret) {
 				printf("FAIL: %s\n", strerror(ret));
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			printf("OK\n");
 			printf("%s: ", ts2s(current_ts()).c_str());
@@ -1221,7 +1221,7 @@ static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned m
 				ret = transmit_msg_retry(node, msg);
 				if (ret) {
 					printf("FAIL: %s\n", strerror(ret));
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 
 				if (wait_for_power_off(node, from, hpd_is_low_cnt))
@@ -1229,7 +1229,7 @@ static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned m
 				if (++tries > max_tries) {
 					if (repeat == repeats) {
 						printf(" FAIL: never went into standby\n");
-						exit(1);
+						std::exit(EXIT_FAILURE);
 					}
 					break;
 				}
@@ -1297,7 +1297,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		ret = transmit_msg_retry(node, msg);
 		if (ret) {
 			printf("FAIL: %s\n", strerror(ret));
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		tries = 0;
 		for (;;) {
@@ -1330,7 +1330,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 				printf("(EINVAL) ");
 			} else if (ret) {
 				printf("FAIL: %s\n", strerror(ret));
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			tries = 0;
 			for (;;) {
@@ -1352,7 +1352,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 		if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID) {
 			printf("FAIL: invalid logical address\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		from = laddrs.log_addr[0];
 		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
@@ -1361,7 +1361,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		       cec_phys_addr_exp(pa), cec_la2s(from));
 		if (pa == CEC_PHYS_ADDR_INVALID || !pa) {
 			printf("FAIL: invalid physical address\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		prev_pa = pa;
 		if (display_pa == CEC_PHYS_ADDR_INVALID)
@@ -1369,7 +1369,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		if (pa != display_pa) {
 			printf("FAIL: physical address changed from %x.%x.%x.%x to %x.%x.%x.%x\n",
 			       cec_phys_addr_exp(display_pa), cec_phys_addr_exp(pa));
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		secs = i <= 10 ? i : 10 + 10 * (i - 10);
 		printf("%s: ", ts2s(current_ts()).c_str());
@@ -1379,7 +1379,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		if (pa != prev_pa) {
 			printf("\tFAIL: PA is now %x.%x.%x.%x\n\n",
 			       cec_phys_addr_exp(pa));
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 
 		printf("\n%s: ", ts2s(current_ts()).c_str());
@@ -1394,14 +1394,14 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		ret = transmit_msg_retry(node, msg);
 		if (ret) {
 			printf("FAIL: Active Source Transmit failed: %s\n", strerror(ret));
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_standby(&msg);
 		ret = transmit_msg_retry(node, msg);
 		if (ret) {
 			printf("FAIL: %s\n", strerror(ret));
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 
 		tries = 0;
@@ -1433,7 +1433,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 					if (!ret)
 						continue;
 					printf("FAIL: %s\n", strerror(ret));
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 				printf("\nFAIL: never went into standby\n");
 				failures++;
@@ -1459,7 +1459,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		if (pa != CEC_PHYS_ADDR_INVALID && pa != display_pa) {
 			printf("FAIL: physical address changed from %x.%x.%x.%x to %x.%x.%x.%x\n",
 			       cec_phys_addr_exp(display_pa), cec_phys_addr_exp(pa));
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		printf("\n");
 	}
@@ -1534,7 +1534,7 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 				printf("(EINVAL) ");
 			} else if (ret) {
 				printf("FAIL: %s\n", strerror(ret));
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 
 			for (;;) {
@@ -1546,7 +1546,7 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 				if (++tries > max_tries) {
 					if (repeat == repeats) {
 						printf("\nFAIL: never woke up\n");
-						exit(1);
+						std::exit(EXIT_FAILURE);
 					}
 					break;
 				}
@@ -1560,7 +1560,7 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 		if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID) {
 			printf("FAIL: invalid logical address\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		from = laddrs.log_addr[0];
 		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
@@ -1570,14 +1570,14 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 		       cec_phys_addr_exp(pa), cec_la2s(from));
 		if (pa == CEC_PHYS_ADDR_INVALID || !pa) {
 			printf("FAIL: invalid physical address\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		if (display_pa == CEC_PHYS_ADDR_INVALID)
 			display_pa = pa;
 		if (pa != display_pa) {
 			printf("FAIL: physical address changed from %x.%x.%x.%x to %x.%x.%x.%x\n",
 			       cec_phys_addr_exp(display_pa), cec_phys_addr_exp(pa));
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 
 		if (cnt && iter == cnt)
@@ -1595,12 +1595,12 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 			if (pa != prev_pa) {
 				printf("\tFAIL: PA is now %x.%x.%x.%x\n\n",
 				       cec_phys_addr_exp(pa));
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			if (pa != CEC_PHYS_ADDR_INVALID && pa != display_pa) {
 				printf("FAIL: physical address changed from %x.%x.%x.%x to %x.%x.%x.%x\n",
 				       cec_phys_addr_exp(display_pa), cec_phys_addr_exp(pa));
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 
 			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
@@ -1612,13 +1612,13 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 			ret = transmit_msg_retry(node, msg);
 			if (ret) {
 				printf("FAIL: Active Source Transmit failed: %s\n", strerror(ret));
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			cec_msg_standby(&msg);
 			ret = transmit_msg_retry(node, msg);
 			if (ret) {
 				printf("FAIL: %s\n", strerror(ret));
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 
 			tries = 0;
@@ -1634,7 +1634,7 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 				if (++tries > max_tries) {
 					if (repeat == repeats) {
 						printf("\nFAIL: never went into standby\n");
-						exit(1);
+						std::exit(EXIT_FAILURE);
 					}
 					break;
 				}
@@ -2075,7 +2075,7 @@ int main(int argc, char **argv)
 					}
 					break;
 				default:
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 			}
 			if (size) {
@@ -2116,7 +2116,7 @@ int main(int argc, char **argv)
 					}
 					break;
 				default:
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 			}
 			if (have_cmd) {
@@ -2157,7 +2157,7 @@ int main(int argc, char **argv)
 					}
 					break;
 				default:
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 			}
 			if (size) {
@@ -2191,7 +2191,7 @@ int main(int argc, char **argv)
 					}
 					break;
 				default:
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 			}
 			if (size) {
@@ -2229,7 +2229,7 @@ int main(int argc, char **argv)
 					test_pwr_cycle_sleep = strtoul(value, 0L, 0);
 					break;
 				default:
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 			}
 			break;
@@ -2277,12 +2277,12 @@ int main(int argc, char **argv)
 					stress_test_pwr_cycle_polls = strtoul(value, 0L, 0);
 					break;
 				default:
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 			}
 			if (stress_test_pwr_cycle_min_sleep > stress_test_pwr_cycle_max_sleep) {
 				fprintf(stderr, "min-sleep > max-sleep\n");
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			warn_if_unconfigured = true;
 			break;
@@ -2291,7 +2291,7 @@ int main(int argc, char **argv)
 		default:
 			if (ch >= OptHelpAll) {
 				cec_parse_usage_options(options);
-				exit(0);
+				std::exit(EXIT_SUCCESS);
 			}
 			if (ch <= OptMessages)
 				break;
@@ -2374,7 +2374,7 @@ int main(int argc, char **argv)
 		if (device.empty()) {
 			fprintf(stderr,
 				"Could not find a CEC device for the given driver/adapter combination\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	}
 	if (device.empty())
@@ -2386,7 +2386,7 @@ int main(int argc, char **argv)
 	if ((fd = open(device.c_str(), O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device.c_str(),
 			strerror(errno));
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	struct node node;
@@ -2490,7 +2490,7 @@ int main(int argc, char **argv)
 				prim_type = i;
 			if (laddrs.num_log_addrs == node.available_log_addrs) {
 				fprintf(stderr, "Attempt to define too many logical addresses\n");
-				exit(-1);
+				std::exit(EXIT_FAILURE);
 			}
 			switch (i) {
 			case CEC_OP_PRIM_DEVTYPE_TV:
@@ -2602,7 +2602,7 @@ int main(int argc, char **argv)
 		fflush(stdout);
 		if (!cec_msg_is_broadcast(&msg) && !options[OptTo]) {
 			fprintf(stderr, "attempting to send message without --to\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		if (msg.msg[0] == 0xf0)
 			msg.msg[0] = first_to;
@@ -2660,7 +2660,7 @@ skip_la:
 
 		fd = open(edid_path, O_RDONLY);
 		if (fd < 0)
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		lseek(fd, 0, SEEK_SET);
 		has_edid = read(fd, &dummy, 1) > 0;
 

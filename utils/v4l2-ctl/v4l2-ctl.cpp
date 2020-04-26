@@ -795,7 +795,7 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 				pixelformat = strtol(value, 0L, 0);
 			} else {
 				fprintf(stderr, "The pixelformat '%s' is invalid\n", value);
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			fmts |= FmtPixelFormat;
 			break;
@@ -931,7 +931,7 @@ static __u32 parse_event(const char *e, const char **name)
 		if (event == V4L2_EVENT_CTRL) {
 			fprintf(stderr, "Missing control name for ctrl event, use ctrl=<name>\n");
 			misc_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	} else if (!strcmp(e, "eos")) {
 		event = V4L2_EVENT_EOS;
@@ -954,7 +954,7 @@ static __u32 parse_event(const char *e, const char **name)
 	if (event == 0) {
 		fprintf(stderr, "Unknown event\n");
 		misc_usage();
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	return event;
 }
@@ -1288,7 +1288,7 @@ int main(int argc, char **argv)
 	if (type == MEDIA_TYPE_CANT_STAT) {
 		fprintf(stderr, "Cannot open device %s, exiting.\n",
 			device);
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	switch (type) {
@@ -1308,7 +1308,7 @@ int main(int argc, char **argv)
 	if (type == MEDIA_TYPE_UNKNOWN) {
 		fprintf(stderr, "Unable to detect what device %s is, exiting.\n",
 			device);
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	is_subdev = type == MEDIA_TYPE_SUBDEV;
 	if (is_subdev)
@@ -1325,14 +1325,14 @@ int main(int argc, char **argv)
 	if (fd < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device,
 			strerror(errno));
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	verbose = options[OptVerbose];
 	c_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
 
 	if (!is_subdev && doioctl(fd, VIDIOC_QUERYCAP, &vcap)) {
 		fprintf(stderr, "%s: not a v4l2 node\n", device);
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	capabilities = vcap.capabilities;
 	if (capabilities & V4L2_CAP_DEVICE_CAPS)
@@ -1356,12 +1356,12 @@ int main(int argc, char **argv)
 		if (out_fd < 0) {
 			fprintf(stderr, "Failed to open %s: %s\n", out_device,
 					strerror(errno));
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		c_out_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
 		if (doioctl(out_fd, VIDIOC_QUERYCAP, &vcap)) {
 			fprintf(stderr, "%s: not a v4l2 node\n", out_device);
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		out_capabilities = vcap.capabilities;
 		if (out_capabilities & V4L2_CAP_DEVICE_CAPS)
@@ -1375,12 +1375,12 @@ int main(int argc, char **argv)
 		if (exp_fd < 0) {
 			fprintf(stderr, "Failed to open %s: %s\n", export_device,
 					strerror(errno));
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		c_exp_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
 		if (doioctl(exp_fd, VIDIOC_QUERYCAP, &vcap)) {
 			fprintf(stderr, "%s: not a v4l2 node\n", export_device);
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	}
 
@@ -1389,17 +1389,17 @@ int main(int argc, char **argv)
 	if (wait_for_event == V4L2_EVENT_CTRL && wait_event_id)
 		if (!common_find_ctrl_id(wait_event_id)) {
 			fprintf(stderr, "unknown control '%s'\n", wait_event_id);
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	if (poll_for_event == V4L2_EVENT_CTRL && poll_event_id)
 		if (!common_find_ctrl_id(poll_event_id)) {
 			fprintf(stderr, "unknown control '%s'\n", poll_event_id);
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	if (epoll_for_event == V4L2_EVENT_CTRL && epoll_event_id)
 		if (!common_find_ctrl_id(epoll_event_id)) {
 			fprintf(stderr, "unknown control '%s'\n", epoll_event_id);
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 
 	if (options[OptAll]) {
@@ -1610,5 +1610,5 @@ int main(int argc, char **argv)
 	// --all sets --silent to avoid ioctl errors to be shown when an ioctl
 	// is not implemented by the driver. Which is fine, but we shouldn't
 	// return an application error in that specific case.
-	exit(options[OptAll] ? 0 : app_result);
+	std::exit(options[OptAll] ? 0 : app_result);
 }

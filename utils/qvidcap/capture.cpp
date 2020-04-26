@@ -737,7 +737,7 @@ void CaptureWin::checkError(const char *msg)
 		fprintf(stderr, "OpenGL Error (no: %u) code 0x%x: %s.\n", errNo++, err, msg);
 
 	if (errNo)
-		exit(errNo);
+		std::exit(errNo);
 }
 
 void CaptureWin::configureTexture(size_t idx)
@@ -817,7 +817,7 @@ void CaptureWin::setModeFile(const QString &filename)
 	m_file.setFileName(filename);
 	if (!m_file.open(QIODevice::ReadOnly)) {
 		fprintf(stderr, "could not open %s\n", filename.toUtf8().data());
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	m_canOverrideResolution = true;
 }
@@ -1137,7 +1137,7 @@ void CaptureWin::v4l2ReadEvent()
 	if (m_cnt == 0)
 		return;
 	if (--m_cnt == 0)
-		exit(0);
+		std::exit(EXIT_SUCCESS);
 }
 
 void CaptureWin::v4l2ExceptionEvent()
@@ -1153,7 +1153,7 @@ void CaptureWin::v4l2ExceptionEvent()
 				fprintf(stderr, "Unsupported format: '%s' %s\n",
 					fcc2s(fmt.g_pixelformat()).c_str(),
 					pixfmt2s(fmt.g_pixelformat()).c_str());
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			updateOrigValues();
 			m_updateShader = true;
@@ -1320,7 +1320,7 @@ void CaptureWin::sockReadEvent()
 	if (m_cnt == 0)
 		return;
 	if (--m_cnt == 0)
-		exit(0);
+		std::exit(EXIT_SUCCESS);
 	return;
 
 new_conn:
@@ -1495,7 +1495,7 @@ void CaptureWin::tpgUpdateFrame()
 	delete m_timer;
 	m_timer = NULL;
 	if (!m_test)
-		exit(0);
+		std::exit(EXIT_SUCCESS);
 
 	m_cnt = m_test;
 
@@ -1533,7 +1533,7 @@ void CaptureWin::tpgUpdateFrame()
 								m_testState.field_idx = 0;
 							if (mask_fmt ||
 							    formats[++m_testState.fmt_idx] == 0)
-								exit(0);
+								std::exit(EXIT_SUCCESS);
 						}
 					}
 				}
@@ -1543,7 +1543,7 @@ void CaptureWin::tpgUpdateFrame()
 
 	while (!supportedFmt(formats[m_testState.fmt_idx]))
 		if (formats[++m_testState.fmt_idx] == 0)
-			exit(0);
+			std::exit(EXIT_SUCCESS);
 
 	m_v4l_fmt.s_pixelformat(formats[m_testState.fmt_idx]);
 	updateV4LFormat(m_v4l_fmt);

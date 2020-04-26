@@ -233,7 +233,7 @@ static void edid_add_block(struct v4l2_edid *e)
 		fprintf(stderr, "edid file error: too long\n");
 		free(e->edid);
 		e->edid = NULL;
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	e->edid = static_cast<unsigned char *>(realloc(e->edid, e->blocks * 128));
 }
@@ -986,13 +986,13 @@ void edid_cmd(int ch, char *optarg)
 			if (opt == -1) {
 				fprintf(stderr, "Invalid suboptions specified\n");
 				edid_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			if (value == NULL && opt <= 8) {
 				fprintf(stderr, "No value given to suboption <%s>\n",
 					subopts[opt]);
 				edid_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			switch (opt) {
 			case 0:
@@ -1020,11 +1020,11 @@ void edid_cmd(int ch, char *optarg)
 					sedid.blocks = sizeof(hdmi_edid) / 128;
 				} else {
 					edid_usage();
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 				if (file_in) {
 					fprintf(stderr, "The edid and file options can't be used together.\n");
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 				break;
 			case 3:
@@ -1032,7 +1032,7 @@ void edid_cmd(int ch, char *optarg)
 					file_in = value;
 					if (sedid.edid) {
 						fprintf(stderr, "The edid and file options can't be used together.\n");
-						exit(1);
+						std::exit(EXIT_FAILURE);
 					}
 				}
 				break;
@@ -1043,7 +1043,7 @@ void edid_cmd(int ch, char *optarg)
 					sformat = RAW;
 				} else {
 					edid_usage();
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 				break;
 			case 5:
@@ -1109,7 +1109,7 @@ void edid_cmd(int ch, char *optarg)
 			case 56: toggle_speaker3_flags |= SPEAKER3_TPLS_TPRS; break;
 			default:
 				edid_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		break;
@@ -1145,7 +1145,7 @@ void edid_cmd(int ch, char *optarg)
 				gedid.start_block = strtoul(value, 0, 0);
 				if (gedid.start_block > 255) {
 					fprintf(stderr, "startblock %d too large, max 255\n", gedid.start_block);
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 				break;
 			case 2:
@@ -1160,7 +1160,7 @@ void edid_cmd(int ch, char *optarg)
 					gformat = CARRAY;
 				} else {
 					edid_usage();
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 				break;
 			case 4:
@@ -1169,7 +1169,7 @@ void edid_cmd(int ch, char *optarg)
 				break;
 			default:
 				edid_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		if (gedid.start_block + gedid.blocks > 256)
@@ -1209,7 +1209,7 @@ void edid_set(cv4l_fd &_fd)
 			if (!fin) {
 				fprintf(stderr, "Failed to open %s: %s\n", file_in,
 						strerror(errno));
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		if (fin) {
@@ -1217,7 +1217,7 @@ void edid_set(cv4l_fd &_fd)
 			if (sedid.blocks == 0) {
 				fprintf(stderr, "%s contained an empty EDID, ignoring.\n",
 						file_in ? file_in : "stdin");
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		if (toggle_cta861_hdr_flags || phys_addr >= 0) {
@@ -1329,7 +1329,7 @@ void edid_get(cv4l_fd &_fd)
 			if (!fout) {
 				fprintf(stderr, "Failed to open %s: %s\n", file_out,
 						strerror(errno));
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		gedid.edid = static_cast<unsigned char *>(malloc(gedid.blocks * 128));

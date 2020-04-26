@@ -486,7 +486,7 @@ static void signal_handler_interrupt(int signum)
 {
 	restoreState();
 	printf("\n");
-	exit(-1);
+	std::exit(EXIT_FAILURE);
 }
 
 static void determine_codec_mask(struct node &node)
@@ -1544,7 +1544,7 @@ int main(int argc, char **argv)
 		switch (ch) {
 		case OptHelp:
 			usage();
-			exit(0);
+			std::exit(EXIT_FAILURE);
 		case OptSetDevice:
 			device = make_devname(optarg, "video", media_bus_info);
 			break;
@@ -1619,7 +1619,7 @@ int main(int argc, char **argv)
 						color_component = 2;
 					else {
 						usage();
-						exit(1);
+						std::exit(EXIT_FAILURE);
 					}
 					break;
 				case 1:
@@ -1634,7 +1634,7 @@ int main(int argc, char **argv)
 					break;
 				default:
 					usage();
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 			}
 			break;
@@ -1647,7 +1647,7 @@ int main(int argc, char **argv)
 				show_colors = isatty(STDOUT_FILENO);
 			else {
 				usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			break;
 		case OptNoWarnings:
@@ -1669,13 +1669,13 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Option `%s' requires a value\n",
 				argv[optind]);
 			usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		case '?':
 			if (argv[optind])
 				fprintf(stderr, "Unknown argument `%s'\n",
 					argv[optind]);
 			usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	}
 	if (optind < argc) {
@@ -1684,7 +1684,7 @@ int main(int argc, char **argv)
 			fprintf(stderr, "%s ", argv[optind++]);
 		fprintf(stderr, "\n");
 		usage();
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	bool direct = !options[OptUseWrapper];
 	int fd;
@@ -1694,12 +1694,12 @@ int main(int argc, char **argv)
 	if (type == MEDIA_TYPE_CANT_STAT) {
 		fprintf(stderr, "Cannot open device %s, exiting.\n",
 			device.c_str());
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	if (type == MEDIA_TYPE_UNKNOWN) {
 		fprintf(stderr, "Unable to detect what device %s is, exiting.\n",
 			device.c_str());
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	node.device = device.c_str();
@@ -1721,7 +1721,7 @@ int main(int argc, char **argv)
 	if (fd < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device.c_str(),
 			strerror(errno));
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	if (!expbuf_device.empty()) {
@@ -1731,7 +1731,7 @@ int main(int argc, char **argv)
 		if (fd < 0) {
 			fprintf(stderr, "Failed to open %s: %s\n", expbuf_device.c_str(),
 				strerror(errno));
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	}
 
@@ -1742,5 +1742,5 @@ int main(int argc, char **argv)
 	if (media_fd >= 0)
 		close(media_fd);
 
-	exit(app_result);
+	std::exit(app_result);
 }

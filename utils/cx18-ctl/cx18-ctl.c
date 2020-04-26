@@ -285,7 +285,7 @@ int main(int argc, char **argv)
 						fprintf(stderr,
 							"No value given to suboption <dir>\n");
 						usage();
-						exit(1);
+						exit(EXIT_FAILURE);
 					}
 					gpio_dir = strtoul(value, 0L, 0);
 					gpio_set_dir = 1;
@@ -295,7 +295,7 @@ int main(int argc, char **argv)
 						fprintf(stderr,
 							"No value given to suboption <val>\n");
 						usage();
-						exit(1);
+						exit(EXIT_FAILURE);
 					}
 					gpio_out =
 					    (unsigned short)strtoul(value, 0L, 0);
@@ -304,7 +304,7 @@ int main(int argc, char **argv)
 					fprintf(stderr,
 						"Invalid suboptions specified\n");
 					usage();
-					exit(1);
+					exit(EXIT_FAILURE);
 					break;
 				}
 			}
@@ -334,7 +334,7 @@ int main(int argc, char **argv)
 	if (fd < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device,
 			strerror(errno));
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	/* Setting Opts */

@@ -48,7 +48,7 @@ void CaptureWin::initializeGL()
 	}
 	if (m_uses_gl_red && glGetString(GL_VERSION)[0] < '3') {
 		fprintf(stderr, "The openGL implementation does not support GL_RED/GL_RG\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	QColor bg = QWidget::palette().color(QWidget::backgroundRole());
@@ -515,7 +515,7 @@ void CaptureWin::changeShader()
 
 	if (!src_ok) {
 		fprintf(stderr, "OpenGL Error: fragment shader compilation failed.\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	// Mandatory vertex shader replaces fixed pipeline in GLES 2.0. In this case just a feedthrough shader.
@@ -541,12 +541,12 @@ void CaptureWin::changeShader()
 
 	if (!src_ok) {
 		fprintf(stderr, "OpenGL Error: vertex shader compilation failed.\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	if (!m_program->bind()) {
 		fprintf(stderr, "OpenGL Error: shader bind failed.\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	GLint loc = m_program->uniformLocation("uvtex");

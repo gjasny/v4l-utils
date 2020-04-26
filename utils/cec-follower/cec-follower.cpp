@@ -451,7 +451,7 @@ int main(int argc, char **argv)
 		if (device.empty()) {
 			fprintf(stderr,
 				"Could not find a CEC device for the given driver/adapter combination\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	}
 	if (device.empty())
@@ -460,7 +460,7 @@ int main(int argc, char **argv)
 	if ((fd = open(device.c_str(), O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device.c_str(),
 			strerror(errno));
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	struct cec_caps caps = { };
@@ -533,7 +533,7 @@ int main(int argc, char **argv)
 	if (missing_la)
 		fprintf(stderr, "FAIL: missing logical address(es), use cec-ctl to configure this\n");
 	if (missing_la || missing_pa)
-		exit(-1);
+		std::exit(EXIT_FAILURE);
 
 	testProcessing(&node, options[OptWallClock]);
 }

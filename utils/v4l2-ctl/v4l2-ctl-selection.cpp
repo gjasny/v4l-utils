@@ -136,7 +136,7 @@ static void parse_crop(char *optarg, unsigned int &set_crop, v4l2_rect &vcrop)
 			break;
 		default:
 			selection_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	}
 }
@@ -184,7 +184,7 @@ static int parse_selection(char *optarg, unsigned int &set_sel, v4l2_selection &
 			if (parse_selection_target(value, vsel.target)) {
 				fprintf(stderr, "Unknown selection target\n");
 				selection_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			break;
 		case 1:
@@ -210,7 +210,7 @@ static int parse_selection(char *optarg, unsigned int &set_sel, v4l2_selection &
 		default:
 			fprintf(stderr, "Unknown option\n");
 			selection_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	}
 
@@ -262,7 +262,7 @@ void selection_cmd(int ch, char *optarg)
 			if (parse_selection(optarg, get_sel, gsel)) {
 				fprintf(stderr, "Unknown selection target\n");
 				selection_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			get_sel_target = gsel.target;
 			break;

@@ -8,10 +8,8 @@
 #ifndef _CEC_COMPLIANCE_H_
 #define _CEC_COMPLIANCE_H_
 
-#include <stdarg.h>
-#include <cerrno>
 #include <string>
-#include <time.h>
+
 #include <linux/cec-funcs.h>
 #include "cec-htng-funcs.h"
 
@@ -228,7 +226,7 @@ struct remote_subtest {
 		       show_colors ? COLOR_BOLD("warn") : "warn",	\
 		       __FILE__, __LINE__, ##args);			\
 	if (exit_on_warn)						\
-		exit(1);						\
+		std::exit(EXIT_FAILURE);				\
 	0;								\
 })
 
@@ -259,7 +257,7 @@ struct remote_subtest {
 	printf("\t\t%s: %s(%d): " fmt, show_colors ?			\
 	       COLOR_RED("fail") : "fail", __FILE__, __LINE__, ##args);	\
 	if (exit_on_fail)						\
-		exit(1);						\
+		std::exit(EXIT_FAILURE);				\
 	FAIL;								\
 })
 

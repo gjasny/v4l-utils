@@ -230,7 +230,7 @@ void misc_cmd(int ch, char *optarg)
 			default:
 				if (opt < 0 || opt > 15) {
 					misc_usage();
-					exit(1);
+					std::exit(EXIT_FAILURE);
 				}
 				len = strlen(value);
 				if (len > sizeof(jpegcomp.APP_data) - 1)
@@ -266,7 +266,7 @@ void misc_cmd(int ch, char *optarg)
 				break;
 			default:
 				misc_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		break;
@@ -304,7 +304,7 @@ void misc_cmd(int ch, char *optarg)
 				break;
 			default:
 				misc_usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 		}
 		break;

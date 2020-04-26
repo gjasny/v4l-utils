@@ -95,7 +95,7 @@ void vbi_cmd(int ch, char *optarg)
 		if (optarg[0] == 0) {
 			fprintf(stderr, "empty string\n");
 			vbi_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		while (*optarg) {
 			subs = strchr(optarg, ',');
@@ -125,7 +125,7 @@ void vbi_cmd(int ch, char *optarg)
 		if (found_off && sliced->fmt.sliced.service_set) {
 			fprintf(stderr, "Sliced VBI mode 'off' cannot be combined with other modes\n");
 			vbi_usage();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		break;
 	case OptSetVbiOutFormat:

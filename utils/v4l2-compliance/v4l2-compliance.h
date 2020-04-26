@@ -208,7 +208,7 @@ private:
 			       COLOR_BOLD("warn") : "warn",	\
 			       __FILE__, __LINE__, ##args);	\
 		if (exit_on_warn)				\
-			exit(1);				\
+			std::exit(EXIT_FAILURE);		\
 	} while (0)
 
 #define warn_once(fmt, args...)						\
@@ -232,7 +232,7 @@ private:
 	printf("\t\t%s: %s(%d): " fmt, show_colors ?			\
 	       COLOR_RED("fail") : "fail", __FILE__, __LINE__, ##args);	\
 	if (exit_on_fail)						\
-		exit(1);						\
+		std::exit(EXIT_FAILURE);				\
 	1;								\
 })
 

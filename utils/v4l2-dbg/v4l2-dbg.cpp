@@ -386,13 +386,13 @@ static int parse_subopt(char **subs, const char * const *subopts, char **value)
 	if (opt == -1) {
 		fprintf(stderr, "Invalid suboptions specified\n");
 		usage();
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	if (*value == NULL) {
 		fprintf(stderr, "No value given to suboption <%s>\n",
 				subopts[opt]);
 		usage();
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	return opt;
 }
@@ -428,7 +428,7 @@ int main(int argc, char **argv)
 
 	if (argc == 1) {
 		usage();
-		exit(0);
+		std::exit(EXIT_SUCCESS);
 	}
 	for (i = 0; long_options[i].name; i++) {
 		if (!isalpha(long_options[i].val))
@@ -466,7 +466,7 @@ int main(int argc, char **argv)
 		switch (ch) {
 		case OptHelp:
 			usage();
-			exit(0);
+			std::exit(EXIT_SUCCESS);
 
 		case OptSetDevice:
 			device = optarg;
@@ -550,7 +550,7 @@ int main(int argc, char **argv)
 	if ((fd = open(device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device,
 			strerror(errno));
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	doioctl(fd, VIDIOC_QUERYCAP, &vcap, "VIDIOC_QUERYCAP");
@@ -814,5 +814,5 @@ list_done:
 	}
 
 	close(fd);
-	exit(0);
+	std::exit(EXIT_SUCCESS);
 }

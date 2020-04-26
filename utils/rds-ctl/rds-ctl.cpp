@@ -339,7 +339,7 @@ static dev_vec list_devices()
 	dp = opendir("/dev");
 	if (dp == NULL) {
 		perror ("Couldn't open the directory");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	while ((ep = readdir(dp)))
 		if (is_radio_dev(ep->d_name))
@@ -414,7 +414,7 @@ static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
 			break;
 		default:
 			usage_tuner();
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 	}
 }
@@ -724,7 +724,7 @@ static void read_rds_from_fd(const int fd)
 	/* create an rds handle for the current device */
 	if (!(rds_handle = v4l2_rds_create(params.options[OptRBDS]))) {
 		fprintf(stderr, "Failed to init RDS lib: %s\n", strerror(errno));
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	/* try to receive and decode RDS data */
@@ -748,7 +748,7 @@ static int parse_cl(int argc, char **argv)
 
 	if (argc == 1) {
 		usage_hint();
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	for (i = 0; long_options[i].name; i++) {
 		if (!isalpha(long_options[i].val))
@@ -976,18 +976,18 @@ int main(int argc, char **argv)
 	parse_cl(argc, argv);
 	if (params.options[OptHelp]) {
 		usage();
-		exit(0);
+		std::exit(EXIT_SUCCESS);
 	}
 
 	/* File Mode: disables all other features, except for RDS decoding */
 	if (params.filemode_active) {
 		if ((fd = open(params.fd_name, O_RDONLY|O_NONBLOCK)) < 0){
 			perror("error opening file");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		read_rds_from_fd(fd);
 		close(fd);
-		exit(0);
+		std::exit(EXIT_SUCCESS);
 	}
 
 	/* Device Mode: open the radio device as read-only and non-blocking */
@@ -996,7 +996,7 @@ int main(int argc, char **argv)
 		dev_vec devices = list_devices();
 		if (devices.empty()) {
 			fprintf(stderr, "No RDS-capable device found\n");
-			exit(1);
+			std::exit(EXIT_FAILURE);
 		}
 		strncpy(params.fd_name, devices[0].c_str(), sizeof(params.fd_name));
 		params.fd_name[sizeof(params.fd_name) - 1] = '\0';
@@ -1005,7 +1005,7 @@ int main(int argc, char **argv)
 	if ((fd = open(params.fd_name, O_RDONLY | O_NONBLOCK)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", params.fd_name,
 			strerror(errno));
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	doioctl(fd, VIDIOC_QUERYCAP, &vcap);
 
@@ -1021,5 +1021,5 @@ int main(int argc, char **argv)
 		read_rds_from_fd(fd);
 
 	close(fd);
-	exit(app_result);
+	std::exit(app_result);
 }

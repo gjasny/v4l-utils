@@ -1243,7 +1243,7 @@ void testAdapter(struct node &node, struct cec_log_addrs &laddrs,
 	if (node.phys_addr == CEC_PHYS_ADDR_INVALID) {
 		fprintf(stderr, "FAIL: without a valid physical address this test cannot proceed.\n");
 		fprintf(stderr, "Make sure that this CEC adapter is connected to another HDMI sink or source.\n");
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 	printf("\tCEC_ADAP_G/S_LOG_ADDRS: %s\n", ok(testAdapLogAddrs(&node)));
 	fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
@@ -1275,7 +1275,7 @@ void testAdapter(struct node &node, struct cec_log_addrs &laddrs,
 	if ((node2.fd = open(device, O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device,
 			strerror(errno));
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	printf("\tCEC_G/S_MODE: %s\n", ok(testModes(&node, &node2)));

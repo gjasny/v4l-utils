@@ -2254,7 +2254,7 @@ static int testBlockingDQBuf(struct node *node, cv4l_queue &q)
 		cv4l_buffer buf(q.g_type(), V4L2_MEMORY_MMAP);
 
 		node->dqbuf(buf);
-		exit(0);
+		std::exit(EXIT_SUCCESS);
 	}
 
 	/* Wait for the child process to start and block */
@@ -2273,7 +2273,7 @@ static int testBlockingDQBuf(struct node *node, cv4l_queue &q)
 		 * be blocked by the DQBUF!
 		 */
 		node->streamoff(q.g_type());
-		exit(0);
+		std::exit(EXIT_SUCCESS);
 	}
 
 	int wstatus_streamoff = 0;
