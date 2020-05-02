@@ -1,3 +1,10 @@
+v4l-utils-1.18.1
+----------------
+
+David Seifert (1):
+      Fix GCC 10 / -fno-common
+
+
 v4l-utils-1.18.0
 ----------------
 
