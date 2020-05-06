@@ -389,7 +389,7 @@ static bool is_rgb_or_hsv(__u32 pixelformat)
 
 static std::string printfmtname(int fd, __u32 type, __u32 pixfmt)
 {
-	struct v4l2_fmtdesc fmt;
+	struct v4l2_fmtdesc fmt = {};
 	std::string s(" (");
 
 	fmt.index = 0;
@@ -607,7 +607,7 @@ void print_frmival(const struct v4l2_frmivalenum &frmival, const char *prefix)
 void print_video_formats(cv4l_fd &fd, __u32 type)
 {
 	cv4l_disable_trace dt(fd);
-	struct v4l2_fmtdesc fmt;
+	struct v4l2_fmtdesc fmt = {};
 
 	printf("\tType: %s\n\n", buftype2s(type).c_str());
 	if (fd.enum_fmt(fmt, true, 0, type))
@@ -624,7 +624,7 @@ void print_video_formats(cv4l_fd &fd, __u32 type)
 void print_video_formats_ext(cv4l_fd &fd, __u32 type)
 {
 	cv4l_disable_trace dt(fd);
-	struct v4l2_fmtdesc fmt;
+	struct v4l2_fmtdesc fmt = {};
 	struct v4l2_frmsizeenum frmsize;
 	struct v4l2_frmivalenum frmival;
 
@@ -961,9 +961,8 @@ static __u32 parse_event(const char *e, const char **name)
 
 bool valid_pixel_format(int fd, __u32 pixelformat, bool output, bool mplane)
 {
-	struct v4l2_fmtdesc fmt;
+	struct v4l2_fmtdesc fmt = {};
 
-	fmt.index = 0;
 	if (output)
 		fmt.type = mplane ? V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE :
 			V4L2_BUF_TYPE_VIDEO_OUTPUT;
@@ -981,7 +980,7 @@ bool valid_pixel_format(int fd, __u32 pixelformat, bool output, bool mplane)
 
 __u32 find_pixel_format(int fd, unsigned index, bool output, bool mplane)
 {
-	struct v4l2_fmtdesc fmt;
+	struct v4l2_fmtdesc fmt = {};
 
 	fmt.index = index;
 	if (output)

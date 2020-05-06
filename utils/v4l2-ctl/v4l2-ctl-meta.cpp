@@ -73,7 +73,7 @@ static void __meta_set(cv4l_fd &_fd, bool set, bool _try, __u32 type)
 	in_vfmt.fmt.meta.dataformat = vfmt.fmt.meta.dataformat;
 
 	if (in_vfmt.fmt.meta.dataformat < 256) {
-		struct v4l2_fmtdesc fmt;
+		struct v4l2_fmtdesc fmt = {};
 
 		fmt.index = in_vfmt.fmt.meta.dataformat;
 		fmt.type = in_vfmt.type;

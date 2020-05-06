@@ -75,7 +75,7 @@ void sdr_set(cv4l_fd &_fd)
 		in_vfmt.fmt.sdr.pixelformat = vfmt.fmt.sdr.pixelformat;
 
 		if (in_vfmt.fmt.sdr.pixelformat < 256) {
-			struct v4l2_fmtdesc fmt;
+			struct v4l2_fmtdesc fmt = {};
 
 			fmt.index = in_vfmt.fmt.sdr.pixelformat;
 			fmt.type = V4L2_BUF_TYPE_SDR_CAPTURE;
@@ -100,7 +100,7 @@ void sdr_set(cv4l_fd &_fd)
 		in_vfmt.fmt.sdr.pixelformat = vfmt.fmt.sdr.pixelformat;
 
 		if (in_vfmt.fmt.sdr.pixelformat < 256) {
-			struct v4l2_fmtdesc fmt;
+			struct v4l2_fmtdesc fmt = {};
 
 			fmt.index = in_vfmt.fmt.sdr.pixelformat;
 			fmt.type = V4L2_BUF_TYPE_SDR_OUTPUT;

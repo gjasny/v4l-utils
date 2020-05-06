@@ -366,7 +366,7 @@ void streaming_usage()
 static enum codec_type get_codec_type(cv4l_fd &fd)
 {
 	cv4l_disable_trace dt(fd);
-	struct v4l2_fmtdesc fmt_desc;
+	struct v4l2_fmtdesc fmt_desc = {};
 	int num_cap_fmts = 0;
 	int num_compressed_cap_fmts = 0;
 	int num_out_fmts = 0;
