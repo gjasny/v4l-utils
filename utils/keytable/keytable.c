@@ -940,12 +940,21 @@ static struct sysfs_names *find_device(char *name)
 	return names;
 }
 
+/*
+ * If an rcdev does not have a decoder for a protocol, try to load a bpf
+ * replacement.
+ */
 static enum sysfs_protocols load_bpf_for_unsupported(enum sysfs_protocols protocols, enum sysfs_protocols supported)
 {
 	const struct protocol_map_entry *pme;
 	struct bpf_protocol *b;
 
 	for (pme = protocol_map; pme->name; pme++) {
+		// So far, we only have a replacement for the xbox_dvd
+		// protocol
+		if (pme->sysfs_protocol != SYSFS_XBOX_DVD)
+			continue;
+
 		if (!(protocols & pme->sysfs_protocol) ||
 		    (supported & pme->sysfs_protocol))
 			continue;
@@ -1151,7 +1160,7 @@ static int v2_set_protocols(struct rc_device *rc_dev)
 
 	if (!stat(name, &st) && !(st.st_mode & 0222)) {
 		fprintf(stderr, _("Protocols for device can not be changed\n"));
-		return 0;
+		return EINVAL;
 	}
 
 	fp = fopen(name, "w");
@@ -1318,8 +1327,7 @@ static int set_proto(struct rc_device *rc_dev)
 	int rc = 0;
 
 	if (rc_dev->version == VERSION_2) {
-		rc = v2_set_protocols(rc_dev);
-		return rc;
+		return v2_set_protocols(rc_dev);
 	}
 
 	rc_dev->current &= rc_dev->supported;
@@ -2102,9 +2110,7 @@ int main(int argc, char *argv[])
 
 		rc_dev.current = load_bpf_for_unsupported(ch_proto, rc_dev.supported);
 
-		if (set_proto(&rc_dev))
-			fprintf(stderr, _("Couldn't change the IR protocols\n"));
-		else {
+		if (!set_proto(&rc_dev)) {
 			fprintf(stderr, _("Protocols changed to "));
 			write_sysfs_protocols(rc_dev.current, stderr, "%s ");
 			fprintf(stderr, "\n");
