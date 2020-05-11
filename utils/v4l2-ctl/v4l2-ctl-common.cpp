@@ -1,7 +1,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <inttypes.h>
 #include <getopt.h>
 #include <sys/types.h>
@@ -22,6 +21,7 @@
 #include <sys/klog.h>
 #endif
 
+#include <cstring>
 #include <list>
 #include <vector>
 #include <map>
@@ -152,7 +152,7 @@ static int calc_node_val(const char *s)
 {
 	int n = 0;
 
-	s = strrchr(s, '/') + 1;
+	s = std::strrchr(s, '/') + 1;
 
 	for (unsigned i = 0; prefixes[i]; i++) {
 		unsigned l = strlen(prefixes[i]);
@@ -741,7 +741,7 @@ static bool parse_subset(char *optarg)
 
 	memset(&subset, 0, sizeof(subset));
 	while (*optarg) {
-		p = strchr(optarg, ',');
+		p = std::strchr(optarg, ',');
 		if (p)
 			*p = 0;
 		if (optarg[0] == 0) {
@@ -808,7 +808,7 @@ void common_cmd(const std::string &media_bus_info, int ch, char *optarg)
 				common_usage();
 				std::exit(EXIT_FAILURE);
 			}
-			if (strchr(value, '=')) {
+			if (std::strchr(value, '=')) {
 				common_usage();
 				std::exit(EXIT_FAILURE);
 			}
@@ -824,7 +824,7 @@ void common_cmd(const std::string &media_bus_info, int ch, char *optarg)
 				common_usage();
 				std::exit(EXIT_FAILURE);
 			}
-			if (const char *equal = strchr(value, '=')) {
+			if (const char *equal = std::strchr(value, '=')) {
 				set_ctrls[std::string(value, (equal - value))] = equal + 1;
 			}
 			else {

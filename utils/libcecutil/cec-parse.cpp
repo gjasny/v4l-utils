@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <inttypes.h>
 #include <getopt.h>
 #include <sys/types.h>
@@ -18,6 +17,7 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <stdarg.h>
+#include <cstring>
 #include <ctime>
 #include <cerrno>
 #include <string>
@@ -191,7 +191,7 @@ unsigned cec_parse_phys_addr(const char *value)
 {
 	unsigned p1, p2, p3, p4;
 
-	if (!strchr(value, '.'))
+	if (!std::strchr(value, '.'))
 		return strtoul(value, NULL, 0);
 	if (sscanf(value, "%x.%x.%x.%x", &p1, &p2, &p3, &p4) != 4) {
 		fprintf(stderr, "Expected a physical address of the form x.x.x.x\n");

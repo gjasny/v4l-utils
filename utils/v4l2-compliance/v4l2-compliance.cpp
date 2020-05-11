@@ -18,10 +18,11 @@
     Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
+#include <cstring>
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <inttypes.h>
 #include <getopt.h>
 #include <sys/types.h>
@@ -1582,7 +1583,7 @@ int main(int argc, char **argv)
 			break;
 		case OptStreamFrom:
 		case OptStreamFromHdr: {
-			char *equal = strchr(optarg, '=');
+			char *equal = std::strchr(optarg, '=');
 			bool has_hdr = ch == OptStreamFromHdr;
 
 			if (equal == optarg)

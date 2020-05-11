@@ -19,7 +19,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <inttypes.h>
 #include <getopt.h>
 #include <sys/types.h>
@@ -43,6 +42,7 @@
 
 #include <linux/videodev2.h>
 
+#include <cstring>
 #include <list>
 #include <vector>
 #include <map>
@@ -731,7 +731,7 @@ int main(int argc, char **argv)
 			goto list_done;
 		}
 
-		p = strchr(chip_info.name, ' ');
+		p = std::strchr(chip_info.name, ' ');
 		if (p)
 			*p = '\0';
 		name = chip_info.name;

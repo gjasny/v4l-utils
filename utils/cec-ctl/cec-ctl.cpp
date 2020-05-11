@@ -3,10 +3,11 @@
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <cstring>
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <inttypes.h>
 #include <getopt.h>
 #include <sys/types.h>
@@ -1650,7 +1651,7 @@ static void stress_test_power_cycle(struct node &node, unsigned cnt,
 
 static int calc_node_val(const char *s)
 {
-	s = strrchr(s, '/') + 1;
+	s = std::strrchr(s, '/') + 1;
 
 	if (!memcmp(s, "cec", 3))
 		return atol(s + 3);
@@ -1917,7 +1918,7 @@ int main(int argc, char **argv)
 		case OptIgnore: {
 			bool all_la = !strncmp(optarg, "all", 3);
 			bool all_opcodes = true;
-			const char *sep = strchr(optarg, ',');
+			const char *sep = std::strchr(optarg, ',');
 			unsigned la_mask = 0xffff, opcode, la = 0;
 
 			if (sep)
@@ -2068,7 +2069,7 @@ int main(int argc, char **argv)
 							size--;
 							break;
 						}
-						value = strchr(value, ':');
+						value = std::strchr(value, ':');
 						if (value == NULL)
 							break;
 						value++;
@@ -2109,7 +2110,7 @@ int main(int argc, char **argv)
 							size--;
 							break;
 						}
-						value = strchr(value, ':');
+						value = std::strchr(value, ':');
 						if (value == NULL)
 							break;
 						value++;
@@ -2150,7 +2151,7 @@ int main(int argc, char **argv)
 							size--;
 							break;
 						}
-						value = strchr(value, ':');
+						value = std::strchr(value, ':');
 						if (value == NULL)
 							break;
 						value++;
@@ -2184,7 +2185,7 @@ int main(int argc, char **argv)
 							size--;
 							break;
 						}
-						value = strchr(value, ':');
+						value = std::strchr(value, ':');
 						if (value == NULL)
 							break;
 						value++;

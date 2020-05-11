@@ -1,7 +1,8 @@
+#include <cstring>
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <inttypes.h>
 #include <getopt.h>
 #include <sys/types.h>
@@ -1660,7 +1661,7 @@ static FILE *open_output_file(cv4l_fd &fd)
 	if (!host_to)
 		return NULL;
 
-	char *p = strchr(host_to, ':');
+	char *p = std::strchr(host_to, ':');
 	struct sockaddr_in serv_addr;
 	struct hostent *server;
 	struct v4l2_fract aspect;
@@ -1925,7 +1926,7 @@ static FILE *open_input_file(cv4l_fd &fd, __u32 type)
 	if (!host_from)
 		return NULL;
 
-	char *p = strchr(host_from, ':');
+	char *p = std::strchr(host_from, ':');
 	int listen_fd;
 	socklen_t clilen;
 	struct sockaddr_in serv_addr = {}, cli_addr;

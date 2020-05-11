@@ -1,7 +1,8 @@
+#include <cstring>
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <inttypes.h>
 #include <getopt.h>
 #include <sys/types.h>
@@ -98,7 +99,7 @@ void vbi_cmd(int ch, char *optarg)
 			std::exit(EXIT_FAILURE);
 		}
 		while (*optarg) {
-			subs = strchr(optarg, ',');
+			subs = std::strchr(optarg, ',');
 			if (subs)
 				*subs = 0;
 

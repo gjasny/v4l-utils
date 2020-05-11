@@ -3,10 +3,11 @@
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <cstring>
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <inttypes.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1530,7 +1531,7 @@ void listTests()
 
 int setExpectedResult(char *optarg, bool no_warnings)
 {
-	char *equal = strchr(optarg, '=');
+	char *equal = std::strchr(optarg, '=');
 
 	if (!equal || equal == optarg || !isdigit(equal[1]))
 		return 1;

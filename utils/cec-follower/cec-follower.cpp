@@ -3,10 +3,11 @@
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <cstring>
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <inttypes.h>
 #include <getopt.h>
 #include <sys/types.h>
@@ -386,7 +387,7 @@ int main(int argc, char **argv)
 		case OptIgnore: {
 			bool all_la = !strncmp(optarg, "all", 3);
 			bool all_opcodes = true;
-			const char *sep = strchr(optarg, ',');
+			const char *sep = std::strchr(optarg, ',');
 			unsigned la_mask = 0xffff, opcode, la = 0;
 
 			if (sep)
