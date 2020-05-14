@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <config.h>
+#include <cstdlib>
 
 #include "cec-compliance.h"
 

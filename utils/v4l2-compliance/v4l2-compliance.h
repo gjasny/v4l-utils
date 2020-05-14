@@ -23,6 +23,7 @@
 
 #include <stdarg.h>
 #include <cerrno>
+#include <cstdlib>
 #include <string>
 #include <map>
 #include <set>

@@ -18,6 +18,7 @@
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sstream>
+#include <cstdlib>
 
 #include "cec-compliance.h"
 #include "compiler.h"

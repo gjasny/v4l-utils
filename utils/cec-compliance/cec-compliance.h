@@ -8,6 +8,7 @@
 #ifndef _CEC_COMPLIANCE_H_
 #define _CEC_COMPLIANCE_H_
 
+#include <cstdlib>
 #include <ctime>
 #include <string>
 

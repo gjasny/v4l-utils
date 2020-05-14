@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <dirent.h>
 #include <math.h>
+#include <cstdlib>
 
 #include "v4l2-ctl.h"
 

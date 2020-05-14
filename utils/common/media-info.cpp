@@ -17,6 +17,7 @@
 #include <sys/time.h>
 #include <sys/sysmacros.h>
 #include <dirent.h>
+#include <cstdlib>
 
 #include <linux/media.h>
 
