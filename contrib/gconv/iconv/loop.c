@@ -57,6 +57,13 @@
 #define __need_size_t
 #include <stddef.h>
 
+extern int __gconv_transliterate (struct __gconv_step *step,
+                                  struct __gconv_step_data *step_data,
+                                  const unsigned char *inbufstart,
+                                  const unsigned char **inbufp,
+                                  const unsigned char *inbufend,
+                                  unsigned char **outbufstart,
+                                  size_t *irreversible);
 
 /* We have to provide support for machines which are not able to handled
    unaligned memory accesses.  Some of the character encodings have
