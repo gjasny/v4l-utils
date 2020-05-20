@@ -29,6 +29,9 @@
 #define CLEAR_P(x,s) memset((x), 0, s)
 #define CLEAR(x) CLEAR_P(&(x), sizeof(x))
 
+static int libv4l = 1;
+static int ppm_output = 1;
+
 struct buffer {
 	void   *start;
 	size_t length;
@@ -39,7 +42,11 @@ static void xioctl(int fh, unsigned long int request, void *arg)
 	int r;
 
 	do {
-		r = v4l2_ioctl(fh, request, arg);
+		if (libv4l)
+			r = v4l2_ioctl(fh, request, arg);
+		else
+			r = ioctl(fh, request, arg);
+
 	} while (r == -1 && ((errno == EINTR) || (errno == EAGAIN)));
 
 	if (r == -1) {
@@ -158,14 +165,20 @@ static int capture_threads (int fd, struct buffer *buffers, int bufpool_size,
 		if (sleep_ms)
 			nanosleep (&sleeptime, NULL);
 
-		sprintf(out_name, "%s/out%03d.ppm", out_dir, i);
+		if (ppm_output)
+			sprintf(out_name, "%s/out%03d.ppm", out_dir, i);
+		else
+			sprintf(out_name, "%s/out%03d.raw", out_dir, i);
+
 		fout = fopen(out_name, "w");
 		if (!fout) {
 			perror("Cannot open image");
 			exit(EXIT_FAILURE);
 		}
-		fprintf(fout, "P6\n%d %d 255\n",
-			fmt.fmt.pix.width, fmt.fmt.pix.height);
+		if (ppm_output)
+			fprintf(fout, "P6\n%d %d 255\n",
+				fmt.fmt.pix.width, fmt.fmt.pix.height);
+
 		buf = buf_queue.buffers[buf_queue.read_pos %
 					buf_queue.buffers_size];
 		fwrite(buffers[buf.index].start, buf.bytesused, 1, fout);
@@ -218,14 +231,20 @@ static int capture_loop (int fd, struct buffer *buffers, struct v4l2_format fmt,
 		buf.memory = V4L2_MEMORY_MMAP;
 		xioctl(fd, VIDIOC_DQBUF, &buf);
 
-		sprintf(out_name, "%s/out%03d.ppm", out_dir, i);
+		if (ppm_output)
+			sprintf(out_name, "%s/out%03d.ppm", out_dir, i);
+		else
+			sprintf(out_name, "%s/out%03d.raw", out_dir, i);
+
 		fout = fopen(out_name, "w");
 		if (!fout) {
 			perror("Cannot open image");
 			exit(EXIT_FAILURE);
 		}
-		fprintf(fout, "P6\n%d %d 255\n",
-			fmt.fmt.pix.width, fmt.fmt.pix.height);
+		if (ppm_output)
+			fprintf(fout, "P6\n%d %d 255\n",
+				fmt.fmt.pix.width, fmt.fmt.pix.height);
+
 		fwrite(buffers[buf.index].start, buf.bytesused, 1, fout);
 		fclose(fout);
 
@@ -245,10 +264,17 @@ static int capture(char *dev_name, int x_res, int y_res, int n_frames,
 	unsigned int			i, n_buffers;
 	struct buffer			*buffers;
 
-	if (block)
-		fd = v4l2_open(dev_name, O_RDWR, 0);
-	else
-		fd = v4l2_open(dev_name, O_RDWR | O_NONBLOCK, 0);
+	if (libv4l) {
+		if (block)
+			fd = v4l2_open(dev_name, O_RDWR, 0);
+		else
+			fd = open(dev_name, O_RDWR | O_NONBLOCK, 0);
+	} else {
+		if (block)
+			fd = open(dev_name, O_RDWR, 0);
+		else
+			fd = open(dev_name, O_RDWR | O_NONBLOCK, 0);
+	}
 	if (fd < 0) {
 		perror("Cannot open device");
 		exit(EXIT_FAILURE);
@@ -261,9 +287,15 @@ static int capture(char *dev_name, int x_res, int y_res, int n_frames,
 	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
 	fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
 	xioctl(fd, VIDIOC_S_FMT, &fmt);
+
 	if (fmt.fmt.pix.pixelformat != V4L2_PIX_FMT_RGB24) {
-		printf("Libv4l didn't accept RGB24 format. Can't proceed.\n");
-		exit(EXIT_FAILURE);
+		if (libv4l) {
+			printf("Libv4l didn't accept RGB24 format. Can't proceed.\n");
+			exit(EXIT_FAILURE);
+		} else {
+			printf("File output won't be in PPM format.\n");
+			ppm_output = 0;
+		}
 	}
 	if ((fmt.fmt.pix.width != x_res) || (fmt.fmt.pix.height != y_res))
 		printf("Warning: driver is sending image at %dx%d\n",
@@ -286,9 +318,15 @@ static int capture(char *dev_name, int x_res, int y_res, int n_frames,
 		xioctl(fd, VIDIOC_QUERYBUF, &buf);
 
 		buffers[n_buffers].length = buf.length;
-		buffers[n_buffers].start = v4l2_mmap(NULL, buf.length,
-			      PROT_READ | PROT_WRITE, MAP_SHARED,
-			      fd, buf.m.offset);
+
+		if (libv4l)
+			buffers[n_buffers].start = v4l2_mmap(NULL, buf.length,
+					    PROT_READ | PROT_WRITE, MAP_SHARED,
+					    fd, buf.m.offset);
+		else
+			buffers[n_buffers].start = mmap(NULL, buf.length,
+					    PROT_READ | PROT_WRITE, MAP_SHARED,
+					    fd, buf.m.offset);
 
 		if (MAP_FAILED == buffers[n_buffers].start) {
 			perror("mmap");
@@ -314,9 +352,16 @@ static int capture(char *dev_name, int x_res, int y_res, int n_frames,
 
 	type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	xioctl(fd, VIDIOC_STREAMOFF, &type);
-	for (i = 0; i < n_buffers; ++i)
-		v4l2_munmap(buffers[i].start, buffers[i].length);
-	v4l2_close(fd);
+	for (i = 0; i < n_buffers; ++i) {
+		if (libv4l)
+			v4l2_munmap(buffers[i].start, buffers[i].length);
+		else
+			munmap(buffers[i].start, buffers[i].length);
+	}
+	if (libv4l)
+		v4l2_close(fd);
+	else
+		close(fd);
 
 	return 0;
 }
@@ -333,6 +378,7 @@ static const char doc[] = "\nCapture images using libv4l, storing them as ppm fi
 
 static const struct argp_option options[] = {
 	{"device",	'd',	"DEV",		0,	"video device (default: /dev/video0)", 0},
+	{"no-libv4l",	'D',	NULL,		0,	"Don't use libv4l", 0},
 	{"out-dir",	'o',	"OUTDIR",	0,	"output directory (default: current dir)", 0},
 	{"xres",	'x',	"XRES",		0,	"horizontal resolution", 0},
 	{"yres",	'y',	"YRES",		0,	"vertical resolution", 0},
@@ -373,6 +419,9 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		val = atoi(arg);
 		if (val)
 			y_res = val;
+		break;
+	case 'D':
+		libv4l = 0;
 		break;
 	case 'n':
 		val = atoi(arg);
