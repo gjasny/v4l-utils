@@ -253,8 +253,9 @@ static int capture_loop (int fd, struct buffer *buffers, struct v4l2_format fmt,
 	return 0;
 }
 
-static int capture(char *dev_name, int x_res, int y_res, int n_frames,
-		   char *out_dir, int block, int threads, int sleep_ms)
+static int capture(char *dev_name, int x_res, int y_res, uint32_t fourcc,
+		   int n_frames, char *out_dir, int block, int threads,
+		   int sleep_ms)
 {
 	struct v4l2_format		fmt;
 	struct v4l2_buffer		buf;
@@ -284,7 +285,7 @@ static int capture(char *dev_name, int x_res, int y_res, int n_frames,
 	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	fmt.fmt.pix.width       = x_res;
 	fmt.fmt.pix.height      = y_res;
-	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+	fmt.fmt.pix.pixelformat = fourcc;
 	fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
 	xioctl(fd, VIDIOC_S_FMT, &fmt);
 
@@ -382,6 +383,7 @@ static const struct argp_option options[] = {
 	{"out-dir",	'o',	"OUTDIR",	0,	"output directory (default: current dir)", 0},
 	{"xres",	'x',	"XRES",		0,	"horizontal resolution", 0},
 	{"yres",	'y',	"YRES",		0,	"vertical resolution", 0},
+	{"fourcc",	'f',	"FOURCC",	0,	"Linux fourcc code", 0},
 	{"n-frames",	'n',	"NFRAMES",	0,	"number of frames to capture", 0},
 	{"thread-enable", 't',	"THREADS",	0,	"if different threads should capture and save", 0},
 	{"blockmode-enable", 'b', "BLOCKMODE",	0,	"if blocking mode should be used", 0},
@@ -398,10 +400,12 @@ static int	n_frames = 20;
 static int	threads = 0;
 static int	block = 0;
 static int	sleep_ms = 0;
+static uint32_t fourcc = V4L2_PIX_FMT_RGB24;
 
 static error_t parse_opt(int k, char *arg, struct argp_state *state)
 {
-	int val;
+	int val, i, len;
+	char s[4];
 
 	switch (k) {
 	case 'd':
@@ -419,6 +423,15 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		val = atoi(arg);
 		if (val)
 			y_res = val;
+		break;
+	case 'f':
+		len = strlen(arg);
+		if (len < 1 || len > 4)
+			return ARGP_ERR_UNKNOWN;
+		memcpy(s, arg, len);
+		for (i = len; i < 4; i++)
+			s[i] = ' ';
+		fourcc = v4l2_fourcc(s[0], s[1], s[2], s[3]);
 		break;
 	case 'D':
 		libv4l = 0;
@@ -456,6 +469,6 @@ int main(int argc, char **argv)
 {
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
-	return capture(dev_name, x_res, y_res, n_frames, out_dir, block,
-		       threads, sleep_ms);
+	return capture(dev_name, x_res, y_res, fourcc, n_frames,
+		       out_dir, block, threads, sleep_ms);
 }
