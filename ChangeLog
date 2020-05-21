@@ -1,3 +1,267 @@
+v4l-utils-1.20.0
+----------------
+
+Akinobu Mita (1):
+      v4l2-ctl: add sizeimage suboption for set-fmt-video options
+
+Bård Eirik Winther (1):
+      qvidcap: Add stride option to command line
+
+Chris Leick (1):
+      Update German translation
+
+David Seifert (1):
+      Fix GCC 10 / -fno-common
+
+Gregor Jasny (8):
+      buildsystem: Start v4l-utils 1.19.0 development cycle
+      dvbv5-zap: Fix typo
+      v4l2-ctl: include C++ cmath header
+      ubuntu1604: add missing headers for std::exit
+      libcecutil: Remove vanished TODO file from ditribution list
+      v4l2-ctl: Do not distribute generated 32bit source
+      v4l2-compliance: Do not distribute generated 32bit source
+      libcecutil: Distribute cec-gen.pl
+
+Hans Petter Selasky (2):
+      Fix broken for loop in libv4l
+      Fix for mismatched class/struct tags
+
+Hans Verkuil (133):
+      v4l2-compliance: improve metadata capture support
+      test-media: remove left-over debug lines
+      v4l2-compliance: fail if selection is present for compressed video
+      cec-compliance: rename 'ok' to 'unknown'
+      cec-ctl/msg2ctl.pl: don't add HTNG commands to msgtable
+      cec-compliance: add --test-fuzzing option
+      test-media: update vimc tests
+      v4l-utils: sync with latest media_tree master
+      keytable: add new generated keymaps
+      msg2ctl.pl: add newline after log_msg
+      cec-follower: drop the hardcoded UI commands list
+      cec-ctl/cec-log: use new CEC_OP_UI_CMD defines
+      cec utils: support CEC_ADAP_G_CONNECTOR_INFO
+      cec-compliance/follower: use new CEC_OP_UI_CMD defines
+      utils/libcecutil: add CEC utility library
+      cec-follower: switch to the new CEC utilities library
+      cec-compliance: use the new CEC utilities library
+      cec-ctl: use the new CEC utilities library
+      utils/common/cec*: remove unused cec files
+      cec-htng(-funcs).h: move to libcecutil
+      libcecutil: do not assume building in source tree.
+      libcecutil: remove empty generated headers on failure
+      libcecutil: cec-gen.pl now generates all headers in one go
+      v4l-utils: sync to latest cec-funcs.h
+      libcecutil: spaces should be replaced by - for help_features
+      cec-compliance: move util_receive to cec-compliance.cpp
+      cec-compliance: add timeout to util_receive
+      cec-compliance: fix a bug in util_receive
+      cec-compliance: Improve the INACTIVE_SOURCE test
+      cec-follower: add INACTIVE_SOURCE support.
+      v4l2-compliance: fix read/write tests
+      cec-compliance: improve Inactive Source test
+      cec-compliance: Set OSD Name is not TV specific
+      Makefile.am: copy v4l2-tpg.h, not v4l2-tpg*
+      v4l-utils: sync with latest media_tree master
+      v4l2-info.cpp: support the new hold capture flags
+      cec-compliance: remove old tuner tests
+      cec-follower: add support for Status Request
+      cec-compliance: improve failure reporting
+      cec-follower: fix index handling
+      v4l-utils: sync with latest media_tree master
+      cec-compliance: improve the Inactive Source test
+      v4l-utils: sync with latest media_tree master
+      v4l2-compliance: better scaler detection for M2M devices
+      cec-ctl: add a --phys-addr-from-edid option
+      cec: fix Makefile.am to get the right library dependencies
+      libcecutil: convert latency values to ms
+      cec-ctl: finish --stress-test-power-cycle with active display
+      cec-compliance: make the subtest names unique
+      cec-compliance: add -e and -l options
+      cec-compliance: make test names easier to type
+      qvidcap: fix typo: fnt -> fmt
+      qvidcap: switch to RGB24 if format is unsupported
+      v4l2-ctl: support -k (concise) when showing touch data
+      v4l2-compliance: relax a 'is the DONE flag set' test
+      v4l-utils: fix sync-with-kernel: it missed pixelformats
+      qvidcap: make texts consistent
+      cec-follower: add --ignore option
+      cec-follower: support CEC 2.0 power status reporting
+      cec-compliance: test CEC 2.0 power transitions
+      cec-ctl: add --phys-addr-from-edid-poll
+      cec-compliance: return OK_PRESUMED in the power transition test
+      cec-compliance: update patch link
+      cec-compliance: change a fail to a warn
+      qvidcap: use --pixelformat instead of --pixel-format
+      cec-ctl: show PA changes with --phys-addr-from-edid-poll
+      cec-ctl: sleep 5s before retry, use cec_phys_addr_exp
+      cec: remove duplicate cec_phys_addr_exp defines
+      cec-ctl: improve --test-power-cycle test
+      cec-ctl: fix --phys-addr-from-edid-poll support
+      cec: show OSD Name with quotes around the name
+      v4l2-compliance: log the size of time_t
+      v4l2-compliance: use %zd with sizeof(time_t)
+      v4l2-ctl/compliance: fix 32-bit g_topology casts
+      v4l2-ctl/compliance: fix 32-bit compiler warnings
+      v4l2-compliance: use a better invalid address
+      v4l2-compliance: fix uninitialized have_sel variable
+      v4l2-compliance: return ENOTTY if selection is not supported
+      cec-compliance: add invalid ioctls test
+      v4l2-compliance: add tests for invalid ioctls
+      cec-ctl/compliance: call srandom()
+      cec-compliance: '-e' alias for --expect was missing
+      cec-compliance.h: add warn_on_test, clean ups
+      cec-compliance: fail/warn if reported latency > 50ms
+      cec-compliance: add --expect-with-no-warnings
+      cec-compliance: swap -n/-N options
+      v4l-utils: remove trailing spaces
+      qvidcap: properly initialize m_curSize/Data
+      Revert "qvidcap: properly initialize m_curSize/Data"
+      qvidcap: properly initialize m_curSize/Data
+      v4l2-compliance: check source and sink pad types of a link
+      cec-compliance: clarify obscure error message
+      cec-ctl: remove trailing space in output
+      cec-ctl: add timestamps to the power-cycle tests
+      cec-ctl: improve --stress-test-power-cycle option
+      libcecutil: translate abort_msg to a message string
+      libcecutil: drop CEC_MSG_ prefix when logging messages
+      v4l2-compliance: improve USERPTR streaming tests
+      v4l2-compliance: fix bug/improve testing filler
+      v4l2-compliance: fix userptr buffer checks
+      cec-compliance: improve system_info_give_features()
+      sync with latest media_tree master
+      v4l-utils: add --enable-v4l2-compliance/ctl-32 option
+      v4l-utils: fix autoconf/automake errors
+      test-media: add -32 option
+      v4l2-compliance: fix 32 bit warnings
+      v4l2-ctl/compliance-32: fix when configuring from another dir
+      v4l2-compliance: fix typo: v4l2-ctl -> v4l2-compliance
+      cec-ctl: add 'repeats' suboption to --stress-test-power-cycle
+      cec-ctl: added polls suboption to --stress-test-power-cycle
+      cec-ctl: handle ENONET errors
+      Revert "cec-ctl: handle ENONET errors"
+      cec-ctl: set wakeup_la correctly and handle ENONET & EINVAL in stress tests
+      v4l2-compliance: fix weird formatting with -f
+      cec-ctl: don't transmit IMAGE_VIEW_ON every second
+      cec-ctl: introduce and use transmit_msg_retry()
+      cec-compliance: check for invalid transient power states
+      cec-ctl: check for incorrect state transitions
+      cec-ctl: add min-sleep suboption
+      cec-ctl: show timeouts vs Nacks
+      cec-ctl: show | instead of e or E
+      test-media: postpone the dmesg command
+      cec-follower: check both CEC_CAP_PHYS_ADDR and _CONNECTOR_INFO
+      cec-ctl: improve wait_for_pwr_state
+      cec-ctl: add physical address sanity checks
+      v4l-utils: sync with latest media_tree master
+      v4l2-compliance: fix step < 0 control check
+      v4l-utils: sync with latest media kernel
+      v4l2-compliance: zero mbus_code
+      v4l2-compliance: add tests for V4L2_CAP_IO_MC
+      v4l2-ctl: zero v4l2_fmtdesc
+      v4l-utils: sync with latest media kernel
+      gconv: fix compiler warning
+
+Helen Koike (1):
+      v4l2-ctl: add missing subdev usage in --help-all
+
+Jiunn Chang (12):
+      cec-follower: create analog channel frequencies
+      cec-follower: add tuner analog service emulation
+      cec-follower: fix bugs for tuner emulation
+      cec-follower: add tuner step increment/decrement
+      cec-follower: fix analog tuner device info update
+      cec-follower: rename freq_idx to service_idx
+      cec-follower: create digital ARIB channels
+      cec-follower: create digital ATSC channels
+      cec-follower: create digital DVB channels
+      cec-follower: add tuner digital service emulation
+      cec-follower: fix tuner step increment/decrement
+      cec-compliance: add tuner control test
+
+Lars Wendler (1):
+      v4l-utils: configure.ac: Avoid bashisms
+
+Laurent Pinchart (1):
+      qv4l2: Use C library file operations with v4lconvert for raw mode devices
+
+Mauro Carvalho Chehab (3):
+      cec: fix cec-log.h dependency issues
+      v4l2grab: allow using direct calls instead of libv4l
+      v4l2grab: add support for setting the fourcc code
+
+Peter Seiderer (1):
+      keymap.h needs sys/types.h and argp.h with musl
+
+Philipp Zabel (1):
+      v4l2-compliance: fix assert on only read/write-only controls
+
+Ricardo Ribalda Delgado (4):
+      v4l2-ctl: Support query V4L2_CTRL_TYPE_AREA controls
+      v4l2-ctl: Support getting V4L2_CTRL_TYPE_AREA controls
+      v4l2-ctl: Support setting V4L2_CTRL_TYPE_AREA controls
+      v4l2-compliance: Allow all the selection targets for subdevs
+
+Rosen Penev (31):
+      keytable: use input_event properly
+      keytable: add compatibility for input_event_sec
+      treewide: remove bzero
+      treewide: fix redundant expressions
+      treewide: remove pointless c_str
+      dvb-sat: remove pointless abs call
+      utils: checks for empty instead of size in if
+      treewide: add extra {} to initialization
+      treewide: do not use return after else
+      treewide: fix wrong identation
+      utils: simplify bool returns
+      treewide: fix math problems
+      treewide: replace C casts with C++
+      treewide: apply performance fixes
+      utils: use bool literals
+      utils: do not use empty void with C++
+      utils: remove extra commas
+      utils: fix float equal warning
+      utils: add copy assignment operator
+      utils: initialize variable
+      utils: fix wrong format
+      utils: fix compilation with C++98
+      utils: add noreturn attribute and remove dead code
+      utils: fix implicit float conversions
+      utils: fix fallthrough warnings
+      utils: fix double promotions
+      utils: replace exit with std variant
+      cec-compliance: add missing header for clang
+      compiler.h: fix compilation with libcxx
+      compiler.h: fix compilation with clang + std=c++98 + glibcxx
+      utils: replace chr functions with std variants
+
+Sean Young (17):
+      ir-ctl: report timeout when it cannot be modified
+      keytable: do not warn if keymap not found in IR_KEYTABLE_USER_DIR
+      ir-keytable: bpf: improve rsc imon pointer decoder
+      sync v4l-utils.spec with the fedora repo
+      keytable: cannot load BPF decoders from udevd
+      50-rc_keymap.conf prevents debian testing from booting
+      lircd2toml: warn when scancode has duplicate definitions
+      keytable: keymap without protocol is invalid
+      rc_keymap.5: improve wording around using rc_keymaps for sending
+      keytable: a bpf protocol can have parameters and no scancodes
+      Fix build failure on s390x
+      keytable: support 64 bit scancodes
+      keytable: new samsung36 bpf decoder
+      Add keymap for Samsung AK59-00125A remote
+      ir-ctl: removed nested functions to support building with clang
+      ir-ctl: allow unmodulated signal to be sent
+      keytable: "-p all" should not attempt BPF decodes that don't exist
+
+Vandana BN (5):
+      v4l2-ctl: Print UVC meta info
+      v4l2-compliance: fix metadata output support
+      v4l2-compliance: Verify metadata formats
+      v4l2-ctl: support for metadata output
+      v4l2-ctl: Add Support for Touch
+
+
 v4l-utils-1.18.0
 ----------------
 
