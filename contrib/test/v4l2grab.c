@@ -386,7 +386,7 @@ static const struct argp_option options[] = {
 	{"fourcc",	'f',	"FOURCC",	0,	"Linux fourcc code", 0},
 	{"n-frames",	'n',	"NFRAMES",	0,	"number of frames to capture", 0},
 	{"thread-enable", 't',	"THREADS",	0,	"if different threads should capture and save", 0},
-	{"blockmode-enable", 'b', "BLOCKMODE",	0,	"if blocking mode should be used", 0},
+	{"blockmode-enable", 'b', NULL,		0,	"if blocking mode should be used", 0},
 	{"sleep-time",	's',	"SLEEP",	0,	"how long should the consumer thread sleep to simulate the processing of a buffer (in ms)"},
 	{ 0, 0, 0, 0, 0, 0 }
 };
