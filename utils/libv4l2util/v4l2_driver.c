@@ -100,6 +100,8 @@ static char *prt_caps(uint32_t caps)
 {
 	static char s[4096]="";
 
+	s[0] = '\0';
+
 	if (V4L2_CAP_VIDEO_CAPTURE & caps)
 		strcat (s,"CAPTURE ");
 	if (V4L2_CAP_VIDEO_CAPTURE_MPLANE & caps)
@@ -148,6 +150,30 @@ static char *prt_caps(uint32_t caps)
 		strcat (s,"EXT_PIX_FORMAT ");
 	if (V4L2_CAP_DEVICE_CAPS & caps)
 		strcat (s,"DEVICE_CAPS ");
+	if(V4L2_CAP_VIDEO_OUTPUT_OVERLAY & caps)
+		strcat (s,"VIDEO_OUTPUT_OVERLAY ");
+	if(V4L2_CAP_HW_FREQ_SEEK & caps)
+		strcat (s,"HW_FREQ_SEEK ");
+	if(V4L2_CAP_VIDEO_M2M_MPLANE & caps)
+		strcat (s,"VIDEO_M2M_MPLANE ");
+	if(V4L2_CAP_VIDEO_M2M & caps)
+		strcat (s,"VIDEO_M2M ");
+	if(V4L2_CAP_SDR_OUTPUT & caps)
+		strcat (s,"SDR_OUTPUT ");
+	if(V4L2_CAP_META_CAPTURE & caps)
+		strcat (s,"META_CAPTURE ");
+	if(V4L2_CAP_READWRITE & caps)
+		strcat (s,"READWRITE ");
+	if(V4L2_CAP_ASYNCIO & caps)
+		strcat (s,"ASYNCIO ");
+	if(V4L2_CAP_STREAMING & caps)
+		strcat (s,"STREAMING ");
+	if(V4L2_CAP_META_OUTPUT & caps)
+		strcat (s,"META_OUTPUT ");
+	if(V4L2_CAP_TOUCH & caps)
+		strcat (s,"TOUCH ");
+	if(V4L2_CAP_IO_MC & caps)
+		strcat (s,"IO_MC ");
 
 	return s;
 }
