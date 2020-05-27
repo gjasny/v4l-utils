@@ -11,20 +11,21 @@
    GNU General Public License for more details.
  */
 
+#include <argp.h>
 #include <config.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <linux/videodev2.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <errno.h>
 #include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/time.h>
 #include <sys/mman.h>
-#include <linux/videodev2.h>
+#include <sys/time.h>
+#include <sys/types.h>
+
 #include "../../lib/include/libv4l2.h"
-#include <argp.h>
-#include <pthread.h>
 
 #define CLEAR_P(x,s) memset((x), 0, s)
 #define CLEAR(x) CLEAR_P(&(x), sizeof(x))
@@ -161,31 +162,212 @@ static void querycap(char *fname, int fd, enum io_method method)
 	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
 		fprintf(stderr, "%s is no video capture device\n",
 			fname);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	switch (method) {
 	case IO_METHOD_READ:
 		if (!(cap.capabilities & V4L2_CAP_READWRITE)) {
-			fprintf(stderr, "%s does not support read i/o\n",
+			fprintf(stderr, "%s does not support read I/O\n",
 				fname);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		break;
 
 	case IO_METHOD_MMAP:
 	case IO_METHOD_USERPTR:
 		if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-			fprintf(stderr, "%s does not support streaming i/o\n",
+			fprintf(stderr, "%s does not support streaming I/O\n",
 				 fname);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		break;
 	}
 }
 
 /*
- * Normal mmapped Capture I/O
+ * Read I/O
+ */
+static int read_capture_loop(int fd, struct buffer *buffers,
+			     struct v4l2_format *fmt, int n_frames,
+			     char *out_dir)
+{
+	unsigned int			i;
+	struct timeval			tv;
+	int				r;
+	fd_set				fds;
+	ssize_t				size;
+	FILE				*fout;
+	char				out_name[25 + strlen(out_dir)];
+
+	for (i = 0; i < n_frames; i++) {
+		do {
+			do {
+				FD_ZERO(&fds);
+				FD_SET(fd, &fds);
+
+				/* Timeout. */
+				tv.tv_sec = 2;
+				tv.tv_usec = 0;
+
+				r = select(fd + 1, &fds, NULL, NULL, &tv);
+			} while ((r == -1 && (errno == EINTR)));
+			if (r == -1) {
+				perror("select");
+				return errno;
+			}
+
+			size = read(fd, buffers[0].start, buffers[0].length);
+
+			if (size == -1 && errno != EAGAIN) {
+				perror("Cannot read image");
+				exit(EXIT_FAILURE);
+			}
+		} while (size != -1);
+
+		if (ppm_output)
+			sprintf(out_name, "%s/out%03d.ppm", out_dir, i);
+		else
+			sprintf(out_name, "%s/out%03d.raw", out_dir, i);
+
+		fout = fopen(out_name, "w");
+		if (!fout) {
+			perror("Cannot open image");
+			exit(EXIT_FAILURE);
+		}
+		if (ppm_output)
+			fprintf(fout, "P6\n%d %d 255\n",
+				fmt->fmt.pix.width, fmt->fmt.pix.height);
+
+		fwrite(buffers[0].start, size, 1, fout);
+		fclose(fout);
+	}
+	return 0;
+}
+
+static int read_capture(int fd, int n_frames, char *out_dir,
+			struct v4l2_format *fmt)
+{
+	struct buffer                   *buffers;
+
+	buffers = calloc(1, sizeof(*buffers));
+
+	return read_capture_loop(fd, buffers, fmt, n_frames, out_dir);
+}
+
+/*
+ * userptr mmapped capture I/O
+ */
+static int userptr_capture_loop(int fd, struct buffer *buffers,
+				int n_buffers, struct v4l2_format *fmt,
+				int n_frames, char *out_dir)
+{
+	struct v4l2_buffer		buf;
+	unsigned int			i, j;
+	struct timeval			tv;
+	int				r;
+	fd_set				fds;
+	FILE				*fout;
+	char				out_name[25 + strlen(out_dir)];
+
+	for (i = 0; i < n_frames; i++) {
+		do {
+			FD_ZERO(&fds);
+			FD_SET(fd, &fds);
+
+			/* Timeout. */
+			tv.tv_sec = 2;
+			tv.tv_usec = 0;
+
+			r = select(fd + 1, &fds, NULL, NULL, &tv);
+		} while ((r == -1 && (errno == EINTR)));
+		if (r == -1) {
+			perror("select");
+			return errno;
+		}
+
+		CLEAR(buf);
+
+		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		buf.memory = V4L2_MEMORY_USERPTR;
+
+		xioctl(fd, VIDIOC_DQBUF, &buf);
+
+		if (ppm_output)
+			sprintf(out_name, "%s/out%03d.ppm", out_dir, i);
+		else
+			sprintf(out_name, "%s/out%03d.raw", out_dir, i);
+
+		fout = fopen(out_name, "w");
+		if (!fout) {
+			perror("Cannot open image");
+			exit(EXIT_FAILURE);
+		}
+		if (ppm_output)
+			fprintf(fout, "P6\n%d %d 255\n",
+				fmt->fmt.pix.width, fmt->fmt.pix.height);
+
+		fwrite(buffers[buf.index].start, buf.bytesused, 1, fout);
+		fclose(fout);
+
+		if (i + 1 < n_frames)
+			xioctl(fd, VIDIOC_QBUF, &buf);
+	}
+	return 0;
+}
+
+static int userptr_capture(int fd, int n_frames, char *out_dir,
+			   struct v4l2_format *fmt)
+{
+	struct v4l2_buffer              buf;
+	struct v4l2_requestbuffers      req;
+	unsigned int                    ret, i, n_buffers;
+	struct buffer                   *buffers;
+
+	CLEAR(req);
+	req.count  = 2;
+	req.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	req.memory = V4L2_MEMORY_USERPTR;
+	xioctl(fd, VIDIOC_REQBUFS, &req);
+
+	buffers = calloc(req.count, sizeof(*buffers));
+	if (!buffers) {
+		fprintf(stderr, "Out of memory\n");
+		exit(EXIT_FAILURE);
+	}
+
+	for (n_buffers = 0; n_buffers < req.count; ++n_buffers) {
+		buffers[n_buffers].length = fmt->fmt.pix.sizeimage;
+		buffers[n_buffers].start = calloc(1, fmt->fmt.pix.sizeimage);
+
+		if (!buffers[n_buffers].start) {
+			fprintf(stderr, "Out of memory\n");
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	for (i = 0; i < n_buffers; ++i) {
+		CLEAR(buf);
+		buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+		buf.memory = V4L2_MEMORY_USERPTR;
+		buf.index = i;
+		buf.m.userptr = (unsigned long)buffers[i].start;
+		buf.length = buffers[i].length;
+		xioctl(fd, VIDIOC_QBUF, &buf);
+	}
+
+	xioctl(fd, VIDIOC_STREAMON, &req.type);
+
+	ret = userptr_capture_loop(fd, buffers, req.count, fmt,
+				   n_frames, out_dir);
+
+	xioctl(fd, VIDIOC_STREAMOFF, &req.type);
+
+	return ret;
+}
+
+/*
+ * Normal mmapped capture I/O
  */
 
 /* Used by the multi thread capture version */
@@ -381,12 +563,13 @@ static int mmap_capture_loop(int fd, struct buffer *buffers,
 		fwrite(buffers[buf.index].start, buf.bytesused, 1, fout);
 		fclose(fout);
 
-		xioctl(fd, VIDIOC_QBUF, &buf);
+		if (i + 1 < n_frames)
+			xioctl(fd, VIDIOC_QBUF, &buf);
 	}
 	return 0;
 }
 
-static int mmap_capture(int fd, int n_frames, char *out_dir, int block,
+static int mmap_capture(int fd, int n_frames, char *out_dir,
 			int threads, int sleep_ms,
 			struct v4l2_format *fmt)
 {
@@ -413,6 +596,10 @@ static int mmap_capture(int fd, int n_frames, char *out_dir, int block,
 		xioctl(fd, VIDIOC_QUERYBUF, &buf);
 
 		buffers[n_buffers].length = buf.length;
+		if (!buffers) {
+			fprintf(stderr, "Out of memory\n");
+			exit(EXIT_FAILURE);
+		}
 
 		if (libv4l)
 			buffers[n_buffers].start = v4l2_mmap(NULL, buf.length,
@@ -475,7 +662,7 @@ static const struct argp_option options[] = {
 	{"yres",	'y',	"YRES",		0,	"vertical resolution", 0},
 	{"fourcc",	'f',	"FOURCC",	0,	"Linux fourcc code", 0},
 	{"userptr",	'u',	NULL,		0,	"Use user-defined memory capture method", 0},
-	{"read",	'u',	NULL,		0,	"Use read capture method", 0},
+	{"read",	'r',	NULL,		0,	"Use read capture method", 0},
 	{"n-frames",	'n',	"NFRAMES",	0,	"number of frames to capture", 0},
 	{"thread-enable", 't',	"THREADS",	0,	"if different threads should capture and save", 0},
 	{"blockmode-enable", 'b', NULL,		0,	"if blocking mode should be used", 0},
@@ -567,7 +754,7 @@ static struct argp argp = {
 int main(int argc, char **argv)
 {
 	struct v4l2_format fmt;
-	int ret = 1, fd = -1;
+	int ret = EXIT_FAILURE, fd = -1;
 
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
@@ -615,14 +802,14 @@ int main(int argc, char **argv)
 	/* Calls the desired capture method */
 	switch (method) {
 	case IO_METHOD_READ:
-		printf("Not implemented yet.\n");
+		ret = read_capture(fd, n_frames, out_dir, &fmt);
 		break;
 	case IO_METHOD_MMAP:
-		ret = mmap_capture(fd, n_frames, out_dir, block,
+		ret = mmap_capture(fd, n_frames, out_dir,
 				   threads, sleep_ms, &fmt);
 		break;
 	case IO_METHOD_USERPTR:
-		printf("Not implemented yet.\n");
+		ret = userptr_capture(fd, n_frames, out_dir, &fmt);
 		break;
 	}
 
