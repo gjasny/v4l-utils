@@ -122,7 +122,7 @@ static void *produce_buffer (void * p)
 /* will create a separate thread that will produce the buffers and put
  * into a circular array while this same thread will get the buffers from
  * this array and 'render' them */
-static int capture_threads (int fd, struct buffer *buffers, int bufpool_size,
+static int mmap_capture_threads (int fd, struct buffer *buffers, int bufpool_size,
 			struct v4l2_format fmt, int n_frames,
 			char *out_dir, int sleep_ms)
 {
@@ -199,8 +199,9 @@ static int capture_threads (int fd, struct buffer *buffers, int bufpool_size,
 	return 0;
 }
 
-static int capture_loop (int fd, struct buffer *buffers, struct v4l2_format fmt,
-			int n_frames, char *out_dir)
+static int mmap_capture_loop(int fd, struct buffer *buffers,
+			     struct v4l2_format fmt, int n_frames,
+			     char *out_dir)
 {
 	struct v4l2_buffer		buf;
 	unsigned int			i;
@@ -346,7 +347,7 @@ static void querycap(int fd)
 		printf("Driver caps: %s\n", prt_caps(cap.device_caps, s));
 }
 
-static int capture(char *dev_name, int x_res, int y_res, uint32_t fourcc,
+static int mmap_capture(int fd, int x_res, int y_res, uint32_t fourcc,
 		   int n_frames, char *out_dir, int block, int threads,
 		   int sleep_ms)
 {
@@ -354,27 +355,8 @@ static int capture(char *dev_name, int x_res, int y_res, uint32_t fourcc,
 	struct v4l2_buffer		buf;
 	struct v4l2_requestbuffers	req;
 	enum v4l2_buf_type		type;
-	int				fd = -1;
 	unsigned int			i, n_buffers;
 	struct buffer			*buffers;
-
-	if (libv4l) {
-		if (block)
-			fd = v4l2_open(dev_name, O_RDWR, 0);
-		else
-			fd = open(dev_name, O_RDWR | O_NONBLOCK, 0);
-	} else {
-		if (block)
-			fd = open(dev_name, O_RDWR, 0);
-		else
-			fd = open(dev_name, O_RDWR | O_NONBLOCK, 0);
-	}
-	if (fd < 0) {
-		perror("Cannot open device");
-		exit(EXIT_FAILURE);
-	}
-
-	querycap(fd);
 
 	CLEAR(fmt);
 	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -441,10 +423,10 @@ static int capture(char *dev_name, int x_res, int y_res, uint32_t fourcc,
 
 	xioctl(fd, VIDIOC_STREAMON, &type);
 	if (threads)
-		capture_threads(fd, buffers, 2, fmt, n_frames, out_dir,
+		mmap_capture_threads(fd, buffers, 2, fmt, n_frames, out_dir,
 				sleep_ms);
 	else
-		capture_loop(fd, buffers, fmt, n_frames, out_dir);
+		mmap_capture_loop(fd, buffers, fmt, n_frames, out_dir);
 
 	type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	xioctl(fd, VIDIOC_STREAMOFF, &type);
@@ -454,10 +436,6 @@ static int capture(char *dev_name, int x_res, int y_res, uint32_t fourcc,
 		else
 			munmap(buffers[i].start, buffers[i].length);
 	}
-	if (libv4l)
-		v4l2_close(fd);
-	else
-		close(fd);
 
 	return 0;
 }
@@ -562,8 +540,35 @@ static struct argp argp = {
 
 int main(int argc, char **argv)
 {
+	int ret, fd = -1;
+
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
-	return capture(dev_name, x_res, y_res, fourcc, n_frames,
-		       out_dir, block, threads, sleep_ms);
+	if (libv4l) {
+		if (block)
+			fd = v4l2_open(dev_name, O_RDWR, 0);
+		else
+			fd = open(dev_name, O_RDWR | O_NONBLOCK, 0);
+	} else {
+		if (block)
+			fd = open(dev_name, O_RDWR, 0);
+		else
+			fd = open(dev_name, O_RDWR | O_NONBLOCK, 0);
+	}
+	if (fd < 0) {
+		perror("Cannot open device");
+		exit(EXIT_FAILURE);
+	}
+
+	querycap(fd);
+
+	ret = mmap_capture(fd, x_res, y_res, fourcc, n_frames,
+			   out_dir, block, threads, sleep_ms);
+
+	if (libv4l)
+		v4l2_close(fd);
+	else
+		close(fd);
+
+	return ret;
 }
