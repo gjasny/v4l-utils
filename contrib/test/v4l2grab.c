@@ -62,6 +62,132 @@ static void xioctl(int fh, unsigned long int request, void *arg)
 	}
 }
 
+/*
+ * Querycap implementation
+ */
+
+static char *prt_caps(uint32_t caps, char *s)
+{
+	if (V4L2_CAP_VIDEO_CAPTURE & caps)
+		strcat (s,"CAPTURE ");
+	if (V4L2_CAP_VIDEO_CAPTURE_MPLANE & caps)
+		strcat (s,"CAPTURE_MPLANE ");
+	if (V4L2_CAP_VIDEO_OUTPUT & caps)
+		strcat (s,"OUTPUT ");
+	if (V4L2_CAP_VIDEO_OUTPUT_MPLANE & caps)
+		strcat (s,"OUTPUT_MPLANE ");
+	if (V4L2_CAP_VIDEO_M2M & caps)
+		strcat (s,"M2M ");
+	if (V4L2_CAP_VIDEO_M2M_MPLANE & caps)
+		strcat (s,"M2M_MPLANE ");
+	if (V4L2_CAP_VIDEO_OVERLAY & caps)
+		strcat (s,"OVERLAY ");
+	if (V4L2_CAP_VBI_CAPTURE & caps)
+		strcat (s,"VBI_CAPTURE ");
+	if (V4L2_CAP_VBI_OUTPUT & caps)
+		strcat (s,"VBI_OUTPUT ");
+	if (V4L2_CAP_SLICED_VBI_CAPTURE & caps)
+		strcat (s,"SLICED_VBI_CAPTURE ");
+	if (V4L2_CAP_SLICED_VBI_OUTPUT & caps)
+		strcat (s,"SLICED_VBI_OUTPUT ");
+	if (V4L2_CAP_RDS_CAPTURE & caps)
+		strcat (s,"RDS_CAPTURE ");
+	if (V4L2_CAP_RDS_OUTPUT & caps)
+		strcat (s,"RDS_OUTPUT ");
+	if (V4L2_CAP_SDR_CAPTURE & caps)
+		strcat (s,"SDR_CAPTURE ");
+	if (V4L2_CAP_TUNER & caps)
+		strcat (s,"TUNER ");
+	if (V4L2_CAP_HW_FREQ_SEEK & caps)
+		strcat (s,"HW_FREQ_SEEK ");
+	if (V4L2_CAP_MODULATOR & caps)
+		strcat (s,"MODULATOR ");
+	if (V4L2_CAP_AUDIO & caps)
+		strcat (s,"AUDIO ");
+	if (V4L2_CAP_RADIO & caps)
+		strcat (s,"RADIO ");
+	if (V4L2_CAP_READWRITE & caps)
+		strcat (s,"READWRITE ");
+	if (V4L2_CAP_ASYNCIO & caps)
+		strcat (s,"ASYNCIO ");
+	if (V4L2_CAP_STREAMING & caps)
+		strcat (s,"STREAMING ");
+	if (V4L2_CAP_EXT_PIX_FORMAT & caps)
+		strcat (s,"EXT_PIX_FORMAT ");
+	if (V4L2_CAP_DEVICE_CAPS & caps)
+		strcat (s,"DEVICE_CAPS ");
+	if(V4L2_CAP_VIDEO_OUTPUT_OVERLAY & caps)
+		strcat (s,"VIDEO_OUTPUT_OVERLAY ");
+	if(V4L2_CAP_HW_FREQ_SEEK & caps)
+		strcat (s,"HW_FREQ_SEEK ");
+	if(V4L2_CAP_VIDEO_M2M_MPLANE & caps)
+		strcat (s,"VIDEO_M2M_MPLANE ");
+	if(V4L2_CAP_VIDEO_M2M & caps)
+		strcat (s,"VIDEO_M2M ");
+	if(V4L2_CAP_SDR_OUTPUT & caps)
+		strcat (s,"SDR_OUTPUT ");
+	if(V4L2_CAP_META_CAPTURE & caps)
+		strcat (s,"META_CAPTURE ");
+	if(V4L2_CAP_READWRITE & caps)
+		strcat (s,"READWRITE ");
+	if(V4L2_CAP_ASYNCIO & caps)
+		strcat (s,"ASYNCIO ");
+	if(V4L2_CAP_STREAMING & caps)
+		strcat (s,"STREAMING ");
+	if(V4L2_CAP_META_OUTPUT & caps)
+		strcat (s,"META_OUTPUT ");
+	if(V4L2_CAP_TOUCH & caps)
+		strcat (s,"TOUCH ");
+	if(V4L2_CAP_IO_MC & caps)
+		strcat (s,"IO_MC ");
+
+	return s;
+}
+
+static void querycap(char *fname, int fd, enum io_method method)
+{
+	struct v4l2_capability cap;
+	char s[4096] = "";
+
+	xioctl(fd, VIDIOC_QUERYCAP, &cap);
+
+	printf("Device caps: %s\n", prt_caps(cap.capabilities, s));
+
+	s[0] = '\0';
+
+	if (cap.capabilities & V4L2_CAP_DEVICE_CAPS)
+		printf("Driver caps: %s\n", prt_caps(cap.device_caps, s));
+
+	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
+		fprintf(stderr, "%s is no video capture device\n",
+			fname);
+		exit(1);
+	}
+
+	switch (method) {
+	case IO_METHOD_READ:
+		if (!(cap.capabilities & V4L2_CAP_READWRITE)) {
+			fprintf(stderr, "%s does not support read i/o\n",
+				fname);
+			exit(1);
+		}
+		break;
+
+	case IO_METHOD_MMAP:
+	case IO_METHOD_USERPTR:
+		if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
+			fprintf(stderr, "%s does not support streaming i/o\n",
+				 fname);
+			exit(1);
+		}
+		break;
+	}
+}
+
+/*
+ * Normal mmapped Capture I/O
+ */
+
 /* Used by the multi thread capture version */
 struct buffer_queue {
 	struct v4l2_buffer *buffers;
@@ -258,124 +384,6 @@ static int mmap_capture_loop(int fd, struct buffer *buffers,
 		xioctl(fd, VIDIOC_QBUF, &buf);
 	}
 	return 0;
-}
-
-static char *prt_caps(uint32_t caps, char *s)
-{
-	if (V4L2_CAP_VIDEO_CAPTURE & caps)
-		strcat (s,"CAPTURE ");
-	if (V4L2_CAP_VIDEO_CAPTURE_MPLANE & caps)
-		strcat (s,"CAPTURE_MPLANE ");
-	if (V4L2_CAP_VIDEO_OUTPUT & caps)
-		strcat (s,"OUTPUT ");
-	if (V4L2_CAP_VIDEO_OUTPUT_MPLANE & caps)
-		strcat (s,"OUTPUT_MPLANE ");
-	if (V4L2_CAP_VIDEO_M2M & caps)
-		strcat (s,"M2M ");
-	if (V4L2_CAP_VIDEO_M2M_MPLANE & caps)
-		strcat (s,"M2M_MPLANE ");
-	if (V4L2_CAP_VIDEO_OVERLAY & caps)
-		strcat (s,"OVERLAY ");
-	if (V4L2_CAP_VBI_CAPTURE & caps)
-		strcat (s,"VBI_CAPTURE ");
-	if (V4L2_CAP_VBI_OUTPUT & caps)
-		strcat (s,"VBI_OUTPUT ");
-	if (V4L2_CAP_SLICED_VBI_CAPTURE & caps)
-		strcat (s,"SLICED_VBI_CAPTURE ");
-	if (V4L2_CAP_SLICED_VBI_OUTPUT & caps)
-		strcat (s,"SLICED_VBI_OUTPUT ");
-	if (V4L2_CAP_RDS_CAPTURE & caps)
-		strcat (s,"RDS_CAPTURE ");
-	if (V4L2_CAP_RDS_OUTPUT & caps)
-		strcat (s,"RDS_OUTPUT ");
-	if (V4L2_CAP_SDR_CAPTURE & caps)
-		strcat (s,"SDR_CAPTURE ");
-	if (V4L2_CAP_TUNER & caps)
-		strcat (s,"TUNER ");
-	if (V4L2_CAP_HW_FREQ_SEEK & caps)
-		strcat (s,"HW_FREQ_SEEK ");
-	if (V4L2_CAP_MODULATOR & caps)
-		strcat (s,"MODULATOR ");
-	if (V4L2_CAP_AUDIO & caps)
-		strcat (s,"AUDIO ");
-	if (V4L2_CAP_RADIO & caps)
-		strcat (s,"RADIO ");
-	if (V4L2_CAP_READWRITE & caps)
-		strcat (s,"READWRITE ");
-	if (V4L2_CAP_ASYNCIO & caps)
-		strcat (s,"ASYNCIO ");
-	if (V4L2_CAP_STREAMING & caps)
-		strcat (s,"STREAMING ");
-	if (V4L2_CAP_EXT_PIX_FORMAT & caps)
-		strcat (s,"EXT_PIX_FORMAT ");
-	if (V4L2_CAP_DEVICE_CAPS & caps)
-		strcat (s,"DEVICE_CAPS ");
-	if(V4L2_CAP_VIDEO_OUTPUT_OVERLAY & caps)
-		strcat (s,"VIDEO_OUTPUT_OVERLAY ");
-	if(V4L2_CAP_HW_FREQ_SEEK & caps)
-		strcat (s,"HW_FREQ_SEEK ");
-	if(V4L2_CAP_VIDEO_M2M_MPLANE & caps)
-		strcat (s,"VIDEO_M2M_MPLANE ");
-	if(V4L2_CAP_VIDEO_M2M & caps)
-		strcat (s,"VIDEO_M2M ");
-	if(V4L2_CAP_SDR_OUTPUT & caps)
-		strcat (s,"SDR_OUTPUT ");
-	if(V4L2_CAP_META_CAPTURE & caps)
-		strcat (s,"META_CAPTURE ");
-	if(V4L2_CAP_READWRITE & caps)
-		strcat (s,"READWRITE ");
-	if(V4L2_CAP_ASYNCIO & caps)
-		strcat (s,"ASYNCIO ");
-	if(V4L2_CAP_STREAMING & caps)
-		strcat (s,"STREAMING ");
-	if(V4L2_CAP_META_OUTPUT & caps)
-		strcat (s,"META_OUTPUT ");
-	if(V4L2_CAP_TOUCH & caps)
-		strcat (s,"TOUCH ");
-	if(V4L2_CAP_IO_MC & caps)
-		strcat (s,"IO_MC ");
-
-	return s;
-}
-
-static void querycap(char *fname, int fd, enum io_method method)
-{
-	struct v4l2_capability cap;
-	char s[4096] = "";
-
-	xioctl(fd, VIDIOC_QUERYCAP, &cap);
-
-	printf("Device caps: %s\n", prt_caps(cap.capabilities, s));
-
-	s[0] = '\0';
-
-	if (cap.capabilities & V4L2_CAP_DEVICE_CAPS)
-		printf("Driver caps: %s\n", prt_caps(cap.device_caps, s));
-
-	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-		fprintf(stderr, "%s is no video capture device\n",
-			fname);
-		exit(1);
-	}
-
-	switch (method) {
-	case IO_METHOD_READ:
-		if (!(cap.capabilities & V4L2_CAP_READWRITE)) {
-			fprintf(stderr, "%s does not support read i/o\n",
-				fname);
-			exit(1);
-		}
-		break;
-
-	case IO_METHOD_MMAP:
-	case IO_METHOD_USERPTR:
-		if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-			fprintf(stderr, "%s does not support streaming i/o\n",
-				 fname);
-			exit(1);
-		}
-		break;
-	}
 }
 
 static int mmap_capture(int fd, int n_frames, char *out_dir, int block,
