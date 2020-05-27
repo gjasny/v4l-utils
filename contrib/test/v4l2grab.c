@@ -263,7 +263,7 @@ static int userptr_capture_loop(int fd, struct buffer *buffers,
 				int n_frames, char *out_dir)
 {
 	struct v4l2_buffer		buf;
-	unsigned int			i, j;
+	unsigned int			i;
 	struct timeval			tv;
 	int				r;
 	fd_set				fds;
