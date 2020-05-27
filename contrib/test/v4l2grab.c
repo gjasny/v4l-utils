@@ -37,6 +37,12 @@ struct buffer {
 	size_t length;
 };
 
+enum io_method {
+	IO_METHOD_READ,
+	IO_METHOD_MMAP,
+	IO_METHOD_USERPTR,
+};
+
 static void xioctl(int fh, unsigned long int request, void *arg)
 {
 	int r;
@@ -122,9 +128,9 @@ static void *produce_buffer (void * p)
 /* will create a separate thread that will produce the buffers and put
  * into a circular array while this same thread will get the buffers from
  * this array and 'render' them */
-static int mmap_capture_threads (int fd, struct buffer *buffers, int bufpool_size,
-			struct v4l2_format fmt, int n_frames,
-			char *out_dir, int sleep_ms)
+static int mmap_capture_threads(int fd, struct buffer *buffers,
+				int bufpool_size, struct v4l2_format *fmt,
+				int n_frames, char *out_dir, int sleep_ms)
 {
 	struct v4l2_buffer		buf;
 	unsigned int			i;
@@ -177,7 +183,7 @@ static int mmap_capture_threads (int fd, struct buffer *buffers, int bufpool_siz
 		}
 		if (ppm_output)
 			fprintf(fout, "P6\n%d %d 255\n",
-				fmt.fmt.pix.width, fmt.fmt.pix.height);
+				fmt->fmt.pix.width, fmt->fmt.pix.height);
 
 		buf = buf_queue.buffers[buf_queue.read_pos %
 					buf_queue.buffers_size];
@@ -200,7 +206,7 @@ static int mmap_capture_threads (int fd, struct buffer *buffers, int bufpool_siz
 }
 
 static int mmap_capture_loop(int fd, struct buffer *buffers,
-			     struct v4l2_format fmt, int n_frames,
+			     struct v4l2_format *fmt, int n_frames,
 			     char *out_dir)
 {
 	struct v4l2_buffer		buf;
@@ -244,7 +250,7 @@ static int mmap_capture_loop(int fd, struct buffer *buffers,
 		}
 		if (ppm_output)
 			fprintf(fout, "P6\n%d %d 255\n",
-				fmt.fmt.pix.width, fmt.fmt.pix.height);
+				fmt->fmt.pix.width, fmt->fmt.pix.height);
 
 		fwrite(buffers[buf.index].start, buf.bytesused, 1, fout);
 		fclose(fout);
@@ -332,7 +338,7 @@ static char *prt_caps(uint32_t caps, char *s)
 	return s;
 }
 
-static void querycap(int fd)
+static void querycap(char *fname, int fd, enum io_method method)
 {
 	struct v4l2_capability cap;
 	char s[4096] = "";
@@ -345,39 +351,42 @@ static void querycap(int fd)
 
 	if (cap.capabilities & V4L2_CAP_DEVICE_CAPS)
 		printf("Driver caps: %s\n", prt_caps(cap.device_caps, s));
+
+	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
+		fprintf(stderr, "%s is no video capture device\n",
+			fname);
+		exit(1);
+	}
+
+	switch (method) {
+	case IO_METHOD_READ:
+		if (!(cap.capabilities & V4L2_CAP_READWRITE)) {
+			fprintf(stderr, "%s does not support read i/o\n",
+				fname);
+			exit(1);
+		}
+		break;
+
+	case IO_METHOD_MMAP:
+	case IO_METHOD_USERPTR:
+		if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
+			fprintf(stderr, "%s does not support streaming i/o\n",
+				 fname);
+			exit(1);
+		}
+		break;
+	}
 }
 
-static int mmap_capture(int fd, int x_res, int y_res, uint32_t fourcc,
-		   int n_frames, char *out_dir, int block, int threads,
-		   int sleep_ms)
+static int mmap_capture(int fd, int n_frames, char *out_dir, int block,
+			int threads, int sleep_ms,
+			struct v4l2_format *fmt)
 {
-	struct v4l2_format		fmt;
-	struct v4l2_buffer		buf;
-	struct v4l2_requestbuffers	req;
-	enum v4l2_buf_type		type;
-	unsigned int			i, n_buffers;
-	struct buffer			*buffers;
-
-	CLEAR(fmt);
-	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	fmt.fmt.pix.width       = x_res;
-	fmt.fmt.pix.height      = y_res;
-	fmt.fmt.pix.pixelformat = fourcc;
-	fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
-	xioctl(fd, VIDIOC_S_FMT, &fmt);
-
-	if (fmt.fmt.pix.pixelformat != V4L2_PIX_FMT_RGB24) {
-		if (libv4l) {
-			printf("Libv4l didn't accept RGB24 format. Can't proceed.\n");
-			exit(EXIT_FAILURE);
-		} else {
-			printf("File output won't be in PPM format.\n");
-			ppm_output = 0;
-		}
-	}
-	if ((fmt.fmt.pix.width != x_res) || (fmt.fmt.pix.height != y_res))
-		printf("Warning: driver is sending image at %dx%d\n",
-			fmt.fmt.pix.width, fmt.fmt.pix.height);
+	struct v4l2_buffer              buf;
+	struct v4l2_requestbuffers      req;
+	enum v4l2_buf_type              type;
+	unsigned int                    i, n_buffers;
+	struct buffer                   *buffers;
 
 	CLEAR(req);
 	req.count = 2;
@@ -457,6 +466,8 @@ static const struct argp_option options[] = {
 	{"xres",	'x',	"XRES",		0,	"horizontal resolution", 0},
 	{"yres",	'y',	"YRES",		0,	"vertical resolution", 0},
 	{"fourcc",	'f',	"FOURCC",	0,	"Linux fourcc code", 0},
+	{"userptr",	'u',	NULL,		0,	"Use user-defined memory capture method", 0},
+	{"read",	'u',	NULL,		0,	"Use read capture method", 0},
 	{"n-frames",	'n',	"NFRAMES",	0,	"number of frames to capture", 0},
 	{"thread-enable", 't',	"THREADS",	0,	"if different threads should capture and save", 0},
 	{"blockmode-enable", 'b', NULL,		0,	"if blocking mode should be used", 0},
@@ -474,6 +485,7 @@ static int	threads = 0;
 static int	block = 0;
 static int	sleep_ms = 0;
 static uint32_t fourcc = V4L2_PIX_FMT_RGB24;
+enum io_method  method = IO_METHOD_MMAP;
 
 static error_t parse_opt(int k, char *arg, struct argp_state *state)
 {
@@ -520,6 +532,12 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 	case 'b':
 		block = 1;
 		break;
+	case 'u':
+		method = IO_METHOD_USERPTR;
+		break;
+	case 'r':
+		method = IO_METHOD_READ;
+		break;
 	case 's':
 		val = atoi(arg);
 		if (val)
@@ -540,7 +558,8 @@ static struct argp argp = {
 
 int main(int argc, char **argv)
 {
-	int ret, fd = -1;
+	struct v4l2_format fmt;
+	int ret = 1, fd = -1;
 
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
@@ -560,11 +579,46 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	querycap(fd);
+	/* Check if the device has the needed caps */
+	querycap(dev_name, fd, method);
 
-	ret = mmap_capture(fd, x_res, y_res, fourcc, n_frames,
-			   out_dir, block, threads, sleep_ms);
+	/* Sets the video format */
+	CLEAR(fmt);
+	fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+	fmt.fmt.pix.width       = x_res;
+	fmt.fmt.pix.height      = y_res;
+	fmt.fmt.pix.pixelformat = fourcc;
+	fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
+	xioctl(fd, VIDIOC_S_FMT, &fmt);
 
+	if (fmt.fmt.pix.pixelformat != V4L2_PIX_FMT_RGB24) {
+		if (libv4l) {
+			printf("Libv4l didn't accept RGB24 format. Can't proceed.\n");
+			exit(EXIT_FAILURE);
+		} else {
+			printf("File output won't be in PPM format.\n");
+			ppm_output = 0;
+		}
+	}
+	if ((fmt.fmt.pix.width != x_res) || (fmt.fmt.pix.height != y_res))
+		printf("Warning: driver is sending image at %dx%d\n",
+			fmt.fmt.pix.width, fmt.fmt.pix.height);
+
+	/* Calls the desired capture method */
+	switch (method) {
+	case IO_METHOD_READ:
+		printf("Not implemented yet.\n");
+		break;
+	case IO_METHOD_MMAP:
+		ret = mmap_capture(fd, n_frames, out_dir, block,
+				   threads, sleep_ms, &fmt);
+		break;
+	case IO_METHOD_USERPTR:
+		printf("Not implemented yet.\n");
+		break;
+	}
+
+	/* Closes the file descriptor */
 	if (libv4l)
 		v4l2_close(fd);
 	else
