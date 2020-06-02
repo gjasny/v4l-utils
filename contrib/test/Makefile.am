@@ -42,7 +42,7 @@ sdlcam_CFLAGS = -I../.. $(SDL2_CFLAGS)
 sdlcam_LDADD = ../../lib/libv4l2/libv4l2.la  ../../lib/libv4lconvert/libv4lconvert.la
 
 mc_nextgen_test_CFLAGS = $(LIBUDEV_CFLAGS)
-mc_nextgen_test_LDFLAGS = $(LIBUDEV_LIBS)
+mc_nextgen_test_LDFLAGS = $(ARGP_LIBS) $(LIBUDEV_LIBS)
 
 
 ioctl_test_SOURCES = ioctl-test.c ioctl-test.h ioctl_32.h ioctl_64.h
