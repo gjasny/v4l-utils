@@ -381,8 +381,6 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 	if (g_flags() & V4L2_BUF_FLAG_BFRAME)
 		frame_types++;
 	fail_on_test(frame_types > 1);
-	fail_on_test(g_flags() & (V4L2_BUF_FLAG_NO_CACHE_INVALIDATE |
-				  V4L2_BUF_FLAG_NO_CACHE_CLEAN));
 	if (g_flags() & V4L2_BUF_FLAG_QUEUED)
 		buf_states++;
 	if (g_flags() & V4L2_BUF_FLAG_DONE)
@@ -661,6 +659,10 @@ int testReqBufs(struct node *node)
 		fail_on_test(q.reqbufs(node, 0));
 
 		for (m = V4L2_MEMORY_MMAP; m <= V4L2_MEMORY_DMABUF; m++) {
+			bool cache_hints_cap = false;
+			bool consistent;
+
+			cache_hints_cap = q.g_capabilities() & V4L2_BUF_CAP_SUPPORTS_MMAP_CACHE_HINTS;
 			if (!(node->valid_memorytype & (1 << m)))
 				continue;
 			cv4l_queue q2(i, m);
@@ -673,11 +675,52 @@ int testReqBufs(struct node *node)
 				fail_on_test(q2.reqbufs(node->node2));
 			}
 			memset(&reqbufs, 0xff, sizeof(reqbufs));
-			reqbufs.count = 0;
+			reqbufs.count = 1;
 			reqbufs.type = i;
 			reqbufs.memory = m;
+			reqbufs.flags = V4L2_FLAG_MEMORY_NON_CONSISTENT;
 			fail_on_test(doioctl(node, VIDIOC_REQBUFS, &reqbufs));
-			fail_on_test(check_0(reqbufs.reserved, sizeof(reqbufs.reserved)));
+			consistent = reqbufs.flags & V4L2_FLAG_MEMORY_NON_CONSISTENT;
+			if (!cache_hints_cap) {
+				fail_on_test(consistent);
+			} else {
+				if (m == V4L2_MEMORY_MMAP)
+					fail_on_test(!consistent);
+				else
+					fail_on_test(consistent);
+			}
+			q.reqbufs(node);
+
+			memset(&crbufs, 0xff, sizeof(crbufs));
+			node->g_fmt(crbufs.format, i);
+			crbufs.count = 1;
+			crbufs.memory = m;
+			crbufs.flags = V4L2_FLAG_MEMORY_NON_CONSISTENT;
+			fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &crbufs));
+			fail_on_test(check_0(crbufs.reserved, sizeof(crbufs.reserved)));
+			fail_on_test(crbufs.index != q.g_buffers());
+
+			consistent = crbufs.flags & V4L2_FLAG_MEMORY_NON_CONSISTENT;
+			if (!cache_hints_cap) {
+				fail_on_test(consistent);
+			} else {
+				if (m == V4L2_MEMORY_MMAP)
+					fail_on_test(!consistent);
+				else
+					fail_on_test(consistent);
+			}
+
+			if (cache_hints_cap) {
+				/*
+				 * Different memory consistency model. Should fail for MMAP
+				 * queues which support cache hints.
+				 */
+				crbufs.flags = 0;
+				if (m == V4L2_MEMORY_MMAP)
+					fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &crbufs) != EINVAL);
+				else
+					fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &crbufs));
+			}
 			q.reqbufs(node);
 
 			ret = q.create_bufs(node, 1);
@@ -693,14 +736,7 @@ int testReqBufs(struct node *node)
 			fail_on_test(testQueryBuf(node, i, q.g_buffers()));
 			if (!node->is_m2m)
 				fail_on_test(q2.create_bufs(node->node2, 1) != EBUSY);
-
-			memset(&crbufs, 0xff, sizeof(crbufs));
-			node->g_fmt(crbufs.format, i);
-			crbufs.count = 0;
-			crbufs.memory = m;
-			fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &crbufs));
-			fail_on_test(check_0(crbufs.reserved, sizeof(crbufs.reserved)));
-			fail_on_test(crbufs.index != q.g_buffers());
+			q.reqbufs(node);
 
 			if (node->is_video) {
 				cv4l_fmt fmt;
@@ -1176,13 +1212,21 @@ static int bufferOutputErrorTest(struct node *node, const buffer &orig_buf)
 
 static int setupMmap(struct node *node, cv4l_queue &q)
 {
+	bool cache_hints = q.g_capabilities() & V4L2_BUF_CAP_SUPPORTS_MMAP_CACHE_HINTS;
+
 	fail_on_test(q.mmap_bufs(node));
 	for (unsigned i = 0; i < q.g_buffers(); i++) {
 		buffer buf(q);
+		unsigned int flags;
 		int ret;
 
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.check(q, Unqueued, i));
+
+		flags = buf.g_flags();
+		flags |= V4L2_BUF_FLAG_NO_CACHE_INVALIDATE;
+		flags |= V4L2_BUF_FLAG_NO_CACHE_CLEAN;
+		buf.s_flags(flags);
 
 		for (unsigned p = 0; p < buf.g_num_planes(); p++) {
 			// Try a random offset
@@ -1220,6 +1264,14 @@ static int setupMmap(struct node *node, cv4l_queue &q)
 			buf.s_index(buf.g_index() - VIDEO_MAX_FRAME);
 			fail_on_test(buf.g_index() != i);
 		}
+		flags = buf.g_flags();
+		if (cache_hints) {
+			fail_on_test(!(flags & V4L2_BUF_FLAG_NO_CACHE_INVALIDATE));
+			fail_on_test(!(flags & V4L2_BUF_FLAG_NO_CACHE_CLEAN));
+		} else {
+			fail_on_test(flags & V4L2_BUF_FLAG_NO_CACHE_INVALIDATE);
+			fail_on_test(flags & V4L2_BUF_FLAG_NO_CACHE_CLEAN);
+		}
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.check(q, Queued, i));
 		fail_on_test(!buf.dqbuf(node));
@@ -1240,6 +1292,8 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 
 	buffer_info.clear();
 	for (type = 0; type <= V4L2_BUF_TYPE_LAST; type++) {
+		cv4l_fmt fmt;
+
 		if (!(node->valid_buftypes & (1 << type)))
 			continue;
 		if (v4l_type_is_overlay(type))
@@ -1296,6 +1350,11 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 		// balance.
 		fail_on_test(q.reqbufs(node, q.g_buffers()));
 		fail_on_test(node->g_fmt(cur_fmt, q.g_type()));
+
+		q.reqbufs(node);
+		q.create_bufs(node, 2, &cur_fmt, V4L2_FLAG_MEMORY_NON_CONSISTENT);
+		fail_on_test(setupMmap(node, q));
+		q.reqbufs(node);
 
 		ret = q.create_bufs(node, 0);
 		fail_on_test(ret != ENOTTY && ret != 0);
@@ -1475,10 +1534,16 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 {
 	for (unsigned i = 0; i < q.g_buffers(); i++) {
 		buffer buf(q);
+		unsigned int flags;
 		int ret;
 
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.check(q, Unqueued, i));
+
+		flags = buf.g_flags();
+		flags |= V4L2_BUF_FLAG_NO_CACHE_INVALIDATE;
+		flags |= V4L2_BUF_FLAG_NO_CACHE_CLEAN;
+		buf.s_flags(flags);
 
 		for (unsigned p = 0; p < buf.g_num_planes(); p++) {
 			// This should not work!
@@ -1537,7 +1602,10 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 			if (v4l_type_is_output(q.g_type()))
 				fail_on_test(!buf.g_bytesused(p));
 		}
-		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
+		flags = buf.g_flags();
+		fail_on_test(flags & V4L2_BUF_FLAG_NO_CACHE_INVALIDATE);
+		fail_on_test(flags & V4L2_BUF_FLAG_NO_CACHE_CLEAN);
+		fail_on_test(flags & V4L2_BUF_FLAG_DONE);
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.check(q, Queued, i));
 	}
@@ -1732,12 +1800,17 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 	fail_on_test(q.mmap_bufs(node));
 	for (unsigned i = 0; i < q.g_buffers(); i++) {
 		buffer buf(q);
+		unsigned int flags;
 		int ret;
 
 		buf.init(q, i);
 		fail_on_test(buf.querybuf(node, i));
 		for (unsigned p = 0; p < buf.g_num_planes(); p++)
 			buf.s_fd(q.g_fd(i, p), p);
+		flags = buf.g_flags();
+		flags |= V4L2_BUF_FLAG_NO_CACHE_INVALIDATE;
+		flags |= V4L2_BUF_FLAG_NO_CACHE_CLEAN;
+		buf.s_flags(flags);
 		ret = buf.prepare_buf(node, q);
 		if (ret != ENOTTY) {
 			fail_on_test(ret);
@@ -1757,7 +1830,11 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 			if (v4l_type_is_output(q.g_type()))
 				fail_on_test(!buf.g_bytesused(p));
 		}
-		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
+		flags = buf.g_flags();
+		/* We always skip cache sync/flush for DMABUF memory type */
+		fail_on_test(!(flags & V4L2_BUF_FLAG_NO_CACHE_INVALIDATE));
+		fail_on_test(!(flags & V4L2_BUF_FLAG_NO_CACHE_CLEAN));
+		fail_on_test(flags & V4L2_BUF_FLAG_DONE);
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.check(q, Queued, i));
 	}
