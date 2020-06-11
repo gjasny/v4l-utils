@@ -306,7 +306,7 @@ static void usage_all()
        edid_usage();
 }
 
-int test_ioctl(int fd, int cmd, void *arg)
+int test_ioctl(int fd, unsigned long cmd, void *arg)
 {
 	return options[OptUseWrapper] ? v4l2_ioctl(fd, cmd, arg) : ioctl(fd, cmd, arg);
 }

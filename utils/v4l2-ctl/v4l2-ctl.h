@@ -300,7 +300,7 @@ typedef struct {
 
 // v4l2-ctl.cpp
 int doioctl_name(int fd, unsigned long int request, void *parm, const char *name);
-int test_ioctl(int fd, int cmd, void *arg);
+int test_ioctl(int fd, unsigned long cmd, void *arg);
 int parse_subopt(char **subs, const char * const *subopts, char **value);
 __u32 parse_field(const char *s);
 __u32 parse_colorspace(const char *s);
