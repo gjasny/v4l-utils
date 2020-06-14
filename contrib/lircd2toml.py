@@ -13,10 +13,11 @@ import math
 import argparse
 
 class LircdParser:
-    def __init__(self, filename, encoding):
+    def __init__(self, filename, encoding, rename):
         self.lineno=0
         self.filename=filename
         self.encoding=encoding
+        self.rename=rename
 
     def getline(self):
         while True:
@@ -126,7 +127,7 @@ class LircdParser:
             k = a.pop(0)
             if k == 'end':
                 return codes
-            if not k.startswith('KEY_'):
+            if self.rename and not k.startswith('KEY_'):
                 k = 'KEY_' + k.upper()
             for s in a:
                 if s[0] == '#':
@@ -153,7 +154,7 @@ class LircdParser:
                 if codes:
                     raw_codes.append({ 'keycode': name, 'raw': codes })
                 name = line.split(maxsplit=2)[1]
-                if not name.startswith('KEY_'):
+                if self.rename and not name.startswith('KEY_'):
                     name = 'KEY_' + name.upper()
                 codes = []
             elif a[0] == 'end':
@@ -642,12 +643,14 @@ can be include with the package.""")
 parser.add_argument('input', metavar='INPUT', help='lircd.conf file')
 parser.add_argument('-o', '--output', metavar='OUTPUT', help='toml output file')
 parser.add_argument('--encoding', default='utf-8-sig', help='Encoding of lircd.conf')
+parser.add_argument('--preserve-codes', const=False, default=True,
+    dest='rename', action='store_const', help='Do not rename codes to KEY_*')
 
 args = parser.parse_args()
 
 remoteNo=1
 tomls=[]
-remotes=LircdParser(args.input, args.encoding).parse()
+remotes=LircdParser(args.input, args.encoding, args.rename).parse()
 if remotes == None:
     sys.exit(1)
 for remote in remotes:
