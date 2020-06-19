@@ -238,7 +238,7 @@ if [ $vivid -eq 1 ]; then
 	echo
 	echo second unbind vivid
 	echo
-	for i in `$v4l2_ctl -z platform:vivid-000 --list-devices`; do
+	for i in `$v4l2_ctl -z platform:vivid-000 --list-devices` `cec-ctl -D vivid -a vivid-000-vid-cap0 -s --list-devices` `cec-ctl -D vivid -a vivid-000-vid-out0 -s --list-devices`; do
 		let "t = 1 + $RANDOM / 4096"
 		echo $i: sleep ${t}s
 		sleep $t <$i &
