@@ -165,12 +165,12 @@ echo
 if [ $vivid -eq 1 ]; then
 	dmesg -n notice
 	echo
-	echo vivid compliance tests, contiguous planes
+	echo vivid compliance tests, contiguous planes | tee /dev/kmsg
 	echo
 	date
 	stdbuf -oL $v4l2_compliance -m platform:vivid-000 -z platform:vivid-002 -e vivid-002-vid-cap -P -s10 -a 2>&1 | tee -a $tmp
 	echo
-	echo vivid compliance tests, non-contiguous planes
+	echo vivid compliance tests, non-contiguous planes | tee /dev/kmsg
 	echo
 	date
 	stdbuf -oL $v4l2_compliance -m platform:vivid-001 -z platform:vivid-002 -e vivid-002-vid-out -P -s10 -a 2>&1 | tee -a $tmp
@@ -187,7 +187,7 @@ fi
 if [ $cec -eq 1 ]; then
 	dmesg -n notice
 	echo
-	echo vivid cec compliance tests
+	echo vivid cec compliance tests | tee /dev/kmsg
 	echo
 	if ! cec-ctl -D vivid -a vivid-000-vid-cap0 >/dev/null ; then
 		echo "FAIL: the vivid module had no cec support" | tee -a $tmp
@@ -226,17 +226,17 @@ fi
 
 if [ $vivid -eq 1 ]; then
 	echo
-	echo unbind vivid
+	echo unbind vivid | tee /dev/kmsg
 	echo
 	echo -n vivid.0 >/sys/bus/platform/drivers/vivid/unbind
 	sleep $unbind_time
 	echo
-	echo rebind vivid
+	echo rebind vivid | tee /dev/kmsg
 	echo
 	echo -n vivid.0 >/sys/bus/platform/drivers/vivid/bind
 	sleep 1
 	echo
-	echo second unbind vivid
+	echo second unbind vivid | tee /dev/kmsg
 	echo
 	for i in `$v4l2_ctl -z platform:vivid-000 --list-devices` `cec-ctl -D vivid -a vivid-000-vid-cap0 -s --list-devices` `cec-ctl -D vivid -a vivid-000-vid-out0 -s --list-devices`; do
 		let "t = 1 + $RANDOM / 4096"
@@ -248,7 +248,7 @@ if [ $vivid -eq 1 ]; then
 	echo -n vivid.0 >/sys/bus/platform/drivers/vivid/unbind
 	sleep $reunbind_time
 	echo
-	echo rmmod vivid
+	echo rmmod vivid | tee /dev/kmsg
 	echo
 	rmmod vivid
 	sleep $rmmod_time
@@ -298,7 +298,7 @@ if [ $vim2m -eq 1 ]; then
 		exit 0
 	fi
 
-	echo vim2m compliance tests
+	echo vim2m compliance tests | tee /dev/kmsg
 	echo
 	date
 	stdbuf -oL $v4l2_compliance -m platform:vim2m -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
@@ -311,17 +311,17 @@ if [ $vim2m -eq 1 ]; then
 	echo
 	echo
 	echo
-	echo unbind vim2m
+	echo unbind vim2m | tee /dev/kmsg
 	echo
 	echo -n vim2m.0 >/sys/bus/platform/drivers/vim2m/unbind
 	sleep $unbind_time
 	echo
-	echo rebind vim2m
+	echo rebind vim2m | tee /dev/kmsg
 	echo
 	echo -n vim2m.0 >/sys/bus/platform/drivers/vim2m/bind
 	sleep 1
 	echo
-	echo second unbind vim2m
+	echo second unbind vim2m | tee /dev/kmsg
 	echo
 	for i in `$v4l2_ctl -z platform:vim2m --list-devices`; do
 		let "t = 1 + $RANDOM / 4096"
@@ -333,7 +333,7 @@ if [ $vim2m -eq 1 ]; then
 	echo -n vim2m.0 >/sys/bus/platform/drivers/vim2m/unbind
 	sleep $reunbind_time
 	echo
-	echo rmmod vim2m
+	echo rmmod vim2m | tee /dev/kmsg
 	echo
 	rmmod vim2m
 	sleep $rmmod_time
@@ -380,7 +380,7 @@ if [ $vimc -eq 1 ]; then
 	$v4l2_ctl -z platform:vimc -d "Raw Capture 1" -v pixelformat=BA81
 	dmesg -n notice
 	echo
-	echo vimc compliance tests
+	echo vimc compliance tests | tee /dev/kmsg
 	echo
 	date
 	stdbuf -oL $v4l2_compliance -m platform:vimc -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
@@ -394,12 +394,12 @@ if [ $vimc -eq 1 ]; then
 	echo
 	echo
 	echo
-	echo unbind vimc
+	echo unbind vimc | tee /dev/kmsg
 	echo
 	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/unbind
 	sleep $unbind_time
 	echo
-	echo rebind vimc
+	echo rebind vimc | tee /dev/kmsg
 	echo
 	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/bind
 	sleep 1
@@ -411,7 +411,7 @@ if [ $vimc -eq 1 ]; then
 	$v4l2_ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
 	$v4l2_ctl -z platform:vimc -d "Raw Capture 1" -v pixelformat=BA81
 	echo
-	echo second unbind vimc
+	echo second unbind vimc | tee /dev/kmsg
 	echo
 	# Max sleep time is 6 + 8 = 14s
 	for i in `$v4l2_ctl -z platform:vimc --list-devices`; do
@@ -424,7 +424,7 @@ if [ $vimc -eq 1 ]; then
 	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/unbind
 	sleep 14
 	echo
-	echo rmmod vimc
+	echo rmmod vimc | tee /dev/kmsg
 	echo
 	rmmod vimc
 	sleep $rmmod_time
@@ -465,18 +465,18 @@ if [ $vicodec -eq 1 ]; then
 		exit 0
 	fi
 
-	echo vicodec media controller compliance tests
+	echo vicodec media controller compliance tests | tee /dev/kmsg
 	echo
 	date
 	stdbuf -oL $v4l2_compliance -M platform:vicodec 2>&1 | tee -a $tmp
 
 	echo
-	echo vicodec encoder compliance tests
+	echo vicodec encoder compliance tests | tee /dev/kmsg
 	echo
 	stdbuf -oL $v4l2_compliance -z platform:vicodec -d stateful-encoder-source -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
 
 	echo
-	echo vicodec create test files
+	echo vicodec create test files | tee /dev/kmsg
 	echo
 
 	encful_opts='-z platform:vicodec -d stateful-encoder-source --stream-mmap --stream-out-mmap --stream-out-hor-speed=1'
@@ -503,7 +503,7 @@ if [ $vicodec -eq 1 ]; then
 	cat $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 >$tmpdir/comp.yu12.mix.4.6
 
 	echo
-	echo vicodec decoder compliance tests
+	echo vicodec decoder compliance tests | tee /dev/kmsg
 	echo
 	decful_opts='-z platform:vicodec -d stateful-decoder-source -z platform:vivid-002 -e vivid-002-vid-cap'
 	stdbuf -oL $v4l2_compliance $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 -s24 -P -a 2>&1 | tee -a $tmp
@@ -516,17 +516,17 @@ if [ $vicodec -eq 1 ]; then
 	decful_opts='-z platform:vicodec -d stateful-decoder-source --stream-mmap --stream-out-mmap'
 	decless_opts='-z platform:vicodec -d stateless-decoder-source --stream-mmap --stream-out-mmap'
 	echo
-	echo stateful decode
+	echo stateful decode | tee /dev/kmsg
 	echo
 	$v4l2_ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 --stream-to=$tmpdir/raw.yu12.1280.24
 	echo
-	echo stateless decode
+	echo stateless decode | tee /dev/kmsg
 	echo
 	$v4l2_ctl $decless_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 --stream-to=$tmpdir/raw.yu12.1280.24.stateless
 	cmp $tmpdir/raw.yu12.1280.24 $tmpdir/raw.yu12.1280.24.stateless
 
 	echo
-	echo stateful decode with dynamic resolution changes for every frame
+	echo stateful decode with dynamic resolution changes for every frame | tee /dev/kmsg
 	echo
 	$v4l2_ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.2.12 --stream-to=$tmpdir/raw.yu12.mix.2.12
 	# v4l2-ctl does not yet reallocate buffers if they are too small for the new format
@@ -534,7 +534,7 @@ if [ $vicodec -eq 1 ]; then
 	cmp $tmpdir/raw.yu12.mix.2.12 $tmpdir/raw.yu12.mix.2.12.stateless
 
 	echo
-	echo stateful decode with dynamic resolution changes for every other frame
+	echo stateful decode with dynamic resolution changes for every other frame | tee /dev/kmsg
 	echo
 	$v4l2_ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.4.6 --stream-to=$tmpdir/raw.yu12.mix.4.6
 	# v4l2-ctl does not yet reallocate buffers if they are too small for the new format
@@ -551,17 +551,17 @@ if [ $vicodec -eq 1 ]; then
 	echo
 	echo
 	echo
-	echo unbind vicodec
+	echo unbind vicodec | tee /dev/kmsg
 	echo
 	echo -n vicodec.0 >/sys/bus/platform/drivers/vicodec/unbind
 	sleep $unbind_time
 	echo
-	echo rebind vicodec
+	echo rebind vicodec | tee /dev/kmsg
 	echo
 	echo -n vicodec.0 >/sys/bus/platform/drivers/vicodec/bind
 	sleep 1
 	echo
-	echo second unbind vicodec
+	echo second unbind vicodec | tee /dev/kmsg
 	echo
 	for i in `$v4l2_ctl -z platform:vicodec --list-devices`; do
 		let "t = 1 + $RANDOM / 4096"
@@ -573,7 +573,7 @@ if [ $vicodec -eq 1 ]; then
 	echo -n vicodec.0 >/sys/bus/platform/drivers/vicodec/unbind
 	sleep $reunbind_time
 	echo
-	echo rmmod vicodec
+	echo rmmod vicodec | tee /dev/kmsg
 	echo
 	rmmod vicodec
 	sleep $rmmod_time
@@ -599,12 +599,12 @@ fi
 
 date
 echo
-echo unbind vivid
+echo unbind vivid | tee /dev/kmsg
 echo
 echo -n vivid.0 >/sys/bus/platform/drivers/vivid/unbind
 sleep $unbind_time
 echo
-echo rmmod vivid
+echo rmmod vivid | tee /dev/kmsg
 echo
 rmmod vivid
 sleep $rmmod_time
