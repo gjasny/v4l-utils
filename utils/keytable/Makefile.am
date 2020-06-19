@@ -29,16 +29,3 @@ check:
 # custom target
 install-data-local:
 	$(install_sh) -d "$(DESTDIR)$(keytableuserdir)"
-
-sync-with-kernel:
-	@if [ ! -f $(KERNEL_DIR)/usr/include/linux/input-event-codes.h ]; then \
-	  echo "Error you must set KERNEL_DIR to point to an extracted kernel source dir"; \
-	  exit 1; \
-	fi
-	@echo generating $(srcdir)/parse.h
-	@./gen_input_events.pl < $(KERNEL_DIR)/usr/include/linux/input-event-codes.h  > $(srcdir)/parse.h
-	@-mkdir -p $(srcdir)/rc_keymaps
-	@-rm $(srcdir)/rc_keymaps/*
-	@echo storing existing keymaps at $(srcdir)/rc_keymaps/
-	@cd $(srcdir) && ./gen_keytables.pl $(KERNEL_DIR);
-	@-cp $(srcdir)/rc_keymaps_userspace/* $(srcdir)/rc_keymaps/

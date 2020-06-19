@@ -128,7 +128,7 @@ fi
 AC_DEFINE_UNQUOTED(LOCALEDIR, "$v4l_localedir", [locale directory])
 AC_SUBST(localedir)
 
-# sync-with-kernel and keytable install could make use of them
+# sync-with-kernel.sh and keytable install could make use of them
 #AC_PROG_GREP
 #AC_PROG_SED
 gl_PROMOTED_TYPE_MODE_T
