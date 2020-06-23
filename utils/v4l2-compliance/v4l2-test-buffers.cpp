@@ -32,8 +32,11 @@
 #include <ctype.h>
 #include <errno.h>
 #include <poll.h>
+#include <pthread.h>
+#include <signal.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
+#include <atomic>
 #include <map>
 #include <vector>
 #include "v4l2-compliance.h"
@@ -2308,11 +2311,137 @@ int testRequests(struct node *node, bool test_streaming)
 	return 0;
 }
 
+
+/*
+ * This class wraps a pthread in such a way that it simplifies passing
+ * parameters, checking completion, gracious halting, and aggressive
+ * termination (an empty signal handler, as installed by testBlockingDQBuf,
+ * is necessary). This alleviates the need for spaghetti error paths when
+ * multiple potentially blocking threads are involved.
+ */
+class BlockingThread
+{
+public:
+	BlockingThread() : done(false), running(false) {}
+
+	virtual ~BlockingThread()
+	{
+		stop();
+	}
+
+	int start()
+	{
+		int ret = pthread_create(&thread, NULL, startRoutine, this);
+		if (ret < 0)
+			return ret;
+
+		running = true;
+		return 0;
+	}
+
+	void stop()
+	{
+		if (!running)
+			return;
+
+		/*
+		 * If the thread is blocked on an ioctl, try to wake it up with
+		 * a signal.
+		 */
+		if (!done) {
+			pthread_kill(thread, SIGUSR1);
+			usleep(100000);
+		}
+
+		/*
+		 * If the signal failed to interrupt the ioctl, use the heavy
+		 * artillery and cancel the thread.
+		 */
+		if (!done) {
+			pthread_cancel(thread);
+			usleep(100000);
+		}
+
+		pthread_join(thread, NULL);
+		running = false;
+	}
+
+	std::atomic<bool> done;
+
+private:
+	static void *startRoutine(void *arg)
+	{
+		BlockingThread *self = static_cast<BlockingThread *>(arg);
+
+		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
+		self->run();
+
+		self->done = true;
+		return NULL;
+	}
+
+	virtual void run() = 0;
+
+	pthread_t thread;
+	std::atomic<bool> running;
+};
+
+class DqbufThread : public BlockingThread
+{
+public:
+	DqbufThread(cv4l_queue *q, struct node *n) : queue(q), node(n) {}
+
+private:
+	void run() override
+	{
+		/*
+		 * In this thread we call VIDIOC_DQBUF and wait indefinitely
+		 * since no buffers are queued.
+		 */
+		cv4l_buffer buf(queue->g_type(), V4L2_MEMORY_MMAP);
+		node->dqbuf(buf);
+	}
+
+	cv4l_queue *queue;
+	struct node *node;
+};
+
+class StreamoffThread : public BlockingThread
+{
+public:
+	StreamoffThread(cv4l_queue *q, struct node *n) : queue(q), node(n) {}
+
+private:
+	void run() override
+	{
+		/*
+		 * In this thread call STREAMOFF; this shouldn't
+		 * be blocked by the DQBUF!
+		 */
+		node->streamoff(queue->g_type());
+	}
+
+	cv4l_queue *queue;
+	struct node *node;
+};
+
+static void pthread_sighandler(int sig)
+{
+}
+
 static int testBlockingDQBuf(struct node *node, cv4l_queue &q)
 {
-	int pid_dqbuf;
-	int pid_streamoff;
-	int pid;
+	DqbufThread thread_dqbuf(&q, node);
+	StreamoffThread thread_streamoff(&q, node);
+
+	/*
+	 * SIGUSR1 is ignored by default, so install an empty signal handler
+	 * so that we can use SIGUSR1 to wake up threads potentially blocked
+	 * on ioctls.
+	 */
+	signal(SIGUSR1, pthread_sighandler);
 
 	fail_on_test(q.reqbufs(node, 2));
 	fail_on_test(node->streamon(q.g_type()));
@@ -2322,51 +2451,19 @@ static int testBlockingDQBuf(struct node *node, cv4l_queue &q)
 	 * other ioctls.
 	 */
 	fflush(stdout);
-	pid_dqbuf = fork();
-	fail_on_test(pid_dqbuf == -1);
+	thread_dqbuf.start();
 
-	if (pid_dqbuf == 0) { // Child
-		/*
-		 * In the child process we call VIDIOC_DQBUF and wait
-		 * indefinitely since no buffers are queued.
-		 */
-		cv4l_buffer buf(q.g_type(), V4L2_MEMORY_MMAP);
-
-		node->dqbuf(buf);
-		std::exit(EXIT_SUCCESS);
-	}
-
-	/* Wait for the child process to start and block */
+	/* Wait for the child thread to start and block */
 	usleep(100000);
-	pid = waitpid(pid_dqbuf, NULL, WNOHANG);
 	/* Check that it is really blocking */
-	fail_on_test(pid);
+	fail_on_test(thread_dqbuf.done);
 
 	fflush(stdout);
-	pid_streamoff = fork();
-	fail_on_test(pid_streamoff == -1);
-
-	if (pid_streamoff == 0) { // Child
-		/*
-		 * In the second child call STREAMOFF: this shouldn't
-		 * be blocked by the DQBUF!
-		 */
-		node->streamoff(q.g_type());
-		std::exit(EXIT_SUCCESS);
-	}
-
-	int wstatus_streamoff = 0;
+	thread_streamoff.start();
 
 	/* Wait for the second child to start and exit */
 	usleep(250000);
-	pid = waitpid(pid_streamoff, &wstatus_streamoff, WNOHANG);
-	kill(pid_dqbuf, SIGKILL);
-	fail_on_test(pid != pid_streamoff);
-	/* Test that the second child exited properly */
-	if (!pid || !WIFEXITED(wstatus_streamoff)) {
-		kill(pid_streamoff, SIGKILL);
-		fail_on_test(!pid || !WIFEXITED(wstatus_streamoff));
-	}
+	fail_on_test(!thread_streamoff.done);
 
 	fail_on_test(node->streamoff(q.g_type()));
 	fail_on_test(q.reqbufs(node, 0));
