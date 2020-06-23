@@ -371,6 +371,7 @@ static const flag_def fmtdesc_def[] = {
 	{ V4L2_FMT_FLAG_EMULATED, "emulated" },
 	{ V4L2_FMT_FLAG_CONTINUOUS_BYTESTREAM, "continuous-bytestream" },
 	{ V4L2_FMT_FLAG_DYN_RESOLUTION, "dyn-resolution" },
+	{ V4L2_FMT_FLAG_ENC_CAP_FRAME_INTERVAL, "enc-cap-frame-interval" },
 	{ 0, NULL }
 };
 
