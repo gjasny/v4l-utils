@@ -691,6 +691,12 @@ int testReqBufs(struct node *node)
 			}
 			q.reqbufs(node);
 
+			ret = q.create_bufs(node, 0);
+			if (ret == ENOTTY) {
+				warn("VIDIOC_CREATE_BUFS not supported\n");
+				break;
+			}
+
 			memset(&crbufs, 0xff, sizeof(crbufs));
 			node->g_fmt(crbufs.format, i);
 			crbufs.count = 1;
@@ -723,12 +729,7 @@ int testReqBufs(struct node *node)
 			}
 			q.reqbufs(node);
 
-			ret = q.create_bufs(node, 1);
-			if (ret == ENOTTY) {
-				warn("VIDIOC_CREATE_BUFS not supported\n");
-				break;
-			}
-			fail_on_test(ret);
+			fail_on_test(q.create_bufs(node, 1));
 			fail_on_test(q.g_buffers() == 0);
 			fail_on_test(q.g_type() != i);
 			fail_on_test(testQueryBuf(node, i, q.g_buffers()));
@@ -1351,16 +1352,17 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 		fail_on_test(q.reqbufs(node, q.g_buffers()));
 		fail_on_test(node->g_fmt(cur_fmt, q.g_type()));
 
-		q.reqbufs(node);
-		q.create_bufs(node, 2, &cur_fmt, V4L2_FLAG_MEMORY_NON_CONSISTENT);
-		fail_on_test(setupMmap(node, q));
-		q.reqbufs(node);
-
 		ret = q.create_bufs(node, 0);
 		fail_on_test(ret != ENOTTY && ret != 0);
 		if (ret == ENOTTY)
 			have_createbufs = false;
 		if (have_createbufs) {
+			q.reqbufs(node);
+			q.create_bufs(node, 2, &cur_fmt, V4L2_FLAG_MEMORY_NON_CONSISTENT);
+			fail_on_test(setupMmap(node, q));
+			q.munmap_bufs(node);
+			q.reqbufs(node, 2);
+
 			cv4l_fmt fmt(cur_fmt);
 
 			if (node->is_video) {
