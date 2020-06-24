@@ -141,7 +141,7 @@ if [ $kmemleak -eq 1 ]; then
 fi
 
 rmmod vivid 2&>/dev/null
-modprobe vivid n_devs=3 multiplanar=1,2,2 #allocators=0,1,1
+modprobe vivid n_devs=3 multiplanar=1,2,2 cache_hints=1,0,0 #allocators=0,1,1
 sleep 1
 
 tmp=`mktemp`
