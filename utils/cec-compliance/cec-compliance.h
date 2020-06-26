@@ -263,6 +263,16 @@ struct remote_subtest {
 	FAIL;								\
 })
 
+#define fail_once(fmt, args...)						\
+	do {								\
+		static bool show;					\
+									\
+		if (!show) {						\
+			show = true;					\
+			fail(fmt, ##args);				\
+		}							\
+	} while (0)
+
 #define fail_or_warn(node, fmt, args...)				\
 ({									\
  	if ((node)->in_standby)						\

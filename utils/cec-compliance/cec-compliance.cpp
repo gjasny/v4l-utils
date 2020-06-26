@@ -931,6 +931,7 @@ retry:
 		break;
 	default:
 		reason = "Unknown";
+		fail_once("Unknown Feature Abort reason (0x%02x)\n", abort_reason(msg));
 		break;
 	}
 	info("Opcode %s was replied to with Feature Abort [%s]\n",
