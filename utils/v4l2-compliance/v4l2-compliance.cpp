@@ -629,7 +629,8 @@ static int testCap(struct node *node)
 	    memcmp(vcap.bus_info, "I2C:", 4) &&
 	    memcmp(vcap.bus_info, "parport", 7) &&
 	    memcmp(vcap.bus_info, "platform:", 9) &&
-	    memcmp(vcap.bus_info, "rmi4:", 5))
+	    memcmp(vcap.bus_info, "rmi4:", 5) &&
+	    memcmp(vcap.bus_info, "libcamera:", 10))
 		return fail("missing bus_info prefix ('%s')\n", vcap.bus_info);
 	if (!node->media_bus_info.empty() &&
 	    node->media_bus_info != std::string(reinterpret_cast<const char *>(vcap.bus_info)))
