@@ -1415,7 +1415,7 @@ static int testBasicSelection(struct node *node, unsigned type, unsigned target)
 	fail_on_test(ret);
 	fail_on_test(check_0(sel.reserved, sizeof(sel.reserved)));
 
-	// selection is not supported (for now) if there is more than one
+	// set selection is not supported (for now) if there is more than one
 	// discrete frame size.
 	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
 		v4l_format_init(&fmt, node->is_planar ?
@@ -1426,8 +1426,13 @@ static int testBasicSelection(struct node *node, unsigned type, unsigned target)
 			V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE :
 			V4L2_BUF_TYPE_VIDEO_OUTPUT);
 	fail_on_test(doioctl(node, VIDIOC_G_FMT, &fmt));
+
+	sel.type = 0xff;
+	bool have_s_sel = doioctl(node, VIDIOC_S_SELECTION, &sel) != ENOTTY;
+
 	__u32 pixfmt = v4l_format_g_pixelformat(&fmt);
-	if (node->frmsizes_count.find(pixfmt) != node->frmsizes_count.end())
+	if (node->frmsizes_count.find(pixfmt) != node->frmsizes_count.end() &&
+	    have_s_sel)
 		fail_on_test(node->frmsizes_count[pixfmt] > 1);
 
 	// Check handling of invalid type.
