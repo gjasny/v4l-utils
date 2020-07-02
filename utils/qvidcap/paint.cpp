@@ -1260,6 +1260,7 @@ void CaptureWin::render_Bayer(__u32 format)
 	case V4L2_PIX_FMT_SGBRG8:
 	case V4L2_PIX_FMT_SGRBG8:
 	case V4L2_PIX_FMT_SRGGB8:
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, m_v4l_fmt.g_bytesperline());
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
 				GL_RED_INTEGER, GL_UNSIGNED_BYTE, m_curData[0]);
 		break;
@@ -1275,6 +1276,7 @@ void CaptureWin::render_Bayer(__u32 format)
 	case V4L2_PIX_FMT_SGBRG16:
 	case V4L2_PIX_FMT_SGRBG16:
 	case V4L2_PIX_FMT_SRGGB16:
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, m_v4l_fmt.g_bytesperline());
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
 				GL_RED_INTEGER, GL_UNSIGNED_SHORT, m_curData[0]);
 		break;
