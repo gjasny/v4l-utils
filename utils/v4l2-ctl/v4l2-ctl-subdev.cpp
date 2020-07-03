@@ -560,10 +560,10 @@ static void print_mbus_code(__u32 code)
 		if (mbus_names[i].code == code)
 			break;
 	if (mbus_names[i].name)
-		printf("\t0x%04x: MEDIA_BUS_FMT_%s\n",
+		printf("\t0x%04x: MEDIA_BUS_FMT_%s",
 		       mbus_names[i].code, mbus_names[i].name);
 	else
-		printf("\t0x%04x\n", code);
+		printf("\t0x%04x", code);
 }
 
 static void print_mbus_codes(int fd, __u32 pad)
@@ -580,6 +580,12 @@ static void print_mbus_codes(int fd, __u32 pad)
 		if (ret)
 			break;
 		print_mbus_code(mbus_code.code);
+		if (mbus_code.flags) {
+			bool is_hsv = mbus_code.code == MEDIA_BUS_FMT_AHSV8888_1X32;
+
+			printf(", %s", mbus2s(mbus_code.flags, is_hsv).c_str());
+		}
+		printf("\n");
 		mbus_code.index++;
 	}
 }

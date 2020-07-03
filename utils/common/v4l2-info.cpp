@@ -373,6 +373,25 @@ std::string fmtdesc2s(unsigned flags, bool is_hsv)
 	return flags2s(flags, fmtdesc_ycbcr_def);
 }
 
+#define MBUS_DEF(enc_type)						\
+static const flag_def mbus_ ## enc_type ## _def[] = { 			\
+	{ V4L2_SUBDEV_MBUS_CODE_CSC_COLORSPACE, "csc-colorspace" }, 	\
+	{ V4L2_SUBDEV_MBUS_CODE_CSC_YCBCR_ENC, "csc-"#enc_type },	\
+	{ V4L2_SUBDEV_MBUS_CODE_CSC_QUANTIZATION, "csc-quantization" }, \
+	{ V4L2_SUBDEV_MBUS_CODE_CSC_XFER_FUNC, "csc-xfer-func" }, 	\
+	{ 0, NULL }							\
+};
+
+MBUS_DEF(ycbcr)
+MBUS_DEF(hsv)
+
+std::string mbus2s(unsigned flags, bool is_hsv)
+{
+	if (is_hsv)
+		return flags2s(flags, mbus_hsv_def);
+	return flags2s(flags, mbus_ycbcr_def);
+}
+
 static const flag_def selection_targets_def[] = {
 	{ V4L2_SEL_TGT_CROP_ACTIVE, "crop" },
 	{ V4L2_SEL_TGT_CROP_DEFAULT, "crop_default" },

@@ -9,6 +9,7 @@
 #include <string>
 
 #include <linux/videodev2.h>
+#include <linux/v4l2-subdev.h>
 
 /* Print capability information */
 void v4l2_info_capability(const v4l2_capability &cap);
@@ -50,6 +51,9 @@ std::string pixflags2s(unsigned flags);
 
 /* Return sliced vbi services description */
 std::string service2s(unsigned service);
+
+/* Return v4l2_subdev_mbus_code_enum flags description */
+std::string mbus2s(unsigned flags, bool is_hsv);
 
 /* Return v4l2_fmtdesc flags description */
 std::string fmtdesc2s(unsigned flags, bool is_hsv);
