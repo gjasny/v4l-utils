@@ -8,6 +8,7 @@ static struct v4l2_frmsizeenum frmsize; /* list frame sizes */
 static struct v4l2_frmivalenum frmival; /* list frame intervals */
 static unsigned set_fmts;
 static __u32 width, height, pixfmt, field, flags;
+static __u32 ycbcr, quantization, xfer_func, colorspace;
 static __u32 bytesperline[VIDEO_MAX_PLANES];
 static __u32 sizeimage[VIDEO_MAX_PLANES];
 static unsigned mbus_code;
@@ -96,7 +97,6 @@ static void print_video_fields(int fd)
 
 void vidcap_cmd(int ch, char *optarg)
 {
-	__u32 colorspace, xfer_func, ycbcr, quantization;
 	char *value, *subs;
 	bool be_pixfmt;
 
@@ -106,8 +106,7 @@ void vidcap_cmd(int ch, char *optarg)
 		set_fmts = parse_fmt(optarg, width, height, pixfmt, field, colorspace,
 				xfer_func, ycbcr, quantization, flags, bytesperline,
 				sizeimage);
-		if (!set_fmts ||
-		    (set_fmts & (FmtColorspace | FmtYCbCr | FmtQuantization | FmtXferFunc))) {
+		if (!set_fmts) {
 			vidcap_usage();
 			std::exit(EXIT_FAILURE);
 		}
@@ -220,6 +219,23 @@ int vidcap_get_and_update_fmt(cv4l_fd &_fd, struct v4l2_format &vfmt)
 				vfmt.fmt.pix_mp.plane_fmt[i].sizeimage =
 					sizeimage[i];
 		}
+
+		if (set_fmts & FmtColorspace) {
+			vfmt.fmt.pix_mp.flags |= V4L2_PIX_FMT_FLAG_SET_CSC;
+			vfmt.fmt.pix_mp.colorspace = colorspace;
+		}
+		if (set_fmts & FmtYCbCr) {
+			vfmt.fmt.pix_mp.flags |= V4L2_PIX_FMT_FLAG_SET_CSC;
+			vfmt.fmt.pix_mp.ycbcr_enc = ycbcr;
+		}
+		if (set_fmts & FmtQuantization) {
+			vfmt.fmt.pix_mp.flags |= V4L2_PIX_FMT_FLAG_SET_CSC;
+			vfmt.fmt.pix_mp.quantization = quantization;
+		}
+		if (set_fmts & FmtXferFunc) {
+			vfmt.fmt.pix_mp.flags |= V4L2_PIX_FMT_FLAG_SET_CSC;
+			vfmt.fmt.pix_mp.xfer_func = xfer_func;
+		}
 	} else {
 		if (set_fmts & FmtWidth)
 			vfmt.fmt.pix.width = width;
@@ -249,6 +265,23 @@ int vidcap_get_and_update_fmt(cv4l_fd &_fd, struct v4l2_format &vfmt)
 		}
 		if (set_fmts & FmtSizeImage)
 			vfmt.fmt.pix.sizeimage = sizeimage[0];
+		if (set_fmts & FmtColorspace) {
+			vfmt.fmt.pix.flags |= V4L2_PIX_FMT_FLAG_SET_CSC;
+			vfmt.fmt.pix.colorspace = colorspace;
+		}
+		if (set_fmts & FmtYCbCr) {
+			vfmt.fmt.pix.flags |= V4L2_PIX_FMT_FLAG_SET_CSC;
+			vfmt.fmt.pix.ycbcr_enc = ycbcr;
+		}
+		if (set_fmts & FmtQuantization) {
+			vfmt.fmt.pix.flags |= V4L2_PIX_FMT_FLAG_SET_CSC;
+			vfmt.fmt.pix.quantization = quantization;
+		}
+		if (set_fmts & FmtXferFunc) {
+			vfmt.fmt.pix.flags |= V4L2_PIX_FMT_FLAG_SET_CSC;
+			vfmt.fmt.pix.xfer_func = xfer_func;
+		}
+
 	}
 
 	if ((set_fmts & FmtPixelFormat) &&

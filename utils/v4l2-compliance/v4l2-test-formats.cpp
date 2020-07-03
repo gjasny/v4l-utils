@@ -260,7 +260,10 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 		if (fmtdesc.flags & ~(V4L2_FMT_FLAG_COMPRESSED | V4L2_FMT_FLAG_EMULATED |
 				      V4L2_FMT_FLAG_CONTINUOUS_BYTESTREAM |
 				      V4L2_FMT_FLAG_DYN_RESOLUTION |
-				      V4L2_FMT_FLAG_ENC_CAP_FRAME_INTERVAL))
+				      V4L2_FMT_FLAG_ENC_CAP_FRAME_INTERVAL |
+				      V4L2_FMT_FLAG_CSC_COLORSPACE |
+				      V4L2_FMT_FLAG_CSC_YCBCR_ENC | V4L2_FMT_FLAG_CSC_HSV_ENC |
+				      V4L2_FMT_FLAG_CSC_QUANTIZATION | V4L2_FMT_FLAG_CSC_XFER_FUNC))
 			return fail("unknown flag %08x returned\n", fmtdesc.flags);
 		if (!(fmtdesc.flags & V4L2_FMT_FLAG_COMPRESSED))
 			fail_on_test(fmtdesc.flags & (V4L2_FMT_FLAG_CONTINUOUS_BYTESTREAM |
