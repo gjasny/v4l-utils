@@ -608,8 +608,12 @@ void print_video_formats(cv4l_fd &fd, __u32 type, unsigned int mbus_code)
 	do {
 		printf("\t[%d]: '%s' (%s", fmt.index, fcc2s(fmt.pixelformat).c_str(),
 		       fmt.description);
-		if (fmt.flags)
-			printf(", %s", fmtdesc2s(fmt.flags).c_str());
+		if (fmt.flags) {
+			bool is_hsv = fmt.pixelformat == V4L2_PIX_FMT_HSV24 ||
+				      fmt.pixelformat == V4L2_PIX_FMT_HSV32;
+
+			printf(", %s", fmtdesc2s(fmt.flags, is_hsv).c_str());
+		}
 		printf(")\n");
 	} while (!fd.enum_fmt(fmt));
 }
@@ -630,8 +634,12 @@ void print_video_formats_ext(cv4l_fd &fd, __u32 type, unsigned int mbus_code)
 	do {
 		printf("\t[%d]: '%s' (%s", fmt.index, fcc2s(fmt.pixelformat).c_str(),
 		       fmt.description);
-		if (fmt.flags)
-			printf(", %s", fmtdesc2s(fmt.flags).c_str());
+		if (fmt.flags) {
+			bool is_hsv = fmt.pixelformat == V4L2_PIX_FMT_HSV24 ||
+				      fmt.pixelformat == V4L2_PIX_FMT_HSV32;
+
+			printf(", %s", fmtdesc2s(fmt.flags, is_hsv).c_str());
+		}
 		printf(")\n");
 		if (fd.enum_framesizes(frmsize, fmt.pixelformat))
 			continue;

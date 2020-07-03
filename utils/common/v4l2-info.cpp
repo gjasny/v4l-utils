@@ -349,18 +349,28 @@ std::string service2s(unsigned service)
 	return flags2s(service, service_def);
 }
 
-static const flag_def fmtdesc_def[] = {
-	{ V4L2_FMT_FLAG_COMPRESSED, "compressed" },
-	{ V4L2_FMT_FLAG_EMULATED, "emulated" },
-	{ V4L2_FMT_FLAG_CONTINUOUS_BYTESTREAM, "continuous-bytestream" },
-	{ V4L2_FMT_FLAG_DYN_RESOLUTION, "dyn-resolution" },
-	{ V4L2_FMT_FLAG_ENC_CAP_FRAME_INTERVAL, "enc-cap-frame-interval" },
-	{ 0, NULL }
+#define FMTDESC_DEF(enc_type)							\
+static const flag_def fmtdesc_ ## enc_type ## _def[] = { 			\
+	{ V4L2_FMT_FLAG_COMPRESSED, "compressed" }, 				\
+	{ V4L2_FMT_FLAG_EMULATED, "emulated" }, 				\
+	{ V4L2_FMT_FLAG_CONTINUOUS_BYTESTREAM, "continuous-bytestream" }, 	\
+	{ V4L2_FMT_FLAG_DYN_RESOLUTION, "dyn-resolution" }, 			\
+	{ V4L2_FMT_FLAG_ENC_CAP_FRAME_INTERVAL, "enc-cap-frame-interval" },	\
+	{ V4L2_FMT_FLAG_CSC_COLORSPACE, "csc-colorspace" }, 			\
+	{ V4L2_FMT_FLAG_CSC_YCBCR_ENC, "csc-"#enc_type }, 			\
+	{ V4L2_FMT_FLAG_CSC_QUANTIZATION, "csc-quantization" }, 		\
+	{ V4L2_FMT_FLAG_CSC_XFER_FUNC, "csc-xfer-func" }, 			\
+	{ 0, NULL } 								\
 };
 
-std::string fmtdesc2s(unsigned flags)
+FMTDESC_DEF(ycbcr)
+FMTDESC_DEF(hsv)
+
+std::string fmtdesc2s(unsigned flags, bool is_hsv)
 {
-	return flags2s(flags, fmtdesc_def);
+	if (is_hsv)
+		return flags2s(flags, fmtdesc_hsv_def);
+	return flags2s(flags, fmtdesc_ycbcr_def);
 }
 
 static const flag_def selection_targets_def[] = {

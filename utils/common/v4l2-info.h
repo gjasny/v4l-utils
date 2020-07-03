@@ -52,7 +52,7 @@ std::string pixflags2s(unsigned flags);
 std::string service2s(unsigned service);
 
 /* Return v4l2_fmtdesc flags description */
-std::string fmtdesc2s(unsigned flags);
+std::string fmtdesc2s(unsigned flags, bool is_hsv);
 
 /* Return selection flags description */
 std::string selflags2s(__u32 flags);
