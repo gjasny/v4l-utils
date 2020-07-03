@@ -407,14 +407,22 @@ void subdev_set(cv4l_fd &_fd)
 				fmt.format.code = ffmt.code;
 			if (set_fmt & FmtField)
 				fmt.format.field = ffmt.field;
-			if (set_fmt & FmtColorspace)
+			if (set_fmt & FmtColorspace) {
 				fmt.format.colorspace = ffmt.colorspace;
-			if (set_fmt & FmtXferFunc)
+				fmt.format.flags |= V4L2_MBUS_FRAMEFMT_SET_CSC;
+			}
+			if (set_fmt & FmtXferFunc) {
 				fmt.format.xfer_func = ffmt.xfer_func;
-			if (set_fmt & FmtYCbCr)
+				fmt.format.flags |= V4L2_MBUS_FRAMEFMT_SET_CSC;
+			}
+			if (set_fmt & FmtYCbCr) {
 				fmt.format.ycbcr_enc = ffmt.ycbcr_enc;
-			if (set_fmt & FmtQuantization)
+				fmt.format.flags |= V4L2_MBUS_FRAMEFMT_SET_CSC;
+			}
+			if (set_fmt & FmtQuantization) {
 				fmt.format.quantization = ffmt.quantization;
+				fmt.format.flags |= V4L2_MBUS_FRAMEFMT_SET_CSC;
+			}
 
 			if (options[OptSetSubDevFormat])
 				printf("Note: --set-subdev-fmt is only for testing.\n"
