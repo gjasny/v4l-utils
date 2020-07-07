@@ -28,6 +28,7 @@
 #include <QVBoxLayout>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QScreen>
 
 #include <math.h>
 
@@ -238,8 +239,8 @@ void CaptureWin::setWindowSize(QSize frameSize)
 	m_origFrameSize = frameSize;
 
 	QSize margins = getMargins();
-	QDesktopWidget *screen = QApplication::desktop();
-	QRect resolution = screen->screenGeometry();
+	QScreen *screen = QGuiApplication::screenAt(mapToGlobal({width() / 2, 0}));
+	QSize resolution = screen->availableSize();
 
 	QSize windowSize =  pixelAspectFrameSize(cropSize(frameSize)) + margins;
 

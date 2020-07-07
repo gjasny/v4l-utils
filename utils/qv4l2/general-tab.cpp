@@ -1806,7 +1806,12 @@ void GeneralTab::updateStandard()
 	if ((vs.id & std) == 0)
 		return;
 	m_tvStandard->setCurrentIndex(vs.index);
-	what.sprintf("TV Standard (0x%llX)\n"
+#if QT_VERSION < 0x050500
+	what.sprintf(
+#else
+	what.asprintf(
+#endif
+		"TV Standard (0x%llX)\n"
 		"Frame period: %f (%d/%d)\n"
 		"Frame lines: %d", (long long int)std,
 		(double)vs.frameperiod.numerator / vs.frameperiod.denominator,
@@ -1876,7 +1881,12 @@ void GeneralTab::updateTimings()
 	if (memcmp(&timings, &p.timings, sizeof(timings)))
 		return;
 	m_videoTimings->setCurrentIndex(p.index);
-	what.sprintf("Video Timings (%u)\n"
+#if QT_VERSION < 0x050500
+	what.sprintf(
+#else
+	what.asprintf(
+#endif
+		"Video Timings (%u)\n"
 		"Frame %ux%u\n",
 		p.index, p.timings.bt.width, p.timings.bt.height);
 	m_isSDTV = p.timings.bt.width <= 720 && p.timings.bt.height <= 576;
