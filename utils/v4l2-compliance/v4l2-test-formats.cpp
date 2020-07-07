@@ -71,6 +71,8 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt,
 		ret = doioctl(node, VIDIOC_ENUM_FRAMEINTERVALS, &frmival);
 		if (ret == ENOTTY)
 			return ret;
+		// M2M devices don't support this, except for stateful encoders
+		fail_on_test(node->is_m2m && !(node->codec_mask & STATEFUL_ENCODER));
 		if (f == 0 && ret == EINVAL) {
 			if (type == V4L2_FRMSIZE_TYPE_DISCRETE)
 				warn("found framesize %dx%d, but no frame intervals\n", w, h);
@@ -264,16 +266,22 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 			return fail("drivers must never set the emulated flag\n");
 		if (fmtdesc.flags & ~(V4L2_FMT_FLAG_COMPRESSED | V4L2_FMT_FLAG_EMULATED |
 				      V4L2_FMT_FLAG_CONTINUOUS_BYTESTREAM |
-				      V4L2_FMT_FLAG_DYN_RESOLUTION))
+				      V4L2_FMT_FLAG_DYN_RESOLUTION |
+				      V4L2_FMT_FLAG_ENC_CAP_FRAME_INTERVAL))
 			return fail("unknown flag %08x returned\n", fmtdesc.flags);
 		if (!(fmtdesc.flags & V4L2_FMT_FLAG_COMPRESSED))
 			fail_on_test(fmtdesc.flags & (V4L2_FMT_FLAG_CONTINUOUS_BYTESTREAM |
-						      V4L2_FMT_FLAG_DYN_RESOLUTION));
+						      V4L2_FMT_FLAG_DYN_RESOLUTION |
+						      V4L2_FMT_FLAG_ENC_CAP_FRAME_INTERVAL));
 		ret = testEnumFrameSizes(node, fmtdesc.pixelformat);
 		if (ret)
 			fail_on_test(node->codec_mask & STATEFUL_ENCODER);
 		if (ret && ret != ENOTTY)
 			return ret;
+		if (fmtdesc.flags & V4L2_FMT_FLAG_ENC_CAP_FRAME_INTERVAL) {
+			fail_on_test(!(node->codec_mask & STATEFUL_ENCODER));
+			node->has_enc_cap_frame_interval = true;
+		}
 		f++;
 		if (type == V4L2_BUF_TYPE_PRIVATE)
 			continue;
@@ -1222,6 +1230,7 @@ int testSlicedVBICap(struct node *node)
 
 static int testParmStruct(struct node *node, struct v4l2_streamparm &parm)
 {
+	bool is_stateful_enc = node->codec_mask & STATEFUL_ENCODER;
 	struct v4l2_captureparm *cap = &parm.parm.capture;
 	struct v4l2_outputparm *out = &parm.parm.output;
 	int ret;
@@ -1239,6 +1248,7 @@ static int testParmStruct(struct node *node, struct v4l2_streamparm &parm)
 			fail_on_test(!cap->readbuffers);
 		fail_on_test(cap->capability & ~V4L2_CAP_TIMEPERFRAME);
 		fail_on_test(node->has_frmintervals && !cap->capability);
+		fail_on_test(is_stateful_enc && !cap->capability);
 		fail_on_test(cap->capturemode & ~V4L2_MODE_HIGHQUALITY);
 		if (cap->capturemode & V4L2_MODE_HIGHQUALITY)
 			warn("V4L2_MODE_HIGHQUALITY is poorly defined\n");
@@ -1257,6 +1267,7 @@ static int testParmStruct(struct node *node, struct v4l2_streamparm &parm)
 		else if (node->g_caps() & V4L2_CAP_STREAMING)
 			fail_on_test(!out->writebuffers);
 		fail_on_test(out->capability & ~V4L2_CAP_TIMEPERFRAME);
+		fail_on_test(is_stateful_enc && !out->capability);
 		fail_on_test(out->outputmode);
 		fail_on_test(out->extendedmode);
 		if (out->capability & V4L2_CAP_TIMEPERFRAME)
@@ -1271,6 +1282,7 @@ static int testParmStruct(struct node *node, struct v4l2_streamparm &parm)
 static int testParmType(struct node *node, unsigned type)
 {
 	struct v4l2_streamparm parm;
+	bool is_stateful_enc = node->codec_mask & STATEFUL_ENCODER;
 	int ret;
 
 	memset(&parm, 0, sizeof(parm));
@@ -1288,10 +1300,10 @@ static int testParmType(struct node *node, unsigned type)
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
-		if (type && (node->g_caps() & buftype2cap[type]))
+		if (node->g_caps() & buftype2cap[type]) {
 			fail_on_test(ret && node->has_frmintervals);
-		if (ret)
-			break;
+			fail_on_test(ret && node->has_enc_cap_frame_interval);
+		}
 		break;
 	default:
 		fail_on_test(ret == 0);
@@ -1300,8 +1312,15 @@ static int testParmType(struct node *node, unsigned type)
 		fail_on_test(!doioctl(node, VIDIOC_S_PARM, &parm));
 		break;
 	}
+	if (ret == ENOTTY) {
+		memset(&parm, 0, sizeof(parm));
+		parm.type = type;
+		fail_on_test(doioctl(node, VIDIOC_S_PARM, &parm) != ENOTTY);
+	}
 	if (ret == ENOTTY)
 		return ret;
+	// M2M devices don't support this, except for stateful encoders
+	fail_on_test(node->is_m2m && !is_stateful_enc);
 	if (ret == EINVAL)
 		return ENOTTY;
 	if (ret)
@@ -1327,10 +1346,28 @@ static int testParmType(struct node *node, unsigned type)
 		cap = parm.parm.output.capability;
 	else
 		cap = parm.parm.capture.capability;
-	fail_on_test(ret && node->has_frmintervals);
-	if (!ret && (cap & V4L2_CAP_TIMEPERFRAME) && !node->has_frmintervals)
+
+	if (is_stateful_enc) {
+		fail_on_test(ret && node->has_enc_cap_frame_interval);
+		if (V4L2_TYPE_IS_OUTPUT(type))
+			fail_on_test(ret);
+	} else {
+		fail_on_test(ret && node->has_frmintervals);
+	}
+
+	/*
+	 * Stateful encoders can support S_PARM without ENUM_FRAMEINTERVALS.
+	 * being present. In that case the limits of the chosen codec apply.
+	 */
+	if (!ret && (cap & V4L2_CAP_TIMEPERFRAME) && !node->has_frmintervals && !is_stateful_enc)
 		warn("S_PARM is supported for buftype %d, but not for ENUM_FRAMEINTERVALS\n", type);
 	if (ret == ENOTTY)
+		return 0;
+	/*
+	 * S_PARM(CAPTURE) is optional for stateful encoders, so EINVAL is a
+	 * valid error code in that case.
+	 */
+	if (is_stateful_enc && !V4L2_TYPE_IS_OUTPUT(type) && ret == -EINVAL)
 		return 0;
 	if (ret)
 		return fail("got error %d when setting parms for buftype %d\n", ret, type);

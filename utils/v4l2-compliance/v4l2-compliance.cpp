@@ -1250,6 +1250,7 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		node.frmsizes.clear();
 		node.frmsizes_count.clear();
 		node.has_frmintervals = false;
+		node.has_enc_cap_frame_interval = false;
 		node.valid_buftypes = 0;
 		node.valid_memorytype = 0;
 		node.buf_caps = 0;

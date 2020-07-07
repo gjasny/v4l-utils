@@ -141,6 +141,7 @@ struct base_node {
 	frmsizes_set frmsizes;
 	frmsizes_count_map frmsizes_count;
 	bool has_frmintervals;
+	bool has_enc_cap_frame_interval;
 	__u32 valid_buftypes;
 	__u32 valid_buftype;
 	__u32 valid_memorytype;
