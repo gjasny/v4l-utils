@@ -18,7 +18,7 @@ qv4l2_CPPFLAGS += $(QT_CFLAGS)
 qv4l2_LDFLAGS = $(QT_LIBS)
 endif
 
-qv4l2_CPPFLAGS += $(ALSA_CFLAGS)
+qv4l2_CPPFLAGS += $(ALSA_CFLAGS) -Wno-psabi
 qv4l2_LDFLAGS += $(ALSA_LIBS) -pthread
 
 EXTRA_DIST = enterbutt.png exit.png fileopen.png qv4l2_24x24.png qv4l2_64x64.png qv4l2.png qv4l2.svg \
