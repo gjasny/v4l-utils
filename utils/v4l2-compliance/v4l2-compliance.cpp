@@ -636,6 +636,8 @@ static int testCap(struct node *node)
 		warn("media bus_info '%s' differs from V4L2 bus_info '%s'\n",
 		     node->media_bus_info.c_str(), vcap.bus_info);
 	fail_on_test((vcap.version >> 16) < 3);
+	if (vcap.version >= 0x050900)  // Present from 5.9.0 onwards
+		node->might_support_cache_hints = true;
 	fail_on_test(check_0(vcap.reserved, sizeof(vcap.reserved)));
 	caps = vcap.capabilities;
 	dcaps = vcap.device_caps;

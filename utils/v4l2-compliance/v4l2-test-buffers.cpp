@@ -1272,7 +1272,7 @@ static int setupMmap(struct node *node, cv4l_queue &q)
 		if (cache_hints) {
 			fail_on_test(!(flags & V4L2_BUF_FLAG_NO_CACHE_INVALIDATE));
 			fail_on_test(!(flags & V4L2_BUF_FLAG_NO_CACHE_CLEAN));
-		} else {
+		} else if (node->might_support_cache_hints) {
 			fail_on_test(flags & V4L2_BUF_FLAG_NO_CACHE_INVALIDATE);
 			fail_on_test(flags & V4L2_BUF_FLAG_NO_CACHE_CLEAN);
 		}

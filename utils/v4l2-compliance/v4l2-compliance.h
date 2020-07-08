@@ -146,6 +146,8 @@ struct base_node {
 	__u32 valid_buftype;
 	__u32 valid_memorytype;
 	bool supports_orphaned_bufs;
+	// support for this was introduced in 5.9
+	bool might_support_cache_hints;
 };
 
 struct node : public base_node, public cv4l_fd {
