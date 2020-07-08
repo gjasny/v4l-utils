@@ -96,7 +96,6 @@ bool show_colors;
 bool exit_on_fail;
 bool exit_on_warn;
 bool is_vivid;
-int kernel_version;
 int media_fd = -1;
 unsigned warnings;
 
@@ -1478,8 +1477,6 @@ int main(int argc, char **argv)
 	int ch;
 	std::string device("/dev/video0");
 	std::string expbuf_device;	/* --expbuf-device device */
-	struct utsname uts;
-	int v1, v2, v3;
 	unsigned frame_count = 60;
 	unsigned all_fmt_frame_count = 0;
 	char short_options[26 * 2 * 3 + 1];
@@ -1495,12 +1492,6 @@ int main(int argc, char **argv)
 #endif
 
 	printf(", %zd bits, %zd-bit time_t\n", sizeof(void *) * 8, sizeof(time_t) * 8);
-	uname(&uts);
-	sscanf(uts.release, "%d.%d.%d", &v1, &v2, &v3);
-	if (v1 == 2 && v2 == 6)
-		kernel_version = v3;
-	if (kernel_version)
-		printf("Running on 2.6.%d\n", kernel_version);
 	printf("\n");
 
 	if (!env_media_apps_color || !strcmp(env_media_apps_color, "auto"))

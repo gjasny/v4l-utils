@@ -409,12 +409,7 @@ int testSimpleControls(struct node *node)
 				return fail("g_ctrl allowed for unsupported type\n");
 			ctrl.id = qctrl.id;
 			ctrl.value = 0;
-			// This call will crash on kernels <= 2.6.37 for control classes due to
-			// a bug in v4l2-ctrls.c. So skip this on those kernels.
-			if (kernel_version < 38 && qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS)
-				ret = EACCES;
-			else
-				ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
+			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
 			if (ret != EINVAL &&
 			    !((qctrl.flags & V4L2_CTRL_FLAG_READ_ONLY) && ret == EACCES))
 				return fail("s_ctrl allowed for unsupported type\n");
