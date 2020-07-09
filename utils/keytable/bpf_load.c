@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <linux/bpf.h>
 #include <assert.h>
+#include <argp.h>
 #include "keymap.h"
 #include "bpf.h"
 #include "bpf_load.h"
