@@ -560,6 +560,7 @@ static int standby_resume_wakeup_text_view_on(struct node *node, unsigned me, un
 	return standby_resume_wakeup_view_on(node, me, la, interactive, CEC_MSG_TEXT_VIEW_ON);
 }
 
+/* Test CEC 2.0 Power State Transitions (see HDMI 2.1, 11.5.5) */
 static int power_state_transitions(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = {};
@@ -575,7 +576,10 @@ static int power_state_transitions(struct node *node, unsigned me, unsigned la, 
 			       CEC_MSG_REPORT_POWER_STATUS);
 	fail_on_test(!res);
 	if (res < 0) {
-		warn("No Report Power Status seen when going to standby. Probably due to this bug: https://patchwork.linuxtv.org/patch/60447\n");
+		warn("No Report Power Status seen when going to standby.\n");
+		info("This might be due to this bug: https://patchwork.linuxtv.org/patch/60447\n");
+		info("However, this was fixed in 5.5 and has been backported to LTS kernels,\n");
+		info("so any kernel released after January 2020 should have this fix.\n");
 		return OK_PRESUMED;
 	}
 	if (time(NULL) - start > 3)
