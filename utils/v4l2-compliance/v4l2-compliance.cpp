@@ -1490,7 +1490,7 @@ int main(int argc, char **argv)
 #define STRING(x) STR(x)
 	printf("v4l2-compliance SHA: %s", STRING(SHA));
 #else
-	printf("v4l2-compliance SHA: not available\n");
+	printf("v4l2-compliance SHA: not available");
 #endif
 
 	printf(", %zd bits, %zd-bit time_t\n", sizeof(void *) * 8, sizeof(time_t) * 8);
