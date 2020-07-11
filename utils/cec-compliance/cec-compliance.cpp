@@ -22,9 +22,6 @@
 
 #include "cec-compliance.h"
 #include "compiler.h"
-#ifndef ANDROID
-#include "version.h"
-#endif
 
 /* Short option list
 
@@ -1395,13 +1392,9 @@ int main(int argc, char **argv)
 	if (options[OptInteractive])
 		test_tags |= TAG_INTERACTIVE;
 
-#ifdef SHA
 #define STR(x) #x
 #define STRING(x) STR(x)
-	printf("cec-compliance SHA                 : %s\n", STRING(SHA));
-#else
-	printf("cec-compliance SHA                 : not available\n");
-#endif
+	printf("cec-compliance SHA                 : %s\n", STRING(GIT_SHA));
 
 	node.phys_addr = CEC_PHYS_ADDR_INVALID;
 	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &node.phys_addr);

@@ -42,9 +42,6 @@
 
 #include "v4l2-compliance.h"
 #include <media-info.h>
-#ifndef ANDROID
-#include "version.h"
-#endif
 
 /* Short option list
 
@@ -1485,14 +1482,9 @@ int main(int argc, char **argv)
 	char *value, *subs;
 	int idx = 0;
 
-#ifdef SHA
 #define STR(x) #x
 #define STRING(x) STR(x)
-	printf("v4l2-compliance SHA: %s", STRING(SHA));
-#else
-	printf("v4l2-compliance SHA: not available");
-#endif
-
+	printf("v4l2-compliance SHA: %s", STRING(GIT_SHA));
 	printf(", %zd bits, %zd-bit time_t\n", sizeof(void *) * 8, sizeof(time_t) * 8);
 	printf("\n");
 
