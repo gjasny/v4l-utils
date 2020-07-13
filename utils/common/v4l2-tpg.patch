@@ -1,6 +1,6 @@
 --- utils/common/v4l2-tpg.h.bak	2016-04-22 09:22:11.168936563 +0200
 +++ utils/common/v4l2-tpg.h	2016-04-22 09:23:07.337262639 +0200
-@@ -20,12 +20,56 @@
+@@ -20,12 +20,58 @@
  #ifndef _V4L2_TPG_H_
  #define _V4L2_TPG_H_
  
@@ -23,7 +23,9 @@
 +typedef __u8 u8;
 +typedef __s8 s8;
 +
++#ifndef __packed
 +#define __packed __attribute__((packed))
++#endif
 +#define pr_info printf
 +#define noinline
 +
