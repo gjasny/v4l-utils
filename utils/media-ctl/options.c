@@ -42,6 +42,13 @@ struct media_options media_opts = {
 	.devname = MEDIA_DEVNAME_DEFAULT,
 };
 
+static void print_version()
+{
+#define STR(x) #x
+#define STRING(x) STR(x)
+	printf("media-ctl %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
+}
+
 static void usage(const char *argv0)
 {
 	unsigned int i;
@@ -66,6 +73,7 @@ static void usage(const char *argv0)
 	printf("    --print-dot		Print the device topology as a dot graph\n");
 	printf("-r, --reset		Reset all links to inactive\n");
 	printf("-v, --verbose		Be verbose\n");
+	printf("    --version		Show version information\n");
 	printf("\n");
 	printf("Links and formats are defined as\n");
 	printf("\tlinks           = link { ',' link } ;\n");
@@ -127,6 +135,7 @@ static void usage(const char *argv0)
 #define OPT_SET_DV			258
 #define OPT_LIST_KNOWN_MBUS_FMTS	259
 #define OPT_GET_DV			260
+#define OPT_VERSION			261
 
 static struct option opts[] = {
 	{"device", 1, 0, 'd'},
@@ -145,6 +154,7 @@ static struct option opts[] = {
 	{"print-topology", 0, 0, 'p'},
 	{"reset", 0, 0, 'r'},
 	{"verbose", 0, 0, 'v'},
+	{"version", 0, 0, OPT_VERSION},
 	{ },
 };
 
@@ -285,6 +295,10 @@ int parse_cmdline(int argc, char **argv)
 
 		case OPT_LIST_KNOWN_MBUS_FMTS:
 			list_known_mbus_formats();
+			exit(0);
+
+		case OPT_VERSION:
+			print_version();
 			exit(0);
 
 		default:
