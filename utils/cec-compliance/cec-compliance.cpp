@@ -183,16 +183,6 @@ static struct option long_options[] = {
 #define STR(x) #x
 #define STRING(x) STR(x)
 
-static void print_sha()
-{
-	printf("cec-compliance SHA                 : %s\n", STRING(GIT_SHA));
-}
-
-static void print_version()
-{
-	printf("cec-compliance %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
-}
-
 static void usage()
 {
 	printf("Usage:\n"
@@ -1276,8 +1266,8 @@ int main(int argc, char **argv)
 			show_info = true;
 			break;
 		case OptVersion:
-			print_version();
-			print_sha();
+			printf("cec-compliance %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
+			printf("cec-compliance SHA: %s\n", STRING(GIT_SHA));
 			std::exit(EXIT_SUCCESS);
 		case ':':
 			fprintf(stderr, "Option '%s' requires a value\n",
@@ -1413,7 +1403,7 @@ int main(int argc, char **argv)
 	if (options[OptInteractive])
 		test_tags |= TAG_INTERACTIVE;
 
-	print_sha();
+	printf("cec-compliance SHA                 : %s\n", STRING(GIT_SHA));
 
 	node.phys_addr = CEC_PHYS_ADDR_INVALID;
 	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &node.phys_addr);
