@@ -93,6 +93,8 @@ enum Option {
 	OptSkipTestTunerControl,
 	OptSkipTestVendorSpecificCommands,
 	OptSkipTestStandbyResume,
+
+	OptVersion,
 	OptLast = 256
 };
 
@@ -174,8 +176,22 @@ static struct option long_options[] = {
 	{"skip-test-tuner-control", no_argument, 0, OptSkipTestTunerControl},
 	{"skip-test-vendor-specific-commands", no_argument, 0, OptSkipTestVendorSpecificCommands},
 	{"skip-test-standby-resume", no_argument, 0, OptSkipTestStandbyResume},
+	{"version", no_argument, 0, OptVersion},
 	{0, 0, 0, 0}
 };
+
+#define STR(x) #x
+#define STRING(x) STR(x)
+
+static void print_sha()
+{
+	printf("cec-compliance SHA                 : %s\n", STRING(GIT_SHA));
+}
+
+static void print_version()
+{
+	printf("cec-compliance %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
+}
 
 static void usage()
 {
@@ -231,6 +247,7 @@ static void usage()
 	       "  -s, --skip-info    Skip Driver Info output\n"
 	       "  -T, --trace        Trace all called ioctls\n"
 	       "  -v, --verbose      Turn on verbose reporting\n"
+	       "  --version          Show version information\n"
 	       "  -w, --wall-clock   Show timestamps as wall-clock time (implies -v)\n"
 	       "  -W, --exit-on-warn Exit on the first warning.\n"
 	       );
@@ -1258,6 +1275,10 @@ int main(int argc, char **argv)
 		case OptVerbose:
 			show_info = true;
 			break;
+		case OptVersion:
+			print_version();
+			print_sha();
+			std::exit(EXIT_SUCCESS);
 		case ':':
 			fprintf(stderr, "Option '%s' requires a value\n",
 				argv[optind]);
@@ -1392,9 +1413,7 @@ int main(int argc, char **argv)
 	if (options[OptInteractive])
 		test_tags |= TAG_INTERACTIVE;
 
-#define STR(x) #x
-#define STRING(x) STR(x)
-	printf("cec-compliance SHA                 : %s\n", STRING(GIT_SHA));
+	print_sha();
 
 	node.phys_addr = CEC_PHYS_ADDR_INVALID;
 	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &node.phys_addr);
