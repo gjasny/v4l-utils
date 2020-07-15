@@ -21,6 +21,9 @@ with the bus info string as specified by the \fB-z\fR option.
 \fB\-v\fR, \fB\-\-verbose\fR
 Turn on verbose reporting.
 .TP
+\fB\-\-version\fR
+Show version information.
+.TP
 \fB\-w\fR, \fB\-\-wrapper\fR
 Use the libv4l2 wrapper library for all V4L2 device accesses. By default v4l2-ctl will
 directly access the V4L2 device, but with this option all access will go via this
