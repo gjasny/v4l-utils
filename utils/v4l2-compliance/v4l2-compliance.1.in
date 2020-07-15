@@ -184,6 +184,9 @@ Trace all called ioctls.
 \fB\-v\fR, \fB\-\-verbose\fR
 Turn on verbose reporting.
 .TP
+\fB\-\-version\fR
+Show version information.
+.TP
 \fB\-w\fR, \fB\-\-wrapper\fR
 Use the libv4l2 wrapper library for all V4L2 device accesses. Note that doing this will
 cause some tests to fail because the libv4l2 library isn't fully V4L2 compliant. By
