@@ -46,6 +46,7 @@ enum Option {
 	OptShowState = 's',
 	OptWallClock = 'w',
 	OptServiceByDigID = 128,
+	OptVersion,
 	OptLast = 256
 };
 
@@ -70,9 +71,26 @@ static struct option long_options[] = {
 	{ "wall-clock", no_argument, 0, OptWallClock },
 	{ "service-by-dig-id", no_argument, 0, OptServiceByDigID },
 	{ "ignore", required_argument, 0, OptIgnore },
+	{ "version", no_argument, 0, OptVersion },
 
 	{ 0, 0, 0, 0 }
 };
+
+static void print_sha()
+{
+#ifdef SHA
+#define STR(x) #x
+#define STRING(x) STR(x)
+	printf("cec-follower SHA                   : %s\n", STRING(SHA));
+#else
+	printf("cec-follower SHA                   : not available\n");
+#endif
+}
+
+static void print_version()
+{
+	printf("cec-follower %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
+}
 
 static void usage()
 {
@@ -93,6 +111,7 @@ static void usage()
 	       "                      Ignore messages from logical address <la> and opcode\n"
 	       "                      <opcode>. 'all' can be used for <la> or <opcode> to match\n"
 	       "                      all logical addresses or opcodes.\n"
+	       "  --version           Show version information\n"
 	       );
 }
 
@@ -427,6 +446,9 @@ int main(int argc, char **argv)
 			show_msgs = true;
 			show_state = true;
 			break;
+		case OptVersion:
+			print_version();
+			std::exit(EXIT_SUCCESS);
 		case ':':
 			fprintf(stderr, "Option '%s' requires a value\n",
 				argv[optind]);
@@ -475,13 +497,7 @@ int main(int argc, char **argv)
 	node.state.service_by_dig_id = options[OptServiceByDigID];
 	state_init(node);
 
-#ifdef SHA
-#define STR(x) #x
-#define STRING(x) STR(x)
-	printf("cec-follower SHA                   : %s\n", STRING(SHA));
-#else
-	printf("cec-follower SHA                   : not available\n");
-#endif
+	print_sha();
 
 	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &node.phys_addr);
 

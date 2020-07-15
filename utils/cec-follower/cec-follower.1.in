@@ -61,6 +61,9 @@ having to rely on the device node number.
 \fB\-v\fR, \fB\-\-verbose\fR
 Turn on verbose reporting.
 .TP
+\fB\-\-version\fR
+Show version information.
+.TP
 \fB\-w\fR, \fB\-\-wall\-clock\fR
 Show timestamps as wall-clock time. This also turns on verbose reporting. 
 .TP
