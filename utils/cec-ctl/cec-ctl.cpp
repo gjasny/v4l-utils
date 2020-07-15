@@ -133,6 +133,7 @@ enum Option {
 	OptVendorCommandWithID,
 	OptVendorRemoteButtonDown,
 	OptCustomCommand,
+	OptVersion,
 };
 
 struct node {
@@ -218,6 +219,8 @@ static struct option long_options[] = {
 	{ "unregistered", no_argument, 0, OptUnregistered },
 	{ "help-all", no_argument, 0, OptHelpAll },
 
+	{ "version", no_argument, 0, OptVersion },
+
 	CEC_PARSE_LONG_OPTS
 
 	{ "vendor-remote-button-down", required_argument, 0, OptVendorRemoteButtonDown }, \
@@ -230,6 +233,13 @@ static struct option long_options[] = {
 
 	{ 0, 0, 0, 0 }
 };
+
+static void print_version()
+{
+#define STR(x) #x
+#define STRING(x) STR(x)
+	printf("cec-ctl %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
+}
 
 static void usage()
 {
@@ -262,6 +272,7 @@ static void usage()
 	       "  --help-all               Show all help messages\n"
 	       "  -T, --trace              Trace all called ioctls\n"
 	       "  -v, --verbose            Turn on verbose reporting\n"
+	       "  --version                Show version information\n"
 	       "  -w, --wall-clock         Show timestamps as wall-clock time (implies -v)\n"
 	       "  -W, --wait-for-msgs      Wait for messages and events for up to --monitor-time secs.\n"
 	       "  --cec-version-1.4        Use CEC Version 1.4 instead of 2.0\n"
@@ -2295,6 +2306,10 @@ int main(int argc, char **argv)
 			warn_if_unconfigured = true;
 			break;
 		}
+
+		case OptVersion:
+			print_version();
+			std::exit(EXIT_SUCCESS);
 
 		default:
 			if (ch >= OptHelpAll) {
