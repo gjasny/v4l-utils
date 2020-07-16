@@ -808,6 +808,32 @@ int testTryFormats(struct node *node)
 	return node->valid_buftypes ? result : ENOTTY;
 }
 
+static int testJPEGColorspace(const cv4l_fmt &fmt_raw, const cv4l_fmt &fmt_jpeg,
+			      bool is_decoder)
+{
+	fail_on_test(fmt_raw.g_colorspace() != V4L2_COLORSPACE_SRGB);
+	fail_on_test(fmt_raw.g_xfer_func() &&
+		     fmt_raw.g_xfer_func() != V4L2_XFER_FUNC_SRGB);
+	fail_on_test(fmt_raw.g_ycbcr_enc() && is_decoder &&
+		     fmt_raw.g_ycbcr_enc() != V4L2_YCBCR_ENC_601);
+	if (fmt_jpeg.g_colorspace() == V4L2_COLORSPACE_JPEG) {
+		/*
+		 * If the V4L2_COLORSPACE_JPEG shorthand is used, then the
+		 * other values shall be 0.
+		 */
+		fail_on_test(fmt_jpeg.g_xfer_func() ||
+			     fmt_jpeg.g_ycbcr_enc() ||
+			     fmt_jpeg.g_quantization());
+		return 0;
+	}
+	/* V4L2_COLORSPACE_JPEG is shorthand for these values: */
+	fail_on_test(fmt_jpeg.g_colorspace() != V4L2_COLORSPACE_SRGB);
+	fail_on_test(fmt_jpeg.g_xfer_func() != V4L2_XFER_FUNC_SRGB);
+	fail_on_test(fmt_jpeg.g_ycbcr_enc() != V4L2_YCBCR_ENC_601);
+	fail_on_test(fmt_jpeg.g_quantization() != V4L2_QUANTIZATION_FULL_RANGE);
+	return 0;
+}
+
 static int testM2MFormats(struct node *node)
 {
 	cv4l_fmt fmt_out;
@@ -818,7 +844,17 @@ static int testM2MFormats(struct node *node)
 	__u32 col, ycbcr_enc, quant, xfer_func;
 
 	fail_on_test(node->g_fmt(fmt_out, out_type));
-	node->g_fmt(fmt_cap, cap_type);
+	fail_on_test(node->g_fmt(fmt_cap, cap_type));
+
+	/*
+	 * JPEG codec have fixed colorspace, so these tests
+	 * are different compared to other m2m devices.
+	 */
+	if (node->codec_mask & JPEG_DECODER)
+		return testJPEGColorspace(fmt_cap, fmt_out, true);
+	if (node->codec_mask & JPEG_ENCODER)
+		return testJPEGColorspace(fmt_out, fmt_cap, false);
+
 	fail_on_test(fmt_cap.g_colorspace() != fmt_out.g_colorspace());
 	fail_on_test(fmt_cap.g_ycbcr_enc() != fmt_out.g_ycbcr_enc());
 	fail_on_test(fmt_cap.g_quantization() != fmt_out.g_quantization());
