@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <vector>
 #include "v4l2-compliance.h"
 
 #define MAGIC 0x1eadbeef
@@ -38,6 +39,7 @@ static int checkEnumFreqBands(struct node *node, __u32 tuner, __u32 type, __u32 
 {
 	const __u32 band_caps = V4L2_TUNER_CAP_LOW | V4L2_TUNER_CAP_1HZ;
 	__u32 caps_union = 0;
+	std::vector<v4l2_frequency_band> bands;
 	unsigned low = 0xffffffff;
 	unsigned high = 0;
 	unsigned i;
@@ -58,6 +60,7 @@ static int checkEnumFreqBands(struct node *node, __u32 tuner, __u32 type, __u32 
 		caps_union |= band.capability;
 		if ((caps & band_caps) != (band.capability & band_caps))
 			return fail("Inconsistent CAP_LOW/CAP_1HZ usage\n");
+		fail_on_test(band.rangelow == 0);
 		fail_on_test(band.rangehigh < band.rangelow);
 		fail_on_test(band.index != i);
 		fail_on_test(band.type != type);
@@ -68,10 +71,17 @@ static int checkEnumFreqBands(struct node *node, __u32 tuner, __u32 type, __u32 
 			low = band.rangelow;
 		if (band.rangehigh > high)
 			high = band.rangehigh;
+		bands.push_back(band);
 	}
 	fail_on_test(caps_union != caps);
 	fail_on_test(low != rangelow);
 	fail_on_test(high != rangehigh);
+
+	// Check that the bands do not overlap or are adjacent
+	for (i = 0; i < bands.size(); i++)
+		for (unsigned j = 1; j < bands.size(); j++)
+			fail_on_test(bands[i].rangehigh + 1 >= bands[j].rangelow &&
+				     bands[i].rangelow - 1 <= bands[j].rangehigh);
 	return 0;
 }
 
@@ -289,6 +299,43 @@ int testTunerFreq(struct node *node)
 		ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
 		if (ret || freq.frequency != tuner.rangehigh)
 			return fail("frequency rangehigh+1 wasn't mapped to rangehigh\n");
+
+		for (unsigned i = 0; ; i++) {
+			struct v4l2_frequency_band band;
+
+			memset(band.reserved, 0, sizeof(band.reserved));
+			band.tuner = t;
+			band.type = tuner.type;
+			band.index = i;
+			ret = doioctl(node, VIDIOC_ENUM_FREQ_BANDS, &band);
+			fail_on_test(i == 0 && ret);
+			if (ret == EINVAL)
+				break;
+			fail_on_test(ret);
+
+			freq.frequency = band.rangelow;
+			ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+			if (ret)
+				return fail("could not set rangelow frequency band\n");
+			freq.frequency = band.rangehigh;
+			ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+			if (ret)
+				return fail("could not set rangehigh frequency band\n");
+			freq.frequency = band.rangelow - 1;
+			ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+			if (ret)
+				return fail("could not set rangelow-1 frequency band\n");
+			ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
+			if (ret || freq.frequency != band.rangelow)
+				return fail("frequency band rangelow-1 wasn't mapped to rangelow\n");
+			freq.frequency = band.rangehigh + 1;
+			ret = doioctl(node, VIDIOC_S_FREQUENCY, &freq);
+			if (ret)
+				return fail("could not set rangehigh+1 frequency band\n");
+			ret = doioctl(node, VIDIOC_G_FREQUENCY, &freq);
+			if (ret || freq.frequency != band.rangehigh)
+				return fail("frequency band rangehigh+1 wasn't mapped to rangehigh\n");
+		}
 	}
 
 	/* If this is a modulator device, then skip the remaining tests */
