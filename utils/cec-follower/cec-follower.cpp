@@ -22,9 +22,6 @@
 
 #include "cec-follower.h"
 #include "compiler.h"
-#ifndef ANDROID
-#include "version.h"
-#endif
 
 /* Short option list
 
@@ -76,21 +73,8 @@ static struct option long_options[] = {
 	{ 0, 0, 0, 0 }
 };
 
-static void print_sha()
-{
-#ifdef SHA
 #define STR(x) #x
 #define STRING(x) STR(x)
-	printf("cec-follower SHA                   : %s\n", STRING(SHA));
-#else
-	printf("cec-follower SHA                   : not available\n");
-#endif
-}
-
-static void print_version()
-{
-	printf("cec-follower %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
-}
 
 static void usage()
 {
@@ -447,7 +431,8 @@ int main(int argc, char **argv)
 			show_state = true;
 			break;
 		case OptVersion:
-			print_version();
+			printf("cec-follower %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
+			printf("cec-follower SHA: %s\n", STRING(GIT_SHA));
 			std::exit(EXIT_SUCCESS);
 		case ':':
 			fprintf(stderr, "Option '%s' requires a value\n",
@@ -497,7 +482,7 @@ int main(int argc, char **argv)
 	node.state.service_by_dig_id = options[OptServiceByDigID];
 	state_init(node);
 
-	print_sha();
+	printf("cec-follower SHA                   : %s\n", STRING(GIT_SHA));
 
 	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &node.phys_addr);
 
@@ -505,8 +490,6 @@ int main(int argc, char **argv)
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 	node.adap_la_mask = laddrs.log_addr_mask;
 	node.cec_version = laddrs.cec_version;
-
-	printf("\n");
 
 	struct cec_connector_info conn_info = {};
 
