@@ -1116,7 +1116,7 @@ static inline bool v4l_type_is_output(unsigned type)
 
 static inline bool v4l_type_is_capture(unsigned type)
 {
-       return !v4l_type_is_output(type);
+       return V4L2_TYPE_IS_CAPTURE(type);
 }
 
 static inline bool v4l_type_is_video(unsigned type)
@@ -1981,7 +1981,7 @@ static inline void v4l_frame_selection(struct v4l2_selection *sel, bool to_frame
 	case V4L2_SEL_TGT_CROP:
 	case V4L2_SEL_TGT_CROP_DEFAULT:
 	case V4L2_SEL_TGT_CROP_BOUNDS:
-		if (!V4L2_TYPE_IS_OUTPUT(sel->type))
+		if (V4L2_TYPE_IS_CAPTURE(sel->type))
 			return;
 		break;
 	case V4L2_SEL_TGT_COMPOSE:

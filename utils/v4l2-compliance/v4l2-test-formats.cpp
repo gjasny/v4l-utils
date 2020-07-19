@@ -1403,7 +1403,7 @@ static int testParmType(struct node *node, unsigned type)
 	 * S_PARM(CAPTURE) is optional for stateful encoders, so EINVAL is a
 	 * valid error code in that case.
 	 */
-	if (is_stateful_enc && !V4L2_TYPE_IS_OUTPUT(type) && ret == -EINVAL)
+	if (is_stateful_enc && V4L2_TYPE_IS_CAPTURE(type) && ret == -EINVAL)
 		return 0;
 	if (ret)
 		return fail("got error %d when setting parms for buftype %d\n", ret, type);
