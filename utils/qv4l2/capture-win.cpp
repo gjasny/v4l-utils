@@ -241,10 +241,11 @@ void CaptureWin::setWindowSize(QSize frameSize)
 	QSize margins = getMargins();
 #if QT_VERSION < 0x050a00
 	QDesktopWidget *screen = QApplication::desktop();
+	QRect resolution = screen->screenGeometry();
 #else
 	QScreen *screen = QGuiApplication::screenAt(mapToGlobal({width() / 2, 0}));
-#endif
 	QSize resolution = screen->availableSize();
+#endif
 
 	QSize windowSize =  pixelAspectFrameSize(cropSize(frameSize)) + margins;
 
