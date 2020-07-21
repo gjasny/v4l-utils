@@ -55,11 +55,11 @@
 
 struct input_keymap_entry_v2 {
 #define KEYMAP_BY_INDEX	(1 << 0)
-	u_int8_t  flags;
-	u_int8_t  len;
-	u_int16_t index;
-	u_int32_t keycode;
-	u_int8_t  scancode[32];
+	uint8_t  flags;
+	uint8_t  len;
+	uint16_t index;
+	uint32_t keycode;
+	uint8_t  scancode[32];
 };
 
 #ifndef input_event_sec
@@ -82,7 +82,7 @@ struct input_keymap_entry_v2 {
 struct keytable_entry {
 	// 64 bit int which can printed with %llx
 	unsigned long long scancode;
-	u_int32_t keycode;
+	uint32_t keycode;
 	struct keytable_entry *next;
 };
 
@@ -1376,7 +1376,7 @@ static int get_input_protocol_version(int fd)
 static void clear_table(int fd)
 {
 	int i, j;
-	u_int32_t codes[2];
+	uint32_t codes[2];
 	struct input_keymap_entry_v2 entry;
 
 	/* Clears old table */
@@ -1463,7 +1463,7 @@ static void display_proto(struct rc_device *rc_dev)
 }
 
 
-static char *get_event_name(struct parse_event *event, u_int16_t code)
+static char *get_event_name(struct parse_event *event, uint16_t code)
 {
 	struct parse_event *p;
 
@@ -1647,14 +1647,14 @@ static void display_table_v2(struct rc_device *rc_dev, int fd)
 		if (ioctl(fd, EVIOCGKEYCODE_V2, &entry) == -1)
 			break;
 
-		if (entry.len == sizeof(u_int32_t)) {
-			u_int32_t temp;
+		if (entry.len == sizeof(uint32_t)) {
+			uint32_t temp;
 
 			memcpy(&temp, entry.scancode, sizeof(temp));
 
 			scancode = temp;
-		} else if (entry.len == sizeof(u_int64_t)) {
-			u_int64_t temp;
+		} else if (entry.len == sizeof(uint64_t)) {
+			uint64_t temp;
 
 			memcpy(&temp, entry.scancode, sizeof(temp));
 
