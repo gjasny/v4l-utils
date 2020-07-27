@@ -499,7 +499,7 @@ int main(int argc, char **argv)
 			break;
 
 		case OptGetRegister:
-			get_regs.push_back(optarg);
+			get_regs.emplace_back(optarg);
 			break;
 
 		case OptSetStride:
