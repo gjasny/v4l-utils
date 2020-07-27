@@ -650,9 +650,8 @@ int main(int argc, char **argv)
 		get_reg.match = match;
 		printf("ioctl: VIDIOC_DBG_G_REGISTER\n");
 
-		for (std::vector<std::string>::iterator iter = get_regs.begin();
-				iter != get_regs.end(); ++iter) {
-			get_reg.reg = parse_reg(curr_bd, *iter);
+		for (const auto &reg : get_regs) {
+			get_reg.reg = parse_reg(curr_bd, reg);
 			if (ioctl(fd, VIDIOC_DBG_G_REGISTER, &get_reg) < 0)
 				fprintf(stderr, "ioctl: VIDIOC_DBG_G_REGISTER "
 						"failed for 0x%llx\n", get_reg.reg);

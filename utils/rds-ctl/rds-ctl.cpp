@@ -306,9 +306,8 @@ static void print_devices(dev_vec files)
 	std::string bus_info;
 	struct v4l2_capability vcap;
 
-	for (dev_vec::iterator iter = files.begin();
-		iter != files.end(); ++iter) {
-		fd = open(iter->c_str(), O_RDWR);
+	for (const auto &file : files) {
+		fd = open(file.c_str(), O_RDWR);
 		memset(&vcap, 0, sizeof(vcap));
 		if (fd < 0)
 			continue;
@@ -318,12 +317,11 @@ static void print_devices(dev_vec files)
 	if (cards[bus_info].empty())
 			cards[bus_info] += std::string(reinterpret_cast<char *>(vcap.card))
 				+ " (" + bus_info + "):\n";
-		cards[bus_info] += "\t" + (*iter);
+		cards[bus_info] += "\t" + file;
 		cards[bus_info] += "\n";
 	}
-	for (dev_map::iterator iter = cards.begin();
-			iter != cards.end(); ++iter) {
-		printf("%s\n", iter->second.c_str());
+	for (const auto &card : cards) {
+		printf("%s\n", card.second.c_str());
 	}
 }
 static dev_vec list_devices()

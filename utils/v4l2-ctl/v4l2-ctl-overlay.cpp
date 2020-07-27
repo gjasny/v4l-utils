@@ -437,9 +437,7 @@ static void do_try_set_overlay(struct v4l2_format &fmt, int fd)
 		stride = (win.w.width + 7) / 8;
 		bitmap = static_cast<unsigned char *>(calloc(1, stride * win.w.height));
 		win.bitmap = bitmap;
-		for (unsigned i = 0; i < bitmap_rects.size(); i++) {
-			const v4l2_rect &r = bitmap_rects[i];
-
+		for (const auto &r : bitmap_rects) {
 			if (r.left + r.width > win.w.width ||
 			    r.top + r.height > win.w.height) {
 				fprintf(stderr, "rectangle is out of range\n");

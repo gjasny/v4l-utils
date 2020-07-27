@@ -36,6 +36,7 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
+#include <algorithm>
 #include <atomic>
 #include <map>
 #include <vector>
@@ -2708,10 +2709,8 @@ static selTest createSelTest(struct node *node)
 
 static bool haveSelTest(const selTest &test)
 {
-	for (unsigned i = 0; i < selTests.size(); i++)
-		if (!memcmp(&selTests[i], &test, sizeof(test)))
-			return true;
-	return false;
+	return std::any_of(selTests.begin(), selTests.end(), [&](const selTest &selfTest)
+		{ return &selfTest != &test; });
 }
 
 static void streamFmtRun(struct node *node, cv4l_fmt &fmt, unsigned frame_count,

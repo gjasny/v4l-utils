@@ -1270,8 +1270,8 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		node.valid_buftypes = 0;
 		node.valid_memorytype = 0;
 		node.buf_caps = 0;
-		for (unsigned idx = 0; idx < V4L2_BUF_TYPE_LAST + 1; idx++)
-			node.buftype_pixfmts[idx].clear();
+		for (auto &buftype_pixfmt : node.buftype_pixfmts)
+			buftype_pixfmt.clear();
 
 		if (max_io) {
 			sprintf(suffix, " (%s %u)",

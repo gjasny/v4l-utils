@@ -706,9 +706,9 @@ static int showTopology(struct node *node)
 		return 0;
 
 	printf("\n\tTopology:\n\n");
-	for (unsigned i = 0; i < 16; i++) {
-		__u16 pa = pas[i] >> 8;
-		__u8 la = pas[i] & 0xf;
+	for (unsigned int i : pas) {
+		__u16 pa = i >> 8;
+		__u8 la = i & 0xf;
 
 		if (pa == 0xffff)
 			break;
@@ -1804,9 +1804,8 @@ static void list_devices()
 
 	std::sort(files.begin(), files.end(), sort_on_device_name);
 
-	for (dev_vec::iterator iter = files.begin();
-			iter != files.end(); ++iter) {
-		int fd = open(iter->c_str(), O_RDWR);
+	for (const auto &file : files) {
+		int fd = open(file.c_str(), O_RDWR);
 		std::string cec_info;
 
 		if (fd < 0)
@@ -1818,14 +1817,13 @@ static void list_devices()
 		cec_info = std::string(caps.driver) + " (" + caps.name + ")";
 		if (cards[cec_info].empty())
 			cards[cec_info] += cec_info + ":\n";
-		cards[cec_info] += "\t" + (*iter);
-		if (!(links[*iter].empty()))
-			cards[cec_info] += " <- " + links[*iter];
+		cards[cec_info] += "\t" + file;
+		if (!(links[file].empty()))
+			cards[cec_info] += " <- " + links[file];
 		cards[cec_info] += "\n";
 	}
-	for (dev_map::iterator iter = cards.begin();
-			iter != cards.end(); ++iter) {
-		printf("%s\n", iter->second.c_str());
+	for (const auto &card : cards) {
+		printf("%s\n", card.second.c_str());
 	}
 }
 
@@ -2619,10 +2617,8 @@ int main(int argc, char **argv)
 	if (options[OptNonBlocking])
 		fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) | O_NONBLOCK);
 
-	for (msg_vec::iterator iter = msgs.begin(); iter != msgs.end(); ++iter) {
-		struct cec_msg msg = *iter;
-
-		fflush(stdout);
+	for (auto &msg : msgs) {
+			fflush(stdout);
 		if (!cec_msg_is_broadcast(&msg) && !options[OptTo]) {
 			fprintf(stderr, "attempting to send message without --to\n");
 			std::exit(EXIT_FAILURE);

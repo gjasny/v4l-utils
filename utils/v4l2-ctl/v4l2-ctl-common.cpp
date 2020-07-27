@@ -291,9 +291,8 @@ static void list_devices()
 
 	std::sort(files.begin(), files.end(), sort_on_device_name);
 
-	for (dev_vec::iterator iter = files.begin();
-			iter != files.end(); ++iter) {
-		int fd = open(iter->c_str(), O_RDWR);
+	for (const auto &file : files) {
+		int fd = open(file.c_str(), O_RDWR);
 		std::string bus_info;
 		std::string card;
 
@@ -323,14 +322,13 @@ static void list_devices()
 			continue;
 		if (cards[bus_info].empty())
 			cards[bus_info] += card + " (" + bus_info + "):\n";
-		cards[bus_info] += "\t" + (*iter);
-		if (!(links[*iter].empty()))
-			cards[bus_info] += " <- " + links[*iter];
+		cards[bus_info] += "\t" + file;
+		if (!(links[file].empty()))
+			cards[bus_info] += " <- " + links[file];
 		cards[bus_info] += "\n";
 	}
-	for (dev_map::iterator iter = cards.begin();
-			iter != cards.end(); ++iter) {
-		printf("%s\n", iter->second.c_str());
+	for (const auto &card : cards) {
+		printf("%s\n", card.second.c_str());
 	}
 }
 
@@ -693,15 +691,15 @@ void common_process_controls(cv4l_fd &fd)
 	have_query_ext_ctrl = rc == 0;
 
 	find_controls(fd);
-	for (ctrl_get_list::iterator iter = get_ctrls.begin(); iter != get_ctrls.end(); ++iter) {
-	    if (ctrl_str2q.find(*iter) == ctrl_str2q.end()) {
-		fprintf(stderr, "unknown control '%s'\n", iter->c_str());
+	for (const auto &get_ctrl : get_ctrls) {
+	    if (ctrl_str2q.find(get_ctrl) == ctrl_str2q.end()) {
+		fprintf(stderr, "unknown control '%s'\n", get_ctrl.c_str());
 		std::exit(EXIT_FAILURE);
 	    }
 	}
-	for (ctrl_set_map::iterator iter = set_ctrls.begin(); iter != set_ctrls.end(); ++iter) {
-	    if (ctrl_str2q.find(iter->first) == ctrl_str2q.end()) {
-		fprintf(stderr, "unknown control '%s'\n", iter->first.c_str());
+	for (const auto &set_ctrl : set_ctrls) {
+	    if (ctrl_str2q.find(set_ctrl.first) == ctrl_str2q.end()) {
+		fprintf(stderr, "unknown control '%s'\n", set_ctrl.first.c_str());
 		std::exit(EXIT_FAILURE);
 	    }
 	}
@@ -914,10 +912,9 @@ void common_set(cv4l_fd &_fd)
 		bool use_ext_ctrls = false;
 
 		memset(&ctrls, 0, sizeof(ctrls));
-		for (ctrl_set_map::iterator iter = set_ctrls.begin();
-				iter != set_ctrls.end(); ++iter) {
+		for (const auto &set_ctrl : set_ctrls) {
 			struct v4l2_ext_control ctrl;
-			struct v4l2_query_ext_ctrl &qc = ctrl_str2q[iter->first];
+			struct v4l2_query_ext_ctrl &qc = ctrl_str2q[set_ctrl.first];
 
 			memset(&ctrl, 0, sizeof(ctrl));
 			ctrl.id = qc.id;
@@ -953,29 +950,29 @@ void common_set(cv4l_fd &_fd)
 
 				switch (qc.type) {
 				case V4L2_CTRL_TYPE_U8:
-					v = strtoul(iter->second.c_str(), NULL, 0);
+					v = strtoul(set_ctrl.second.c_str(), NULL, 0);
 					for (i = 0; i < qc.elems; i++)
 						if (idx_in_subset(qc, subset, divide, i))
 							ctrl.p_u8[i] = v;
 					break;
 				case V4L2_CTRL_TYPE_U16:
-					v = strtoul(iter->second.c_str(), NULL, 0);
+					v = strtoul(set_ctrl.second.c_str(), NULL, 0);
 					for (i = 0; i < qc.elems; i++)
 						if (idx_in_subset(qc, subset, divide, i))
 							ctrl.p_u16[i] = v;
 					break;
 				case V4L2_CTRL_TYPE_U32:
-					v = strtoul(iter->second.c_str(), NULL, 0);
+					v = strtoul(set_ctrl.second.c_str(), NULL, 0);
 					for (i = 0; i < qc.elems; i++)
 						if (idx_in_subset(qc, subset, divide, i))
 							ctrl.p_u32[i] = v;
 					break;
 				case V4L2_CTRL_TYPE_STRING:
-					strncpy(ctrl.string, iter->second.c_str(), qc.maximum);
+					strncpy(ctrl.string, set_ctrl.second.c_str(), qc.maximum);
 					ctrl.string[qc.maximum] = 0;
 					break;
 				case V4L2_CTRL_TYPE_AREA:
-					sscanf(iter->second.c_str(), "%ux%u",
+					sscanf(set_ctrl.second.c_str(), "%ux%u",
 					       &ctrl.p_area->width, &ctrl.p_area->height);
 					break;
 				default:
@@ -986,20 +983,19 @@ void common_set(cv4l_fd &_fd)
 			} else {
 				if (V4L2_CTRL_DRIVER_PRIV(ctrl.id))
 					use_ext_ctrls = true;
-				ctrl.value = strtol(iter->second.c_str(), NULL, 0);
+				ctrl.value = strtol(set_ctrl.second.c_str(), NULL, 0);
 			}
 			class2ctrls[V4L2_CTRL_ID2WHICH(ctrl.id)].push_back(ctrl);
 		}
-		for (class2ctrls_map::iterator iter = class2ctrls.begin();
-				iter != class2ctrls.end(); ++iter) {
+		for (auto &class2ctrl : class2ctrls) {
 			if (!use_ext_ctrls &&
-			    (iter->first == V4L2_CTRL_CLASS_USER ||
-			     iter->first == V4L2_CID_PRIVATE_BASE)) {
-				for (unsigned i = 0; i < iter->second.size(); i++) {
+			    (class2ctrl.first == V4L2_CTRL_CLASS_USER ||
+			     class2ctrl.first == V4L2_CID_PRIVATE_BASE)) {
+				for (const auto &i : class2ctrl.second) {
 					struct v4l2_control ctrl;
 
-					ctrl.id = iter->second[i].id;
-					ctrl.value = iter->second[i].value;
+					ctrl.id = i.id;
+					ctrl.value = i.value;
 					if (doioctl(fd, VIDIOC_S_CTRL, &ctrl)) {
 						fprintf(stderr, "%s: %s\n",
 								ctrl_id2str[ctrl.id].c_str(),
@@ -1008,10 +1004,10 @@ void common_set(cv4l_fd &_fd)
 				}
 				continue;
 			}
-			if (!iter->second.empty()) {
-				ctrls.which = iter->first;
-				ctrls.count = iter->second.size();
-				ctrls.controls = &iter->second[0];
+			if (!class2ctrl.second.empty()) {
+				ctrls.which = class2ctrl.first;
+				ctrls.count = class2ctrl.second.size();
+				ctrls.controls = &class2ctrl.second[0];
 				if (doioctl(fd, VIDIOC_S_EXT_CTRLS, &ctrls)) {
 					if (ctrls.error_idx >= ctrls.count) {
 						fprintf(stderr, "Error setting controls: %s\n",
@@ -1019,7 +1015,7 @@ void common_set(cv4l_fd &_fd)
 					}
 					else {
 						fprintf(stderr, "%s: %s\n",
-								ctrl_id2str[iter->second[ctrls.error_idx].id].c_str(),
+								ctrl_id2str[class2ctrl.second[ctrls.error_idx].id].c_str(),
 								strerror(errno));
 					}
 				}
@@ -1101,10 +1097,9 @@ void common_get(cv4l_fd &_fd)
 		bool use_ext_ctrls = false;
 
 		memset(&ctrls, 0, sizeof(ctrls));
-		for (ctrl_get_list::iterator iter = get_ctrls.begin();
-				iter != get_ctrls.end(); ++iter) {
+		for (const auto &get_ctrl : get_ctrls) {
 			struct v4l2_ext_control ctrl;
-			struct v4l2_query_ext_ctrl &qc = ctrl_str2q[*iter];
+			struct v4l2_query_ext_ctrl &qc = ctrl_str2q[get_ctrl];
 
 			memset(&ctrl, 0, sizeof(ctrl));
 			ctrl.id = qc.id;
@@ -1120,28 +1115,26 @@ void common_get(cv4l_fd &_fd)
 				use_ext_ctrls = true;
 			class2ctrls[V4L2_CTRL_ID2WHICH(ctrl.id)].push_back(ctrl);
 		}
-		for (class2ctrls_map::iterator iter = class2ctrls.begin();
-				iter != class2ctrls.end(); ++iter) {
+		for (auto &class2ctrl : class2ctrls) {
 			if (!use_ext_ctrls &&
-			    (iter->first == V4L2_CTRL_CLASS_USER ||
-			     iter->first == V4L2_CID_PRIVATE_BASE)) {
-				for (unsigned i = 0; i < iter->second.size(); i++) {
+			    (class2ctrl.first == V4L2_CTRL_CLASS_USER ||
+			     class2ctrl.first == V4L2_CID_PRIVATE_BASE)) {
+				for (const auto &i : class2ctrl.second) {
 					struct v4l2_control ctrl;
 
-					ctrl.id = iter->second[i].id;
+					ctrl.id = i.id;
 					doioctl(fd, VIDIOC_G_CTRL, &ctrl);
 					printf("%s: %d\n", ctrl_id2str[ctrl.id].c_str(), ctrl.value);
 				}
 				continue;
 			}
-			if (!iter->second.empty()) {
-				ctrls.which = iter->first;
-				ctrls.count = iter->second.size();
-				ctrls.controls = &iter->second[0];
+			if (!class2ctrl.second.empty()) {
+				ctrls.which = class2ctrl.first;
+				ctrls.count = class2ctrl.second.size();
+				ctrls.controls = &class2ctrl.second[0];
 				doioctl(fd, VIDIOC_G_EXT_CTRLS, &ctrls);
-				for (unsigned i = 0; i < iter->second.size(); i++) {
-					struct v4l2_ext_control ctrl = iter->second[i];
-					std::string &name = ctrl_id2str[ctrl.id];
+				for (auto ctrl : class2ctrl.second) {
+						std::string &name = ctrl_id2str[ctrl.id];
 					struct v4l2_query_ext_ctrl &qc = ctrl_str2q[name];
 
 					if (qc.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD) {

@@ -500,9 +500,7 @@ int main(int argc, char **argv)
 	if (laddrs.cec_version >= CEC_OP_CEC_VERSION_2_0) {
 		bool is_dev_feat = false;
 
-		for (unsigned idx = 0; idx < sizeof(laddrs.features[0]); idx++) {
-			__u8 byte = laddrs.features[0][idx];
-
+		for (__u8 byte : laddrs.features[0]) {
 			if (is_dev_feat) {
 				node.source_has_arc_rx = (byte & CEC_OP_FEAT_DEV_SOURCE_HAS_ARC_RX) != 0;
 				node.sink_has_arc_tx = (byte & CEC_OP_FEAT_DEV_SINK_HAS_ARC_TX) != 0;

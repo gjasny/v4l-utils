@@ -529,11 +529,11 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		if (ret)
 			return fail("sliced.reserved not zeroed\n");
 		fail_on_test(sliced.service_lines[0][0] || sliced.service_lines[1][0]);
-		for (int f = 0; f < 2; f++) {
-			for (int i = 0; i < 24; i++) {
-				if (sliced.service_lines[f][i])
+		for (const auto &service_line : sliced.service_lines) {
+			for (unsigned short i : service_line) {
+				if (i)
 					cnt++;
-				service_set |= sliced.service_lines[f][i];
+				service_set |= i;
 			}
 		}
 		fail_on_test(sliced.io_size < sizeof(struct v4l2_sliced_vbi_data) * cnt);
@@ -1243,9 +1243,9 @@ static int testSlicedVBICapType(struct node *node, unsigned type)
 	fail_on_test(cap.type != type);
 	fail_on_test(!sliced_type || !(node->g_caps() & buftype2cap[type]));
 
-	for (int f = 0; f < 2; f++)
-		for (int i = 0; i < 24; i++)
-			service_set |= cap.service_lines[f][i];
+	for (const auto &service_line : cap.service_lines)
+		for (unsigned short i : service_line)
+			service_set |= i;
 	fail_on_test(cap.service_set != service_set);
 	fail_on_test(cap.service_lines[0][0] || cap.service_lines[1][0]);
 	return 0;

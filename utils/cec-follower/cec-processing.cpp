@@ -763,14 +763,14 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		format_list.erase(format_list.end() - 1);
 		dev_info("Requested descriptors: %s\n", format_list.c_str());
 		for (unsigned i = 0; i < num_descriptors; i++) {
-			for (unsigned j = 0; j < ARRAY_SIZE(supported_formats); j++) {
+			for (const auto &supported_format : supported_formats) {
 				if (found_descs >= 4)
 					break;
 				if ((audio_format_id[i] == 0 &&
-				     audio_format_code[i] == supported_formats[j].format_code) ||
+				     audio_format_code[i] == supported_format.format_code) ||
 				    (audio_format_id[i] == 1 &&
-				     audio_format_code[i] == supported_formats[j].extension_type_code))
-					sad_encode(&supported_formats[j], &descriptors[found_descs++]);
+				     audio_format_code[i] == supported_format.extension_type_code))
+					sad_encode(&supported_format, &descriptors[found_descs++]);
 			}
 		}
 
@@ -844,8 +844,8 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 static void poll_remote_devs(struct node *node, unsigned me)
 {
 	node->remote_la_mask = 0;
-	for (unsigned i = 0; i < 15; i++)
-		node->remote_phys_addr[i] = CEC_PHYS_ADDR_INVALID;
+	for (unsigned short & i : node->remote_phys_addr)
+		i = CEC_PHYS_ADDR_INVALID;
 
 	if (!(node->caps & CEC_CAP_TRANSMIT))
 		return;

@@ -18,25 +18,25 @@
 
 const char *cec_opcode2s(unsigned opcode)
 {
-	for (unsigned i = 0; i < sizeof(msgtable) / sizeof(msgtable[0]); i++)
-		if (msgtable[i].opcode == opcode)
-			return msgtable[i].name;
+	for (auto i : msgtable)
+		if (i.opcode == opcode)
+			return i.name;
 	return NULL;
 }
 
 const char *cec_cdc_opcode2s(unsigned cdc_opcode)
 {
-	for (unsigned i = 0; i < sizeof(cdcmsgtable) / sizeof(cdcmsgtable[0]); i++)
-		if (cdcmsgtable[i].opcode == cdc_opcode)
-			return cdcmsgtable[i].name;
+	for (auto i : cdcmsgtable)
+		if (i.opcode == cdc_opcode)
+			return i.name;
 	return NULL;
 }
 
 const char *cec_htng_opcode2s(unsigned htng_opcode)
 {
-	for (unsigned i = 0; i < sizeof(htngmsgtable) / sizeof(htngmsgtable[0]); i++)
-		if (htngmsgtable[i].opcode == htng_opcode)
-			return htngmsgtable[i].name;
+	for (auto i : htngmsgtable)
+		if (i.opcode == htng_opcode)
+			return i.name;
 	return NULL;
 }
 
@@ -443,10 +443,8 @@ void cec_driver_info(const struct cec_caps &caps,
 		       cec_all_dev_types2s(laddrs.all_device_types[i]).c_str());
 
 		bool is_dev_feat = false;
-		for (unsigned idx = 0; idx < sizeof(laddrs.features[0]); idx++) {
-			__u8 byte = laddrs.features[i][idx];
-
-			if (!is_dev_feat) {
+		for (__u8 byte : laddrs.features[i]) {
+				if (!is_dev_feat) {
 				if (byte & 0x40) {
 					printf("\t    RC Source Profile      :\n%s",
 					       cec_rc_src_prof2s(byte, "").c_str());

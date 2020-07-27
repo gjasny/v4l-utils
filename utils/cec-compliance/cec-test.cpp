@@ -922,15 +922,14 @@ static int tuner_ctl_test(struct node *node, unsigned me, unsigned la, bool inte
 	printf("\t    Finished Channel Scan\n");
 
 	printf("\t    Start Channel Test\n");
-	for (std::vector<struct cec_op_tuner_device_info>::iterator iter = info_vec.begin();
-			iter != info_vec.end(); iter++) {
+	for (const auto &iter : info_vec) {
 		cec_msg_init(&msg, me, la);
-		log_tuner_service(*iter, "Select ");
-		if (iter->is_analog)
-			cec_msg_select_analogue_service(&msg, iter->analog.ana_bcast_type,
-				iter->analog.ana_freq, iter->analog.bcast_system);
+		log_tuner_service(iter, "Select ");
+		if (iter.is_analog)
+			cec_msg_select_analogue_service(&msg, iter.analog.ana_bcast_type,
+				iter.analog.ana_freq, iter.analog.bcast_system);
 		else
-			cec_msg_select_digital_service(&msg, &iter->digital);
+			cec_msg_select_digital_service(&msg, &iter.digital);
 		fail_on_test(!transmit(node, &msg));
 		fail_on_test(cec_msg_status_is_abort(&msg));
 		cec_msg_init(&msg, me, la);
@@ -939,11 +938,11 @@ static int tuner_ctl_test(struct node *node, unsigned me, unsigned la, bool inte
 		fail_on_test(timed_out_or_abort(&msg));
 		memset(&info, 0, sizeof(info));
 		cec_ops_tuner_device_status(&msg, &info);
-		if (memcmp(&info, &(*iter), sizeof(info))) {
+		if (memcmp(&info, &iter, sizeof(info))) {
 			log_tuner_service(info);
-			log_tuner_service(*iter);
+			log_tuner_service(iter);
 		}
-		fail_on_test(memcmp(&info, &(*iter), sizeof(info)));
+		fail_on_test(memcmp(&info, &iter, sizeof(info)));
 	}
 	printf("\t    Finished Channel Test\n");
 
@@ -1500,15 +1499,15 @@ void collectTests()
 {
 	std::map<std::string, __u64> mapTestFuncs;
 
-	for (unsigned i = 0; i < num_tests; i++) {
-		for (unsigned j = 0; j < tests[i].num_subtests; j++) {
-			std::string name = safename(tests[i].subtests[j].name);
-			__u64 func = (__u64)tests[i].subtests[j].test_fn;
+	for (const auto &test : tests) {
+		for (unsigned j = 0; j < test.num_subtests; j++) {
+			std::string name = safename(test.subtests[j].name);
+			__u64 func = (__u64)test.subtests[j].test_fn;
 
 			if (mapTestFuncs.find(name) != mapTestFuncs.end() &&
 			    mapTestFuncs[name] != func) {
 				fprintf(stderr, "Duplicate subtest name, but different tests: %s\n",
-					tests[i].subtests[j].name);
+					test.subtests[j].name);
 				std::exit(EXIT_FAILURE);
 			}
 			mapTestFuncs[name] = func;
@@ -1520,10 +1519,10 @@ void collectTests()
 
 void listTests()
 {
-	for (unsigned i = 0; i < num_tests; i++) {
-		printf("%s:\n", tests[i].name);
-		for (unsigned j = 0; j < tests[i].num_subtests; j++) {
-			std::string name = safename(tests[i].subtests[j].name);
+	for (const auto &test : tests) {
+		printf("%s:\n", test.name);
+		for (unsigned j = 0; j < test.num_subtests; j++) {
+			std::string name = safename(test.subtests[j].name);
 
 			printf("\t%s\n", name.c_str());
 		}
@@ -1564,32 +1563,32 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 
 	int ret = 0;
 
-	for (unsigned i = 0; i < num_tests; i++) {
-		if ((tests[i].tags & test_tags) != tests[i].tags)
+	for (const auto &test : tests) {
+		if ((test.tags & test_tags) != test.tags)
 			continue;
 
-		printf("\t%s:\n", tests[i].name);
-		for (unsigned j = 0; j < tests[i].num_subtests; j++) {
-			const char *name = tests[i].subtests[j].name;
+		printf("\t%s:\n", test.name);
+		for (unsigned j = 0; j < test.num_subtests; j++) {
+			const char *name = test.subtests[j].name;
 
-			if (tests[i].subtests[j].for_cec20 &&
+			if (test.subtests[j].for_cec20 &&
 			    (node->remote[la].cec_version < CEC_OP_CEC_VERSION_2_0 ||
 			     !node->has_cec20))
 				continue;
 
-			if (tests[i].subtests[j].in_standby) {
+			if (test.subtests[j].in_standby) {
 				struct cec_log_addrs laddrs = { };
 				doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 
 				if (!laddrs.log_addr_mask)
 					continue;
 			}
-			node->in_standby = tests[i].subtests[j].in_standby;
+			node->in_standby = test.subtests[j].in_standby;
 			mode_set_initiator(node);
 			unsigned old_warnings = warnings;
-			ret = tests[i].subtests[j].test_fn(node, me, la, interactive);
+			ret = test.subtests[j].test_fn(node, me, la, interactive);
 			bool has_warnings = old_warnings < warnings;
-			if (!(tests[i].subtests[j].la_mask & (1 << la)) && !ret)
+			if (!(test.subtests[j].la_mask & (1 << la)) && !ret)
 				ret = OK_UNEXPECTED;
 
 			if (mapTests[safename(name)] != DONT_CARE) {

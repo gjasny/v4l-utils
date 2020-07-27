@@ -393,9 +393,8 @@ int testMediaEnum(struct node *node)
 	}
 	fail_on_test(num_data_links != num_links);
 
-	for (entity_map::iterator iter = ent_map.begin();
-	     iter != ent_map.end(); ++iter) {
-		media_entity_desc &ent = iter->second;
+	for (auto & iter : ent_map) {
+		media_entity_desc &ent = iter.second;
 
 		memset(&links, 0, sizeof(links));
 		memset(&links.reserved, 0xff, sizeof(links.reserved));

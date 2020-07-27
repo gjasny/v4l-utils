@@ -879,10 +879,10 @@ static bool set_fwht_req_by_fd(const struct fwht_cframe_hdr *hdr,
 
 	set_fwht_stateless_params(fwht_params, hdr, last_bf_ts);
 
-	for (int idx = 0; idx < VIDEO_MAX_FRAME; idx++) {
-		if (fwht_reqs[idx].fd == req_fd) {
-			fwht_reqs[idx].ts = ts;
-			fwht_reqs[idx].params = fwht_params;
+	for (auto &fwht_req : fwht_reqs) {
+		if (fwht_req.fd == req_fd) {
+			fwht_req.ts = ts;
+			fwht_req.params = fwht_params;
 			return true;
 		}
 	}
