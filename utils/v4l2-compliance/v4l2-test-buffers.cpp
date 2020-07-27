@@ -218,11 +218,11 @@ static bool fill_output_buffer(const cv4l_queue &q, cv4l_buffer &buf, bool first
 
 class buffer : public cv4l_buffer {
 public:
-	buffer(unsigned type = 0, unsigned memory = 0, unsigned index = 0) :
+	explicit buffer(unsigned type = 0, unsigned memory = 0, unsigned index = 0) :
 		cv4l_buffer(type, memory, index) {}
-	buffer(const cv4l_queue &q, unsigned index = 0) :
+	explicit buffer(const cv4l_queue &q, unsigned index = 0) :
 		cv4l_buffer(q, index) {}
-	buffer(const cv4l_buffer &b) : cv4l_buffer(b) {}
+	explicit buffer(const cv4l_buffer &b) : cv4l_buffer(b) {}
 
 	int querybuf(node *node, unsigned index)
 	{
