@@ -299,7 +299,7 @@ static bool is_radio_dev(const char *name)
 	return !memcmp(name, "radio", 5);
 }
 
-static void print_devices(dev_vec files)
+static void print_devices(const dev_vec& files)
 {
 	dev_map cards;
 	int fd = -1;
