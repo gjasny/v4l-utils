@@ -1749,8 +1749,8 @@ static __u16 parse_phys_addr_from_edid(const char *edid_path)
 	return pa;
 }
 
-typedef std::vector<std::string> dev_vec;
-typedef std::map<std::string, std::string> dev_map;
+using dev_vec = std::vector<std::string>;
+using dev_map = std::map<std::string, std::string>;
 
 static void list_devices()
 {

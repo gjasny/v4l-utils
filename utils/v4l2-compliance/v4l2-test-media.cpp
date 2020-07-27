@@ -322,7 +322,7 @@ static media_link_desc link_disabled;
 
 int testMediaEnum(struct node *node)
 {
-	typedef std::map<__u32, media_entity_desc> entity_map;
+	using entity_map = std::map<__u32, media_entity_desc>;
 	entity_map ent_map;
 	id_set has_default_set;
 	struct media_entity_desc ent;

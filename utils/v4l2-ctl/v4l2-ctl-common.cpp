@@ -34,22 +34,22 @@ struct ctrl_subset {
 
 typedef std::map<unsigned, std::vector<struct v4l2_ext_control> > class2ctrls_map;
 
-typedef std::map<std::string, struct v4l2_query_ext_ctrl> ctrl_qmap;
+using ctrl_qmap = std::map<std::string, struct v4l2_query_ext_ctrl>;
 static ctrl_qmap ctrl_str2q;
-typedef std::map<unsigned, std::string> ctrl_idmap;
+using ctrl_idmap = std::map<unsigned int, std::string>;
 static ctrl_idmap ctrl_id2str;
 
-typedef std::map<std::string, ctrl_subset> ctrl_subset_map;
+using ctrl_subset_map = std::map<std::string, ctrl_subset>;
 static ctrl_subset_map ctrl_subsets;
 
-typedef std::list<std::string> ctrl_get_list;
+using ctrl_get_list = std::list<std::string>;
 static ctrl_get_list get_ctrls;
 
-typedef std::map<std::string, std::string> ctrl_set_map;
+using ctrl_set_map = std::map<std::string, std::string>;
 static ctrl_set_map set_ctrls;
 
-typedef std::vector<std::string> dev_vec;
-typedef std::map<std::string, std::string> dev_map;
+using dev_vec = std::vector<std::string>;
+using dev_map = std::map<std::string, std::string>;
 
 static enum v4l2_priority prio = V4L2_PRIORITY_UNSET;
 
