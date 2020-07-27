@@ -1502,7 +1502,7 @@ void collectTests()
 	for (const auto &test : tests) {
 		for (unsigned j = 0; j < test.num_subtests; j++) {
 			std::string name = safename(test.subtests[j].name);
-			__u64 func = (__u64)test.subtests[j].test_fn;
+			auto func = (__u64)test.subtests[j].test_fn;
 
 			if (mapTestFuncs.find(name) != mapTestFuncs.end() &&
 			    mapTestFuncs[name] != func) {

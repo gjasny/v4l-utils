@@ -1681,7 +1681,7 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 			for (unsigned p = 0; p < q.g_num_planes(); p++) {
 				/* ensure that len is a multiple of 4 */
 				__u32 len = ((q.g_length(p) + 3) & ~0x3) + 4 * 4096;
-				__u32 *m = static_cast<__u32 *>(malloc(len));
+				auto m = static_cast<__u32 *>(malloc(len));
 
 				fail_on_test(!m);
 				fail_on_test((uintptr_t)m & 0x7);
@@ -1740,7 +1740,7 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 				__u32 buflen = (q.g_length(p) + 3U) & ~3U;
 				__u32 memlen = buflen + 4 * 4096;
 				__u32 *m = buffers[i][p];
-				__u32 *u = static_cast<__u32 *>(q.g_userptr(i, p));
+				auto u = static_cast<__u32 *>(q.g_userptr(i, p));
 
 				for (__u32 *x = m; x < u; x++)
 					if (*x != filler)
@@ -2372,7 +2372,7 @@ public:
 private:
 	static void *startRoutine(void *arg)
 	{
-		BlockingThread *self = static_cast<BlockingThread *>(arg);
+		auto self = static_cast<BlockingThread *>(arg);
 
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);

@@ -1772,7 +1772,7 @@ static void list_devices()
 	closedir(dp);
 
 	/* Find device nodes which are links to other device nodes */
-	for (dev_vec::iterator iter = files.begin();
+	for (auto iter = files.begin();
 			iter != files.end(); ) {
 		char link[64+1];
 		int link_len;

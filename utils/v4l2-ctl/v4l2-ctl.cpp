@@ -484,7 +484,7 @@ void printfmt(int fd, const struct v4l2_format &vfmt)
 			}
 		printf("\tClip Bitmap : %s", vfmt.fmt.win.bitmap ? "Yes, " : "No\n");
 		if (vfmt.fmt.win.bitmap) {
-			unsigned char *bitmap = static_cast<unsigned char *>(vfmt.fmt.win.bitmap);
+			auto bitmap = static_cast<unsigned char *>(vfmt.fmt.win.bitmap);
 			unsigned stride = (vfmt.fmt.win.w.width + 7) / 8;
 			unsigned cnt = 0;
 
@@ -1056,11 +1056,11 @@ static const char *make_devname(const char *device, const char *devname,
 		return device;
 	}
 
-	media_v2_entity *ents = new media_v2_entity[topology.num_entities];
+	auto ents = new media_v2_entity[topology.num_entities];
 	topology.ptr_entities = (uintptr_t)ents;
-	media_v2_link *links = new media_v2_link[topology.num_links];
+	auto links = new media_v2_link[topology.num_links];
 	topology.ptr_links = (uintptr_t)links;
-	media_v2_interface *ifaces = new media_v2_interface[topology.num_interfaces];
+	auto ifaces = new media_v2_interface[topology.num_interfaces];
 	topology.ptr_interfaces = (uintptr_t)ifaces;
 
 	unsigned i, ent_id, iface_id = 0;

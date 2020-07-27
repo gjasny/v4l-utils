@@ -277,7 +277,7 @@ int cec_named_ioctl(int fd, const char *name,
 			name, retval, strerror(e));
 
 	if (!retval) {
-		const struct cec_msg *msg = static_cast<const struct cec_msg *>(parm);
+		const auto msg = static_cast<const struct cec_msg *>(parm);
 
 		/* Update the timestamp whenever we successfully transmit to an LA,
 		   or whenever we receive something from the LA */

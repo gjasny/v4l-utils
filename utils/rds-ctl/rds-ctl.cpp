@@ -346,7 +346,7 @@ static dev_vec list_devices()
 
 	/* Iterate through all devices, and remove all non-accessible devices
 	 * and all devices that don't offer the RDS_BLOCK_IO capability */
-	for (dev_vec::iterator iter = files.begin();
+	for (auto iter = files.begin();
 			iter != files.end();) {
 		int fd = open(iter->c_str(), O_RDONLY | O_NONBLOCK);
 		std::string bus_info;

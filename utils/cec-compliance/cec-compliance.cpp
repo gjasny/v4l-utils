@@ -655,7 +655,7 @@ int cec_named_ioctl(struct node *node, const char *name,
 {
 	int retval;
 	int e;
-	struct cec_msg *msg = static_cast<struct cec_msg *>(parm);
+	auto msg = static_cast<struct cec_msg *>(parm);
 	__u8 opcode = 0;
 	std::string opname;
 
