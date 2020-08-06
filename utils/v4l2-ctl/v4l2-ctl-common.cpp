@@ -983,7 +983,10 @@ void common_set(cv4l_fd &_fd)
 			} else {
 				if (V4L2_CTRL_DRIVER_PRIV(ctrl.id))
 					use_ext_ctrls = true;
-				ctrl.value = strtol(set_ctrl.second.c_str(), NULL, 0);
+				if (qc.type == V4L2_CTRL_TYPE_INTEGER64)
+					ctrl.value64 = strtoll(set_ctrl.second.c_str(), NULL, 0);
+				else
+					ctrl.value = strtol(set_ctrl.second.c_str(), NULL, 0);
 			}
 			class2ctrls[V4L2_CTRL_ID2WHICH(ctrl.id)].push_back(ctrl);
 		}
@@ -1026,6 +1029,7 @@ void common_set(cv4l_fd &_fd)
 
 static void print_array(const struct v4l2_query_ext_ctrl &qc, void *p)
 {
+	std::string &name = ctrl_id2str[qc.id];
 	ctrl_subset subset;
 	unsigned divide[V4L2_CTRL_MAX_DIMS] = { 0 };
 	unsigned from, to;
@@ -1054,7 +1058,7 @@ static void print_array(const struct v4l2_query_ext_ctrl &qc, void *p)
 		if (d < qc.nr_of_dims - 1)
 			continue;
 
-		printf("%s", qc.name);
+		printf("%s", name.c_str());
 		for (d = 0; d < qc.nr_of_dims - 1; d++)
 			printf("[%u]", (idx / divide[d]) % qc.dims[d]);
 		printf(": ");
@@ -1084,6 +1088,38 @@ static void print_array(const struct v4l2_query_ext_ctrl &qc, void *p)
 			printf("\n");
 			break;
 		}
+	}
+}
+
+void common_print_control(v4l2_query_ext_ctrl &qc, v4l2_ext_control &ctrl)
+{
+	std::string &name = ctrl_id2str[qc.id];
+
+	if (qc.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD) {
+		switch (qc.type) {
+		case V4L2_CTRL_TYPE_U8:
+		case V4L2_CTRL_TYPE_U16:
+		case V4L2_CTRL_TYPE_U32:
+			print_array(qc, ctrl.ptr);
+			break;
+		case V4L2_CTRL_TYPE_STRING:
+			printf("%s: '%s'\n", name.c_str(),
+			       safename(ctrl.string).c_str());
+			break;
+		case V4L2_CTRL_TYPE_AREA:
+			printf("%s: %dx%d\n", name.c_str(),
+			       ctrl.p_area->width,
+			       ctrl.p_area->height);
+			break;
+		default:
+			fprintf(stderr, "%s: unsupported payload type\n",
+				name.c_str());
+			break;
+		}
+	} else if (qc.type == V4L2_CTRL_TYPE_INTEGER64) {
+		printf("%s: %lld\n", name.c_str(), ctrl.value64);
+	} else {
+		printf("%s: %d\n", name.c_str(), ctrl.value);
 	}
 }
 
@@ -1134,32 +1170,10 @@ void common_get(cv4l_fd &_fd)
 				ctrls.controls = &class2ctrl.second[0];
 				doioctl(fd, VIDIOC_G_EXT_CTRLS, &ctrls);
 				for (auto ctrl : class2ctrl.second) {
-						std::string &name = ctrl_id2str[ctrl.id];
+					std::string &name = ctrl_id2str[ctrl.id];
 					struct v4l2_query_ext_ctrl &qc = ctrl_str2q[name];
 
-					if (qc.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD) {
-						switch (qc.type) {
-						case V4L2_CTRL_TYPE_U8:
-						case V4L2_CTRL_TYPE_U16:
-						case V4L2_CTRL_TYPE_U32:
-							print_array(qc, ctrl.ptr);
-							break;
-						case V4L2_CTRL_TYPE_STRING:
-							printf("%s: '%s'\n", name.c_str(),
-								safename(ctrl.string).c_str());
-							break;
-						case V4L2_CTRL_TYPE_AREA:
-							printf("%s: %dx%d\n", name.c_str(),
-							       ctrl.p_area->width,
-							       ctrl.p_area->height);
-							break;
-						default:
-							fprintf(stderr, "%s: unsupported payload type\n",
-									qc.name);
-							break;
-						}
-					} else
-						printf("%s: %d\n", name.c_str(), ctrl.value);
+					common_print_control(qc, ctrl);
 				}
 			}
 		}
