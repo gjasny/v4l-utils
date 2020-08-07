@@ -129,7 +129,7 @@ void meta_list(cv4l_fd &fd)
 	}
 }
 
-struct vivid_uvc_meta_buf {
+struct uvc_meta_buf {
 	__u64 ns;
 	__u16 sof;
 	__u8 length;
@@ -149,14 +149,14 @@ struct vivid_meta_out_buf {
 
 void print_meta_buffer(FILE *f, cv4l_buffer &buf, cv4l_fmt &fmt, cv4l_queue &q)
 {
-	struct vivid_uvc_meta_buf *vbuf;
+	struct uvc_meta_buf *vbuf;
 	int buf_off = 0;
 	struct vivid_meta_out_buf *vbuf_out;
 
 	switch (fmt.g_pixelformat()) {
 	case V4L2_META_FMT_UVC:
 		fprintf(f, "UVC: ");
-		vbuf = static_cast<vivid_uvc_meta_buf *>(q.g_dataptr(buf.g_index(), 0));
+		vbuf = static_cast<uvc_meta_buf *>(q.g_dataptr(buf.g_index(), 0));
 
 		fprintf(f, "%.6fs sof: %4d len: %u flags: 0x%02x",
 			static_cast<double>(vbuf->ns) / 1000000000.0,
