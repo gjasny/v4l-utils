@@ -832,6 +832,9 @@ public:
 	}
 	cv4l_buffer operator= (const cv4l_buffer &b)
 	{
+		v4l_buffer *dst = this;
+		const v4l_buffer *src = &b;
+		memcpy(dst, src, sizeof(*src));
 		return *this;
 	}
 	virtual ~cv4l_buffer() {}
