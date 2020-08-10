@@ -2506,7 +2506,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		 * is not needed anymore as a reference frame
 		 */
 		if (queue_lst_buf) {
-			if (fd.qbuf(last_in_buf) < 0) {
+			if (fd.qbuf(last_in_buf)) {
 				fprintf(stderr, "%s: qbuf failed\n", __func__);
 				return;
 			}
