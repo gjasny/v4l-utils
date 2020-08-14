@@ -30,6 +30,7 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <libudev.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
