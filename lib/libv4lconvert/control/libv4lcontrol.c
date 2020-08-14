@@ -262,7 +262,7 @@ static const struct v4lcontrol_flags_info v4lcontrol_flags[] = {
 	{ 0x1046, 0x9967, 0,    NULL, NULL, V4LCONTROL_FORCE_TINYJPEG },
 };
 
-static const struct v4l2_queryctrl fake_controls[];
+static const struct v4l2_queryctrl fake_controls[V4LCONTROL_COUNT];
 
 static const char *asus_board_vendor[] = {
 	"ASUSTeK Computer Inc.",
