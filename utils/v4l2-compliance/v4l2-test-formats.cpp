@@ -1628,8 +1628,12 @@ int testCropping(struct node *node)
 	fail_on_test(testLegacyCrop(node));
 	if (node->can_capture && node->is_video)
 		ret_cap = testBasicSelection(node, V4L2_BUF_TYPE_VIDEO_CAPTURE, V4L2_SEL_TGT_CROP);
+	if (ret_cap && ret_cap != ENOTTY)
+		return ret_cap;
 	if (node->can_output && node->is_video)
 		ret_out = testBasicSelection(node, V4L2_BUF_TYPE_VIDEO_OUTPUT, V4L2_SEL_TGT_CROP);
+	if (ret_out && ret_out != ENOTTY)
+		return ret_out;
 	if ((!node->can_capture && !node->can_output) || !node->is_video) {
 		struct v4l2_selection sel = {
 			V4L2_BUF_TYPE_VIDEO_CAPTURE,
@@ -1935,7 +1939,7 @@ int testScaling(struct node *node)
 			V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE :
 			V4L2_BUF_TYPE_VIDEO_CAPTURE);
 		fail_on_test(doioctl(node, VIDIOC_G_FMT, &fmt));
-		testBasicScaling(node, fmt);
+		fail_on_test(testBasicScaling(node, fmt));
 		fail_on_test(doioctl(node, VIDIOC_S_FMT, &fmt));
 	}
 	if (node->can_output) {
@@ -1943,7 +1947,7 @@ int testScaling(struct node *node)
 			V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE :
 			V4L2_BUF_TYPE_VIDEO_OUTPUT);
 		fail_on_test(doioctl(node, VIDIOC_G_FMT, &fmt));
-		testBasicScaling(node, fmt);
+		fail_on_test(testBasicScaling(node, fmt));
 		fail_on_test(doioctl(node, VIDIOC_S_FMT, &fmt));
 	}
 	return node->can_scale ? 0 : ENOTTY;
