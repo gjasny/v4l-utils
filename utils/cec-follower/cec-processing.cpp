@@ -289,13 +289,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		/* Standby */
 
 	case CEC_MSG_STANDBY:
-		if (node->state.power_status == CEC_OP_POWER_STATUS_ON ||
-		    node->state.power_status == CEC_OP_POWER_STATUS_TO_ON) {
-			node->state.old_power_status = node->state.power_status;
-			node->state.power_status = CEC_OP_POWER_STATUS_STANDBY;
-			node->state.power_status_changed_time = time(NULL);
-			dev_info("Changing state to standby\n");
-		}
+		enter_standby(node);
 		return;
 
 
