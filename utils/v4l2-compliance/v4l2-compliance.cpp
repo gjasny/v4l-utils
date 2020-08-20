@@ -18,27 +18,17 @@
     Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
-#include <cstdlib>
+#include <cctype>
+#include <csignal>
 #include <cstring>
+#include <map>
+#include <set>
+#include <vector>
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <inttypes.h>
+#include <dirent.h>
 #include <getopt.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <sys/sysmacros.h>
-#include <dirent.h>
-#include <math.h>
-#include <sys/utsname.h>
-#include <signal.h>
-#include <vector>
+#include <unistd.h>
 
 #include "v4l2-compliance.h"
 #include <media-info.h>

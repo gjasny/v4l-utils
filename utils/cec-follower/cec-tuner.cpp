@@ -3,8 +3,10 @@
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <ctime>
+#include <string>
+
 #include <sys/ioctl.h>
-#include <stdlib.h>
 
 #include "cec-follower.h"
 #include "compiler.h"

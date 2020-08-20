@@ -14,20 +14,11 @@
     GNU General Public License for more details.
  */
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <inttypes.h>
-#include <getopt.h>
+#include <cstdio>
+#include <map>
+#include <set>
+
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <math.h>
 
 #include "compiler.h"
 #include "v4l2-compliance.h"

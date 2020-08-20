@@ -3,21 +3,14 @@
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <inttypes.h>
-#include <getopt.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <cerrno>
+#include <ctime>
+#include <string>
+
 #include <fcntl.h>
-#include <ctype.h>
-#include <errno.h>
 #include <sys/ioctl.h>
-#include <sys/wait.h>
-#include <sstream>
-#include <cstdlib>
+#include <sys/select.h>
+#include <unistd.h>
 
 #include "cec-compliance.h"
 

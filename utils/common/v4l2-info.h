@@ -7,6 +7,7 @@
 #define _V4L2_INFO_H
 
 #include <string>
+
 #include <linux/videodev2.h>
 
 /* Print capability information */

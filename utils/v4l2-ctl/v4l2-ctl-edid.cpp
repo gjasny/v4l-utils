@@ -1,18 +1,9 @@
-#include <cstdlib>
+#include <cctype>
 #include <cstring>
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <inttypes.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <errno.h>
-#include <sys/ioctl.h>
+#include <linux/v4l2-subdev.h>
 
 #include "v4l2-ctl.h"
-
-#include <linux/v4l2-subdev.h>
 
 /*
  * The 24-bit IEEE Registration Identifier for the HDMI-LLC Vendor

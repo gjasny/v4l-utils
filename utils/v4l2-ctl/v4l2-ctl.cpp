@@ -20,23 +20,11 @@
     Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <inttypes.h>
-#include <getopt.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/epoll.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <sys/sysmacros.h>
+#include <cctype>
+
 #include <dirent.h>
-#include <math.h>
+#include <getopt.h>
+#include <sys/epoll.h>
 
 #include <linux/media.h>
 
@@ -47,12 +35,6 @@
 #ifdef HAVE_SYS_KLOG_H
 #include <sys/klog.h>
 #endif
-
-#include <list>
-#include <vector>
-#include <map>
-#include <algorithm>
-#include <fstream>
 
 char options[OptLast];
 

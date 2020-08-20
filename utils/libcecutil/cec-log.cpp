@@ -3,14 +3,12 @@
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <inttypes.h>
-#include <stdarg.h>
 #include <string>
+
+#include <unistd.h>
+
 #include <linux/cec-funcs.h>
+
 #include "cec-htng-funcs.h"
 #include "cec-info.h"
 #include "cec-log.h"

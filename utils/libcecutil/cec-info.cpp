@@ -5,12 +5,14 @@
  * Copyright 2017 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include <stdio.h>
+#include <cctype>
 #include <string>
-#include <unistd.h>
-#include <fcntl.h>
+
 #include <dirent.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
+
 #include <cec-info.h>
 #include <cec-htng.h>
 

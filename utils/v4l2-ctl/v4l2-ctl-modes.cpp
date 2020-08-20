@@ -6,8 +6,6 @@
  * reserved.
  */
 
-#include <stdio.h>
-#include <stdbool.h>
 #include "v4l2-ctl.h"
 
 static bool valid_params(int width, int height, int refresh_rate)

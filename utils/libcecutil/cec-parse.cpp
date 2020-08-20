@@ -3,27 +3,12 @@
  * Copyright 2019 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <inttypes.h>
-#include <getopt.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <dirent.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <stdarg.h>
+#include <cctype>
 #include <cstring>
-#include <ctime>
-#include <cerrno>
 #include <string>
-#include <vector>
-#include <map>
-#include <algorithm>
+
+#include <unistd.h>
+
 #include <linux/cec-funcs.h>
 #include "cec-htng-funcs.h"
 #include "cec-log.h"

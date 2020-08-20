@@ -7,34 +7,25 @@
  * Author: Konke Radlow <koradlow@gmail.com>
  */
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <wchar.h>
-#include <locale.h>
-#include <inttypes.h>
-#include <getopt.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
+#include <cctype>
+#include <cerrno>
+#include <clocale>
+#include <cmath>
+#include <csignal>
+#include <cstring>
+#include <ctime>
+#include <map>
+#include <string>
+#include <vector>
+
 #include <dirent.h>
-#include <config.h>
-#include <signal.h>
+#include <fcntl.h>
+#include <getopt.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 #include <linux/videodev2.h>
 #include <libv4l2rds.h>
-
-#include <cctype>
-#include <cmath>
-#include <ctime>
-#include <list>
-#include <vector>
-#include <map>
-#include <string>
-#include <algorithm>
 
 #define ARRAY_SIZE(arr) ((int)(sizeof(arr) / sizeof((arr)[0])))
 

@@ -3,23 +3,13 @@
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include <cstdlib>
 #include <cstring>
-
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <inttypes.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <config.h>
+#include <map>
 #include <sstream>
 #include <vector>
-#include <map>
+
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 #include "cec-compliance.h"
 

@@ -1,21 +1,5 @@
 #include <cstring>
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <inttypes.h>
-#include <getopt.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <dirent.h>
-#include <math.h>
-#include <cstdlib>
-
 #include "compiler.h"
 #include "v4l2-ctl.h"
 

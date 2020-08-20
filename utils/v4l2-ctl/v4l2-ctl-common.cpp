@@ -1,18 +1,14 @@
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <inttypes.h>
-#include <getopt.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <sys/sysmacros.h>
-#include <sys/time.h>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <list>
+#include <map>
+#include <vector>
+
 #include <dirent.h>
-#include <math.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
+
 #include <linux/media.h>
 
 #include "v4l2-ctl.h"
@@ -20,12 +16,6 @@
 #ifdef HAVE_SYS_KLOG_H
 #include <sys/klog.h>
 #endif
-
-#include <cstring>
-#include <list>
-#include <vector>
-#include <map>
-#include <algorithm>
 
 struct ctrl_subset {
 	unsigned offset[V4L2_CTRL_MAX_DIMS];

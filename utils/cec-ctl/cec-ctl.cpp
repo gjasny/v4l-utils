@@ -3,29 +3,23 @@
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include <cstring>
-
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <inttypes.h>
-#include <getopt.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <dirent.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <stdarg.h>
-#include <ctime>
+#include <algorithm>
+#include <cctype>
 #include <cerrno>
-#include <pthread.h>
+#include <cstring>
+#include <ctime>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
-#include <algorithm>
+
+#include <dirent.h>
+#include <fcntl.h>
+#include <getopt.h>
+#include <pthread.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <unistd.h>
+
 #include <linux/cec-funcs.h>
 #include "cec-htng-funcs.h"
 #include "cec-log.h"

@@ -3,26 +3,19 @@
  * Copyright 2018 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <inttypes.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
-#include <sys/sysmacros.h>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+
 #include <dirent.h>
-#include <cstdlib>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
+#include <unistd.h>
 
 #include <linux/media.h>
 
-#include <iostream>
-#include <fstream>
 #include <media-info.h>
 
 static std::string num2s(unsigned num, bool is_hex = true)

@@ -21,13 +21,6 @@
 #ifndef _V4L2_COMPLIANCE_H_
 #define _V4L2_COMPLIANCE_H_
 
-#include <stdarg.h>
-#include <cerrno>
-#include <cstdlib>
-#include <string>
-#include <map>
-#include <set>
-#include <map>
 #include <linux/videodev2.h>
 #include <linux/v4l2-subdev.h>
 #include <linux/media.h>

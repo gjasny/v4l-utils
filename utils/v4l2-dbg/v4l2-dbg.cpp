@@ -16,20 +16,16 @@
     Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <inttypes.h>
-#include <getopt.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <cctype>
+#include <cerrno>
+#include <cstring>
+#include <string>
+#include <vector>
+
 #include <fcntl.h>
-#include <ctype.h>
-#include <errno.h>
+#include <getopt.h>
 #include <sys/ioctl.h>
-#include <sys/time.h>
-#include <math.h>
-#include <cstdlib>
+#include <unistd.h>
 
 #ifdef ANDROID
 #include <android-config.h>
@@ -42,12 +38,6 @@
 #endif
 
 #include <linux/videodev2.h>
-
-#include <cstring>
-#include <list>
-#include <vector>
-#include <map>
-#include <string>
 
 #include "v4l2-dbg-bttv.h"
 #include "v4l2-dbg-saa7134.h"

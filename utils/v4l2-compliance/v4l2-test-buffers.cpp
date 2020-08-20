@@ -18,28 +18,18 @@
     Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
  */
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <inttypes.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <sys/wait.h>
-#include <sys/epoll.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <errno.h>
-#include <poll.h>
-#include <pthread.h>
-#include <signal.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
 #include <algorithm>
 #include <atomic>
+#include <csignal>
 #include <map>
+#include <set>
 #include <vector>
+
+#include <arpa/inet.h>
+#include <poll.h>
+#include <pthread.h>
+#include <sys/epoll.h>
+
 #include "v4l2-compliance.h"
 
 #define V4L2_CTRL_CLASS_VIVID		0x00f00000

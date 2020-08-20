@@ -7,8 +7,6 @@
 #include <config.h>
 #endif
 
-#include <string>
-
 #include <linux/videodev2.h>
 #include <linux/v4l2-subdev.h>
 
