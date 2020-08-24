@@ -291,16 +291,23 @@ else
    AC_MSG_WARN(ALSA library not available)
 fi
 
-PKG_CHECK_MODULES(libudev, libudev, have_libudev=yes, have_libudev=no)
-if test "x$have_libudev" = "xyes"; then
-	AC_DEFINE([HAVE_LIBUDEV], [], [Use libudev])
-	LIBUDEV_CFLAGS="$libudev_CFLAGS"
-	LIBUDEV_LIBS="$libudev_LIBS"
-	AC_SUBST(LIBUDEV_CFLAGS)
-	AC_SUBST(LIBUDEV_LIBS)
-else
-   AC_MSG_WARN(udev library not available)
-fi
+AC_ARG_WITH([libudev],
+            AS_HELP_STRING([--without-libudev], [Do not use udev library]),
+            [],
+            [with_libudev=yes])
+
+have_libudev=no
+
+AS_IF([test "x$with_libudev" != xno -o "x$enable_libdvbv5" != xno],
+      [PKG_CHECK_MODULES(libudev, libudev, have_libudev=yes, [])
+       AS_IF([test "x$have_libudev" = xyes],
+             [AC_DEFINE([HAVE_LIBUDEV], [], [Use libudev])
+              LIBUDEV_CFLAGS="$libudev_CFLAGS"
+              LIBUDEV_LIBS="$libudev_LIBS"
+              AC_SUBST(LIBUDEV_CFLAGS)
+              AC_SUBST(LIBUDEV_LIBS)],
+             AC_MSG_WARN(udev library not available)
+            )])
 
 AC_SUBST([JPEG_LIBS])
 
