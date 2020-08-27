@@ -56,6 +56,8 @@ static inline void *vzalloc(unsigned long size)
 	__val = __val < __min ? __min: __val;	\
 	__val > __max ? __max: __val; })
 
+#define clamp_t(type, val, min, max) clamp((type)val, (type)min, (type)max)
+
 static inline u32 prandom_u32_max(u32 ep_ro)
 {
 	return rand() % ep_ro;
@@ -371,6 +373,7 @@ static inline void tpg_s_saturation(struct tpg_data *tpg,
 static inline void tpg_s_hue(struct tpg_data *tpg,
 					s16 hue)
 {
+	hue = clamp_t(s16, hue, -128, 128);
 	if (tpg->hue == hue)
 		return;
 	tpg->hue = hue;
