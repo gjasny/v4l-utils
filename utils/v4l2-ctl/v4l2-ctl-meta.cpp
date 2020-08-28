@@ -18,11 +18,16 @@
 #include "v4l2-ctl.h"
 
 static struct v4l2_format vfmt;	/* set_format/get_format */
+static unsigned mbus_code;
+static unsigned mbus_code_out;
 
 void meta_usage()
 {
 	printf("\nMetadata Formats options:\n"
-	       "  --list-formats-meta display supported metadata capture formats [VIDIOC_ENUM_FMT]\n"
+	       "  --list-formats-meta [<mbus_code>] display supported metadata capture formats.\n"
+	       "		      <mbus_code> is an optional media bus code, if the device has\n"
+	       "		      capability V4L2_CAP_IO_MC then only formats that support this\n"
+	       "		      media bus code are listed [VIDIOC_ENUM_FMT]\n"
 	       "  --get-fmt-meta      query the metadata capture format [VIDIOC_G_FMT]\n"
 	       "  --set-fmt-meta <f>  set the metadata capture format [VIDIOC_S_FMT]\n"
 	       "                     parameter is either the format index as reported by\n"
@@ -30,7 +35,10 @@ void meta_usage()
 	       "  --try-fmt-meta <f>  try the metadata capture format [VIDIOC_TRY_FMT]\n"
 	       "                     parameter is either the format index as reported by\n"
 	       "                     --list-formats-meta, or the fourcc value as a string\n"
-	       "  --list-formats-meta-out display supported metadata output formats [VIDIOC_ENUM_FMT]\n"
+	       "  --list-formats-meta-out [<mbus_code>] display supported metadata output formats.\n"
+	       "		      <mbus_code> is an optional media bus code, if the device has\n"
+	       "		      capability V4L2_CAP_IO_MC then only formats that support this\n"
+	       "		      media bus code are listed [VIDIOC_ENUM_FMT]\n"
 	       "  --get-fmt-meta-out      query the metadata output format [VIDIOC_G_FMT]\n"
 	       "  --set-fmt-meta-out <f>  set the metadata output format [VIDIOC_S_FMT]\n"
 	       "                          parameter is either the format index as reported by\n"
@@ -57,6 +65,14 @@ void meta_cmd(int ch, char *optarg)
 		} else {
 			vfmt.fmt.meta.dataformat = strtol(optarg, 0L, 0);
 		}
+		break;
+	case OptListMetaFormats:
+		if (optarg)
+			mbus_code = strtoul(optarg, 0L, 0);
+		break;
+	case OptListMetaOutFormats:
+		if (optarg)
+			mbus_code_out = strtoul(optarg, 0L, 0);
 		break;
 	}
 }
@@ -120,12 +136,12 @@ void meta_list(cv4l_fd &fd)
 {
 	if (options[OptListMetaFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats(fd, V4L2_BUF_TYPE_META_CAPTURE);
+		print_video_formats(fd, V4L2_BUF_TYPE_META_CAPTURE, mbus_code);
 	}
 
 	if (options[OptListMetaOutFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats(fd, V4L2_BUF_TYPE_META_OUTPUT);
+		print_video_formats(fd, V4L2_BUF_TYPE_META_OUTPUT, mbus_code_out);
 	}
 }
 

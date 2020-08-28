@@ -23,13 +23,21 @@ static unsigned set_fmts;
 static __u32 width, height, pixfmt, field, flags;
 static __u32 bytesperline[VIDEO_MAX_PLANES];
 static __u32 sizeimage[VIDEO_MAX_PLANES];
+static unsigned mbus_code;
 
 void vidcap_usage()
 {
 	printf("\nVideo Capture Formats options:\n"
-	       "  --list-formats     display supported video formats [VIDIOC_ENUM_FMT]\n"
-	       "  --list-formats-ext display supported video formats including frame sizes\n"
-	       "                     and intervals\n"
+	       "  --list-formats [<mbus_code>]\n"
+	       "		     display supported video formats. <mbus_code> is an optional\n"
+	       "		     media bus code, if the device has capability V4L2_CAP_IO_MC\n"
+	       "		     then only formats that support this media bus code are listed\n"
+	       "		     [VIDIOC_ENUM_FMT]\n"
+	       "  --list-formats-ext [<mbus_code>]\n"
+	       "		     display supported video formats including frame sizes and intervals\n"
+	       "		     <mbus_code> is an optional media bus code, if the device has\n"
+	       "		     capability V4L2_CAP_IO_MC then only formats that support this\n"
+	       "		     media bus code are listed [VIDIOC_ENUM_FMT]\n"
 	       "  --list-framesizes <f>\n"
 	       "                     list supported framesizes for pixelformat <f>\n"
 	       "                     [VIDIOC_ENUM_FRAMESIZES]\n"
@@ -116,6 +124,11 @@ void vidcap_cmd(int ch, char *optarg)
 			vidcap_usage();
 			std::exit(EXIT_FAILURE);
 		}
+		break;
+	case OptListFormats:
+	case OptListFormatsExt:
+		if (optarg)
+			mbus_code = strtoul(optarg, 0L, 0);
 		break;
 	case OptListFrameSizes:
 		be_pixfmt = strlen(optarg) == 7 && !memcmp(optarg + 4, "-BE", 3);
@@ -298,12 +311,12 @@ void vidcap_list(cv4l_fd &fd)
 {
 	if (options[OptListFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats(fd, vidcap_buftype);
+		print_video_formats(fd, vidcap_buftype, mbus_code);
 	}
 
 	if (options[OptListFormatsExt]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats_ext(fd, vidcap_buftype);
+		print_video_formats_ext(fd, vidcap_buftype, mbus_code);
 	}
 
 	if (options[OptListFields]) {

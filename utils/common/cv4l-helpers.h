@@ -483,12 +483,13 @@ public:
 		return cv4l_ioctl(VIDIOC_ENUM_DV_TIMINGS, &timings);
 	}
 
-	int enum_fmt(v4l2_fmtdesc &fmt, bool init = false, int index = 0, unsigned type = 0)
+	int enum_fmt(v4l2_fmtdesc &fmt, bool init = false, int index = 0, unsigned type = 0, __u32 mbus_code = 0)
 	{
 		if (init) {
 			memset(&fmt, 0, sizeof(fmt));
 			fmt.type = type ? type : g_type();
 			fmt.index = index;
+			fmt.mbus_code = mbus_code;
 		} else {
 			fmt.index++;
 		}

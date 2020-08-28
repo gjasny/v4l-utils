@@ -21,14 +21,19 @@ static unsigned set_fmts_out;
 static __u32 width, height, pixfmt, field, colorspace, xfer_func, ycbcr, quantization, flags;
 static __u32 bytesperline[VIDEO_MAX_PLANES];
 static __u32 sizeimage[VIDEO_MAX_PLANES];
+static unsigned mbus_code_out;
 
 void vidout_usage()
 {
 	printf("\nVideo Output Formats options:\n"
-	       "  --list-formats-out display supported video output formats [VIDIOC_ENUM_FMT]\n"
-	       "  --list-formats-out-ext\n"
-	       "                     display supported video output formats including frame sizes\n"
-	       "                     and intervals\n"
+	       "  --list-formats-out [<mbus_code>] display supported video output formats.\n"
+	       "		     <mbus_code> is an optional media bus code, if the device has\n"
+	       "		     capability V4L2_CAP_IO_MC then only formats that support this\n"
+	       "		     media bus code are listed [VIDIOC_ENUM_FMT]\n"
+	       "  --list-formats-out-ext [<mbus_code>] display supported video output formats including\n"
+	       "		     frame sizes and intervals. <mbus_code> is an optional media bus code,\n"
+	       "		     if the device has capability V4L2_CAP_IO_MC then only formats that\n"
+	       "		     support this media bus code are listed [VIDIOC_ENUM_FMT]\n"
 	       "  --list-fields-out  list supported fields for the current output format\n"
 	       "  -X, --get-fmt-video-out\n"
 	       "     		     query the video output format [VIDIOC_G_FMT]\n"
@@ -102,6 +107,11 @@ void vidout_cmd(int ch, char *optarg)
 			vidcap_usage();
 			std::exit(EXIT_FAILURE);
 		}
+		break;
+	case OptListOutFormats:
+	case OptListOutFormatsExt:
+		if (optarg)
+			mbus_code_out = strtoul(optarg, 0L, 0);
 		break;
 	}
 }
@@ -233,12 +243,12 @@ void vidout_list(cv4l_fd &fd)
 {
 	if (options[OptListOutFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats(fd, vidout_buftype);
+		print_video_formats(fd, vidout_buftype, mbus_code_out);
 	}
 
 	if (options[OptListOutFormatsExt]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats_ext(fd, vidout_buftype);
+		print_video_formats_ext(fd, vidout_buftype, mbus_code_out);
 	}
 
 	if (options[OptListOutFields]) {

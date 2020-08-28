@@ -114,18 +114,18 @@ static struct option long_options[] = {
 	{"get-freq", no_argument, 0, OptGetFreq},
 	{"set-freq", required_argument, 0, OptSetFreq},
 	{"list-standards", no_argument, 0, OptListStandards},
-	{"list-formats", no_argument, 0, OptListFormats},
-	{"list-formats-ext", no_argument, 0, OptListFormatsExt},
+	{"list-formats", optional_argument, 0, OptListFormats},
+	{"list-formats-ext", optional_argument, 0, OptListFormatsExt},
 	{"list-fields", no_argument, 0, OptListFields},
 	{"list-framesizes", required_argument, 0, OptListFrameSizes},
 	{"list-frameintervals", required_argument, 0, OptListFrameIntervals},
 	{"list-formats-overlay", no_argument, 0, OptListOverlayFormats},
 	{"list-formats-sdr", no_argument, 0, OptListSdrFormats},
 	{"list-formats-sdr-out", no_argument, 0, OptListSdrOutFormats},
-	{"list-formats-out", no_argument, 0, OptListOutFormats},
-	{"list-formats-out-ext", no_argument, 0, OptListOutFormatsExt},
-	{"list-formats-meta", no_argument, 0, OptListMetaFormats},
-	{"list-formats-meta-out", no_argument, 0, OptListMetaOutFormats},
+	{"list-formats-out", optional_argument, 0, OptListOutFormats},
+	{"list-formats-out-ext", optional_argument, 0, OptListOutFormatsExt},
+	{"list-formats-meta", optional_argument, 0, OptListMetaFormats},
+	{"list-formats-meta-out", optional_argument, 0, OptListMetaOutFormats},
 	{"list-subdev-mbus-codes", optional_argument, 0, OptListSubDevMBusCodes},
 	{"list-subdev-framesizes", required_argument, 0, OptListSubDevFrameSizes},
 	{"list-subdev-frameintervals", required_argument, 0, OptListSubDevFrameIntervals},
@@ -612,13 +612,16 @@ void print_frmival(const struct v4l2_frmivalenum &frmival, const char *prefix)
 	}
 }
 
-void print_video_formats(cv4l_fd &fd, __u32 type)
+void print_video_formats(cv4l_fd &fd, __u32 type, unsigned int mbus_code)
 {
 	cv4l_disable_trace dt(fd);
 	struct v4l2_fmtdesc fmt = {};
 
+	if (mbus_code && !(capabilities & V4L2_CAP_IO_MC))
+		mbus_code = 0;
+
 	printf("\tType: %s\n\n", buftype2s(type).c_str());
-	if (fd.enum_fmt(fmt, true, 0, type))
+	if (fd.enum_fmt(fmt, true, 0, type, mbus_code))
 		return;
 	do {
 		printf("\t[%d]: '%s' (%s", fmt.index, fcc2s(fmt.pixelformat).c_str(),
@@ -629,15 +632,18 @@ void print_video_formats(cv4l_fd &fd, __u32 type)
 	} while (!fd.enum_fmt(fmt));
 }
 
-void print_video_formats_ext(cv4l_fd &fd, __u32 type)
+void print_video_formats_ext(cv4l_fd &fd, __u32 type, unsigned int mbus_code)
 {
 	cv4l_disable_trace dt(fd);
 	struct v4l2_fmtdesc fmt = {};
 	struct v4l2_frmsizeenum frmsize;
 	struct v4l2_frmivalenum frmival;
 
+	if (mbus_code && !(capabilities & V4L2_CAP_IO_MC))
+		mbus_code = 0;
+
 	printf("\tType: %s\n\n", buftype2s(type).c_str());
-	if (fd.enum_fmt(fmt, true, 0, type))
+	if (fd.enum_fmt(fmt, true, 0, type, mbus_code))
 		return;
 	do {
 		printf("\t[%d]: '%s' (%s", fmt.index, fcc2s(fmt.pixelformat).c_str(),
