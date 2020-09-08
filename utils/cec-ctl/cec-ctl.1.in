@@ -56,7 +56,7 @@ Turn on verbose reporting.
 Show version information.
 .TP
 \fB\-w\fR, \fB\-\-wall\-clock\fR
-Show timestamps as wall-clock time. This also turns on verbose reporting. 
+Show timestamps as wall-clock time. This also turns on verbose reporting.
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Prints the help message.
@@ -79,6 +79,10 @@ EDID file every 100 ms and, if changed, update the physical address.
 
 This provides a way for Pulse-Eight (or similar) USB CEC dongles to become
 aware of HDMI disconnect and reconnect events.
+
+Polling happens in the background while cec-ctl processes other requested
+actions (i.e. transmitting messages, waiting for replies, etc.) and when that
+is all done cec-ctl will keep polling until the user kills cec-ctl (Ctrl-C).
 .TP
 \fB\-o\fR, \fB\-\-osd\-name\fR \fI<name>\fR
 Use this OSD name. The maximum length is 14 characters.
@@ -102,7 +106,7 @@ By default when sending a CEC message that expects a reply this utility will
 wait for that reply. With this option it will just send it without waiting
 for the reply. This option applies to the messages following this option.
 It acts as a toggle, so after you specify it a second time then the following
-messages will wait for a reply again. 
+messages will wait for a reply again.
 .TP
 \fB\-N\fR, \fB\-\-non\-blocking\fR
 Transmit messages in non-blocking mode.

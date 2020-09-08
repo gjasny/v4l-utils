@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <ctime>
 #include <cerrno>
+#include <pthread.h>
 #include <string>
 #include <vector>
 #include <map>
@@ -42,6 +43,7 @@
 static struct timespec start_monotonic;
 static struct timeval start_timeofday;
 static bool ignore_la[16];
+static const char *edid_path;
 
 #define POLL_FAKE_OPCODE 256
 static unsigned short ignore_opcode[257];
@@ -1749,6 +1751,48 @@ static __u16 parse_phys_addr_from_edid(const char *edid_path)
 	return pa;
 }
 
+static void *thread_edid_poll(void *arg)
+{
+	struct node *node = static_cast<struct node *>(arg);
+	__u16 phys_addr;
+	bool has_edid;
+	char dummy;
+	int fd;
+
+	fd = open(edid_path, O_RDONLY);
+	if (fd < 0)
+		std::exit(EXIT_FAILURE);
+	lseek(fd, 0, SEEK_SET);
+	has_edid = read(fd, &dummy, 1) > 0;
+
+	if (!has_edid)
+		phys_addr = CEC_PHYS_ADDR_INVALID;
+	else
+		phys_addr = parse_phys_addr_from_edid(edid_path);
+	doioctl(node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
+	printf("Physical Address: %x.%x.%x.%x\n", cec_phys_addr_exp(phys_addr));
+
+	for (;;) {
+		bool edid;
+
+		/* Poll every 100 ms */
+		usleep(100000);
+		lseek(fd, 0, SEEK_SET);
+		edid = read(fd, &dummy, 1) > 0;
+		if (has_edid != edid) {
+			has_edid = edid;
+			if (!edid)
+				phys_addr = CEC_PHYS_ADDR_INVALID;
+			else
+				phys_addr = parse_phys_addr_from_edid(edid_path);
+			doioctl(node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
+			printf("Physical Address: %x.%x.%x.%x\n",
+			       cec_phys_addr_exp(phys_addr));
+		}
+	}
+	return NULL;
+}
+
 using dev_vec = std::vector<std::string>;
 using dev_map = std::map<std::string, std::string>;
 
@@ -1763,7 +1807,7 @@ static void list_devices()
 
 	dp = opendir("/dev");
 	if (dp == NULL) {
-		perror ("Couldn't open the directory");
+		perror("Couldn't open the directory");
 		return;
 	}
 	while ((ep = readdir(dp)))
@@ -1856,7 +1900,6 @@ int main(int argc, char **argv)
 	__u8 rc_tv = 0;
 	__u8 rc_src = 0;
 	const char *osd_name = "";
-	const char *edid_path = NULL;
 	const char *store_pin = NULL;
 	const char *analyze_pin = NULL;
 	bool reply = true;
@@ -2580,10 +2623,19 @@ int main(int argc, char **argv)
 		cec_driver_info(caps, laddrs, phys_addr, conn_info);
 	}
 
+	if (options[OptPhysAddrFromEDIDPoll]) {
+		pthread_t t;
+		int ret = pthread_create(&t, NULL, thread_edid_poll, &node);
+		if (ret) {
+			fprintf(stderr, "Failed to start EDID poll thread: %s\n",
+				strerror(errno));
+			std::exit(EXIT_FAILURE);
+		}
+	}
+
 	if (node.num_log_addrs == 0) {
 		if (options[OptMonitor] || options[OptMonitorAll] ||
-		    options[OptMonitorPin] || options[OptStorePin] ||
-		    options[OptPhysAddrFromEDIDPoll])
+		    options[OptMonitorPin] || options[OptStorePin])
 			goto skip_la;
 		if (warn_if_unconfigured)
 			fprintf(stderr, "\nAdapter is unconfigured, please configure it first.\n");
@@ -2672,49 +2724,15 @@ int main(int argc, char **argv)
 					stress_test_pwr_cycle_sleep_before_off);
 
 skip_la:
-	if (options[OptPhysAddrFromEDIDPoll]) {
-		bool has_edid;
-		char dummy;
-		int fd;
-
-		fd = open(edid_path, O_RDONLY);
-		if (fd < 0)
-			std::exit(EXIT_FAILURE);
-		lseek(fd, 0, SEEK_SET);
-		has_edid = read(fd, &dummy, 1) > 0;
-
-		if (!has_edid)
-			phys_addr = CEC_PHYS_ADDR_INVALID;
-		else
-			phys_addr = parse_phys_addr_from_edid(edid_path);
-		doioctl(&node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
-		printf("Physical Address: %x.%x.%x.%x\n", cec_phys_addr_exp(phys_addr));
-
-		for (;;) {
-			bool edid;
-
-			/* Poll every 100 ms */
-			usleep(100000);
-			lseek(fd, 0, SEEK_SET);
-			edid = read(fd, &dummy, 1) > 0;
-			if (has_edid != edid) {
-				has_edid = edid;
-				if (!edid)
-					phys_addr = CEC_PHYS_ADDR_INVALID;
-				else
-					phys_addr = parse_phys_addr_from_edid(edid_path);
-				doioctl(&node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
-				printf("Physical Address: %x.%x.%x.%x\n",
-				       cec_phys_addr_exp(phys_addr));
-			}
-		}
-	}
-
 	if (options[OptMonitor] || options[OptMonitorAll] ||
-	    options[OptMonitorPin] || options[OptStorePin])
+	    options[OptMonitorPin] || options[OptStorePin]) {
 		monitor(node, monitor_time, store_pin);
-	else if (options[OptWaitForMsgs])
+	} else if (options[OptWaitForMsgs]) {
 		wait_for_msgs(node, monitor_time);
+	} else if (options[OptPhysAddrFromEDIDPoll]) {
+		printf("Press Ctrl-C to stop EDID polling.\n");
+		pause();
+	}
 	fflush(stdout);
 	close(fd);
 	return 0;
