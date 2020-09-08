@@ -85,6 +85,13 @@ Show state changes from the emulated device.
 \fB\-\-service\-by\-dig\-id\fR
 Report digital services by digital ID instead of by channel.
 .TP
+\fB\-\-standby\fR
+Start the follower in the Standby status.
+.TP
+\fB\-\-toggle\-power\-status\fR \fI<secs>\fR
+Toggle the power status every <secs> seconds. Only supported if the follower
+is emulating a TV.
+.TP
 \fB\-i\fR, \fB\-\-ignore\fR \fI<la>,<opcode>\fR
 Ignore messages from logical address \fI<la>\fR and opcode
 \fI<opcode>\fR. 'all' can be used for \fI<la>\fR or \fI<opcode>\fR to match

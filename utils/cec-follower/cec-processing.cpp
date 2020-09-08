@@ -871,6 +871,7 @@ void testProcessing(struct node *node, bool wallclock)
 	unsigned me;
 	unsigned last_poll_la = 15;
 	__u8 last_pwr_state = current_power_state(node);
+	time_t last_pwr_status_toggle = time(NULL);
 
 	clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
 	gettimeofday(&start_timeofday, NULL);
@@ -970,6 +971,15 @@ void testProcessing(struct node *node, bool wallclock)
 			cec_msg_report_power_status(&msg, pwr_state);
 			transmit(node, &msg);
 			last_pwr_state = pwr_state;
+		}
+
+		if (node->state.toggle_power_status && cec_has_tv(1 << me) &&
+		    (time(NULL) - last_pwr_status_toggle > node->state.toggle_power_status)) {
+			last_pwr_status_toggle = time(NULL);
+			if (pwr_state & 1) // standby or to-standby
+				exit_standby(node);
+			else
+				enter_standby(node);
 		}
 
 		__u64 ts_now = get_ts();

@@ -43,6 +43,8 @@ enum Option {
 	OptShowState = 's',
 	OptWallClock = 'w',
 	OptServiceByDigID = 128,
+	OptStandby,
+	OptTogglePowerStatus,
 	OptVersion,
 	OptLast = 256
 };
@@ -67,6 +69,8 @@ static struct option long_options[] = {
 	{ "show-state", no_argument, 0, OptShowState },
 	{ "wall-clock", no_argument, 0, OptWallClock },
 	{ "service-by-dig-id", no_argument, 0, OptServiceByDigID },
+	{ "standby", no_argument, 0, OptStandby },
+	{ "toggle-power-status", required_argument, 0, OptTogglePowerStatus },
 	{ "ignore", required_argument, 0, OptIgnore },
 	{ "version", no_argument, 0, OptVersion },
 
@@ -91,6 +95,9 @@ static void usage()
 	       "  -m, --show-msgs     Show received messages\n"
 	       "  -s, --show-state    Show state changes from the emulated device\n"
 	       "  --service-by-dig-id Report digital services by digital ID instead of by channel\n"
+	       "  --standby           Start in Standby state\n"
+	       "  --toggle-power-status <secs>\n"
+	       "                      Toggle the power status every <secs> seconds\n"
 	       "  -i, --ignore <la>,<opcode>\n"
 	       "                      Ignore messages from logical address <la> and opcode\n"
 	       "                      <opcode>. 'all' can be used for <la> or <opcode> to match\n"
@@ -300,7 +307,10 @@ int cec_named_ioctl(int fd, const char *name,
 
 void state_init(struct node &node)
 {
-	node.state.power_status = CEC_OP_POWER_STATUS_ON;
+	if (options[OptStandby])
+		node.state.power_status = CEC_OP_POWER_STATUS_STANDBY;
+	else
+		node.state.power_status = CEC_OP_POWER_STATUS_ON;
 	node.state.old_power_status = CEC_OP_POWER_STATUS_ON;
 	node.state.power_status_changed_time = 0;
 	strcpy(node.state.menu_language, "eng");
@@ -321,6 +331,7 @@ int main(int argc, char **argv)
 	struct node node = { };
 	const char *driver = NULL;
 	const char *adapter = NULL;
+	unsigned toggle_power_status = 0;
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
 	int fd = -1;
@@ -387,6 +398,9 @@ int main(int argc, char **argv)
 			break;
 		case OptShowState:
 			show_state = true;
+			break;
+		case OptTogglePowerStatus:
+			toggle_power_status = strtoul(optarg, NULL, 0);
 			break;
 		case OptIgnore: {
 			bool all_la = !strncmp(optarg, "all", 3);
@@ -480,6 +494,7 @@ int main(int argc, char **argv)
 	node.caps = caps.capabilities;
 	node.available_log_addrs = caps.available_log_addrs;
 	node.state.service_by_dig_id = options[OptServiceByDigID];
+	node.state.toggle_power_status = toggle_power_status;
 	state_init(node);
 
 	printf("cec-follower SHA                   : %s\n", STRING(GIT_SHA));

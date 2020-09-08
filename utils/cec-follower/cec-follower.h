@@ -57,6 +57,7 @@ struct state {
 	bool service_by_dig_id;
 	bool tuner_report_changes;
 	bool deck_report_changes;
+	unsigned toggle_power_status;
 };
 
 struct node {
