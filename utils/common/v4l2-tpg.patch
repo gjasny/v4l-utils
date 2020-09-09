@@ -15,12 +15,13 @@ diff --git a/utils/common/v4l2-tpg-core.c b/utils/common/v4l2-tpg-core.c
 index 630a75e0..44972222 100644
 --- a/utils/common/v4l2-tpg-core.c
 +++ b/utils/common/v4l2-tpg-core.c
-@@ -8,8 +8,7 @@
+@@ -8,8 +8,8 @@
   * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
   */
  
 -#include <linux/module.h>
 -#include <media/tpg/v4l2-tpg.h>
++#include "compiler.h"
 +#include "v4l2-tpg-colors.h"
  
  /* Must remain in sync with enum tpg_pattern */

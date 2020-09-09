@@ -8,6 +8,7 @@
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include "compiler.h"
 #include "v4l2-tpg-colors.h"
 
 /* Must remain in sync with enum tpg_pattern */
@@ -203,7 +204,7 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
 		tpg->vdownsampling[1] = 1;
 		tpg->hdownsampling[1] = 1;
 		tpg->planes = 2;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_RGB332:
 	case V4L2_PIX_FMT_RGB565:
 	case V4L2_PIX_FMT_RGB565X:
@@ -264,7 +265,7 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
 	case V4L2_PIX_FMT_YUV420M:
 	case V4L2_PIX_FMT_YVU420M:
 		tpg->buffers = 3;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_YUV420:
 	case V4L2_PIX_FMT_YVU420:
 		tpg->vdownsampling[1] = 2;
@@ -277,7 +278,7 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
 	case V4L2_PIX_FMT_YUV422M:
 	case V4L2_PIX_FMT_YVU422M:
 		tpg->buffers = 3;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_YUV422P:
 		tpg->vdownsampling[1] = 1;
 		tpg->vdownsampling[2] = 1;
@@ -289,7 +290,7 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
 	case V4L2_PIX_FMT_NV16M:
 	case V4L2_PIX_FMT_NV61M:
 		tpg->buffers = 2;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_NV16:
 	case V4L2_PIX_FMT_NV61:
 		tpg->vdownsampling[1] = 1;
@@ -301,7 +302,7 @@ bool tpg_s_fourcc(struct tpg_data *tpg, u32 fourcc)
 	case V4L2_PIX_FMT_NV12M:
 	case V4L2_PIX_FMT_NV21M:
 		tpg->buffers = 2;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_NV12:
 	case V4L2_PIX_FMT_NV21:
 		tpg->vdownsampling[1] = 2;
@@ -1265,7 +1266,7 @@ static void gen_twopix(struct tpg_data *tpg,
 	case V4L2_PIX_FMT_RGB444:
 	case V4L2_PIX_FMT_XRGB444:
 		alpha = 0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_YUV444:
 	case V4L2_PIX_FMT_ARGB444:
 		buf[0][offset] = (g_u_s << 4) | b_v;
@@ -1273,21 +1274,21 @@ static void gen_twopix(struct tpg_data *tpg,
 		break;
 	case V4L2_PIX_FMT_RGBX444:
 		alpha = 0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_RGBA444:
 		buf[0][offset] = (b_v << 4) | (alpha >> 4);
 		buf[0][offset + 1] = (r_y_h << 4) | g_u_s;
 		break;
 	case V4L2_PIX_FMT_XBGR444:
 		alpha = 0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_ABGR444:
 		buf[0][offset] = (g_u_s << 4) | r_y_h;
 		buf[0][offset + 1] = (alpha & 0xf0) | b_v;
 		break;
 	case V4L2_PIX_FMT_BGRX444:
 		alpha = 0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_BGRA444:
 		buf[0][offset] = (r_y_h << 4) | (alpha >> 4);
 		buf[0][offset + 1] = (b_v << 4) | g_u_s;
@@ -1295,7 +1296,7 @@ static void gen_twopix(struct tpg_data *tpg,
 	case V4L2_PIX_FMT_RGB555:
 	case V4L2_PIX_FMT_XRGB555:
 		alpha = 0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_YUV555:
 	case V4L2_PIX_FMT_ARGB555:
 		buf[0][offset] = (g_u_s << 5) | b_v;
@@ -1304,7 +1305,7 @@ static void gen_twopix(struct tpg_data *tpg,
 		break;
 	case V4L2_PIX_FMT_RGBX555:
 		alpha = 0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_RGBA555:
 		buf[0][offset] = (g_u_s << 6) | (b_v << 1) |
 				 ((alpha & 0x80) >> 7);
@@ -1312,7 +1313,7 @@ static void gen_twopix(struct tpg_data *tpg,
 		break;
 	case V4L2_PIX_FMT_XBGR555:
 		alpha = 0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_ABGR555:
 		buf[0][offset] = (g_u_s << 5) | r_y_h;
 		buf[0][offset + 1] = (alpha & 0x80) | (b_v << 2)
@@ -1320,7 +1321,7 @@ static void gen_twopix(struct tpg_data *tpg,
 		break;
 	case V4L2_PIX_FMT_BGRX555:
 		alpha = 0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_BGRA555:
 		buf[0][offset] = (g_u_s << 6) | (r_y_h << 1) |
 				 ((alpha & 0x80) >> 7);
@@ -1329,7 +1330,7 @@ static void gen_twopix(struct tpg_data *tpg,
 	case V4L2_PIX_FMT_RGB555X:
 	case V4L2_PIX_FMT_XRGB555X:
 		alpha = 0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_ARGB555X:
 		buf[0][offset] = (alpha & 0x80) | (r_y_h << 2) | (g_u_s >> 3);
 		buf[0][offset + 1] = (g_u_s << 5) | b_v;
@@ -1356,7 +1357,7 @@ static void gen_twopix(struct tpg_data *tpg,
 	case V4L2_PIX_FMT_HSV32:
 	case V4L2_PIX_FMT_XYUV32:
 		alpha = 0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_YUV32:
 	case V4L2_PIX_FMT_ARGB32:
 	case V4L2_PIX_FMT_AYUV32:
@@ -1367,7 +1368,7 @@ static void gen_twopix(struct tpg_data *tpg,
 		break;
 	case V4L2_PIX_FMT_RGBX32:
 		alpha = 0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_RGBA32:
 		buf[0][offset] = r_y_h;
 		buf[0][offset + 1] = g_u_s;
@@ -1378,7 +1379,7 @@ static void gen_twopix(struct tpg_data *tpg,
 	case V4L2_PIX_FMT_XBGR32:
 	case V4L2_PIX_FMT_VUYX32:
 		alpha = 0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_ABGR32:
 	case V4L2_PIX_FMT_VUYA32:
 		buf[0][offset] = b_v;
@@ -1388,7 +1389,7 @@ static void gen_twopix(struct tpg_data *tpg,
 		break;
 	case V4L2_PIX_FMT_BGRX32:
 		alpha = 0;
-		/* fall through */
+		fallthrough;
 	case V4L2_PIX_FMT_BGRA32:
 		buf[0][offset] = alpha;
 		buf[0][offset + 1] = b_v;
