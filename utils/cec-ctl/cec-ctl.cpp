@@ -38,6 +38,7 @@ static struct timespec start_monotonic;
 static struct timeval start_timeofday;
 static bool ignore_la[16];
 static const char *edid_path;
+static bool is_paused;
 
 #define POLL_FAKE_OPCODE 256
 static unsigned short ignore_opcode[257];
@@ -1756,15 +1757,9 @@ static void *thread_edid_poll(void *arg)
 	fd = open(edid_path, O_RDONLY);
 	if (fd < 0)
 		std::exit(EXIT_FAILURE);
-	lseek(fd, 0, SEEK_SET);
-	has_edid = read(fd, &dummy, 1) > 0;
 
-	if (!has_edid)
-		phys_addr = CEC_PHYS_ADDR_INVALID;
-	else
-		phys_addr = parse_phys_addr_from_edid(edid_path);
-	doioctl(node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
-	printf("Physical Address: %x.%x.%x.%x\n", cec_phys_addr_exp(phys_addr));
+	doioctl(node, CEC_ADAP_G_PHYS_ADDR, &phys_addr);
+	has_edid = phys_addr != CEC_PHYS_ADDR_INVALID;
 
 	for (;;) {
 		bool edid;
@@ -1780,8 +1775,9 @@ static void *thread_edid_poll(void *arg)
 			else
 				phys_addr = parse_phys_addr_from_edid(edid_path);
 			doioctl(node, CEC_ADAP_S_PHYS_ADDR, &phys_addr);
-			printf("Physical Address: %x.%x.%x.%x\n",
-			       cec_phys_addr_exp(phys_addr));
+			if (is_paused)
+				printf("Physical Address: %x.%x.%x.%x\n",
+				       cec_phys_addr_exp(phys_addr));
 		}
 	}
 	return NULL;
@@ -2725,6 +2721,7 @@ skip_la:
 		wait_for_msgs(node, monitor_time);
 	} else if (options[OptPhysAddrFromEDIDPoll]) {
 		printf("Press Ctrl-C to stop EDID polling.\n");
+		is_paused = true;
 		pause();
 	}
 	fflush(stdout);
