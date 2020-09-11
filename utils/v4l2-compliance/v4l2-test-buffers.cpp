@@ -653,10 +653,6 @@ int testReqBufs(struct node *node)
 		fail_on_test(q.reqbufs(node, 0));
 
 		for (m = V4L2_MEMORY_MMAP; m <= V4L2_MEMORY_DMABUF; m++) {
-			bool cache_hints_cap = false;
-			bool consistent;
-
-			cache_hints_cap = q.g_capabilities() & V4L2_BUF_CAP_SUPPORTS_MMAP_CACHE_HINTS;
 			if (!(node->valid_memorytype & (1 << m)))
 				continue;
 			cv4l_queue q2(i, m);
@@ -672,17 +668,8 @@ int testReqBufs(struct node *node)
 			reqbufs.count = 1;
 			reqbufs.type = i;
 			reqbufs.memory = m;
-			reqbufs.flags = V4L2_FLAG_MEMORY_NON_CONSISTENT;
 			fail_on_test(doioctl(node, VIDIOC_REQBUFS, &reqbufs));
-			consistent = reqbufs.flags & V4L2_FLAG_MEMORY_NON_CONSISTENT;
-			if (!cache_hints_cap) {
-				fail_on_test(consistent);
-			} else {
-				if (m == V4L2_MEMORY_MMAP)
-					fail_on_test(!consistent);
-				else
-					fail_on_test(consistent);
-			}
+			fail_on_test(check_0(reqbufs.reserved, sizeof(reqbufs.reserved)));
 			q.reqbufs(node);
 
 			ret = q.create_bufs(node, 0);
@@ -695,32 +682,9 @@ int testReqBufs(struct node *node)
 			node->g_fmt(crbufs.format, i);
 			crbufs.count = 1;
 			crbufs.memory = m;
-			crbufs.flags = V4L2_FLAG_MEMORY_NON_CONSISTENT;
 			fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &crbufs));
 			fail_on_test(check_0(crbufs.reserved, sizeof(crbufs.reserved)));
 			fail_on_test(crbufs.index != q.g_buffers());
-
-			consistent = crbufs.flags & V4L2_FLAG_MEMORY_NON_CONSISTENT;
-			if (!cache_hints_cap) {
-				fail_on_test(consistent);
-			} else {
-				if (m == V4L2_MEMORY_MMAP)
-					fail_on_test(!consistent);
-				else
-					fail_on_test(consistent);
-			}
-
-			if (cache_hints_cap) {
-				/*
-				 * Different memory consistency model. Should fail for MMAP
-				 * queues which support cache hints.
-				 */
-				crbufs.flags = 0;
-				if (m == V4L2_MEMORY_MMAP)
-					fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &crbufs) != EINVAL);
-				else
-					fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &crbufs));
-			}
 			q.reqbufs(node);
 
 			fail_on_test(q.create_bufs(node, 1));
@@ -1352,7 +1316,7 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 			have_createbufs = false;
 		if (have_createbufs) {
 			q.reqbufs(node);
-			q.create_bufs(node, 2, &cur_fmt, V4L2_FLAG_MEMORY_NON_CONSISTENT);
+			q.create_bufs(node, 2, &cur_fmt);
 			fail_on_test(setupMmap(node, q));
 			q.munmap_bufs(node);
 			q.reqbufs(node, 2);
