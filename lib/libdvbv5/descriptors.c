@@ -45,6 +45,7 @@
 #include <libdvbv5/desc_isdbt_delivery.h>
 #include <libdvbv5/desc_service.h>
 #include <libdvbv5/desc_frequency_list.h>
+#include <libdvbv5/desc_registration_id.h>
 #include <libdvbv5/desc_event_short.h>
 #include <libdvbv5/desc_event_extended.h>
 #include <libdvbv5/desc_atsc_service_location.h>
@@ -261,10 +262,10 @@ const struct dvb_descriptor dvb_descriptors[] = {
 	},
 	[registration_descriptor] = {
 		.name  = "registration_descriptor",
-		.init  = NULL,
-		.print = NULL,
-		.free  = NULL,
-		.size  = 0,
+		.init  = dvb_desc_registration_init,
+		.print = dvb_desc_registration_print,
+		.free  = dvb_desc_registration_free,
+		.size  = sizeof(struct dvb_desc_registration),
 	},
 	[ds_alignment_descriptor] = {
 		.name  = "ds_alignment_descriptor",

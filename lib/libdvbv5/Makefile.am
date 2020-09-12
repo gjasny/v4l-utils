@@ -27,6 +27,7 @@ otherinclude_HEADERS = \
 	../include/libdvbv5/desc_t2_delivery.h \
 	../include/libdvbv5/desc_service.h \
 	../include/libdvbv5/desc_frequency_list.h \
+	../include/libdvbv5/desc_registration_id.h \
 	../include/libdvbv5/desc_event_short.h \
 	../include/libdvbv5/desc_event_extended.h \
 	../include/libdvbv5/desc_atsc_service_location.h \
@@ -99,6 +100,7 @@ libdvbv5_la_SOURCES = \
 	descriptors/desc_terrestrial_delivery.c \
 	descriptors/desc_t2_delivery.c		\
 	descriptors/desc_service.c		\
+	descriptors/desc_registration_id.c	\
 	descriptors/desc_frequency_list.c	\
 	descriptors/desc_event_short.c		\
 	descriptors/desc_event_extended.c	\
