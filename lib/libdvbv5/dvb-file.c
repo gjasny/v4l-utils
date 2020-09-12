@@ -42,6 +42,7 @@
 #include <libdvbv5/desc_sat.h>
 #include <libdvbv5/desc_terrestrial_delivery.h>
 #include <libdvbv5/desc_service.h>
+#include <libdvbv5/desc_registration_id.h>
 #include <libdvbv5/desc_frequency_list.h>
 #include <libdvbv5/desc_event_short.h>
 #include <libdvbv5/desc_event_extended.h>
@@ -1036,7 +1037,7 @@ static int sort_other_el_pid(const void *a_arg, const void *b_arg)
 static void get_pmt_descriptors(struct dvb_entry *entry,
 				struct dvb_table_pmt *pmt)
 {
-	int has_ac3 = 0;
+	int has_audio = 0;
 	int video_len = 0, audio_len = 0, other_len = 0;
 
 	dvb_pmt_stream_foreach(stream, pmt) {
@@ -1081,12 +1082,26 @@ static void get_pmt_descriptors(struct dvb_entry *entry,
 			* DVB AC-3. So, need to seek for the AC-3 descriptors
 			*/
 			dvb_desc_find(struct dvb_desc_service, desc, stream, AC_3_descriptor)
-				has_ac3 = 1;
+				has_audio = 1;
 
 			dvb_desc_find(struct dvb_desc_service, desc, stream, enhanced_AC_3_descriptor)
-				has_ac3 = 1;
+				has_audio = 1;
 
-			if (has_ac3) {
+			dvb_desc_find(struct dvb_desc_service, desc, stream,
+				      registration_descriptor) {
+				struct dvb_desc_registration *d = (void *) desc;
+
+				/*
+				 * Check if the data contains audio via the
+				 * format identifier:
+				 *
+				 *	0x42535344 = SMPTE 302m
+				 */
+				if (d->format_identifier == 0x42535344)
+					has_audio = 1;
+			}
+
+			if (has_audio) {
 				entry->audio_pid = realloc(entry->audio_pid,
 							   sizeof(*entry->audio_pid) *
 							   (audio_len + 1));
