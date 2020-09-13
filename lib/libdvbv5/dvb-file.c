@@ -1033,93 +1033,146 @@ static int sort_other_el_pid(const void *a_arg, const void *b_arg)
 	return b->pid - a->pid;
 }
 
+enum desc_fourcc_type {
+	PID_ES_OTHER,
+	PID_ES_VIDEO,
+	PID_ES_AUDIO,
+};
+
+struct desc_fourcc_type_table {
+	uint8_t			stream_type;
+	char			fourcc[4];
+	enum desc_fourcc_type	type;
+};
+
+static const struct desc_fourcc_type_table desc_fourcc[] = {
+	{
+		.stream_type = 0x06,
+		.fourcc = {'E', 'A', 'C', '3'},	/* Enhanced AC-3 */
+		.type = PID_ES_AUDIO,
+	}, {
+		.stream_type = 0x06,
+		.fourcc = {'A', 'C', '-', '3'},	/* AC-3 */
+		.type = PID_ES_AUDIO,
+	}, {
+		.stream_type = 0x06,
+		.fourcc = {'D', 'T', 'S', '1'},	/* 512 Bpf */
+		.type = PID_ES_AUDIO,
+	}, {
+		.stream_type = 0x06,
+		.fourcc = {'D', 'T', 'S', '2'},	/* 1024 Bpf */
+		.type = PID_ES_AUDIO,
+	}, {
+		.stream_type = 0x06,
+		.fourcc = {'D', 'T', 'S', '3'},	/* 2048 Bpf */
+		.type = PID_ES_AUDIO,
+	}, {
+		.stream_type = 0x06,
+		.fourcc = {'B', 'S', 'S', 'D'},	/* SMPTE 302m */
+		.type = PID_ES_AUDIO,
+	}, {
+		.stream_type = 0x06,
+		.fourcc = {'H', 'E', 'V', 'C'},	/* HEVC */
+		.type = PID_ES_VIDEO,
+	}, {
+		.stream_type = 0xea,
+		.fourcc = {'V', 'C', '-', '1'},	/* SMPTE RP 227 */
+		.type = PID_ES_VIDEO,
+	}
+};
+
+static enum desc_fourcc_type check_descriptor_type(struct dvb_table_pmt_stream *stream)
+{
+	/*
+	 * As the format_identifier of the registration descriptor uniquely
+	 * identifies the format of the data, check it first, if present.
+	 */
+	dvb_desc_find(struct dvb_desc_service, desc, stream,
+		      registration_descriptor) {
+		int i;
+		struct dvb_desc_registration *d = (void *) desc;
+
+		for (i = 0; i < ARRAY_SIZE(desc_fourcc); i++) {
+			if (desc_fourcc[i].stream_type != stream->type)
+				continue;
+
+			if (memcmp(&d->format_identifier, &desc_fourcc[i].fourcc, 4))
+				continue;
+
+			return desc_fourcc[i].type;
+		}
+	}
+
+	/* Now check for the stream->type directly */
+
+	switch(stream->type) {
+	case 0x01: /* ISO/IEC 11172-2 Video */
+	case 0x02: /* H.262, ISO/IEC 13818-2 or ISO/IEC 11172-2 video */
+	case 0x1b: /* H.264 AVC */
+	case 0x24: /* HEVC */
+	case 0x42: /* CAVS */
+	case 0x80: /* MPEG-2 MOTO video */
+		return PID_ES_VIDEO;
+	case 0x03: /* ISO/IEC 11172-3 Audio */
+	case 0x04: /* ISO/IEC 13818-3 Audio */
+	case 0x07: /* DTS and DTS-HD Audio */
+	case 0x0f: /* ISO/IEC 13818-7 Audio with ADTS (AAC) */
+	case 0x11: /* ISO/IEC 14496-3 Audio with the LATM */
+	case 0x1c: /* ISO/IEC 14496-3 Audio, without additional transport syntax */
+	case 0x81: /* A52 */
+	case 0x84: /* SDDS */
+	case 0x85: /* DTS on HDMV */
+	case 0x87: /* E-AC3 */
+	case 0x8a: /* DTS */
+	case 0x91: /* A52 VLS */
+	case 0x94: /* SDDS */
+		return PID_ES_AUDIO;
+	case 0x05: /* private sections */
+	case 0x06: /* private data */
+		/*
+		    * It is likely that the previous check already
+		    * detected, but just in case, let's check for AC-3
+		    */
+		dvb_desc_find(struct dvb_desc_service, desc, stream, AC_3_descriptor)
+			return PID_ES_AUDIO;
+
+		dvb_desc_find(struct dvb_desc_service, desc, stream, enhanced_AC_3_descriptor)
+			return PID_ES_AUDIO;
+		break;
+	default:
+		return PID_ES_OTHER;
+	}
+
+	return PID_ES_OTHER;
+}
 
 static void get_pmt_descriptors(struct dvb_entry *entry,
 				struct dvb_table_pmt *pmt)
 {
-	int has_audio = 0;
 	int video_len = 0, audio_len = 0, other_len = 0;
+	uint16_t  pid;
+	enum desc_fourcc_type type;
 
 	dvb_pmt_stream_foreach(stream, pmt) {
-		uint16_t  pid = stream->elementary_pid;
+		pid = stream->elementary_pid;
+		type = check_descriptor_type(stream);
 
-		switch(stream->type) {
-		case 0x01: /* ISO/IEC 11172-2 Video */
-		case 0x02: /* H.262, ISO/IEC 13818-2 or ISO/IEC 11172-2 video */
-		case 0x1b: /* H.264 AVC */
-		case 0x24: /* HEVC */
-		case 0x42: /* CAVS */
-		case 0x80: /* MPEG-2 MOTO video */
+		switch (type) {
+		case PID_ES_VIDEO:
 			entry->video_pid = realloc(entry->video_pid,
-						   sizeof(*entry->video_pid) *
-						   (video_len + 1));
+						sizeof(*entry->video_pid) * (video_len + 1));
 			entry->video_pid[video_len] = pid;
 			video_len++;
 			break;
-		case 0x03: /* ISO/IEC 11172-3 Audio */
-		case 0x04: /* ISO/IEC 13818-3 Audio */
-		case 0x07: /* DTS and DTS-HD Audio */
-		case 0x0f: /* ISO/IEC 13818-7 Audio with ADTS (AAC) */
-		case 0x11: /* ISO/IEC 14496-3 Audio with the LATM */
-		case 0x1c: /* ISO/IEC 14496-3 Audio, without additional transport syntax */
-		case 0x81: /* A52 */
-		case 0x84: /* SDDS */
-		case 0x85: /* DTS on HDMV */
-		case 0x87: /* E-AC3 */
-		case 0x8a: /* DTS */
-		case 0x91: /* A52 VLS */
-		case 0x94: /* SDDS */
+		case PID_ES_AUDIO:
 			entry->audio_pid = realloc(entry->audio_pid,
-						   sizeof(*entry->audio_pid) *
-						   (audio_len + 1));
+						sizeof(*entry->audio_pid) * (audio_len + 1));
 			entry->audio_pid[audio_len] = pid;
 			audio_len++;
 			break;
-		case 0x05: /* private sections */
-		case 0x06: /* private data */
-			/*
-			* Those can be used by sub-titling, teletext and/or
-			* DVB AC-3. So, need to seek for the AC-3 descriptors
-			*/
-			dvb_desc_find(struct dvb_desc_service, desc, stream, AC_3_descriptor)
-				has_audio = 1;
-
-			dvb_desc_find(struct dvb_desc_service, desc, stream, enhanced_AC_3_descriptor)
-				has_audio = 1;
-
-			dvb_desc_find(struct dvb_desc_service, desc, stream,
-				      registration_descriptor) {
-				struct dvb_desc_registration *d = (void *) desc;
-
-				/*
-				 * Check if the data contains audio via the
-				 * format identifier:
-				 *
-				 *	0x42535344 = SMPTE 302m
-				 */
-				if (d->format_identifier == 0x42535344)
-					has_audio = 1;
-			}
-
-			if (has_audio) {
-				entry->audio_pid = realloc(entry->audio_pid,
-							   sizeof(*entry->audio_pid) *
-							   (audio_len + 1));
-				entry->audio_pid[audio_len] = pid;
-				audio_len++;
-			} else {
-				entry->other_el_pid = realloc(entry->other_el_pid,
-							   sizeof(*entry->other_el_pid) *
-							   (other_len + 1));
-				entry->other_el_pid[other_len].type = stream->type;
-				entry->other_el_pid[other_len].pid = pid;
-				other_len++;
-			}
-			break;
-		default:
+		case PID_ES_OTHER:
 			entry->other_el_pid = realloc(entry->other_el_pid,
-						   sizeof(*entry->other_el_pid) *
-						   (other_len + 1));
+						    sizeof(*entry->other_el_pid) * (other_len + 1));
 			entry->other_el_pid[other_len].type = stream->type;
 			entry->other_el_pid[other_len].pid = pid;
 			other_len++;
