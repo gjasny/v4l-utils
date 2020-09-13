@@ -55,7 +55,7 @@ struct dvb_desc_registration {
 	uint8_t length;
 	struct dvb_desc *next;
 
-	uint32_t format_identifier;
+	uint8_t format_identifier[4];
 	uint8_t *additional_identification_info;
 } __attribute__((packed));
 

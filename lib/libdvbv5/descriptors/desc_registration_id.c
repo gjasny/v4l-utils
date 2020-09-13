@@ -36,7 +36,6 @@ int dvb_desc_registration_init(struct dvb_v5_fe_parms *parms,
 	}
 
 	memcpy(&d->format_identifier, buf, size);
-	bswap32(d->format_identifier);
 
 	if (desc->length <= size)
 		return 0;
@@ -52,7 +51,9 @@ void dvb_desc_registration_print(struct dvb_v5_fe_parms *parms, const struct dvb
 	const struct dvb_desc_registration *d = (const struct dvb_desc_registration *) desc;
 	int i = 0;
 
-	dvb_loginfo("|           format_identifier     : %08x", d->format_identifier);
+	dvb_loginfo("|           format_identifier     : %c%c%c%c",
+		    d->format_identifier[0], d->format_identifier[1],
+		    d->format_identifier[2], d->format_identifier[3]);
 
 	if (!d->additional_identification_info)
 		return;
