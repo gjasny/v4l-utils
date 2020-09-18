@@ -1281,6 +1281,12 @@ int main(int argc, char **argv)
 			goto err;
 	}
 
+	if (((vpid >= 0 && vpid != 0x2000) || apid) && !args.rec_psi) {
+		printf(_("PMT record is disabled.\n"
+		         "Please notice that some streams can only be decoded with PMT data.\n"
+			 "Use '-p' option to also record PMT.\n"));
+	}
+
 	set_signals(&args);
 
 	if (!check_frontend(&args, parms)) {
