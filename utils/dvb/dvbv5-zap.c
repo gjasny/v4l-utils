@@ -1028,6 +1028,7 @@ int main(int argc, char **argv)
 	int vpid = -1, apid = -1, sid = -1;
 	int pmtpid = 0;
 	struct dvb_open_descriptor *pat_fd = NULL, *pmt_fd = NULL;
+	struct dvb_open_descriptor *sdt_fd = NULL;
 	struct dvb_open_descriptor *sid_fd = NULL, *dvr_fd = NULL;
 	struct dvb_open_descriptor *audio_fd = NULL, *video_fd = NULL;
 	int file_fd = -1;
@@ -1225,6 +1226,19 @@ int main(int argc, char **argv)
 			goto err;
 		}
 		if (dvb_dev_dmx_set_pesfilter(pmt_fd, pmtpid, DMX_PES_OTHER,
+				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
+				args.dvr ? 64 * 1024 : 0) < 0)
+			goto err;
+
+		/*
+		 * SDT may also be needed in order to play some streams
+		 */
+		sdt_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
+		if (!sdt_fd) {
+			ERROR("opening sdt demux failed");
+			goto err;
+		}
+		if (dvb_dev_dmx_set_pesfilter(sdt_fd, 0x0011, DMX_PES_OTHER,
 				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
 				args.dvr ? 64 * 1024 : 0) < 0)
 			goto err;
