@@ -2211,7 +2211,7 @@ static int capture_setup(cv4l_fd &fd, cv4l_queue &in, cv4l_fd *exp_fd, cv4l_fmt 
 
 static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 			 FILE *fin, FILE *fout, cv4l_fmt &fmt_in,
-			 cv4l_fmt &fmt_out, cv4l_fd *exp_fd_p)
+			 const cv4l_fmt &fmt_out, cv4l_fd *exp_fd_p)
 {
 	int fd_flags = fcntl(fd.g_fd(), F_GETFL);
 	fps_timestamps fps_ts[2];
@@ -2411,7 +2411,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 
 static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 			  FILE *fin, FILE *fout, cv4l_fmt &fmt_in,
-			  cv4l_fmt &fmt_out, cv4l_fd *exp_fd_p)
+			  const cv4l_fmt &fmt_out, cv4l_fd *exp_fd_p)
 {
 	fps_timestamps fps_ts[2];
 	unsigned count[2] = { 0, 0 };

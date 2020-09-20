@@ -543,7 +543,7 @@ void CaptureWin::mouseDoubleClickEvent(QMouseEvent * e)
 	toggleFullScreen();
 }
 
-void CaptureWin::cycleMenu(__u32 &overrideVal, __u32 &origVal,
+void CaptureWin::cycleMenu(__u32 &overrideVal, __u32 origVal,
 			     const __u32 values[], bool hasShift, bool hasCtrl)
 {
 	unsigned i;
@@ -1106,7 +1106,7 @@ bool CaptureWin::setV4LFormat(cv4l_fmt &fmt)
 	return true;
 }
 
-void CaptureWin::setPixelAspect(v4l2_fract &pixelaspect)
+void CaptureWin::setPixelAspect(const v4l2_fract &pixelaspect)
 {
 	m_pixelaspect = pixelaspect;
 }

@@ -791,7 +791,7 @@ static void show_msg(const cec_msg &msg)
 		       status.c_str());
 }
 
-static void wait_for_msgs(struct node &node, __u32 monitor_time)
+static void wait_for_msgs(const struct node &node, __u32 monitor_time)
 {
 	fd_set rd_fds;
 	fd_set ex_fds;
@@ -836,7 +836,7 @@ static void wait_for_msgs(struct node &node, __u32 monitor_time)
 
 #define MONITOR_FL_DROPPED_EVENTS     (1 << 16)
 
-static void monitor(struct node &node, __u32 monitor_time, const char *store_pin)
+static void monitor(const struct node &node, __u32 monitor_time, const char *store_pin)
 {
 	__u32 monitor = CEC_MODE_MONITOR;
 	fd_set rd_fds;
@@ -1057,7 +1057,7 @@ err:
 	std::exit(EXIT_FAILURE);
 }
 
-static bool wait_for_pwr_state(struct node &node, unsigned from,
+static bool wait_for_pwr_state(const struct node &node, unsigned from,
 			       unsigned &hpd_is_low_cnt, bool on)
 {
 	struct cec_msg msg;
@@ -1116,18 +1116,18 @@ static bool wait_for_pwr_state(struct node &node, unsigned from,
 	return pwr == (on ? CEC_OP_POWER_STATUS_ON : CEC_OP_POWER_STATUS_STANDBY);
 }
 
-static bool wait_for_power_on(struct node &node, unsigned from)
+static bool wait_for_power_on(const struct node &node, unsigned from)
 {
 	unsigned hpd_is_low_cnt = 0;
 	return wait_for_pwr_state(node, from, hpd_is_low_cnt, true);
 }
 
-static bool wait_for_power_off(struct node &node, unsigned from, unsigned &hpd_is_low_cnt)
+static bool wait_for_power_off(const struct node &node, unsigned from, unsigned &hpd_is_low_cnt)
 {
 	return wait_for_pwr_state(node, from, hpd_is_low_cnt, false);
 }
 
-static int transmit_msg_retry(struct node &node, struct cec_msg &msg)
+static int transmit_msg_retry(const struct node &node, struct cec_msg &msg)
 {
 	bool from_unreg = cec_msg_initiator(&msg) == CEC_LOG_ADDR_UNREGISTERED;
 	unsigned cnt = 0;
@@ -1144,7 +1144,7 @@ static int transmit_msg_retry(struct node &node, struct cec_msg &msg)
 	return ret;
 }
 
-static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned max_tries)
+static int init_power_cycle_test(const struct node &node, unsigned repeats, unsigned max_tries)
 {
 	struct cec_msg msg;
 	unsigned from;
@@ -1261,7 +1261,7 @@ static int init_power_cycle_test(struct node &node, unsigned repeats, unsigned m
 	return from;
 }
 
-static void test_power_cycle(struct node &node, unsigned int max_tries,
+static void test_power_cycle(const struct node &node, unsigned int max_tries,
 			     unsigned int retry_sleep)
 {
 	struct cec_log_addrs laddrs = { };
@@ -1476,7 +1476,7 @@ static void test_power_cycle(struct node &node, unsigned int max_tries,
 		printf("Test had %u failure%s\n", failures, failures == 1 ? "" : "s");
 }
 
-static void stress_test_power_cycle(struct node &node, unsigned cnt,
+static void stress_test_power_cycle(const struct node &node, unsigned cnt,
 				    unsigned min_sleep, unsigned max_sleep, unsigned max_tries,
 				    bool has_seed, unsigned seed, unsigned repeats,
 				    double sleep_before_on, double sleep_before_off)

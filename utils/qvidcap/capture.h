@@ -78,7 +78,7 @@ public:
 	void setModeTest(unsigned cnt);
 	void setQueue(cv4l_queue *q);
 	bool setV4LFormat(cv4l_fmt &fmt);
-	void setPixelAspect(v4l2_fract &pixelaspect);
+	void setPixelAspect(const v4l2_fract &pixelaspect);
 	bool updateV4LFormat(const cv4l_fmt &fmt);
 	void setOverrideWidth(__u32 w);
 	void setOverrideHeight(__u32 h);
@@ -130,7 +130,7 @@ private:
 	void listenForNewConnection();
 	int read_u32(__u32 &v);
 	void showCurrentOverrides();
-	void cycleMenu(__u32 &overrideVal, __u32 &origVal,
+	void cycleMenu(__u32 &overrideVal, __u32 origVal,
 		       const __u32 values[], bool hasShift, bool hasCtrl);
 
 	bool supportedFmt(__u32 fmt);

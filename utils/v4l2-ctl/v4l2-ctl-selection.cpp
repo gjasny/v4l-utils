@@ -69,7 +69,7 @@ void selection_usage()
 	       );
 }
 
-static void do_crop(int fd, unsigned int set_crop, struct v4l2_rect &vcrop, v4l2_buf_type type)
+static void do_crop(int fd, unsigned int set_crop, const struct v4l2_rect &vcrop, v4l2_buf_type type)
 {
 	struct v4l2_crop in_crop;
 
@@ -125,7 +125,7 @@ static void parse_crop(char *optarg, unsigned int &set_crop, v4l2_rect &vcrop)
 	}
 }
 
-static void do_selection(int fd, unsigned int set_selection, struct v4l2_selection &vsel,
+static void do_selection(int fd, unsigned int set_selection, const struct v4l2_selection &vsel,
 			 v4l2_buf_type type)
 {
 	struct v4l2_selection in_selection;

@@ -345,7 +345,7 @@ int testQueryControls(struct node *node)
 	return 0;
 }
 
-static int checkSimpleCtrl(struct v4l2_control &ctrl, struct test_query_ext_ctrl &qctrl)
+static int checkSimpleCtrl(const struct v4l2_control &ctrl, const struct test_query_ext_ctrl &qctrl)
 {
 	if (ctrl.id != qctrl.id)
 		return fail("control id mismatch\n");
@@ -524,7 +524,7 @@ int testSimpleControls(struct node *node)
 	return 0;
 }
 
-static int checkExtendedCtrl(struct v4l2_ext_control &ctrl, struct test_query_ext_ctrl &qctrl)
+static int checkExtendedCtrl(const struct v4l2_ext_control &ctrl, const struct test_query_ext_ctrl &qctrl)
 {
 	int len;
 
