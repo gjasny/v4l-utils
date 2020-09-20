@@ -439,7 +439,7 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
 			*is_invalid = true;
 		return MEDIA_ENT_F_UNKNOWN;
 	}
-	media_v2_interface &iface = v2_ifaces[i];
+	const media_v2_interface &iface = v2_ifaces[i];
 	for (i = 0; i < topology.num_links; i++) {
 		__u32 type = v2_links[i].flags & MEDIA_LNK_FL_LINK_TYPE;
 
@@ -486,7 +486,7 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
 	if (is_radio)
 		return MEDIA_ENT_F_UNKNOWN;
 
-	media_v2_entity &ent = v2_ents[i];
+	const media_v2_entity &ent = v2_ents[i];
 	printf("Entity Info:\n");
 	printf("\tID               : 0x%08x (%u)\n", ent.id, ent.id);
 	printf("\tName             : %s\n", ent.name);
