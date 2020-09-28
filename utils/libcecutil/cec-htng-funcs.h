@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
+// SPDX-License-Identifier: (LGPL-2.1-only OR BSD-3-Clause)
 /*
  * cec-htng-funcs - HDMI CEC wrapper functions for Hospitality Profile
  *

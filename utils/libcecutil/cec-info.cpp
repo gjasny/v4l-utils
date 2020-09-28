@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LGPL-2.1-only
+// SPDX-License-Identifier: (LGPL-2.1-only OR BSD-3-Clause)
 /*
  * CEC common helper functions
  *
