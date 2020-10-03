@@ -158,7 +158,7 @@ static const char *v4l2_dv_type_to_string(unsigned int type)
 		{ V4L2_DV_BT_656_1120, "BT.656/1120" },
 	};
 
-	static char unknown[20];
+	static char unknown[21];
 	unsigned int i;
 
 	for (i = 0; i < ARRAY_SIZE(types); i++) {
