@@ -48,16 +48,16 @@ void meta_cmd(int ch, char *optarg)
 			vfmt.fmt.meta.dataformat = v4l2_fourcc(optarg[0],
 					optarg[1], optarg[2], optarg[3]);
 		} else {
-			vfmt.fmt.meta.dataformat = strtol(optarg, 0L, 0);
+			vfmt.fmt.meta.dataformat = strtol(optarg, nullptr, 0);
 		}
 		break;
 	case OptListMetaFormats:
 		if (optarg)
-			mbus_code = strtoul(optarg, 0L, 0);
+			mbus_code = strtoul(optarg, nullptr, 0);
 		break;
 	case OptListMetaOutFormats:
 		if (optarg)
-			mbus_code_out = strtoul(optarg, 0L, 0);
+			mbus_code_out = strtoul(optarg, nullptr, 0);
 		break;
 	}
 }

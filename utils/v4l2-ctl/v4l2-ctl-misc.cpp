@@ -170,10 +170,10 @@ void misc_cmd(int ch, char *optarg)
 
 	switch (ch) {
 	case OptSetParm:
-		fps = strtod(optarg, NULL);
+		fps = strtod(optarg, nullptr);
 		break;
 	case OptSetOutputParm:
-		output_fps = strtod(optarg, NULL);
+		output_fps = strtod(optarg, nullptr);
 		break;
 	case OptSetJpegComp:
 		subs = optarg;
@@ -186,14 +186,14 @@ void misc_cmd(int ch, char *optarg)
 				"quality",
 				"markers",
 				"comment",
-				NULL
+				nullptr
 			};
 			size_t len;
 			int opt = parse_subopt(&subs, subopts, &value);
 
 			switch (opt) {
 			case 16:
-				jpegcomp.quality = strtol(value, 0L, 0);
+				jpegcomp.quality = strtol(value, nullptr, 0);
 				break;
 			case 17:
 				if (strstr(value, "dht"))
@@ -238,7 +238,7 @@ void misc_cmd(int ch, char *optarg)
 			static const char *const subopts[] = {
 				"cmd",
 				"flags",
-				NULL
+				nullptr
 			};
 
 			switch (parse_subopt(&subs, subopts, &value)) {
@@ -264,7 +264,7 @@ void misc_cmd(int ch, char *optarg)
 				"stop_pts",
 				"start_speed",
 				"start_format",
-				NULL
+				nullptr
 			};
 
 			switch (parse_subopt(&subs, subopts, &value)) {
@@ -275,10 +275,10 @@ void misc_cmd(int ch, char *optarg)
 				dec_cmd.flags = parse_decflags(value);
 				break;
 			case 2:
-				dec_cmd.stop.pts = strtoull(value, 0, 0);
+				dec_cmd.stop.pts = strtoull(value, nullptr, 0);
 				break;
 			case 3:
-				dec_cmd.start.speed = strtol(value, 0, 0);
+				dec_cmd.start.speed = strtol(value, nullptr, 0);
 				break;
 			case 4:
 				if (!strcmp(value, "gop"))

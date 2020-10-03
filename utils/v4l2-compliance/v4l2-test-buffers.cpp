@@ -548,7 +548,7 @@ int testReqBufs(struct node *node)
 		return ret;
 	}
 	fail_on_test(ret != EINVAL);
-	fail_on_test(node->node2 == NULL);
+	fail_on_test(node->node2 == nullptr);
 	for (i = 1; i <= V4L2_BUF_TYPE_LAST; i++) {
 		bool is_overlay = v4l_type_is_overlay(i);
 		__u32 caps = 0;
@@ -934,9 +934,9 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 			if (node->is_m2m)
 				ret = select(node->g_fd() + 1, &rfds, &wfds, &efds, &tv);
 			else if (v4l_type_is_output(q.g_type()))
-				ret = select(node->g_fd() + 1, NULL, &wfds, NULL, &tv);
+				ret = select(node->g_fd() + 1, nullptr, &wfds, nullptr, &tv);
 			else
-				ret = select(node->g_fd() + 1, &rfds, NULL, NULL, &tv);
+				ret = select(node->g_fd() + 1, &rfds, nullptr, nullptr, &tv);
 			fail_on_test(ret == 0);
 			fail_on_test(ret < 0);
 			fail_on_test(!FD_ISSET(node->g_fd(), &rfds) &&
@@ -1025,7 +1025,7 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 				warn_once("QBUF returned the buffer as DONE.\n");
 			if (buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD) {
 				fail_on_test(doioctl_fd(buf_req_fds[req_idx],
-							MEDIA_REQUEST_IOC_QUEUE, 0));
+							MEDIA_REQUEST_IOC_QUEUE, nullptr));
 				// testRequests will close some of these request fds,
 				// so we need to find the next valid fds.
 				do {
@@ -1367,7 +1367,7 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 				fcntl(node->g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
 				FD_ZERO(&efds);
 				FD_SET(node->g_fd(), &efds);
-				ret = select(node->g_fd() + 1, NULL, NULL, &efds, &tv);
+				ret = select(node->g_fd() + 1, nullptr, nullptr, &efds, &tv);
 				fail_on_test(ret < 0);
 				fail_on_test(ret == 0);
 				fail_on_test(node->dqevent(ev));
@@ -1514,7 +1514,7 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 		// Try to use VIDIOC_PREPARE_BUF for every other buffer
 		if ((i & 1) == 0) {
 			for (unsigned p = 0; p < buf.g_num_planes(); p++)
-				buf.s_userptr(0UL, p);
+				buf.s_userptr(nullptr, p);
 			ret = buf.prepare_buf(node);
 			fail_on_test(!ret);
 			for (unsigned p = 0; p < buf.g_num_planes(); p++)
@@ -1530,7 +1530,7 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 				fail_on_test(buf.querybuf(node, i));
 				fail_on_test(buf.check(q, Prepared, i));
 				for (unsigned p = 0; p < buf.g_num_planes(); p++) {
-					buf.s_userptr(0UL, p);
+					buf.s_userptr(nullptr, p);
 					buf.s_bytesused(0, p);
 					buf.s_length(0, p);
 				}
@@ -1538,7 +1538,7 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 		}
 		if (ret == ENOTTY) {
 			for (unsigned p = 0; p < buf.g_num_planes(); p++)
-				buf.s_userptr(0UL, p);
+				buf.s_userptr(nullptr, p);
 			ret = buf.qbuf(node);
 			fail_on_test(!ret);
 
@@ -1723,7 +1723,7 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 						fail("data at %zd bytes after the end of the buffer was touched\n",
 						     (x - (u + buflen / 4)) * 4);
 				free(m);
-				q.s_userptr(i, p, NULL);
+				q.s_userptr(i, p, nullptr);
 			}
 		}
 		stream_close();
@@ -1982,16 +1982,16 @@ int testRequests(struct node *node, bool test_streaming)
 		ctrls.request_fd = req_fd;
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EACCES);
 	}
-	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, 0) != ENOENT);
-	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, 0));
+	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, nullptr) != ENOENT);
+	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, nullptr));
 	fhs.del(media_fd);
-	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, 0) != ENOENT);
-	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, 0));
+	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, nullptr) != ENOENT);
+	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, nullptr));
 	fhs.del(req_fd);
 	if (have_controls)
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EINVAL);
-	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, 0) != EBADF);
-	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, 0) != EBADF);
+	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, nullptr) != EBADF);
+	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, nullptr) != EBADF);
 
 	media_fd = fhs.add(mi_get_media_fd(node->g_fd(), node->bus_info));
 	fail_on_test(doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &req_fd));
@@ -2059,7 +2059,7 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &buf_req_fds[i]));
 		fhs.add(buf_req_fds[i]);
 		fail_on_test(buf_req_fds[i] < 0);
-		fail_on_test(!doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0));
+		fail_on_test(!doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, nullptr));
 	}
 	fhs.del(media_fd);
 
@@ -2163,7 +2163,7 @@ int testRequests(struct node *node, bool test_streaming)
 		ctrl.value = (i & 1) ? valid_qctrl.maximum : valid_qctrl.minimum;
 		ctrls.request_fd = buf_req_fds[i];
 		fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
-		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, 0));
+		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, nullptr));
 
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST);
@@ -2187,8 +2187,8 @@ int testRequests(struct node *node, bool test_streaming)
 						  VIVID_CID_BUF_PREPARE_ERROR :
 						  VIVID_CID_REQ_VALIDATE_ERROR))
 			fail_on_test(doioctl_fd(buf_req_fds[i],
-						MEDIA_REQUEST_IOC_QUEUE, 0) != EINVAL);
-		ret = doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0);
+						MEDIA_REQUEST_IOC_QUEUE, nullptr) != EINVAL);
+		ret = doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, nullptr);
 		if (node->codec_mask & STATELESS_DECODER) {
 			fail_on_test(ret != ENOENT);
 			test_streaming = false;
@@ -2199,8 +2199,8 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST);
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_QUEUED));
-		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, 0) != EBUSY);
-		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0) != EBUSY);
+		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, nullptr) != EBUSY);
+		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, nullptr) != EBUSY);
 		if (i >= min_bufs) {
 			close(buf_req_fds[i]);
 			buf_req_fds[i] = -1;
@@ -2237,8 +2237,8 @@ int testRequests(struct node *node, bool test_streaming)
 			POLLPRI, 0
 		};
 		fail_on_test(poll(&pfd, 1, 100) != 1);
-		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, 0) != EBUSY);
-		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, 0));
+		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, nullptr) != EBUSY);
+		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, nullptr));
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD);
 		fail_on_test(buf.g_request_fd());
@@ -2286,7 +2286,7 @@ public:
 
 	int start()
 	{
-		int ret = pthread_create(&thread, NULL, startRoutine, this);
+		int ret = pthread_create(&thread, nullptr, startRoutine, this);
 		if (ret < 0)
 			return ret;
 
@@ -2317,7 +2317,7 @@ public:
 			usleep(100000);
 		}
 
-		pthread_join(thread, NULL);
+		pthread_join(thread, nullptr);
 		running = false;
 	}
 
@@ -2328,13 +2328,13 @@ private:
 	{
 		auto self = static_cast<BlockingThread *>(arg);
 
-		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
+		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
 
 		self->run();
 
 		self->done = true;
-		return NULL;
+		return nullptr;
 	}
 
 	virtual void run() = 0;
@@ -2933,7 +2933,7 @@ static void streamIntervals(struct node *node, __u32 pixelformat, __u32 w, __u32
 	v4l2_frmivalenum frmival = { 0 };
 
 	if (node->enum_frameintervals(frmival, pixelformat, w, h)) {
-		streamFmt(node, pixelformat, w, h, NULL, frame_count);
+		streamFmt(node, pixelformat, w, h, nullptr, frame_count);
 		return;
 	}
 

@@ -8,7 +8,7 @@ struct mbus_name {
 static struct mbus_name mbus_names[] = {
 	{ "Fixed", MEDIA_BUS_FMT_FIXED },
 #include "media-bus-format-names.h"
-	{ NULL, 0 }
+	{ nullptr, 0 }
 };
 
 /* selection specified */
@@ -92,7 +92,7 @@ void subdev_cmd(int ch, char *optarg)
 	switch (ch) {
 	case OptListSubDevMBusCodes:
 		if (optarg)
-			list_mbus_codes_pad = strtoul(optarg, 0L, 0);
+			list_mbus_codes_pad = strtoul(optarg, nullptr, 0);
 		break;
 	case OptListSubDevFrameSizes:
 		subs = optarg;
@@ -100,15 +100,15 @@ void subdev_cmd(int ch, char *optarg)
 			static const char *const subopts[] = {
 				"pad",
 				"code",
-				NULL
+				nullptr
 			};
 
 			switch (parse_subopt(&subs, subopts, &value)) {
 			case 0:
-				frmsize.pad = strtoul(value, 0L, 0);
+				frmsize.pad = strtoul(value, nullptr, 0);
 				break;
 			case 1:
-				frmsize.code = strtoul(value, 0L, 0);
+				frmsize.code = strtoul(value, nullptr, 0);
 				break;
 			default:
 				subdev_usage();
@@ -124,21 +124,21 @@ void subdev_cmd(int ch, char *optarg)
 				"code",
 				"width",
 				"height",
-				NULL
+				nullptr
 			};
 
 			switch (parse_subopt(&subs, subopts, &value)) {
 			case 0:
-				frmival.pad = strtoul(value, 0L, 0);
+				frmival.pad = strtoul(value, nullptr, 0);
 				break;
 			case 1:
-				frmival.code = strtoul(value, 0L, 0);
+				frmival.code = strtoul(value, nullptr, 0);
 				break;
 			case 2:
-				frmival.width = strtoul(value, 0L, 0);
+				frmival.width = strtoul(value, nullptr, 0);
 				break;
 			case 3:
-				frmival.height = strtoul(value, 0L, 0);
+				frmival.height = strtoul(value, nullptr, 0);
 				break;
 			default:
 				subdev_usage();
@@ -148,7 +148,7 @@ void subdev_cmd(int ch, char *optarg)
 		break;
 	case OptGetSubDevFormat:
 		if (optarg)
-			get_fmt_pad = strtoul(optarg, 0L, 0);
+			get_fmt_pad = strtoul(optarg, nullptr, 0);
 		break;
 	case OptGetSubDevSelection:
 		subs = optarg;
@@ -156,13 +156,13 @@ void subdev_cmd(int ch, char *optarg)
 			static const char *const subopts[] = {
 				"pad",
 				"target",
-				NULL
+				nullptr
 			};
 			unsigned int target;
 
 			switch (parse_subopt(&subs, subopts, &value)) {
 			case 0:
-				get_sel_pad = strtoul(value, 0L, 0);
+				get_sel_pad = strtoul(value, nullptr, 0);
 				break;
 			case 1:
 				if (parse_selection_target(value, target)) {
@@ -180,7 +180,7 @@ void subdev_cmd(int ch, char *optarg)
 		break;
 	case OptGetSubDevFPS:
 		if (optarg)
-			get_fps_pad = strtoul(optarg, 0L, 0);
+			get_fps_pad = strtoul(optarg, nullptr, 0);
 		break;
 	case OptSetSubDevFormat:
 	case OptTrySubDevFormat:
@@ -198,20 +198,20 @@ void subdev_cmd(int ch, char *optarg)
 				"quantization",
 				"xfer",
 				"pad",
-				NULL
+				nullptr
 			};
 
 			switch (parse_subopt(&subs, subopts, &value)) {
 			case 0:
-				ffmt.width = strtoul(value, 0L, 0);
+				ffmt.width = strtoul(value, nullptr, 0);
 				set_fmt |= FmtWidth;
 				break;
 			case 1:
-				ffmt.height = strtoul(value, 0L, 0);
+				ffmt.height = strtoul(value, nullptr, 0);
 				set_fmt |= FmtHeight;
 				break;
 			case 2:
-				ffmt.code = strtoul(value, 0L, 0);
+				ffmt.code = strtoul(value, nullptr, 0);
 				set_fmt |= FmtPixelFormat;
 				break;
 			case 3:
@@ -242,7 +242,7 @@ void subdev_cmd(int ch, char *optarg)
 				set_fmt |= FmtXferFunc;
 				break;
 			case 9:
-				set_fmt_pad = strtoul(value, 0L, 0);
+				set_fmt_pad = strtoul(value, nullptr, 0);
 				break;
 			default:
 				fprintf(stderr, "Unknown option\n");
@@ -264,7 +264,7 @@ void subdev_cmd(int ch, char *optarg)
 				"width",
 				"height",
 				"pad",
-				NULL
+				nullptr
 			};
 
 			switch (parse_subopt(&subs, subopts, &value)) {
@@ -280,23 +280,23 @@ void subdev_cmd(int ch, char *optarg)
 				set_selection |= SelectionFlags;
 				break;
 			case 2:
-				vsel.r.left = strtol(value, 0L, 0);
+				vsel.r.left = strtol(value, nullptr, 0);
 				set_selection |= SelectionLeft;
 				break;
 			case 3:
-				vsel.r.top = strtol(value, 0L, 0);
+				vsel.r.top = strtol(value, nullptr, 0);
 				set_selection |= SelectionTop;
 				break;
 			case 4:
-				vsel.r.width = strtoul(value, 0L, 0);
+				vsel.r.width = strtoul(value, nullptr, 0);
 				set_selection |= SelectionWidth;
 				break;
 			case 5:
-				vsel.r.height = strtoul(value, 0L, 0);
+				vsel.r.height = strtoul(value, nullptr, 0);
 				set_selection |= SelectionHeight;
 				break;
 			case 6:
-				vsel.pad = strtoul(value, 0L, 0);
+				vsel.pad = strtoul(value, nullptr, 0);
 				break;
 			default:
 				fprintf(stderr, "Unknown option\n");
@@ -312,15 +312,15 @@ void subdev_cmd(int ch, char *optarg)
 			static const char *const subopts[] = {
 				"pad",
 				"fps",
-				NULL
+				nullptr
 			};
 
 			switch (parse_subopt(&subs, subopts, &value)) {
 			case 0:
-				set_fps_pad = strtoul(value, 0L, 0);
+				set_fps_pad = strtoul(value, nullptr, 0);
 				break;
 			case 1:
-				set_fps = strtod(value, NULL);
+				set_fps = strtod(value, nullptr);
 				break;
 			default:
 				fprintf(stderr, "Unknown option\n");

@@ -57,5 +57,5 @@ int testRegister(struct node *node)
 
 int testLogStatus(struct node *node)
 {
-	return doioctl(node, VIDIOC_LOG_STATUS, NULL);
+	return doioctl(node, VIDIOC_LOG_STATUS, nullptr);
 }

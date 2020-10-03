@@ -414,7 +414,7 @@ static void createInvalidFmt(struct v4l2_format &fmt, struct v4l2_clip &clip, un
 		clip.next = (struct  v4l2_clip *)0x0eadbeef;
 		fmt.fmt.win.clipcount = 1;
 		fmt.fmt.win.clips = &clip;
-		fmt.fmt.win.bitmap = NULL;
+		fmt.fmt.win.bitmap = nullptr;
 	}
 }
 
@@ -1177,7 +1177,7 @@ int testSetFormats(struct node *node)
 
 	// Test if setting a format on one fh will set the format for all
 	// filehandles.
-	if (node->node2 == NULL)
+	if (node->node2 == nullptr)
 		return 0;
 
 	// m2m devices are special in that the format is often per-filehandle.

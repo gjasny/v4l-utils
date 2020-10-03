@@ -32,7 +32,7 @@ int testMediaDeviceInfo(struct node *node)
 	struct media_device_info mdinfo;
 
 	memset(&mdinfo, 0xff, sizeof(mdinfo));
-	fail_on_test(doioctl(node, MEDIA_IOC_DEVICE_INFO, NULL) != EFAULT);
+	fail_on_test(doioctl(node, MEDIA_IOC_DEVICE_INFO, nullptr) != EFAULT);
 	fail_on_test(doioctl(node, MEDIA_IOC_DEVICE_INFO, &mdinfo));
 	fail_on_test(check_0(mdinfo.reserved, sizeof(mdinfo.reserved)));
 	fail_on_test(check_string(mdinfo.driver, sizeof(mdinfo.driver)));
@@ -66,7 +66,7 @@ static int checkDevice(__u32 major, __u32 minor, bool iface, __u32 id)
 	fail_on_test(snprintf(dev_path, sizeof(dev_path), "/sys/dev/char/%d:%d",
 			      major, minor) == -1);
 	DIR *dp = opendir(dev_path);
-	if (dp == NULL)
+	if (dp == nullptr)
 		return fail("couldn't find %s for %s %u\n",
 			    dev_path, iface ? "interface" : "entity", id);
 	closedir(dp);
@@ -396,10 +396,10 @@ int testMediaEnum(struct node *node)
 		fail_on_test(links.links);
 		links.pads = (struct media_pad_desc *)4;
 		fail_on_test(ent.pads && doioctl(node, MEDIA_IOC_ENUM_LINKS, &links) != EFAULT);
-		links.pads = NULL;
+		links.pads = nullptr;
 		links.links = (struct media_link_desc *)4;
 		fail_on_test(ent.links && doioctl(node, MEDIA_IOC_ENUM_LINKS, &links) != EFAULT);
-		links.links = NULL;
+		links.links = nullptr;
 		links.pads = new media_pad_desc[ent.pads];
 		memset(links.pads, 0xff, ent.pads * sizeof(*links.pads));
 		links.links = new media_link_desc[ent.links];

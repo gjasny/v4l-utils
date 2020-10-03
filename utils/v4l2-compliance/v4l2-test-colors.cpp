@@ -476,7 +476,7 @@ static int testColorsFmt(struct node *node, unsigned component,
 {
 	cv4l_queue q;
 	cv4l_fmt fmt;
-	__u8 *planes[3] = { 0, 0, 0 };
+	__u8 *planes[3] = { nullptr, nullptr, nullptr };
 	skip++;
 
 	node->g_fmt(fmt);

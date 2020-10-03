@@ -50,224 +50,224 @@ __u32 vidcap_buftype;
 __u32 vidout_buftype;
 
 static struct option long_options[] = {
-	{"list-audio-inputs", no_argument, 0, OptListAudioInputs},
-	{"list-audio-outputs", no_argument, 0, OptListAudioOutputs},
-	{"all", no_argument, 0, OptAll},
-	{"device", required_argument, 0, OptSetDevice},
-	{"out-device", required_argument, 0, OptSetOutDevice},
-	{"export-device", required_argument, 0, OptSetExportDevice},
-	{"media-bus-info", required_argument, 0, OptMediaBusInfo},
-	{"get-fmt-video", no_argument, 0, OptGetVideoFormat},
-	{"set-fmt-video", required_argument, 0, OptSetVideoFormat},
-	{"try-fmt-video", required_argument, 0, OptTryVideoFormat},
-	{"get-fmt-video-out", no_argument, 0, OptGetVideoOutFormat},
-	{"set-fmt-video-out", required_argument, 0, OptSetVideoOutFormat},
-	{"try-fmt-video-out", required_argument, 0, OptTryVideoOutFormat},
-	{"help", no_argument, 0, OptHelp},
-	{"help-tuner", no_argument, 0, OptHelpTuner},
-	{"help-io", no_argument, 0, OptHelpIO},
-	{"help-stds", no_argument, 0, OptHelpStds},
-	{"help-vidcap", no_argument, 0, OptHelpVidCap},
-	{"help-vidout", no_argument, 0, OptHelpVidOut},
-	{"help-overlay", no_argument, 0, OptHelpOverlay},
-	{"help-vbi", no_argument, 0, OptHelpVbi},
-	{"help-sdr", no_argument, 0, OptHelpSdr},
-	{"help-meta", no_argument, 0, OptHelpMeta},
-	{"help-subdev", no_argument, 0, OptHelpSubDev},
-	{"help-selection", no_argument, 0, OptHelpSelection},
-	{"help-misc", no_argument, 0, OptHelpMisc},
-	{"help-streaming", no_argument, 0, OptHelpStreaming},
-	{"help-edid", no_argument, 0, OptHelpEdid},
-	{"help-all", no_argument, 0, OptHelpAll},
+	{"list-audio-inputs", no_argument, nullptr, OptListAudioInputs},
+	{"list-audio-outputs", no_argument, nullptr, OptListAudioOutputs},
+	{"all", no_argument, nullptr, OptAll},
+	{"device", required_argument, nullptr, OptSetDevice},
+	{"out-device", required_argument, nullptr, OptSetOutDevice},
+	{"export-device", required_argument, nullptr, OptSetExportDevice},
+	{"media-bus-info", required_argument, nullptr, OptMediaBusInfo},
+	{"get-fmt-video", no_argument, nullptr, OptGetVideoFormat},
+	{"set-fmt-video", required_argument, nullptr, OptSetVideoFormat},
+	{"try-fmt-video", required_argument, nullptr, OptTryVideoFormat},
+	{"get-fmt-video-out", no_argument, nullptr, OptGetVideoOutFormat},
+	{"set-fmt-video-out", required_argument, nullptr, OptSetVideoOutFormat},
+	{"try-fmt-video-out", required_argument, nullptr, OptTryVideoOutFormat},
+	{"help", no_argument, nullptr, OptHelp},
+	{"help-tuner", no_argument, nullptr, OptHelpTuner},
+	{"help-io", no_argument, nullptr, OptHelpIO},
+	{"help-stds", no_argument, nullptr, OptHelpStds},
+	{"help-vidcap", no_argument, nullptr, OptHelpVidCap},
+	{"help-vidout", no_argument, nullptr, OptHelpVidOut},
+	{"help-overlay", no_argument, nullptr, OptHelpOverlay},
+	{"help-vbi", no_argument, nullptr, OptHelpVbi},
+	{"help-sdr", no_argument, nullptr, OptHelpSdr},
+	{"help-meta", no_argument, nullptr, OptHelpMeta},
+	{"help-subdev", no_argument, nullptr, OptHelpSubDev},
+	{"help-selection", no_argument, nullptr, OptHelpSelection},
+	{"help-misc", no_argument, nullptr, OptHelpMisc},
+	{"help-streaming", no_argument, nullptr, OptHelpStreaming},
+	{"help-edid", no_argument, nullptr, OptHelpEdid},
+	{"help-all", no_argument, nullptr, OptHelpAll},
 #ifndef NO_LIBV4L2
-	{"wrapper", no_argument, 0, OptUseWrapper},
+	{"wrapper", no_argument, nullptr, OptUseWrapper},
 #endif
-	{"concise", no_argument, 0, OptConcise},
-	{"get-output", no_argument, 0, OptGetOutput},
-	{"set-output", required_argument, 0, OptSetOutput},
-	{"list-outputs", no_argument, 0, OptListOutputs},
-	{"list-inputs", no_argument, 0, OptListInputs},
-	{"get-input", no_argument, 0, OptGetInput},
-	{"set-input", required_argument, 0, OptSetInput},
-	{"get-audio-input", no_argument, 0, OptGetAudioInput},
-	{"set-audio-input", required_argument, 0, OptSetAudioInput},
-	{"get-audio-output", no_argument, 0, OptGetAudioOutput},
-	{"set-audio-output", required_argument, 0, OptSetAudioOutput},
-	{"get-freq", no_argument, 0, OptGetFreq},
-	{"set-freq", required_argument, 0, OptSetFreq},
-	{"list-standards", no_argument, 0, OptListStandards},
-	{"list-formats", optional_argument, 0, OptListFormats},
-	{"list-formats-ext", optional_argument, 0, OptListFormatsExt},
-	{"list-fields", no_argument, 0, OptListFields},
-	{"list-framesizes", required_argument, 0, OptListFrameSizes},
-	{"list-frameintervals", required_argument, 0, OptListFrameIntervals},
-	{"list-formats-overlay", no_argument, 0, OptListOverlayFormats},
-	{"list-formats-sdr", no_argument, 0, OptListSdrFormats},
-	{"list-formats-sdr-out", no_argument, 0, OptListSdrOutFormats},
-	{"list-formats-out", optional_argument, 0, OptListOutFormats},
-	{"list-formats-out-ext", optional_argument, 0, OptListOutFormatsExt},
-	{"list-formats-meta", optional_argument, 0, OptListMetaFormats},
-	{"list-formats-meta-out", optional_argument, 0, OptListMetaOutFormats},
-	{"list-subdev-mbus-codes", optional_argument, 0, OptListSubDevMBusCodes},
-	{"list-subdev-framesizes", required_argument, 0, OptListSubDevFrameSizes},
-	{"list-subdev-frameintervals", required_argument, 0, OptListSubDevFrameIntervals},
-	{"list-fields-out", no_argument, 0, OptListOutFields},
-	{"clear-clips", no_argument, 0, OptClearClips},
-	{"clear-bitmap", no_argument, 0, OptClearBitmap},
-	{"add-clip", required_argument, 0, OptAddClip},
-	{"add-bitmap", required_argument, 0, OptAddBitmap},
-	{"find-fb", no_argument, 0, OptFindFb},
-	{"subset", required_argument, 0, OptSubset},
-	{"get-standard", no_argument, 0, OptGetStandard},
-	{"set-standard", required_argument, 0, OptSetStandard},
-	{"get-detected-standard", no_argument, 0, OptQueryStandard},
-	{"get-parm", no_argument, 0, OptGetParm},
-	{"set-parm", required_argument, 0, OptSetParm},
-	{"get-output-parm", no_argument, 0, OptGetOutputParm},
-	{"set-output-parm", required_argument, 0, OptSetOutputParm},
-	{"info", no_argument, 0, OptGetDriverInfo},
-	{"list-ctrls", no_argument, 0, OptListCtrls},
-	{"list-ctrls-menus", no_argument, 0, OptListCtrlsMenus},
-	{"set-ctrl", required_argument, 0, OptSetCtrl},
-	{"get-ctrl", required_argument, 0, OptGetCtrl},
-	{"get-tuner", no_argument, 0, OptGetTuner},
-	{"set-tuner", required_argument, 0, OptSetTuner},
-	{"list-freq-bands", no_argument, 0, OptListFreqBands},
-	{"silent", no_argument, 0, OptSilent},
-	{"verbose", no_argument, 0, OptVerbose},
-	{"log-status", no_argument, 0, OptLogStatus},
-	{"get-fmt-overlay", no_argument, 0, OptGetOverlayFormat},
-	{"set-fmt-overlay", optional_argument, 0, OptSetOverlayFormat},
-	{"try-fmt-overlay", optional_argument, 0, OptTryOverlayFormat},
-	{"get-fmt-sliced-vbi", no_argument, 0, OptGetSlicedVbiFormat},
-	{"set-fmt-sliced-vbi", required_argument, 0, OptSetSlicedVbiFormat},
-	{"try-fmt-sliced-vbi", required_argument, 0, OptTrySlicedVbiFormat},
-	{"get-fmt-sliced-vbi-out", no_argument, 0, OptGetSlicedVbiOutFormat},
-	{"set-fmt-sliced-vbi-out", required_argument, 0, OptSetSlicedVbiOutFormat},
-	{"try-fmt-sliced-vbi-out", required_argument, 0, OptTrySlicedVbiOutFormat},
-	{"get-fmt-vbi", no_argument, 0, OptGetVbiFormat},
-	{"set-fmt-vbi", required_argument, 0, OptSetVbiFormat},
-	{"try-fmt-vbi", required_argument, 0, OptTryVbiFormat},
-	{"get-fmt-vbi-out", no_argument, 0, OptGetVbiOutFormat},
-	{"set-fmt-vbi-out", required_argument, 0, OptSetVbiOutFormat},
-	{"try-fmt-vbi-out", required_argument, 0, OptTryVbiOutFormat},
-	{"get-fmt-sdr", no_argument, 0, OptGetSdrFormat},
-	{"set-fmt-sdr", required_argument, 0, OptSetSdrFormat},
-	{"try-fmt-sdr", required_argument, 0, OptTrySdrFormat},
-	{"get-fmt-sdr-out", no_argument, 0, OptGetSdrOutFormat},
-	{"set-fmt-sdr-out", required_argument, 0, OptSetSdrOutFormat},
-	{"try-fmt-sdr-out", required_argument, 0, OptTrySdrOutFormat},
-	{"get-fmt-meta", no_argument, 0, OptGetMetaFormat},
-	{"set-fmt-meta", required_argument, 0, OptSetMetaFormat},
-	{"try-fmt-meta", required_argument, 0, OptTryMetaFormat},
-	{"get-fmt-meta-out", no_argument, 0, OptGetMetaOutFormat},
-	{"set-fmt-meta-out", required_argument, 0, OptSetMetaOutFormat},
-	{"try-fmt-meta-out", required_argument, 0, OptTryMetaOutFormat},
-	{"get-subdev-fmt", optional_argument, 0, OptGetSubDevFormat},
-	{"set-subdev-fmt", required_argument, 0, OptSetSubDevFormat},
-	{"try-subdev-fmt", required_argument, 0, OptTrySubDevFormat},
-	{"get-sliced-vbi-cap", no_argument, 0, OptGetSlicedVbiCap},
-	{"get-sliced-vbi-out-cap", no_argument, 0, OptGetSlicedVbiOutCap},
-	{"get-fbuf", no_argument, 0, OptGetFBuf},
-	{"set-fbuf", required_argument, 0, OptSetFBuf},
-	{"get-cropcap", no_argument, 0, OptGetCropCap},
-	{"get-crop", no_argument, 0, OptGetCrop},
-	{"set-crop", required_argument, 0, OptSetCrop},
-	{"get-cropcap-output", no_argument, 0, OptGetOutputCropCap},
-	{"get-crop-output", no_argument, 0, OptGetOutputCrop},
-	{"set-crop-output", required_argument, 0, OptSetOutputCrop},
-	{"get-cropcap-overlay", no_argument, 0, OptGetOverlayCropCap},
-	{"get-crop-overlay", no_argument, 0, OptGetOverlayCrop},
-	{"set-crop-overlay", required_argument, 0, OptSetOverlayCrop},
-	{"get-cropcap-output-overlay", no_argument, 0, OptGetOutputOverlayCropCap},
-	{"get-crop-output-overlay", no_argument, 0, OptGetOutputOverlayCrop},
-	{"set-crop-output-overlay", required_argument, 0, OptSetOutputOverlayCrop},
-	{"get-selection", required_argument, 0, OptGetSelection},
-	{"set-selection", required_argument, 0, OptSetSelection},
-	{"get-selection-output", required_argument, 0, OptGetOutputSelection},
-	{"set-selection-output", required_argument, 0, OptSetOutputSelection},
-	{"get-subdev-selection", required_argument, 0, OptGetSubDevSelection},
-	{"set-subdev-selection", required_argument, 0, OptSetSubDevSelection},
-	{"try-subdev-selection", required_argument, 0, OptTrySubDevSelection},
-	{"get-subdev-fps", optional_argument, 0, OptGetSubDevFPS},
-	{"set-subdev-fps", required_argument, 0, OptSetSubDevFPS},
-	{"get-jpeg-comp", no_argument, 0, OptGetJpegComp},
-	{"set-jpeg-comp", required_argument, 0, OptSetJpegComp},
-	{"get-modulator", no_argument, 0, OptGetModulator},
-	{"set-modulator", required_argument, 0, OptSetModulator},
-	{"get-priority", no_argument, 0, OptGetPriority},
-	{"set-priority", required_argument, 0, OptSetPriority},
-	{"wait-for-event", required_argument, 0, OptWaitForEvent},
-	{"poll-for-event", required_argument, 0, OptPollForEvent},
-	{"epoll-for-event", required_argument, 0, OptEPollForEvent},
-	{"overlay", required_argument, 0, OptOverlay},
-	{"sleep", required_argument, 0, OptSleep},
-	{"list-devices", no_argument, 0, OptListDevices},
-	{"list-dv-timings", optional_argument, 0, OptListDvTimings},
-	{"query-dv-timings", no_argument, 0, OptQueryDvTimings},
-	{"get-dv-timings", no_argument, 0, OptGetDvTimings},
-	{"set-dv-bt-timings", required_argument, 0, OptSetDvBtTimings},
-	{"get-dv-timings-cap", optional_argument, 0, OptGetDvTimingsCap},
-	{"freq-seek", required_argument, 0, OptFreqSeek},
-	{"encoder-cmd", required_argument, 0, OptEncoderCmd},
-	{"try-encoder-cmd", required_argument, 0, OptTryEncoderCmd},
-	{"decoder-cmd", required_argument, 0, OptDecoderCmd},
-	{"try-decoder-cmd", required_argument, 0, OptTryDecoderCmd},
-	{"set-edid", required_argument, 0, OptSetEdid},
-	{"clear-edid", optional_argument, 0, OptClearEdid},
-	{"get-edid", optional_argument, 0, OptGetEdid},
-	{"info-edid", optional_argument, 0, OptInfoEdid},
-	{"fix-edid-checksums", no_argument, 0, OptFixEdidChecksums},
-	{"tuner-index", required_argument, 0, OptTunerIndex},
-	{"list-buffers", no_argument, 0, OptListBuffers},
-	{"list-buffers-out", no_argument, 0, OptListBuffersOut},
-	{"list-buffers-vbi", no_argument, 0, OptListBuffersVbi},
-	{"list-buffers-sliced-vbi", no_argument, 0, OptListBuffersSlicedVbi},
-	{"list-buffers-vbi-out", no_argument, 0, OptListBuffersVbiOut},
-	{"list-buffers-sliced-vbi-out", no_argument, 0, OptListBuffersSlicedVbiOut},
-	{"list-buffers-sdr", no_argument, 0, OptListBuffersSdr},
-	{"list-buffers-sdr-out", no_argument, 0, OptListBuffersSdrOut},
-	{"list-buffers-meta", no_argument, 0, OptListBuffersMeta},
-	{"list-buffers-meta-out", no_argument, 0, OptListBuffersMetaOut},
-	{"stream-count", required_argument, 0, OptStreamCount},
-	{"stream-skip", required_argument, 0, OptStreamSkip},
-	{"stream-loop", no_argument, 0, OptStreamLoop},
-	{"stream-sleep", required_argument, 0, OptStreamSleep},
-	{"stream-poll", no_argument, 0, OptStreamPoll},
-	{"stream-no-query", no_argument, 0, OptStreamNoQuery},
+	{"concise", no_argument, nullptr, OptConcise},
+	{"get-output", no_argument, nullptr, OptGetOutput},
+	{"set-output", required_argument, nullptr, OptSetOutput},
+	{"list-outputs", no_argument, nullptr, OptListOutputs},
+	{"list-inputs", no_argument, nullptr, OptListInputs},
+	{"get-input", no_argument, nullptr, OptGetInput},
+	{"set-input", required_argument, nullptr, OptSetInput},
+	{"get-audio-input", no_argument, nullptr, OptGetAudioInput},
+	{"set-audio-input", required_argument, nullptr, OptSetAudioInput},
+	{"get-audio-output", no_argument, nullptr, OptGetAudioOutput},
+	{"set-audio-output", required_argument, nullptr, OptSetAudioOutput},
+	{"get-freq", no_argument, nullptr, OptGetFreq},
+	{"set-freq", required_argument, nullptr, OptSetFreq},
+	{"list-standards", no_argument, nullptr, OptListStandards},
+	{"list-formats", optional_argument, nullptr, OptListFormats},
+	{"list-formats-ext", optional_argument, nullptr, OptListFormatsExt},
+	{"list-fields", no_argument, nullptr, OptListFields},
+	{"list-framesizes", required_argument, nullptr, OptListFrameSizes},
+	{"list-frameintervals", required_argument, nullptr, OptListFrameIntervals},
+	{"list-formats-overlay", no_argument, nullptr, OptListOverlayFormats},
+	{"list-formats-sdr", no_argument, nullptr, OptListSdrFormats},
+	{"list-formats-sdr-out", no_argument, nullptr, OptListSdrOutFormats},
+	{"list-formats-out", optional_argument, nullptr, OptListOutFormats},
+	{"list-formats-out-ext", optional_argument, nullptr, OptListOutFormatsExt},
+	{"list-formats-meta", optional_argument, nullptr, OptListMetaFormats},
+	{"list-formats-meta-out", optional_argument, nullptr, OptListMetaOutFormats},
+	{"list-subdev-mbus-codes", optional_argument, nullptr, OptListSubDevMBusCodes},
+	{"list-subdev-framesizes", required_argument, nullptr, OptListSubDevFrameSizes},
+	{"list-subdev-frameintervals", required_argument, nullptr, OptListSubDevFrameIntervals},
+	{"list-fields-out", no_argument, nullptr, OptListOutFields},
+	{"clear-clips", no_argument, nullptr, OptClearClips},
+	{"clear-bitmap", no_argument, nullptr, OptClearBitmap},
+	{"add-clip", required_argument, nullptr, OptAddClip},
+	{"add-bitmap", required_argument, nullptr, OptAddBitmap},
+	{"find-fb", no_argument, nullptr, OptFindFb},
+	{"subset", required_argument, nullptr, OptSubset},
+	{"get-standard", no_argument, nullptr, OptGetStandard},
+	{"set-standard", required_argument, nullptr, OptSetStandard},
+	{"get-detected-standard", no_argument, nullptr, OptQueryStandard},
+	{"get-parm", no_argument, nullptr, OptGetParm},
+	{"set-parm", required_argument, nullptr, OptSetParm},
+	{"get-output-parm", no_argument, nullptr, OptGetOutputParm},
+	{"set-output-parm", required_argument, nullptr, OptSetOutputParm},
+	{"info", no_argument, nullptr, OptGetDriverInfo},
+	{"list-ctrls", no_argument, nullptr, OptListCtrls},
+	{"list-ctrls-menus", no_argument, nullptr, OptListCtrlsMenus},
+	{"set-ctrl", required_argument, nullptr, OptSetCtrl},
+	{"get-ctrl", required_argument, nullptr, OptGetCtrl},
+	{"get-tuner", no_argument, nullptr, OptGetTuner},
+	{"set-tuner", required_argument, nullptr, OptSetTuner},
+	{"list-freq-bands", no_argument, nullptr, OptListFreqBands},
+	{"silent", no_argument, nullptr, OptSilent},
+	{"verbose", no_argument, nullptr, OptVerbose},
+	{"log-status", no_argument, nullptr, OptLogStatus},
+	{"get-fmt-overlay", no_argument, nullptr, OptGetOverlayFormat},
+	{"set-fmt-overlay", optional_argument, nullptr, OptSetOverlayFormat},
+	{"try-fmt-overlay", optional_argument, nullptr, OptTryOverlayFormat},
+	{"get-fmt-sliced-vbi", no_argument, nullptr, OptGetSlicedVbiFormat},
+	{"set-fmt-sliced-vbi", required_argument, nullptr, OptSetSlicedVbiFormat},
+	{"try-fmt-sliced-vbi", required_argument, nullptr, OptTrySlicedVbiFormat},
+	{"get-fmt-sliced-vbi-out", no_argument, nullptr, OptGetSlicedVbiOutFormat},
+	{"set-fmt-sliced-vbi-out", required_argument, nullptr, OptSetSlicedVbiOutFormat},
+	{"try-fmt-sliced-vbi-out", required_argument, nullptr, OptTrySlicedVbiOutFormat},
+	{"get-fmt-vbi", no_argument, nullptr, OptGetVbiFormat},
+	{"set-fmt-vbi", required_argument, nullptr, OptSetVbiFormat},
+	{"try-fmt-vbi", required_argument, nullptr, OptTryVbiFormat},
+	{"get-fmt-vbi-out", no_argument, nullptr, OptGetVbiOutFormat},
+	{"set-fmt-vbi-out", required_argument, nullptr, OptSetVbiOutFormat},
+	{"try-fmt-vbi-out", required_argument, nullptr, OptTryVbiOutFormat},
+	{"get-fmt-sdr", no_argument, nullptr, OptGetSdrFormat},
+	{"set-fmt-sdr", required_argument, nullptr, OptSetSdrFormat},
+	{"try-fmt-sdr", required_argument, nullptr, OptTrySdrFormat},
+	{"get-fmt-sdr-out", no_argument, nullptr, OptGetSdrOutFormat},
+	{"set-fmt-sdr-out", required_argument, nullptr, OptSetSdrOutFormat},
+	{"try-fmt-sdr-out", required_argument, nullptr, OptTrySdrOutFormat},
+	{"get-fmt-meta", no_argument, nullptr, OptGetMetaFormat},
+	{"set-fmt-meta", required_argument, nullptr, OptSetMetaFormat},
+	{"try-fmt-meta", required_argument, nullptr, OptTryMetaFormat},
+	{"get-fmt-meta-out", no_argument, nullptr, OptGetMetaOutFormat},
+	{"set-fmt-meta-out", required_argument, nullptr, OptSetMetaOutFormat},
+	{"try-fmt-meta-out", required_argument, nullptr, OptTryMetaOutFormat},
+	{"get-subdev-fmt", optional_argument, nullptr, OptGetSubDevFormat},
+	{"set-subdev-fmt", required_argument, nullptr, OptSetSubDevFormat},
+	{"try-subdev-fmt", required_argument, nullptr, OptTrySubDevFormat},
+	{"get-sliced-vbi-cap", no_argument, nullptr, OptGetSlicedVbiCap},
+	{"get-sliced-vbi-out-cap", no_argument, nullptr, OptGetSlicedVbiOutCap},
+	{"get-fbuf", no_argument, nullptr, OptGetFBuf},
+	{"set-fbuf", required_argument, nullptr, OptSetFBuf},
+	{"get-cropcap", no_argument, nullptr, OptGetCropCap},
+	{"get-crop", no_argument, nullptr, OptGetCrop},
+	{"set-crop", required_argument, nullptr, OptSetCrop},
+	{"get-cropcap-output", no_argument, nullptr, OptGetOutputCropCap},
+	{"get-crop-output", no_argument, nullptr, OptGetOutputCrop},
+	{"set-crop-output", required_argument, nullptr, OptSetOutputCrop},
+	{"get-cropcap-overlay", no_argument, nullptr, OptGetOverlayCropCap},
+	{"get-crop-overlay", no_argument, nullptr, OptGetOverlayCrop},
+	{"set-crop-overlay", required_argument, nullptr, OptSetOverlayCrop},
+	{"get-cropcap-output-overlay", no_argument, nullptr, OptGetOutputOverlayCropCap},
+	{"get-crop-output-overlay", no_argument, nullptr, OptGetOutputOverlayCrop},
+	{"set-crop-output-overlay", required_argument, nullptr, OptSetOutputOverlayCrop},
+	{"get-selection", required_argument, nullptr, OptGetSelection},
+	{"set-selection", required_argument, nullptr, OptSetSelection},
+	{"get-selection-output", required_argument, nullptr, OptGetOutputSelection},
+	{"set-selection-output", required_argument, nullptr, OptSetOutputSelection},
+	{"get-subdev-selection", required_argument, nullptr, OptGetSubDevSelection},
+	{"set-subdev-selection", required_argument, nullptr, OptSetSubDevSelection},
+	{"try-subdev-selection", required_argument, nullptr, OptTrySubDevSelection},
+	{"get-subdev-fps", optional_argument, nullptr, OptGetSubDevFPS},
+	{"set-subdev-fps", required_argument, nullptr, OptSetSubDevFPS},
+	{"get-jpeg-comp", no_argument, nullptr, OptGetJpegComp},
+	{"set-jpeg-comp", required_argument, nullptr, OptSetJpegComp},
+	{"get-modulator", no_argument, nullptr, OptGetModulator},
+	{"set-modulator", required_argument, nullptr, OptSetModulator},
+	{"get-priority", no_argument, nullptr, OptGetPriority},
+	{"set-priority", required_argument, nullptr, OptSetPriority},
+	{"wait-for-event", required_argument, nullptr, OptWaitForEvent},
+	{"poll-for-event", required_argument, nullptr, OptPollForEvent},
+	{"epoll-for-event", required_argument, nullptr, OptEPollForEvent},
+	{"overlay", required_argument, nullptr, OptOverlay},
+	{"sleep", required_argument, nullptr, OptSleep},
+	{"list-devices", no_argument, nullptr, OptListDevices},
+	{"list-dv-timings", optional_argument, nullptr, OptListDvTimings},
+	{"query-dv-timings", no_argument, nullptr, OptQueryDvTimings},
+	{"get-dv-timings", no_argument, nullptr, OptGetDvTimings},
+	{"set-dv-bt-timings", required_argument, nullptr, OptSetDvBtTimings},
+	{"get-dv-timings-cap", optional_argument, nullptr, OptGetDvTimingsCap},
+	{"freq-seek", required_argument, nullptr, OptFreqSeek},
+	{"encoder-cmd", required_argument, nullptr, OptEncoderCmd},
+	{"try-encoder-cmd", required_argument, nullptr, OptTryEncoderCmd},
+	{"decoder-cmd", required_argument, nullptr, OptDecoderCmd},
+	{"try-decoder-cmd", required_argument, nullptr, OptTryDecoderCmd},
+	{"set-edid", required_argument, nullptr, OptSetEdid},
+	{"clear-edid", optional_argument, nullptr, OptClearEdid},
+	{"get-edid", optional_argument, nullptr, OptGetEdid},
+	{"info-edid", optional_argument, nullptr, OptInfoEdid},
+	{"fix-edid-checksums", no_argument, nullptr, OptFixEdidChecksums},
+	{"tuner-index", required_argument, nullptr, OptTunerIndex},
+	{"list-buffers", no_argument, nullptr, OptListBuffers},
+	{"list-buffers-out", no_argument, nullptr, OptListBuffersOut},
+	{"list-buffers-vbi", no_argument, nullptr, OptListBuffersVbi},
+	{"list-buffers-sliced-vbi", no_argument, nullptr, OptListBuffersSlicedVbi},
+	{"list-buffers-vbi-out", no_argument, nullptr, OptListBuffersVbiOut},
+	{"list-buffers-sliced-vbi-out", no_argument, nullptr, OptListBuffersSlicedVbiOut},
+	{"list-buffers-sdr", no_argument, nullptr, OptListBuffersSdr},
+	{"list-buffers-sdr-out", no_argument, nullptr, OptListBuffersSdrOut},
+	{"list-buffers-meta", no_argument, nullptr, OptListBuffersMeta},
+	{"list-buffers-meta-out", no_argument, nullptr, OptListBuffersMetaOut},
+	{"stream-count", required_argument, nullptr, OptStreamCount},
+	{"stream-skip", required_argument, nullptr, OptStreamSkip},
+	{"stream-loop", no_argument, nullptr, OptStreamLoop},
+	{"stream-sleep", required_argument, nullptr, OptStreamSleep},
+	{"stream-poll", no_argument, nullptr, OptStreamPoll},
+	{"stream-no-query", no_argument, nullptr, OptStreamNoQuery},
 #ifndef NO_STREAM_TO
-	{"stream-to", required_argument, 0, OptStreamTo},
-	{"stream-to-hdr", required_argument, 0, OptStreamToHdr},
-	{"stream-lossless", no_argument, 0, OptStreamLossless},
-	{"stream-to-host", required_argument, 0, OptStreamToHost},
+	{"stream-to", required_argument, nullptr, OptStreamTo},
+	{"stream-to-hdr", required_argument, nullptr, OptStreamToHdr},
+	{"stream-lossless", no_argument, nullptr, OptStreamLossless},
+	{"stream-to-host", required_argument, nullptr, OptStreamToHost},
 #endif
-	{"stream-buf-caps", no_argument, 0, OptStreamBufCaps},
-	{"stream-mmap", optional_argument, 0, OptStreamMmap},
-	{"stream-user", optional_argument, 0, OptStreamUser},
-	{"stream-dmabuf", no_argument, 0, OptStreamDmaBuf},
-	{"stream-from", required_argument, 0, OptStreamFrom},
-	{"stream-from-hdr", required_argument, 0, OptStreamFromHdr},
-	{"stream-from-host", required_argument, 0, OptStreamFromHost},
-	{"stream-out-pattern", required_argument, 0, OptStreamOutPattern},
-	{"stream-out-square", no_argument, 0, OptStreamOutSquare},
-	{"stream-out-border", no_argument, 0, OptStreamOutBorder},
-	{"stream-out-sav", no_argument, 0, OptStreamOutInsertSAV},
-	{"stream-out-eav", no_argument, 0, OptStreamOutInsertEAV},
-	{"stream-out-pixel-aspect", required_argument, 0, OptStreamOutPixelAspect},
-	{"stream-out-video-aspect", required_argument, 0, OptStreamOutVideoAspect},
-	{"stream-out-alpha", required_argument, 0, OptStreamOutAlphaComponent},
-	{"stream-out-alpha-red-only", no_argument, 0, OptStreamOutAlphaRedOnly},
-	{"stream-out-rgb-lim-range", required_argument, 0, OptStreamOutRGBLimitedRange},
-	{"stream-out-hor-speed", required_argument, 0, OptStreamOutHorSpeed},
-	{"stream-out-vert-speed", required_argument, 0, OptStreamOutVertSpeed},
-	{"stream-out-perc-fill", required_argument, 0, OptStreamOutPercFill},
-	{"stream-out-buf-caps", no_argument, 0, OptStreamOutBufCaps},
-	{"stream-out-mmap", optional_argument, 0, OptStreamOutMmap},
-	{"stream-out-user", optional_argument, 0, OptStreamOutUser},
-	{"stream-out-dmabuf", no_argument, 0, OptStreamOutDmaBuf},
-	{"list-patterns", no_argument, 0, OptListPatterns},
-	{"version", no_argument, 0, OptVersion},
-	{0, 0, 0, 0}
+	{"stream-buf-caps", no_argument, nullptr, OptStreamBufCaps},
+	{"stream-mmap", optional_argument, nullptr, OptStreamMmap},
+	{"stream-user", optional_argument, nullptr, OptStreamUser},
+	{"stream-dmabuf", no_argument, nullptr, OptStreamDmaBuf},
+	{"stream-from", required_argument, nullptr, OptStreamFrom},
+	{"stream-from-hdr", required_argument, nullptr, OptStreamFromHdr},
+	{"stream-from-host", required_argument, nullptr, OptStreamFromHost},
+	{"stream-out-pattern", required_argument, nullptr, OptStreamOutPattern},
+	{"stream-out-square", no_argument, nullptr, OptStreamOutSquare},
+	{"stream-out-border", no_argument, nullptr, OptStreamOutBorder},
+	{"stream-out-sav", no_argument, nullptr, OptStreamOutInsertSAV},
+	{"stream-out-eav", no_argument, nullptr, OptStreamOutInsertEAV},
+	{"stream-out-pixel-aspect", required_argument, nullptr, OptStreamOutPixelAspect},
+	{"stream-out-video-aspect", required_argument, nullptr, OptStreamOutVideoAspect},
+	{"stream-out-alpha", required_argument, nullptr, OptStreamOutAlphaComponent},
+	{"stream-out-alpha-red-only", no_argument, nullptr, OptStreamOutAlphaRedOnly},
+	{"stream-out-rgb-lim-range", required_argument, nullptr, OptStreamOutRGBLimitedRange},
+	{"stream-out-hor-speed", required_argument, nullptr, OptStreamOutHorSpeed},
+	{"stream-out-vert-speed", required_argument, nullptr, OptStreamOutVertSpeed},
+	{"stream-out-perc-fill", required_argument, nullptr, OptStreamOutPercFill},
+	{"stream-out-buf-caps", no_argument, nullptr, OptStreamOutBufCaps},
+	{"stream-out-mmap", optional_argument, nullptr, OptStreamOutMmap},
+	{"stream-out-user", optional_argument, nullptr, OptStreamOutUser},
+	{"stream-out-dmabuf", no_argument, nullptr, OptStreamOutDmaBuf},
+	{"list-patterns", no_argument, nullptr, OptListPatterns},
+	{"version", no_argument, nullptr, OptVersion},
+	{nullptr, 0, nullptr, 0}
 };
 
 static void usage_all()
@@ -667,7 +667,7 @@ int parse_subopt(char **subs, const char * const *subopts, char **value)
 		fprintf(stderr, "Invalid suboptions specified\n");
 		return -1;
 	}
-	if (*value == NULL) {
+	if (*value == nullptr) {
 		fprintf(stderr, "No value given to suboption <%s>\n",
 				subopts[opt]);
 		return -1;
@@ -775,16 +775,16 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 			"quantization",
 			"xfer",
 			"sizeimage",
-			NULL
+			nullptr
 		};
 
 		switch (parse_subopt(&subs, subopts, &value)) {
 		case 0:
-			width = strtoul(value, 0L, 0);
+			width = strtoul(value, nullptr, 0);
 			fmts |= FmtWidth;
 			break;
 		case 1:
-			height = strtoul(value, 0L, 0);
+			height = strtoul(value, nullptr, 0);
 			fmts |= FmtHeight;
 			break;
 		case 2:
@@ -796,7 +796,7 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 				if (be_pixfmt)
 					pixelformat |= 1U << 31;
 			} else if (isdigit(value[0])) {
-				pixelformat = strtol(value, 0L, 0);
+				pixelformat = strtol(value, nullptr, 0);
 			} else {
 				fprintf(stderr, "The pixelformat '%s' is invalid\n", value);
 				std::exit(EXIT_FAILURE);
@@ -823,7 +823,7 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 			fmts |= FmtYCbCr;
 			break;
 		case 7:
-			bytesperline[bpl_index] = strtoul(value, 0L, 0);
+			bytesperline[bpl_index] = strtoul(value, nullptr, 0);
 			if (bytesperline[bpl_index] > 0xffff) {
 				fprintf(stderr, "bytesperline can't be more than 65535\n");
 				bytesperline[bpl_index] = 0;
@@ -844,7 +844,7 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 			fmts |= FmtXferFunc;
 			break;
 		case 11:
-			sizeimage[sizeimage_index] = strtoul(value, 0L, 0);
+			sizeimage[sizeimage_index] = strtoul(value, nullptr, 0);
 			sizeimage_index++;
 			fmts |= FmtSizeImage;
 			break;
@@ -931,7 +931,7 @@ static __u32 parse_event(const char *e, const char **name)
 
 	*name = "0";
 	if (isdigit(e[0])) {
-		event = strtoul(e, 0L, 0);
+		event = strtoul(e, nullptr, 0);
 		if (event == V4L2_EVENT_CTRL) {
 			fprintf(stderr, "Missing control name for ctrl event, use ctrl=<name>\n");
 			misc_usage();
@@ -1005,7 +1005,7 @@ static int open_media_bus_info(const std::string &bus_info)
 	struct dirent *ep;
 
 	dp = opendir("/dev");
-	if (dp == NULL)
+	if (dp == nullptr)
 		return -1;
 
 	while ((ep = readdir(dp))) {
@@ -1065,7 +1065,7 @@ static const char *make_devname(const char *device, const char *devname,
 		goto err;
 
 	if (device[0] == '0' && device[1] == 'x')
-		iface_id = strtoul(device, NULL, 16);
+		iface_id = strtoul(device, nullptr, 16);
 
 	if (!iface_id) {
 		for (i = 0; i < topology.num_entities; i++)
@@ -1118,15 +1118,15 @@ int main(int argc, char **argv)
 	/* command args */
 	int ch;
 	const char *device = "/dev/video0";	/* -d device */
-	const char *out_device = NULL;
-	const char *export_device = NULL;
+	const char *out_device = nullptr;
+	const char *export_device = nullptr;
 	struct v4l2_capability vcap;	/* list_cap */
 	__u32 wait_for_event = 0;	/* wait for this event */
-	const char *wait_event_id = NULL;
+	const char *wait_event_id = nullptr;
 	__u32 poll_for_event = 0;	/* poll for this event */
-	const char *poll_event_id = NULL;
+	const char *poll_event_id = nullptr;
 	__u32 epoll_for_event = 0;	/* epoll for this event */
-	const char *epoll_event_id = NULL;
+	const char *epoll_event_id = nullptr;
 	unsigned secs = 0;
 	char short_options[26 * 2 * 3 + 1];
 	int idx = 0;
@@ -1247,7 +1247,7 @@ int main(int argc, char **argv)
 				return 1;
 			break;
 		case OptSleep:
-			secs = strtoul(optarg, 0L, 0);
+			secs = strtoul(optarg, nullptr, 0);
 			break;
 		case OptVersion:
 			print_version();
@@ -1515,7 +1515,7 @@ int main(int argc, char **argv)
 		if (wait_for_event == V4L2_EVENT_CTRL)
 			sub.id = common_find_ctrl_id(wait_event_id);
 		else if (wait_for_event == V4L2_EVENT_SOURCE_CHANGE)
-			sub.id = strtoul(wait_event_id, 0L, 0);
+			sub.id = strtoul(wait_event_id, nullptr, 0);
 		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub))
 			if (!doioctl(fd, VIDIOC_DQEVENT, &ev))
 				print_event(&ev);
@@ -1531,7 +1531,7 @@ int main(int argc, char **argv)
 		if (poll_for_event == V4L2_EVENT_CTRL)
 			sub.id = common_find_ctrl_id(poll_event_id);
 		else if (poll_for_event == V4L2_EVENT_SOURCE_CHANGE)
-			sub.id = strtoul(poll_event_id, 0L, 0);
+			sub.id = strtoul(poll_event_id, nullptr, 0);
 		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub)) {
 			fd_set fds;
 			__u32 seq = 0;
@@ -1542,7 +1542,7 @@ int main(int argc, char **argv)
 
 				FD_ZERO(&fds);
 				FD_SET(fd, &fds);
-				res = select(fd + 1, NULL, NULL, &fds, NULL);
+				res = select(fd + 1, nullptr, nullptr, &fds, nullptr);
 				if (res <= 0)
 					break;
 				if (!doioctl(fd, VIDIOC_DQEVENT, &ev)) {
@@ -1572,7 +1572,7 @@ int main(int argc, char **argv)
 		if (epoll_for_event == V4L2_EVENT_CTRL)
 			sub.id = common_find_ctrl_id(epoll_event_id);
 		else if (epoll_for_event == V4L2_EVENT_SOURCE_CHANGE)
-			sub.id = strtoul(epoll_event_id, 0L, 0);
+			sub.id = strtoul(epoll_event_id, nullptr, 0);
 		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub)) {
 			__u32 seq = 0;
 

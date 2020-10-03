@@ -152,7 +152,7 @@ int system_info_give_features(struct node *node, unsigned me, unsigned la, bool 
 	const __u8 *rc_profile, *dev_features;
 
 	cec_ops_report_features(&msg, &cec_version, &all_device_types, &rc_profile, &dev_features);
-	fail_on_test(rc_profile == NULL || dev_features == NULL);
+	fail_on_test(rc_profile == nullptr || dev_features == nullptr);
 	info("All Device Types: \t\t%s\n", cec_all_dev_types2s(all_device_types).c_str());
 	info("RC Profile: \t%s", cec_rc_src_prof2s(*rc_profile, "").c_str());
 	info("Device Features: \t%s", cec_dev_feat2s(*dev_features, "").c_str());
@@ -1529,7 +1529,7 @@ int setExpectedResult(char *optarg, bool no_warnings)
 	std::string name = safename(optarg);
 	if (mapTests.find(name) == mapTests.end())
 		return 1;
-	mapTests[name] = strtoul(equal + 1, NULL, 0);
+	mapTests[name] = strtoul(equal + 1, nullptr, 0);
 	mapTestsNoWarnings[name] = no_warnings;
 	return 0;
 }

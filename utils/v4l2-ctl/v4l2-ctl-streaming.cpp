@@ -637,13 +637,13 @@ void streaming_cmd(int ch, char *optarg)
 
 	switch (ch) {
 	case OptStreamCount:
-		stream_count = strtoul(optarg, 0L, 0);
+		stream_count = strtoul(optarg, nullptr, 0);
 		break;
 	case OptStreamSkip:
-		stream_skip = strtoul(optarg, 0L, 0);
+		stream_skip = strtoul(optarg, nullptr, 0);
 		break;
 	case OptStreamSleep:
-		stream_sleep = strtol(optarg, 0L, 0);
+		stream_sleep = strtol(optarg, nullptr, 0);
 		break;
 	case OptStreamNoQuery:
 		stream_no_query = true;
@@ -652,7 +652,7 @@ void streaming_cmd(int ch, char *optarg)
 		stream_loop = true;
 		break;
 	case OptStreamOutPattern:
-		stream_pat = strtoul(optarg, 0L, 0);
+		stream_pat = strtoul(optarg, nullptr, 0);
 		for (i = 0; tpg_pattern_strings[i]; i++) ;
 		if (stream_pat >= i)
 			stream_pat = 0;
@@ -692,7 +692,7 @@ void streaming_cmd(int ch, char *optarg)
 			streaming_usage();
 		break;
 	case OptStreamOutAlphaComponent:
-		stream_out_alpha = strtoul(optarg, 0L, 0);
+		stream_out_alpha = strtoul(optarg, nullptr, 0);
 		break;
 	case OptStreamOutAlphaRedOnly:
 		stream_out_alpha_red_only = true;
@@ -702,7 +702,7 @@ void streaming_cmd(int ch, char *optarg)
 		break;
 	case OptStreamOutHorSpeed:
 	case OptStreamOutVertSpeed:
-		speed = strtol(optarg, 0L, 0);
+		speed = strtol(optarg, nullptr, 0);
 		if (speed < -3)
 			speed = -3;
 		if (speed > 3)
@@ -713,7 +713,7 @@ void streaming_cmd(int ch, char *optarg)
 			stream_out_vert_mode = static_cast<tpg_move_mode>(speed + 3);
 		break;
 	case OptStreamOutPercFill:
-		stream_out_perc_fill = strtoul(optarg, 0L, 0);
+		stream_out_perc_fill = strtoul(optarg, nullptr, 0);
 		if (stream_out_perc_fill > 100)
 			stream_out_perc_fill = 100;
 		if (stream_out_perc_fill < 1)
@@ -753,7 +753,7 @@ void streaming_cmd(int ch, char *optarg)
 		fallthrough;
 	case OptStreamMmap:
 		if (optarg) {
-			reqbufs_count_cap = strtoul(optarg, 0L, 0);
+			reqbufs_count_cap = strtoul(optarg, nullptr, 0);
 			if (reqbufs_count_cap == 0)
 				reqbufs_count_cap = 3;
 		}
@@ -766,7 +766,7 @@ void streaming_cmd(int ch, char *optarg)
 		fallthrough;
 	case OptStreamOutMmap:
 		if (optarg) {
-			reqbufs_count_out = strtoul(optarg, 0L, 0);
+			reqbufs_count_out = strtoul(optarg, nullptr, 0);
 			if (reqbufs_count_out == 0)
 				reqbufs_count_out = 3;
 		}
@@ -1416,7 +1416,7 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 				     host_fd_to >= 0 ? 100 - comp_perc / comp_perc_count : -1);
 		comp_perc_count = comp_perc = 0;
 	}
-	if (!last_buffer && index == NULL) {
+	if (!last_buffer && index == nullptr) {
 		/*
 		 * EINVAL in qbuf can happen if this is the last buffer before
 		 * a dynamic resolution change sequence. In this case the buffer
@@ -1632,7 +1632,7 @@ static int do_handle_out_to_in(cv4l_fd &out_fd, cv4l_fd &fd, cv4l_queue &out, cv
 
 static FILE *open_output_file(cv4l_fd &fd)
 {
-	FILE *fout = NULL;
+	FILE *fout = nullptr;
 
 #ifndef NO_STREAM_TO
 	if (file_to) {
@@ -1644,7 +1644,7 @@ static FILE *open_output_file(cv4l_fd &fd)
 		return fout;
 	}
 	if (!host_to)
-		return NULL;
+		return nullptr;
 
 	char *p = std::strchr(host_to, ':');
 	struct sockaddr_in serv_addr;
@@ -1657,7 +1657,7 @@ static FILE *open_output_file(cv4l_fd &fd)
 
 	aspect = fd.g_pixel_aspect(width, height);
 	if (p) {
-		host_port_to = strtoul(p + 1, 0L, 0);
+		host_port_to = strtoul(p + 1, nullptr, 0);
 		*p = '\0';
 	}
 	host_fd_to = socket(AF_INET, SOCK_STREAM, 0);
@@ -1666,7 +1666,7 @@ static FILE *open_output_file(cv4l_fd &fd)
 		std::exit(EXIT_SUCCESS);
 	}
 	server = gethostbyname(host_to);
-	if (server == NULL) {
+	if (server == nullptr) {
 		fprintf(stderr, "no such host %s\n", host_to);
 		std::exit(EXIT_SUCCESS);
 	}
@@ -1728,7 +1728,7 @@ static void streaming_set_cap(cv4l_fd &fd, cv4l_fd &exp_fd)
 	unsigned count;
 	bool eos;
 	bool source_change;
-	FILE *fout = NULL;
+	FILE *fout = nullptr;
 	cv4l_fmt fmt;
 
 	if (!(capabilities & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_CAPTURE_MPLANE |
@@ -1833,7 +1833,7 @@ recover:
 		FD_SET(fd.g_fd(), &exception_fds);
 		FD_ZERO(&read_fds);
 		FD_SET(fd.g_fd(), &read_fds);
-		r = select(fd.g_fd() + 1, use_poll ? &read_fds : NULL, NULL, &exception_fds, &tv);
+		r = select(fd.g_fd() + 1, use_poll ? &read_fds : nullptr, nullptr, &exception_fds, &tv);
 
 		if (r == -1) {
 			if (EINTR == errno)
@@ -1870,7 +1870,7 @@ recover:
 		}
 
 		if (FD_ISSET(fd.g_fd(), &read_fds)) {
-			r = do_handle_cap(fd, q, fout, NULL,
+			r = do_handle_cap(fd, q, fout, nullptr,
 					  count, fps_ts, fmt, false);
 			if (r < 0)
 				break;
@@ -1898,7 +1898,7 @@ done:
 
 static FILE *open_input_file(cv4l_fd &fd, __u32 type)
 {
-	FILE *fin = NULL;
+	FILE *fin = nullptr;
 
 	if (file_from) {
 		if (!strcmp(file_from, "-"))
@@ -1909,7 +1909,7 @@ static FILE *open_input_file(cv4l_fd &fd, __u32 type)
 		return fin;
 	}
 	if (!host_from)
-		return NULL;
+		return nullptr;
 
 	char *p = std::strchr(host_from, ':');
 	int listen_fd;
@@ -1917,7 +1917,7 @@ static FILE *open_input_file(cv4l_fd &fd, __u32 type)
 	struct sockaddr_in serv_addr = {}, cli_addr;
 
 	if (p) {
-		host_port_from = strtoul(p + 1, 0L, 0);
+		host_port_from = strtoul(p + 1, nullptr, 0);
 		*p = '\0';
 	}
 	listen_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -2032,7 +2032,7 @@ static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 	fps_timestamps fps_ts;
 	unsigned count = 0;
 	bool stopped = false;
-	FILE *fin = NULL;
+	FILE *fin = nullptr;
 	cv4l_fmt fmt;
 
 	fd.g_fmt(fmt);
@@ -2113,7 +2113,7 @@ static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 			tv.tv_sec = 2;
 			tv.tv_usec = 0;
 
-			r = select(fd.g_fd() + 1, NULL, &fds, NULL, &tv);
+			r = select(fd.g_fd() + 1, nullptr, &fds, nullptr, &tv);
 
 			if (r == -1) {
 				if (EINTR == errno)
@@ -2128,7 +2128,7 @@ static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 				goto done;
 			}
 		}
-		r = do_handle_out(fd, q, fin, NULL,
+		r = do_handle_out(fd, q, fin, nullptr,
 				  count, fps_ts, fmt, stopped, false);
 		if (r == QUEUE_STOPPED)
 			stopped = true;
@@ -2160,7 +2160,7 @@ enum stream_type {
 	OUT,
 };
 
-static int capture_setup(cv4l_fd &fd, cv4l_queue &in, cv4l_fd *exp_fd, cv4l_fmt *new_fmt = NULL)
+static int capture_setup(cv4l_fd &fd, cv4l_queue &in, cv4l_fd *exp_fd, cv4l_fmt *new_fmt = nullptr)
 {
 	if (fd.streamoff(in.g_type())) {
 		fprintf(stderr, "%s: fd.streamoff error\n", __func__);
@@ -2323,22 +2323,22 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		}
 
 		if (rd_fds && FD_ISSET(fd.g_fd(), rd_fds)) {
-			r = do_handle_cap(fd, in, fin, NULL,
+			r = do_handle_cap(fd, in, fin, nullptr,
 					  count[CAP], fps_ts[CAP], fmt_in,
 					  ignore_count_skip);
 			if (r == QUEUE_STOPPED)
 				break;
 			if (r < 0) {
-				rd_fds = NULL;
+				rd_fds = nullptr;
 				if (!have_eos) {
-					ex_fds = NULL;
+					ex_fds = nullptr;
 					break;
 				}
 			}
 		}
 
 		if (wr_fds && FD_ISSET(fd.g_fd(), wr_fds)) {
-			r = do_handle_out(fd, out, fout, NULL,
+			r = do_handle_out(fd, out, fout, nullptr,
 					  count[OUT], fps_ts[OUT], fmt_out, stopped,
 					  !ignore_count_skip);
 			if (r == QUEUE_STOPPED) {
@@ -2362,7 +2362,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 
 			while (!fd.dqevent(ev)) {
 				if (ev.type == V4L2_EVENT_EOS) {
-					wr_fds = NULL;
+					wr_fds = nullptr;
 					if (!verbose)
 						fprintf(stderr, "\n");
 					fprintf(stderr, "EOS EVENT\n");
@@ -2472,7 +2472,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		FD_ZERO(&except_fds);
 		FD_SET(req_fd, &except_fds);
 
-		int rc = select(req_fd + 1, NULL, NULL, &except_fds, &tv);
+		int rc = select(req_fd + 1, nullptr, nullptr, &except_fds, &tv);
 
 		if (rc == 0) {
 			fprintf(stderr, "Timeout when waiting for media request\n");
@@ -2499,7 +2499,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		 * fin is not sent to do_handle_cap since the capture buf is
 		 * written to the file in current function
 		 */
-		rc = do_handle_cap(fd, in, NULL, &buf_idx, count[CAP],
+		rc = do_handle_cap(fd, in, nullptr, &buf_idx, count[CAP],
 				   fps_ts[CAP], fmt_in, false);
 		if (rc && rc != QUEUE_STOPPED) {
 			fprintf(stderr, "%s: do_handle_cap err\n", __func__);
@@ -2539,7 +2539,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 			return;
 
 		if (!stopped) {
-			rc = do_handle_out(fd, out, fout, NULL, count[OUT],
+			rc = do_handle_out(fd, out, fout, nullptr, count[OUT],
 					   fps_ts[OUT], fmt_out, false, true);
 			if (rc) {
 				stopped = true;
@@ -2567,8 +2567,8 @@ static void streaming_set_m2m(cv4l_fd &fd, cv4l_fd &exp_fd)
 	cv4l_queue in(fd.g_type(), memory);
 	cv4l_queue out(v4l_type_invert(fd.g_type()), out_memory);
 	cv4l_queue exp_q(exp_fd.g_type(), V4L2_MEMORY_MMAP);
-	cv4l_fd *exp_fd_p = NULL;
-	FILE *file[2] = {NULL, NULL};
+	cv4l_fd *exp_fd_p = nullptr;
+	FILE *file[2] = {nullptr, nullptr};
 	cv4l_fmt fmt[2];
 
 	fd.g_fmt(fmt[OUT], out.g_type());
@@ -2629,7 +2629,7 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 	cv4l_queue out(out_type, out_memory);
 	fps_timestamps fps_ts[2];
 	unsigned count[2] = { 0, 0 };
-	FILE *file[2] = {NULL, NULL};
+	FILE *file[2] = {nullptr, nullptr};
 	fd_set fds;
 	unsigned cnt = 0;
 	cv4l_fmt fmt[2];
@@ -2737,7 +2737,7 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 		FD_SET(fd.g_fd(), &fds);
 
 		if (use_poll)
-			r = select(fd.g_fd() + 1, &fds, NULL, NULL, &tv);
+			r = select(fd.g_fd() + 1, &fds, nullptr, nullptr, &tv);
 
 		if (r == -1) {
 			if (EINTR == errno)

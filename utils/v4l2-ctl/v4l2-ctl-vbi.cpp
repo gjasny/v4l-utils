@@ -104,7 +104,7 @@ void vbi_cmd(int ch, char *optarg)
 					V4L2_SLICED_VPS;
 			else
 				vbi_usage();
-			if (subs == NULL)
+			if (subs == nullptr)
 				break;
 			optarg = subs + 1;
 		}
@@ -131,30 +131,30 @@ void vbi_cmd(int ch, char *optarg)
 				"start1",
 				"count0",
 				"count1",
-				NULL
+				nullptr
 			};
 
 			switch (parse_subopt(&subs, subopts, &value)) {
 			case 0:
-				raw->fmt.vbi.sampling_rate = strtoul(value, NULL, 0);
+				raw->fmt.vbi.sampling_rate = strtoul(value, nullptr, 0);
 				break;
 			case 1:
-				raw->fmt.vbi.offset = strtoul(value, NULL, 0);
+				raw->fmt.vbi.offset = strtoul(value, nullptr, 0);
 				break;
 			case 2:
-				raw->fmt.vbi.samples_per_line = strtoul(value, NULL, 0);
+				raw->fmt.vbi.samples_per_line = strtoul(value, nullptr, 0);
 				break;
 			case 3:
-				raw->fmt.vbi.start[0] = strtoul(value, NULL, 0);
+				raw->fmt.vbi.start[0] = strtoul(value, nullptr, 0);
 				break;
 			case 4:
-				raw->fmt.vbi.start[1] = strtoul(value, NULL, 0);
+				raw->fmt.vbi.start[1] = strtoul(value, nullptr, 0);
 				break;
 			case 5:
-				raw->fmt.vbi.count[0] = strtoul(value, NULL, 0);
+				raw->fmt.vbi.count[0] = strtoul(value, nullptr, 0);
 				break;
 			case 6:
-				raw->fmt.vbi.count[1] = strtoul(value, NULL, 0);
+				raw->fmt.vbi.count[1] = strtoul(value, nullptr, 0);
 				break;
 			default:
 				vbi_usage();

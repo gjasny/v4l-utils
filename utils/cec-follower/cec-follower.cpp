@@ -49,23 +49,23 @@ bool show_warnings = true;
 unsigned warnings;
 
 static struct option long_options[] = {
-	{ "device", required_argument, 0, OptSetDevice },
-	{ "adapter", required_argument, 0, OptSetAdapter },
-	{ "driver", required_argument, 0, OptSetDriver },
-	{ "help", no_argument, 0, OptHelp },
-	{ "no-warnings", no_argument, 0, OptNoWarnings },
-	{ "trace", no_argument, 0, OptTrace },
-	{ "verbose", no_argument, 0, OptVerbose },
-	{ "show-msgs", no_argument, 0, OptShowMsgs },
-	{ "show-state", no_argument, 0, OptShowState },
-	{ "wall-clock", no_argument, 0, OptWallClock },
-	{ "service-by-dig-id", no_argument, 0, OptServiceByDigID },
-	{ "standby", no_argument, 0, OptStandby },
-	{ "toggle-power-status", required_argument, 0, OptTogglePowerStatus },
-	{ "ignore", required_argument, 0, OptIgnore },
-	{ "version", no_argument, 0, OptVersion },
+	{ "device", required_argument, nullptr, OptSetDevice },
+	{ "adapter", required_argument, nullptr, OptSetAdapter },
+	{ "driver", required_argument, nullptr, OptSetDriver },
+	{ "help", no_argument, nullptr, OptHelp },
+	{ "no-warnings", no_argument, nullptr, OptNoWarnings },
+	{ "trace", no_argument, nullptr, OptTrace },
+	{ "verbose", no_argument, nullptr, OptVerbose },
+	{ "show-msgs", no_argument, nullptr, OptShowMsgs },
+	{ "show-state", no_argument, nullptr, OptShowState },
+	{ "wall-clock", no_argument, nullptr, OptWallClock },
+	{ "service-by-dig-id", no_argument, nullptr, OptServiceByDigID },
+	{ "standby", no_argument, nullptr, OptStandby },
+	{ "toggle-power-status", required_argument, nullptr, OptTogglePowerStatus },
+	{ "ignore", required_argument, nullptr, OptIgnore },
+	{ "version", no_argument, nullptr, OptVersion },
 
-	{ 0, 0, 0, 0 }
+	{ nullptr, 0, nullptr, 0 }
 };
 
 #define STR(x) #x
@@ -320,8 +320,8 @@ int main(int argc, char **argv)
 {
 	std::string device;
 	struct node node = { };
-	const char *driver = NULL;
-	const char *adapter = NULL;
+	const char *driver = nullptr;
+	const char *adapter = nullptr;
 	unsigned toggle_power_status = 0;
 	char short_options[26 * 2 * 2 + 1];
 	int idx = 0;
@@ -391,7 +391,7 @@ int main(int argc, char **argv)
 			show_state = true;
 			break;
 		case OptTogglePowerStatus:
-			toggle_power_status = strtoul(optarg, NULL, 0);
+			toggle_power_status = strtoul(optarg, nullptr, 0);
 			break;
 		case OptIgnore: {
 			bool all_la = !strncmp(optarg, "all", 3);
@@ -402,7 +402,7 @@ int main(int argc, char **argv)
 			if (sep)
 				all_opcodes = !strncmp(sep + 1, "all", 3);
 			if (!all_la) {
-				la = strtoul(optarg, NULL, 0);
+				la = strtoul(optarg, nullptr, 0);
 
 				if (la > 15) {
 					fprintf(stderr, "invalid logical address (> 15)\n");
@@ -412,7 +412,7 @@ int main(int argc, char **argv)
 				la_mask = 1 << la;
 			}
 			if (!all_opcodes) {
-				opcode = strtoul(sep + 1, NULL, 0);
+				opcode = strtoul(sep + 1, nullptr, 0);
 				if (opcode > 255) {
 					fprintf(stderr, "invalid opcode (> 255)\n");
 					usage();

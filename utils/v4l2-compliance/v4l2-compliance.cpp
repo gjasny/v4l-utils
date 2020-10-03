@@ -114,35 +114,35 @@ struct dev_state {
 static struct dev_state state;
 
 static struct option long_options[] = {
-	{"device", required_argument, 0, OptSetDevice},
-	{"radio-device", required_argument, 0, OptSetRadioDevice},
-	{"vbi-device", required_argument, 0, OptSetVbiDevice},
-	{"sdr-device", required_argument, 0, OptSetSWRadioDevice},
-	{"subdev-device", required_argument, 0, OptSetSubDevDevice},
-	{"expbuf-device", required_argument, 0, OptSetExpBufDevice},
-	{"touch-device", required_argument, 0, OptSetTouchDevice},
-	{"media-device", required_argument, 0, OptSetMediaDevice},
-	{"media-device-only", required_argument, 0, OptSetMediaDeviceOnly},
-	{"media-bus-info", required_argument, 0, OptMediaBusInfo},
-	{"help", no_argument, 0, OptHelp},
-	{"verbose", no_argument, 0, OptVerbose},
-	{"color", required_argument, 0, OptColor},
-	{"no-warnings", no_argument, 0, OptNoWarnings},
-	{"no-progress", no_argument, 0, OptNoProgress},
-	{"exit-on-fail", no_argument, 0, OptExitOnFail},
-	{"exit-on-warn", no_argument, 0, OptExitOnWarn},
-	{"trace", no_argument, 0, OptTrace},
+	{"device", required_argument, nullptr, OptSetDevice},
+	{"radio-device", required_argument, nullptr, OptSetRadioDevice},
+	{"vbi-device", required_argument, nullptr, OptSetVbiDevice},
+	{"sdr-device", required_argument, nullptr, OptSetSWRadioDevice},
+	{"subdev-device", required_argument, nullptr, OptSetSubDevDevice},
+	{"expbuf-device", required_argument, nullptr, OptSetExpBufDevice},
+	{"touch-device", required_argument, nullptr, OptSetTouchDevice},
+	{"media-device", required_argument, nullptr, OptSetMediaDevice},
+	{"media-device-only", required_argument, nullptr, OptSetMediaDeviceOnly},
+	{"media-bus-info", required_argument, nullptr, OptMediaBusInfo},
+	{"help", no_argument, nullptr, OptHelp},
+	{"verbose", no_argument, nullptr, OptVerbose},
+	{"color", required_argument, nullptr, OptColor},
+	{"no-warnings", no_argument, nullptr, OptNoWarnings},
+	{"no-progress", no_argument, nullptr, OptNoProgress},
+	{"exit-on-fail", no_argument, nullptr, OptExitOnFail},
+	{"exit-on-warn", no_argument, nullptr, OptExitOnWarn},
+	{"trace", no_argument, nullptr, OptTrace},
 #ifndef NO_LIBV4L2
-	{"wrapper", no_argument, 0, OptUseWrapper},
+	{"wrapper", no_argument, nullptr, OptUseWrapper},
 #endif
-	{"streaming", optional_argument, 0, OptStreaming},
-	{"stream-from", required_argument, 0, OptStreamFrom},
-	{"stream-from-hdr", required_argument, 0, OptStreamFromHdr},
-	{"stream-all-formats", optional_argument, 0, OptStreamAllFormats},
-	{"stream-all-io", no_argument, 0, OptStreamAllIO},
-	{"stream-all-color", required_argument, 0, OptStreamAllColorTest},
-	{"version", no_argument, 0, OptVersion},
-	{0, 0, 0, 0}
+	{"streaming", optional_argument, nullptr, OptStreaming},
+	{"stream-from", required_argument, nullptr, OptStreamFrom},
+	{"stream-from-hdr", required_argument, nullptr, OptStreamFromHdr},
+	{"stream-all-formats", optional_argument, nullptr, OptStreamAllFormats},
+	{"stream-all-io", no_argument, nullptr, OptStreamAllIO},
+	{"stream-all-color", required_argument, nullptr, OptStreamAllColorTest},
+	{"version", no_argument, nullptr, OptVersion},
+	{nullptr, 0, nullptr, 0}
 };
 
 #define STR(x) #x
@@ -617,7 +617,7 @@ static int testCap(struct node *node)
 
 	memset(&vcap, 0xff, sizeof(vcap));
 	// Must always be there
-	fail_on_test(doioctl(node, VIDIOC_QUERYCAP, NULL) != EFAULT);
+	fail_on_test(doioctl(node, VIDIOC_QUERYCAP, nullptr) != EFAULT);
 	fail_on_test(doioctl(node, VIDIOC_QUERYCAP, &vcap));
 	fail_on_test(check_ustring(vcap.driver, sizeof(vcap.driver)));
 	fail_on_test(check_ustring(vcap.card, sizeof(vcap.card)));
@@ -776,9 +776,9 @@ static int testInvalidIoctls(struct node *node, char type)
 	unsigned ioc = _IOC(_IOC_NONE, type, 0xff, 0);
 	unsigned char buf[0x4000] = {};
 
-	fail_on_test(doioctl(node, ioc, NULL) != ENOTTY);
+	fail_on_test(doioctl(node, ioc, nullptr) != ENOTTY);
 	ioc = _IOC(_IOC_NONE, type, 0, 0x3fff);
-	fail_on_test(doioctl(node, ioc, NULL) != ENOTTY);
+	fail_on_test(doioctl(node, ioc, nullptr) != ENOTTY);
 	ioc = _IOC(_IOC_READ, type, 0, 0x3fff);
 	fail_on_test(doioctl(node, ioc, buf) != ENOTTY);
 	fail_on_test(check_0(buf, sizeof(buf)));
@@ -820,7 +820,7 @@ static int parse_subopt(char **subs, const char * const *subopts, char **value)
 		fprintf(stderr, "Invalid suboptions specified\n");
 		return -1;
 	}
-	if (*value == NULL) {
+	if (*value == nullptr) {
 		fprintf(stderr, "No value given to suboption <%s>\n",
 				subopts[opt]);
 		return -1;
@@ -834,7 +834,7 @@ static int open_media_bus_info(const std::string &bus_info, std::string &media_d
 	struct dirent *ep;
 
 	dp = opendir("/dev");
-	if (dp == NULL)
+	if (dp == nullptr)
 		return -1;
 
 	while ((ep = readdir(dp))) {
@@ -902,7 +902,7 @@ static std::string make_devname(const char *device, const char *devname,
 		goto err;
 
 	if (device[0] == '0' && device[1] == 'x')
-		iface_id = strtoul(device, NULL, 16);
+		iface_id = strtoul(device, nullptr, 16);
 
 	if (!iface_id) {
 		for (i = 0; i < topology.num_entities; i++)
@@ -1566,7 +1566,7 @@ int main(int argc, char **argv)
 			break;
 		case OptStreaming:
 			if (optarg)
-				frame_count = strtoul(optarg, NULL, 0);
+				frame_count = strtoul(optarg, nullptr, 0);
 			break;
 		case OptStreamFrom:
 		case OptStreamFromHdr: {
@@ -1574,7 +1574,7 @@ int main(int argc, char **argv)
 			bool has_hdr = ch == OptStreamFromHdr;
 
 			if (equal == optarg)
-				equal = NULL;
+				equal = nullptr;
 			if (equal) {
 				*equal = '\0';
 				stream_from_map[optarg] = equal + 1;
@@ -1587,7 +1587,7 @@ int main(int argc, char **argv)
 		}
 		case OptStreamAllFormats:
 			if (optarg)
-				all_fmt_frame_count = strtoul(optarg, NULL, 0);
+				all_fmt_frame_count = strtoul(optarg, nullptr, 0);
 			break;
 		case OptStreamAllColorTest:
 			subs = optarg;
@@ -1596,7 +1596,7 @@ int main(int argc, char **argv)
 					"color",
 					"skip",
 					"perc",
-					NULL
+					nullptr
 				};
 
 				switch (parse_subopt(&subs, subopts, &value)) {
@@ -1613,10 +1613,10 @@ int main(int argc, char **argv)
 					}
 					break;
 				case 1:
-					color_skip = strtoul(value, 0L, 0);
+					color_skip = strtoul(value, nullptr, 0);
 					break;
 				case 2:
-					color_perc = strtoul(value, 0L, 0);
+					color_perc = strtoul(value, nullptr, 0);
 					if (color_perc == 0)
 						color_perc = 90;
 					if (color_perc > 100)

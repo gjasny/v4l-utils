@@ -77,26 +77,26 @@ static struct ctl_parameters params;
 static int app_result;
 
 static struct option long_options[] = {
-	{"all", no_argument, 0, OptAll},
-	{"rbds", no_argument, 0, OptRBDS},
-	{"device", required_argument, 0, OptSetDevice},
-	{"file", required_argument, 0, OptOpenFile},
-	{"freq-seek", required_argument, 0, OptFreqSeek},
-	{"get-freq", no_argument, 0, OptGetFreq},
-	{"get-tuner", no_argument, 0, OptGetTuner},
-	{"help", no_argument, 0, OptHelp},
-	{"info", no_argument, 0, OptGetDriverInfo},
-	{"list-devices", no_argument, 0, OptListDevices},
-	{"list-freq-bands", no_argument, 0, OptListFreqBands},
-	{"print-block", no_argument, 0, OptPrintBlock},
-	{"read-rds", no_argument, 0, OptReadRds},
-	{"set-freq", required_argument, 0, OptSetFreq},
-	{"tmc", no_argument, 0, OptTMC},
-	{"tuner-index", required_argument, 0, OptTunerIndex},
-	{"silent", no_argument, 0, OptSilent},
-	{"verbose", no_argument, 0, OptVerbose},
-	{"wait-limit", required_argument, 0, OptWaitLimit},
-	{0, 0, 0, 0}
+	{"all", no_argument, nullptr, OptAll},
+	{"rbds", no_argument, nullptr, OptRBDS},
+	{"device", required_argument, nullptr, OptSetDevice},
+	{"file", required_argument, nullptr, OptOpenFile},
+	{"freq-seek", required_argument, nullptr, OptFreqSeek},
+	{"get-freq", no_argument, nullptr, OptGetFreq},
+	{"get-tuner", no_argument, nullptr, OptGetTuner},
+	{"help", no_argument, nullptr, OptHelp},
+	{"info", no_argument, nullptr, OptGetDriverInfo},
+	{"list-devices", no_argument, nullptr, OptListDevices},
+	{"list-freq-bands", no_argument, nullptr, OptListFreqBands},
+	{"print-block", no_argument, nullptr, OptPrintBlock},
+	{"read-rds", no_argument, nullptr, OptReadRds},
+	{"set-freq", required_argument, nullptr, OptSetFreq},
+	{"tmc", no_argument, nullptr, OptTMC},
+	{"tuner-index", required_argument, nullptr, OptTunerIndex},
+	{"silent", no_argument, nullptr, OptSilent},
+	{"verbose", no_argument, nullptr, OptVerbose},
+	{"wait-limit", required_argument, nullptr, OptWaitLimit},
+	{nullptr, 0, nullptr, 0}
 };
 
 static void usage_hint()
@@ -326,7 +326,7 @@ static dev_vec list_devices()
 	struct v4l2_tuner vt;
 
 	dp = opendir("/dev");
-	if (dp == NULL) {
+	if (dp == nullptr) {
 		perror ("Couldn't open the directory");
 		std::exit(EXIT_FAILURE);
 	}
@@ -370,7 +370,7 @@ static int parse_subopt(char **subs, const char * const *subopts, char **value)
 		fprintf(stderr, "Invalid suboptions specified\n");
 		return -1;
 	}
-	if (*value == NULL) {
+	if (*value == nullptr) {
 		fprintf(stderr, "No value given to suboption <%s>\n",
 				subopts[opt]);
 		return -1;
@@ -388,18 +388,18 @@ static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
 			"dir",
 			"wrap",
 			"spacing",
-			NULL
+			nullptr
 		};
 
 		switch (parse_subopt(&subs, subopts, &value)) {
 		case 0:
-			seek.seek_upward = strtol(value, 0L, 0);
+			seek.seek_upward = strtol(value, nullptr, 0);
 			break;
 		case 1:
-			seek.wrap_around = strtol(value, 0L, 0);
+			seek.wrap_around = strtol(value, nullptr, 0);
 			break;
 		case 2:
-			seek.spacing = strtol(value, 0L, 0);
+			seek.spacing = strtol(value, nullptr, 0);
 			break;
 		default:
 			usage_tuner();
@@ -765,7 +765,7 @@ static int parse_cl(int argc, char **argv)
 			params.fd_name[sizeof(params.fd_name) - 1] = '\0';
 			break;
 		case OptSetFreq:
-			params.freq = strtod(optarg, NULL);
+			params.freq = strtod(optarg, nullptr);
 			break;
 		case OptListDevices:
 			print_devices(list_devices());
@@ -774,7 +774,7 @@ static int parse_cl(int argc, char **argv)
 			parse_freq_seek(optarg, params.freq_seek);
 			break;
 		case OptTunerIndex:
-			params.tuner_index = strtoul(optarg, NULL, 0);
+			params.tuner_index = strtoul(optarg, nullptr, 0);
 			break;
 		case OptOpenFile:
 		{
@@ -791,7 +791,7 @@ static int parse_cl(int argc, char **argv)
 			break;
 		}
 		case OptWaitLimit:
-			params.wait_limit = strtoul(optarg, NULL, 0);
+			params.wait_limit = strtoul(optarg, nullptr, 0);
 			break;
 		case ':':
 			fprintf(stderr, "Option '%s' requires a value\n",

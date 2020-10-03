@@ -616,7 +616,7 @@ int testExtendedControls(struct node *node)
 		info("checking extended control '%s' (0x%08x)\n", qctrl.name, qctrl.id);
 		ctrl.id = qctrl.id;
 		ctrl.size = 0;
-		ctrl.ptr = NULL;
+		ctrl.ptr = nullptr;
 		ctrl.reserved2[0] = 0;
 		ctrls.count = 1;
 
@@ -690,7 +690,7 @@ int testExtendedControls(struct node *node)
 		}
 		if (qctrl.type == V4L2_CTRL_TYPE_STRING)
 			delete [] ctrl.string;
-		ctrl.string = NULL;
+		ctrl.string = nullptr;
 	}
 
 	ctrls.which = 0;
@@ -824,7 +824,7 @@ int testEvents(struct node *node)
 		//if (qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS)
 		FD_ZERO(&set);
 		FD_SET(node->g_fd(), &set);
-		ret = select(node->g_fd() + 1, NULL, NULL, &set, &timeout);
+		ret = select(node->g_fd() + 1, nullptr, nullptr, &set, &timeout);
 		if (ret == 0) {
 			if (qctrl.type != V4L2_CTRL_TYPE_CTRL_CLASS)
 				return fail("failed to find event for control '%s'\n", qctrl.name);

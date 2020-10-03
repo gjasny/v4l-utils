@@ -114,7 +114,7 @@ void vidcap_cmd(int ch, char *optarg)
 	case OptListFormats:
 	case OptListFormatsExt:
 		if (optarg)
-			mbus_code = strtoul(optarg, 0L, 0);
+			mbus_code = strtoul(optarg, nullptr, 0);
 		break;
 	case OptListFrameSizes:
 		be_pixfmt = strlen(optarg) == 7 && !memcmp(optarg + 4, "-BE", 3);
@@ -124,7 +124,7 @@ void vidcap_cmd(int ch, char *optarg)
 			if (be_pixfmt)
 				frmsize.pixel_format |= 1U << 31;
 		} else if (isdigit(optarg[0])) {
-			frmsize.pixel_format = strtol(optarg, 0L, 0);
+			frmsize.pixel_format = strtol(optarg, nullptr, 0);
 		} else {
 			fprintf(stderr, "The pixelformat '%s' is invalid\n", optarg);
 			std::exit(EXIT_FAILURE);
@@ -137,15 +137,15 @@ void vidcap_cmd(int ch, char *optarg)
 				"width",
 				"height",
 				"pixelformat",
-				NULL
+				nullptr
 			};
 
 			switch (parse_subopt(&subs, subopts, &value)) {
 			case 0:
-				frmival.width = strtol(value, 0L, 0);
+				frmival.width = strtol(value, nullptr, 0);
 				break;
 			case 1:
-				frmival.height = strtol(value, 0L, 0);
+				frmival.height = strtol(value, nullptr, 0);
 				break;
 			case 2:
 				be_pixfmt = strlen(value) == 7 && !memcmp(value + 4, "-BE", 3);
@@ -156,7 +156,7 @@ void vidcap_cmd(int ch, char *optarg)
 					if (be_pixfmt)
 						frmival.pixel_format |= 1U << 31;
 				} else if (isdigit(optarg[0])) {
-					frmival.pixel_format = strtol(value, 0L, 0);
+					frmival.pixel_format = strtol(value, nullptr, 0);
 				} else {
 					fprintf(stderr, "The pixelformat '%s' is invalid\n", optarg);
 					std::exit(EXIT_FAILURE);

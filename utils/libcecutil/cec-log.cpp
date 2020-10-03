@@ -114,7 +114,7 @@ static void log_htng_unknown_msg(const struct cec_msg *msg);
 const struct cec_msg_args *cec_log_msg_args(unsigned int index)
 {
 	if (index >= sizeof(messages) / sizeof(messages[0]))
-		return NULL;
+		return nullptr;
 	return &messages[index];
 }
 
@@ -325,5 +325,5 @@ const char *cec_log_ui_cmd_string(__u8 ui_cmd)
 		if (type_ui_cmd[i].value == ui_cmd)
 			return type_ui_cmd[i].type_name;
 	}
-	return NULL;
+	return nullptr;
 }

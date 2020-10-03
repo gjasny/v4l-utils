@@ -163,24 +163,24 @@ static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
 			"spacing",
 			"low",
 			"high",
-			NULL
+			nullptr
 		};
 
 		switch (parse_subopt(&subs, subopts, &value)) {
 		case 0:
-			seek.seek_upward = strtol(value, 0L, 0);
+			seek.seek_upward = strtol(value, nullptr, 0);
 			break;
 		case 1:
-			seek.wrap_around = strtol(value, 0L, 0);
+			seek.wrap_around = strtol(value, nullptr, 0);
 			break;
 		case 2:
-			seek.spacing = strtol(value, 0L, 0);
+			seek.spacing = strtol(value, nullptr, 0);
 			break;
 		case 3:
-			low = strtod(value, NULL);
+			low = strtod(value, nullptr);
 			break;
 		case 4:
-			high = strtod(value, NULL);
+			high = strtod(value, nullptr);
 			break;
 		default:
 			tuner_usage();
@@ -193,7 +193,7 @@ void tuner_cmd(int ch, char *optarg)
 {
 	switch (ch) {
 	case OptSetFreq:
-		freq = strtod(optarg, NULL);
+		freq = strtod(optarg, nullptr);
 		break;
 	case OptSetTuner:
 		if (!strcmp(optarg, "stereo"))
@@ -213,7 +213,7 @@ void tuner_cmd(int ch, char *optarg)
 		}
 		break;
 	case OptSetModulator:
-		txsubchans = strtol(optarg, 0L, 0);
+		txsubchans = strtol(optarg, nullptr, 0);
 		if (!strcmp(optarg, "stereo"))
 			txsubchans = V4L2_TUNER_SUB_STEREO;
 		else if (!strcmp(optarg, "stereo-sap"))
@@ -238,7 +238,7 @@ void tuner_cmd(int ch, char *optarg)
 		parse_freq_seek(optarg, freq_seek);
 		break;
 	case OptTunerIndex:
-		tuner_index = strtoul(optarg, NULL, 0);
+		tuner_index = strtoul(optarg, nullptr, 0);
 		break;
 	}
 }

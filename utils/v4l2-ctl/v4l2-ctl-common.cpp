@@ -123,7 +123,7 @@ static const char *prefixes[] = {
 	"v4l-subdev",
 	"v4l-touch",
 	"media",
-	NULL
+	nullptr
 };
 
 static bool is_v4l_dev(const char *name)
@@ -173,7 +173,7 @@ static void list_media_devices(const std::string &media_bus_info)
 	std::map<dev_t, std::string> devices;
 
 	dp = opendir("/dev");
-	if (dp == NULL) {
+	if (dp == nullptr) {
 		perror ("Couldn't open the directory");
 		return;
 	}
@@ -239,7 +239,7 @@ static void list_devices()
 	struct v4l2_capability vcap;
 
 	dp = opendir("/dev");
-	if (dp == NULL) {
+	if (dp == nullptr) {
 		perror ("Couldn't open the directory");
 		return;
 	}
@@ -520,7 +520,7 @@ static int print_control(int fd, struct v4l2_query_ext_ctrl &qctrl, int show_men
 		return 1;
 	}
 	if (qctrl.type >= V4L2_CTRL_COMPOUND_TYPES) {
-		print_qctrl(fd, &qctrl, NULL, show_menus);
+		print_qctrl(fd, &qctrl, nullptr, show_menus);
 		return 1;
 	}
 	ctrls.which = V4L2_CTRL_ID2WHICH(qctrl.id);
@@ -745,9 +745,9 @@ static bool parse_subset(char *optarg)
 				return true;
 			}
 			if (idx & 1)
-				subset.offset[idx / 2] = strtoul(optarg, 0, 0);
+				subset.offset[idx / 2] = strtoul(optarg, nullptr, 0);
 			else {
-				subset.size[idx / 2 - 1] = strtoul(optarg, 0, 0);
+				subset.size[idx / 2 - 1] = strtoul(optarg, nullptr, 0);
 				if (subset.size[idx / 2 - 1] == 0) {
 					fprintf(stderr, "<size> cannot be 0\n");
 					return true;
@@ -755,7 +755,7 @@ static bool parse_subset(char *optarg)
 			}
 		}
 		idx++;
-		if (p == NULL)
+		if (p == nullptr)
 			break;
 		optarg = p + 1;
 	}
@@ -775,7 +775,7 @@ static bool parse_subset(char *optarg)
 static bool parse_next_subopt(char **subs, char **value)
 {
 	static char *const subopts[] = {
-	    NULL
+	    nullptr
 	};
 	int opt = getsubopt(subs, subopts, value);
 
@@ -829,7 +829,7 @@ void common_cmd(const std::string &media_bus_info, int ch, char *optarg)
 		}
 		break;
 	case OptSetPriority:
-		prio = static_cast<enum v4l2_priority>(strtoul(optarg, 0L, 0));
+		prio = static_cast<enum v4l2_priority>(strtoul(optarg, nullptr, 0));
 		break;
 	case OptListDevices:
 		if (media_bus_info.empty())
@@ -940,19 +940,19 @@ void common_set(cv4l_fd &_fd)
 
 				switch (qc.type) {
 				case V4L2_CTRL_TYPE_U8:
-					v = strtoul(set_ctrl.second.c_str(), NULL, 0);
+					v = strtoul(set_ctrl.second.c_str(), nullptr, 0);
 					for (i = 0; i < qc.elems; i++)
 						if (idx_in_subset(qc, subset, divide, i))
 							ctrl.p_u8[i] = v;
 					break;
 				case V4L2_CTRL_TYPE_U16:
-					v = strtoul(set_ctrl.second.c_str(), NULL, 0);
+					v = strtoul(set_ctrl.second.c_str(), nullptr, 0);
 					for (i = 0; i < qc.elems; i++)
 						if (idx_in_subset(qc, subset, divide, i))
 							ctrl.p_u16[i] = v;
 					break;
 				case V4L2_CTRL_TYPE_U32:
-					v = strtoul(set_ctrl.second.c_str(), NULL, 0);
+					v = strtoul(set_ctrl.second.c_str(), nullptr, 0);
 					for (i = 0; i < qc.elems; i++)
 						if (idx_in_subset(qc, subset, divide, i))
 							ctrl.p_u32[i] = v;
@@ -974,9 +974,9 @@ void common_set(cv4l_fd &_fd)
 				if (V4L2_CTRL_DRIVER_PRIV(ctrl.id))
 					use_ext_ctrls = true;
 				if (qc.type == V4L2_CTRL_TYPE_INTEGER64)
-					ctrl.value64 = strtoll(set_ctrl.second.c_str(), NULL, 0);
+					ctrl.value64 = strtoll(set_ctrl.second.c_str(), nullptr, 0);
 				else
-					ctrl.value = strtol(set_ctrl.second.c_str(), NULL, 0);
+					ctrl.value = strtol(set_ctrl.second.c_str(), nullptr, 0);
 			}
 			class2ctrls[V4L2_CTRL_ID2WHICH(ctrl.id)].push_back(ctrl);
 		}
@@ -1178,7 +1178,7 @@ void common_get(cv4l_fd &_fd)
 		static char buf[40960];
 		int len = -1;
 
-		if (doioctl(fd, VIDIOC_LOG_STATUS, NULL) == 0) {
+		if (doioctl(fd, VIDIOC_LOG_STATUS, nullptr) == 0) {
 			printf("\nStatus Log:\n\n");
 #ifdef HAVE_KLOGCTL
 			len = klogctl(3, buf, sizeof(buf) - 1);

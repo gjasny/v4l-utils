@@ -225,7 +225,7 @@ static void edid_add_block(struct v4l2_edid *e)
 	if (e->blocks > 256) {
 		fprintf(stderr, "edid file error: too long\n");
 		free(e->edid);
-		e->edid = NULL;
+		e->edid = nullptr;
 		std::exit(EXIT_FAILURE);
 	}
 	e->edid = static_cast<unsigned char *>(realloc(e->edid, e->blocks * 128));
@@ -238,7 +238,7 @@ static void read_edid_file(FILE *f, struct v4l2_edid *e)
 	int c;
 
 	fseek(f, SEEK_SET, 0);
-	e->edid = NULL;
+	e->edid = nullptr;
 	e->blocks = 0;
 
 	while ((c = fgetc(f)) != EOF) {
@@ -258,7 +258,7 @@ static void read_edid_file(FILE *f, struct v4l2_edid *e)
 			value[1] = c;
 			if (i % 256 == 1)
 				edid_add_block(e);
-			e->edid[i / 2] = strtoul(value, 0, 16);
+			e->edid[i / 2] = strtoul(value, nullptr, 16);
 		} else {
 			value[0] = c;
 		}
@@ -704,7 +704,7 @@ static unsigned short parse_phys_addr(const char *value)
 	unsigned p1, p2, p3, p4;
 
 	if (!std::strchr(value, '.'))
-		return strtoul(value, NULL, 0);
+		return strtoul(value, nullptr, 0);
 	if (sscanf(value, "%x.%x.%x.%x", &p1, &p2, &p3, &p4) != 4) {
 		fprintf(stderr, "Expected a physical address of the form x.x.x.x\n");
 		return 0xffff;
@@ -908,7 +908,7 @@ void edid_cmd(int ch, char *optarg)
 	switch (ch) {
 	case OptSetEdid:
 		memset(&sedid, 0, sizeof(sedid));
-		file_in = NULL;
+		file_in = nullptr;
 		if (!optarg)
 			break;
 		subs = optarg;
@@ -971,7 +971,7 @@ void edid_cmd(int ch, char *optarg)
 				"btfc",
 				"btfl-btbr",
 				"tpls-tprs",
-				NULL
+				nullptr
 			};
 
 			int opt = getsubopt(&subs, (char* const*)subopts, &value);
@@ -981,7 +981,7 @@ void edid_cmd(int ch, char *optarg)
 				edid_usage();
 				std::exit(EXIT_FAILURE);
 			}
-			if (value == NULL && opt <= 8) {
+			if (value == nullptr && opt <= 8) {
 				fprintf(stderr, "No value given to suboption <%s>\n",
 					subopts[opt]);
 				edid_usage();
@@ -989,7 +989,7 @@ void edid_cmd(int ch, char *optarg)
 			}
 			switch (opt) {
 			case 0:
-				sedid.pad = strtoul(value, 0, 0);
+				sedid.pad = strtoul(value, nullptr, 0);
 				break;
 			case 1:
 			case 2:	/* keep edid for compat reasons, it's the same as type */
@@ -1044,13 +1044,13 @@ void edid_cmd(int ch, char *optarg)
 					phys_addr = parse_phys_addr(value);
 				break;
 			case 6:
-				mod_s_pt = strtoul(value, 0, 0) & 3;
+				mod_s_pt = strtoul(value, nullptr, 0) & 3;
 				break;
 			case 7:
-				mod_s_it = strtoul(value, 0, 0) & 3;
+				mod_s_it = strtoul(value, nullptr, 0) & 3;
 				break;
 			case 8:
-				mod_s_ce = strtoul(value, 0, 0) & 3;
+				mod_s_ce = strtoul(value, nullptr, 0) & 3;
 				break;
 			case 9: toggle_hdmi_vsdb_dc_flags |= HDMI_VSDB_Y444_BIT; break;
 			case 10: toggle_hdmi_vsdb_dc_flags |= HDMI_VSDB_30_BIT; break;
@@ -1109,14 +1109,14 @@ void edid_cmd(int ch, char *optarg)
 
 	case OptClearEdid:
 		if (optarg)
-			clear_pad = strtoul(optarg, 0, 0);
+			clear_pad = strtoul(optarg, nullptr, 0);
 		break;
 
 	case OptGetEdid:
 		memset(&gedid, 0, sizeof(gedid));
 		gedid.blocks = 256; /* default all blocks */
 		gformat = HEX; /* default hex output */
-		file_out = NULL;
+		file_out = nullptr;
 		if (!optarg)
 			break;
 		subs = optarg;
@@ -1127,22 +1127,22 @@ void edid_cmd(int ch, char *optarg)
 				"blocks",
 				"format",
 				"file",
-				NULL
+				nullptr
 			};
 
 			switch (parse_subopt(&subs, subopts, &value)) {
 			case 0:
-				gedid.pad = strtoul(value, 0, 0);
+				gedid.pad = strtoul(value, nullptr, 0);
 				break;
 			case 1:
-				gedid.start_block = strtoul(value, 0, 0);
+				gedid.start_block = strtoul(value, nullptr, 0);
 				if (gedid.start_block > 255) {
 					fprintf(stderr, "startblock %d too large, max 255\n", gedid.start_block);
 					std::exit(EXIT_FAILURE);
 				}
 				break;
 			case 2:
-				gedid.blocks = strtoul(value, 0, 0);
+				gedid.blocks = strtoul(value, nullptr, 0);
 				break;
 			case 3:
 				if (!strcmp(value, "hex")) {
@@ -1172,7 +1172,7 @@ void edid_cmd(int ch, char *optarg)
 	case OptInfoEdid:
 		memset(&info_edid, 0, sizeof(info_edid));
 		if (optarg)
-			info_edid.pad = strtoul(optarg, 0, 0);
+			info_edid.pad = strtoul(optarg, nullptr, 0);
 		break;
 	}
 }
@@ -1191,7 +1191,7 @@ void edid_set(cv4l_fd &_fd)
 	}
 
 	if (options[OptSetEdid]) {
-		FILE *fin = NULL;
+		FILE *fin = nullptr;
 		bool must_fix_edid = options[OptFixEdidChecksums];
 
 		if (file_in) {
@@ -1299,7 +1299,7 @@ void edid_set(cv4l_fd &_fd)
 		if (fin) {
 			if (sedid.edid) {
 				free(sedid.edid);
-				sedid.edid = NULL;
+				sedid.edid = nullptr;
 			}
 			if (fin != stdin)
 				fclose(fin);

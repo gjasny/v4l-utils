@@ -579,7 +579,7 @@ static int checkEdid(struct node *node, unsigned pad, bool is_input)
 	}
 	edid.blocks = blocks;
 	edid.pad = pad;
-	edid.edid = NULL;
+	edid.edid = nullptr;
 	ret = doioctl(node, VIDIOC_S_EDID, &edid);
 	fail_on_test(ret != EFAULT);
 	edid.edid = (__u8 *)0x0eadbeef;

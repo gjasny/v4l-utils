@@ -147,7 +147,7 @@ static bool exit_standby(struct node *node)
 	    node->state.power_status == CEC_OP_POWER_STATUS_TO_STANDBY) {
 		node->state.old_power_status = node->state.power_status;
 		node->state.power_status = CEC_OP_POWER_STATUS_ON;
-		node->state.power_status_changed_time = time(NULL);
+		node->state.power_status_changed_time = time(nullptr);
 		dev_info("Changing state to on\n");
 		return true;
 	}
@@ -160,7 +160,7 @@ static bool enter_standby(struct node *node)
 	    node->state.power_status == CEC_OP_POWER_STATUS_TO_ON) {
 		node->state.old_power_status = node->state.power_status;
 		node->state.power_status = CEC_OP_POWER_STATUS_STANDBY;
-		node->state.power_status_changed_time = time(NULL);
+		node->state.power_status_changed_time = time(nullptr);
 		dev_info("Changing state to standby\n");
 		return true;
 	}
@@ -222,7 +222,7 @@ static bool pa_is_upstream_from(__u16 pa1, __u16 pa2)
 
 static __u8 current_power_state(struct node *node)
 {
-	time_t t = time(NULL);
+	time_t t = time(nullptr);
 
 	if (t - node->state.power_status_changed_time <= time_to_transient)
 		return node->state.old_power_status;
@@ -864,10 +864,10 @@ void testProcessing(struct node *node, bool wallclock)
 	unsigned me;
 	unsigned last_poll_la = 15;
 	__u8 last_pwr_state = current_power_state(node);
-	time_t last_pwr_status_toggle = time(NULL);
+	time_t last_pwr_status_toggle = time(nullptr);
 
 	clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
-	gettimeofday(&start_timeofday, NULL);
+	gettimeofday(&start_timeofday, nullptr);
 
 	doioctl(node, CEC_S_MODE, &mode);
 	doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
@@ -885,7 +885,7 @@ void testProcessing(struct node *node, bool wallclock)
 		FD_ZERO(&ex_fds);
 		FD_SET(fd, &rd_fds);
 		FD_SET(fd, &ex_fds);
-		res = select(fd + 1, &rd_fds, NULL, &ex_fds, &timeval);
+		res = select(fd + 1, &rd_fds, nullptr, &ex_fds, &timeval);
 		if (res < 0)
 			break;
 		if (FD_ISSET(fd, &ex_fds)) {
@@ -967,8 +967,8 @@ void testProcessing(struct node *node, bool wallclock)
 		}
 
 		if (node->state.toggle_power_status && cec_has_tv(1 << me) &&
-		    (time(NULL) - last_pwr_status_toggle > node->state.toggle_power_status)) {
-			last_pwr_status_toggle = time(NULL);
+		    (time(nullptr) - last_pwr_status_toggle > node->state.toggle_power_status)) {
+			last_pwr_status_toggle = time(nullptr);
 			if (pwr_state & 1) // standby or to-standby
 				exit_standby(node);
 			else

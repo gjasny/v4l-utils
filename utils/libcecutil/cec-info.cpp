@@ -23,7 +23,7 @@ const char *cec_opcode2s(unsigned opcode)
 	for (auto i : msgtable)
 		if (i.opcode == opcode)
 			return i.name;
-	return NULL;
+	return nullptr;
 }
 
 const char *cec_cdc_opcode2s(unsigned cdc_opcode)
@@ -31,7 +31,7 @@ const char *cec_cdc_opcode2s(unsigned cdc_opcode)
 	for (auto i : cdcmsgtable)
 		if (i.opcode == cdc_opcode)
 			return i.name;
-	return NULL;
+	return nullptr;
 }
 
 const char *cec_htng_opcode2s(unsigned htng_opcode)
@@ -39,7 +39,7 @@ const char *cec_htng_opcode2s(unsigned htng_opcode)
 	for (auto i : htngmsgtable)
 		if (i.opcode == htng_opcode)
 			return i.name;
-	return NULL;
+	return nullptr;
 }
 
 static std::string caps2s(unsigned caps)
@@ -493,7 +493,7 @@ std::string cec_device_find(const char *driver, const char *adapter)
 	std::string name;
 
 	dp = opendir("/dev");
-	if (dp == NULL) {
+	if (dp == nullptr) {
 		perror("Couldn't open the directory");
 		return name;
 	}

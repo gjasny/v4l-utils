@@ -105,70 +105,70 @@ unsigned reply_threshold = 1000;
 time_t long_timeout = 60;
 
 static struct option long_options[] = {
-	{"device", required_argument, 0, OptSetDevice},
-	{"adapter", required_argument, 0, OptSetAdapter},
-	{"driver", required_argument, 0, OptSetDriver},
-	{"help", no_argument, 0, OptHelp},
-	{"no-warnings", no_argument, 0, OptNoWarnings},
-	{"exit-on-fail", no_argument, 0, OptExitOnFail},
-	{"exit-on-warn", no_argument, 0, OptExitOnWarn},
-	{"remote", optional_argument, 0, OptRemote},
-	{"list-tests", no_argument, 0, OptListTests},
-	{"expect", required_argument, 0, OptExpect},
-	{"expect-with-no-warnings", required_argument, 0, OptExpectWithNoWarnings},
-	{"timeout", required_argument, 0, OptTimeout},
-	{"trace", no_argument, 0, OptTrace},
-	{"verbose", no_argument, 0, OptVerbose},
-	{"color", required_argument, 0, OptColor},
-	{"skip-info", no_argument, 0, OptSkipInfo},
-	{"wall-clock", no_argument, 0, OptWallClock},
-	{"interactive", no_argument, 0, OptInteractive},
-	{"reply-threshold", required_argument, 0, OptReplyThreshold},
+	{"device", required_argument, nullptr, OptSetDevice},
+	{"adapter", required_argument, nullptr, OptSetAdapter},
+	{"driver", required_argument, nullptr, OptSetDriver},
+	{"help", no_argument, nullptr, OptHelp},
+	{"no-warnings", no_argument, nullptr, OptNoWarnings},
+	{"exit-on-fail", no_argument, nullptr, OptExitOnFail},
+	{"exit-on-warn", no_argument, nullptr, OptExitOnWarn},
+	{"remote", optional_argument, nullptr, OptRemote},
+	{"list-tests", no_argument, nullptr, OptListTests},
+	{"expect", required_argument, nullptr, OptExpect},
+	{"expect-with-no-warnings", required_argument, nullptr, OptExpectWithNoWarnings},
+	{"timeout", required_argument, nullptr, OptTimeout},
+	{"trace", no_argument, nullptr, OptTrace},
+	{"verbose", no_argument, nullptr, OptVerbose},
+	{"color", required_argument, nullptr, OptColor},
+	{"skip-info", no_argument, nullptr, OptSkipInfo},
+	{"wall-clock", no_argument, nullptr, OptWallClock},
+	{"interactive", no_argument, nullptr, OptInteractive},
+	{"reply-threshold", required_argument, nullptr, OptReplyThreshold},
 
-	{"test-adapter", no_argument, 0, OptTestAdapter},
-	{"test-fuzzing", no_argument, 0, OptTestFuzzing},
-	{"test-core", no_argument, 0, OptTestCore},
-	{"test-audio-rate-control", no_argument, 0, OptTestAudioRateControl},
-	{"test-audio-return-channel-control", no_argument, 0, OptTestARCControl},
-	{"test-capability-discovery-and-control", no_argument, 0, OptTestCapDiscoveryControl},
-	{"test-deck-control", no_argument, 0, OptTestDeckControl},
-	{"test-device-menu-control", no_argument, 0, OptTestDeviceMenuControl},
-	{"test-device-osd-transfer", no_argument, 0, OptTestDeviceOSDTransfer},
-	{"test-dynamic-auto-lipsync", no_argument, 0, OptTestDynamicAutoLipsync},
-	{"test-osd-display", no_argument, 0, OptTestOSDDisplay},
-	{"test-one-touch-play", no_argument, 0, OptTestOneTouchPlay},
-	{"test-one-touch-record", no_argument, 0, OptTestOneTouchRecord},
-	{"test-power-status", no_argument, 0, OptTestPowerStatus},
-	{"test-remote-control-passthrough", no_argument, 0, OptTestRemoteControlPassthrough},
-	{"test-routing-control", no_argument, 0, OptTestRoutingControl},
-	{"test-system-audio-control", no_argument, 0, OptTestSystemAudioControl},
-	{"test-system-information", no_argument, 0, OptTestSystemInformation},
-	{"test-timer-programming", no_argument, 0, OptTestTimerProgramming},
-	{"test-tuner-control", no_argument, 0, OptTestTunerControl},
-	{"test-vendor-specific-commands", no_argument, 0, OptTestVendorSpecificCommands},
-	{"test-standby-resume", no_argument, 0, OptTestStandbyResume},
+	{"test-adapter", no_argument, nullptr, OptTestAdapter},
+	{"test-fuzzing", no_argument, nullptr, OptTestFuzzing},
+	{"test-core", no_argument, nullptr, OptTestCore},
+	{"test-audio-rate-control", no_argument, nullptr, OptTestAudioRateControl},
+	{"test-audio-return-channel-control", no_argument, nullptr, OptTestARCControl},
+	{"test-capability-discovery-and-control", no_argument, nullptr, OptTestCapDiscoveryControl},
+	{"test-deck-control", no_argument, nullptr, OptTestDeckControl},
+	{"test-device-menu-control", no_argument, nullptr, OptTestDeviceMenuControl},
+	{"test-device-osd-transfer", no_argument, nullptr, OptTestDeviceOSDTransfer},
+	{"test-dynamic-auto-lipsync", no_argument, nullptr, OptTestDynamicAutoLipsync},
+	{"test-osd-display", no_argument, nullptr, OptTestOSDDisplay},
+	{"test-one-touch-play", no_argument, nullptr, OptTestOneTouchPlay},
+	{"test-one-touch-record", no_argument, nullptr, OptTestOneTouchRecord},
+	{"test-power-status", no_argument, nullptr, OptTestPowerStatus},
+	{"test-remote-control-passthrough", no_argument, nullptr, OptTestRemoteControlPassthrough},
+	{"test-routing-control", no_argument, nullptr, OptTestRoutingControl},
+	{"test-system-audio-control", no_argument, nullptr, OptTestSystemAudioControl},
+	{"test-system-information", no_argument, nullptr, OptTestSystemInformation},
+	{"test-timer-programming", no_argument, nullptr, OptTestTimerProgramming},
+	{"test-tuner-control", no_argument, nullptr, OptTestTunerControl},
+	{"test-vendor-specific-commands", no_argument, nullptr, OptTestVendorSpecificCommands},
+	{"test-standby-resume", no_argument, nullptr, OptTestStandbyResume},
 
-	{"skip-test-audio-rate-control", no_argument, 0, OptSkipTestAudioRateControl},
-	{"skip-test-audio-return-channel-control", no_argument, 0, OptSkipTestARCControl},
-	{"skip-test-capability-discovery-and-control", no_argument, 0, OptSkipTestCapDiscoveryControl},
-	{"skip-test-deck-control", no_argument, 0, OptSkipTestDeckControl},
-	{"skip-test-device-menu-control", no_argument, 0, OptSkipTestDeviceMenuControl},
-	{"skip-test-device-osd-transfer", no_argument, 0, OptSkipTestDeviceOSDTransfer},
-	{"skip-test-dynamic-auto-lipsync", no_argument, 0, OptSkipTestDynamicAutoLipsync},
-	{"skip-test-osd-display", no_argument, 0, OptSkipTestOSDDisplay},
-	{"skip-test-one-touch-play", no_argument, 0, OptSkipTestOneTouchPlay},
-	{"skip-test-one-touch-record", no_argument, 0, OptSkipTestOneTouchRecord},
-	{"skip-test-power-status", no_argument, 0, OptSkipTestPowerStatus},
-	{"skip-test-remote-control-passthrough", no_argument, 0, OptSkipTestRemoteControlPassthrough},
-	{"skip-test-routing-control", no_argument, 0, OptSkipTestRoutingControl},
-	{"skip-test-system-audio-control", no_argument, 0, OptSkipTestSystemAudioControl},
-	{"skip-test-system-information", no_argument, 0, OptSkipTestSystemInformation},
-	{"skip-test-timer-programming", no_argument, 0, OptSkipTestTimerProgramming},
-	{"skip-test-tuner-control", no_argument, 0, OptSkipTestTunerControl},
-	{"skip-test-vendor-specific-commands", no_argument, 0, OptSkipTestVendorSpecificCommands},
-	{"skip-test-standby-resume", no_argument, 0, OptSkipTestStandbyResume},
-	{"version", no_argument, 0, OptVersion},
-	{0, 0, 0, 0}
+	{"skip-test-audio-rate-control", no_argument, nullptr, OptSkipTestAudioRateControl},
+	{"skip-test-audio-return-channel-control", no_argument, nullptr, OptSkipTestARCControl},
+	{"skip-test-capability-discovery-and-control", no_argument, nullptr, OptSkipTestCapDiscoveryControl},
+	{"skip-test-deck-control", no_argument, nullptr, OptSkipTestDeckControl},
+	{"skip-test-device-menu-control", no_argument, nullptr, OptSkipTestDeviceMenuControl},
+	{"skip-test-device-osd-transfer", no_argument, nullptr, OptSkipTestDeviceOSDTransfer},
+	{"skip-test-dynamic-auto-lipsync", no_argument, nullptr, OptSkipTestDynamicAutoLipsync},
+	{"skip-test-osd-display", no_argument, nullptr, OptSkipTestOSDDisplay},
+	{"skip-test-one-touch-play", no_argument, nullptr, OptSkipTestOneTouchPlay},
+	{"skip-test-one-touch-record", no_argument, nullptr, OptSkipTestOneTouchRecord},
+	{"skip-test-power-status", no_argument, nullptr, OptSkipTestPowerStatus},
+	{"skip-test-remote-control-passthrough", no_argument, nullptr, OptSkipTestRemoteControlPassthrough},
+	{"skip-test-routing-control", no_argument, nullptr, OptSkipTestRoutingControl},
+	{"skip-test-system-audio-control", no_argument, nullptr, OptSkipTestSystemAudioControl},
+	{"skip-test-system-information", no_argument, nullptr, OptSkipTestSystemInformation},
+	{"skip-test-timer-programming", no_argument, nullptr, OptSkipTestTimerProgramming},
+	{"skip-test-tuner-control", no_argument, nullptr, OptSkipTestTunerControl},
+	{"skip-test-vendor-specific-commands", no_argument, nullptr, OptSkipTestVendorSpecificCommands},
+	{"skip-test-standby-resume", no_argument, nullptr, OptSkipTestStandbyResume},
+	{"version", no_argument, nullptr, OptVersion},
+	{nullptr, 0, nullptr, 0}
 };
 
 #define STR(x) #x
@@ -268,7 +268,7 @@ static std::string ts2s(__u64 ts)
 		return buf;
 	}
 	clock_gettime(CLOCK_MONOTONIC, &now);
-	gettimeofday(&tv, NULL);
+	gettimeofday(&tv, nullptr);
 	diff = now.tv_sec * 1000000000ULL + now.tv_nsec - ts;
 	sub.tv_sec = diff / 1000000000ULL;
 	sub.tv_usec = (diff % 1000000000ULL) / 1000;
@@ -815,7 +815,7 @@ static bool wait_for_hpd(struct node *node, bool send_image_view_on)
 {
 	int fd = node->fd;
 	int flags = fcntl(node->fd, F_GETFL);
-	time_t t = time(NULL);
+	time_t t = time(nullptr);
 
 	fcntl(node->fd, F_SETFL, flags | O_NONBLOCK);
 	for (;;) {
@@ -825,7 +825,7 @@ static bool wait_for_hpd(struct node *node, bool send_image_view_on)
 
 		FD_ZERO(&ex_fds);
 		FD_SET(fd, &ex_fds);
-		res = select(fd + 1, NULL, NULL, &ex_fds, &tv);
+		res = select(fd + 1, nullptr, nullptr, &ex_fds, &tv);
 		if (res < 0) {
 			fail("select failed with error %d\n", errno);
 			return false;
@@ -839,7 +839,7 @@ static bool wait_for_hpd(struct node *node, bool send_image_view_on)
 				break;
 		}
 
-		if (send_image_view_on && time(NULL) - t > TX_WAIT_FOR_HPD) {
+		if (send_image_view_on && time(nullptr) - t > TX_WAIT_FOR_HPD) {
 			struct cec_msg image_view_on_msg;
 
 			// So the HPD is gone (possibly due to a standby), but
@@ -852,7 +852,7 @@ static bool wait_for_hpd(struct node *node, bool send_image_view_on)
 			send_image_view_on = false;
 		}
 
-		if (time(NULL) - t > TX_WAIT_FOR_HPD + TX_WAIT_FOR_HPD_RETURN) {
+		if (time(nullptr) - t > TX_WAIT_FOR_HPD + TX_WAIT_FOR_HPD_RETURN) {
 			fail("timed out after %d s waiting for HPD to return\n",
 			     TX_WAIT_FOR_HPD + TX_WAIT_FOR_HPD_RETURN);
 			return false;
@@ -1103,11 +1103,11 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 		/* RC Profile and Device Features are assumed to be 1 byte. As of CEC 2.0 only
 		   1 byte is used, but this might be extended in future versions. */
 		__u8 cec_version, all_device_types;
-		const __u8 *rc_profile = NULL, *dev_features = NULL;
+		const __u8 *rc_profile = nullptr, *dev_features = nullptr;
 
 		cec_ops_report_features(&msg, &cec_version, &all_device_types,
 					&rc_profile, &dev_features);
-		if (rc_profile == NULL || dev_features == NULL)
+		if (rc_profile == nullptr || dev_features == nullptr)
 			return;
 		node->remote[i].rc_profile = *rc_profile;
 		node->remote[i].dev_features = *dev_features;
@@ -1128,8 +1128,8 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 int main(int argc, char **argv)
 {
 	std::string device;
-	const char *driver = NULL;
-	const char *adapter = NULL;
+	const char *driver = nullptr;
+	const char *adapter = nullptr;
 	char short_options[26 * 2 * 2 + 1];
 	int remote_la = -1;
 	bool test_remote = false;
@@ -1140,7 +1140,7 @@ int main(int argc, char **argv)
 	int i;
 	const char *env_media_apps_color = getenv("MEDIA_APPS_COLOR");
 
-	srandom(time(NULL));
+	srandom(time(nullptr));
 	if (!env_media_apps_color || !strcmp(env_media_apps_color, "auto"))
 		show_colors = isatty(STDOUT_FILENO);
 	else if (!strcmp(env_media_apps_color, "always"))
@@ -1207,10 +1207,10 @@ int main(int argc, char **argv)
 			adapter = optarg;
 			break;
 		case OptReplyThreshold:
-			reply_threshold = strtoul(optarg, NULL, 0);
+			reply_threshold = strtoul(optarg, nullptr, 0);
 			break;
 		case OptTimeout:
-			long_timeout = strtoul(optarg, NULL, 0);
+			long_timeout = strtoul(optarg, nullptr, 0);
 			break;
 		case OptColor:
 			if (!strcmp(optarg, "always"))
@@ -1243,7 +1243,7 @@ int main(int argc, char **argv)
 			break;
 		case OptRemote:
 			if (optarg) {
-				remote_la = strtoul(optarg, NULL, 0);
+				remote_la = strtoul(optarg, nullptr, 0);
 				if (remote_la < 0 || remote_la > 15) {
 					fprintf(stderr, "--test: invalid remote logical address\n");
 					usage();

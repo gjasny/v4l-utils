@@ -151,84 +151,84 @@ bool verbose;
 typedef std::vector<cec_msg> msg_vec;
 
 static struct option long_options[] = {
-	{ "device", required_argument, 0, OptSetDevice },
-	{ "adapter", required_argument, 0, OptSetAdapter },
-	{ "driver", required_argument, 0, OptSetDriver },
-	{ "help", no_argument, 0, OptHelp },
-	{ "trace", no_argument, 0, OptTrace },
-	{ "verbose", no_argument, 0, OptVerbose },
-	{ "wall-clock", no_argument, 0, OptWallClock },
-	{ "osd-name", required_argument, 0, OptOsdName },
-	{ "phys-addr-from-edid-poll", required_argument, 0, OptPhysAddrFromEDIDPoll },
-	{ "phys-addr-from-edid", required_argument, 0, OptPhysAddrFromEDID },
-	{ "phys-addr", required_argument, 0, OptPhysAddr },
-	{ "vendor-id", required_argument, 0, OptVendorID },
-	{ "cec-version-1.4", no_argument, 0, OptCECVersion1_4 },
-	{ "allow-unreg-fallback", no_argument, 0, OptAllowUnregFallback },
-	{ "no-rc-passthrough", no_argument, 0, OptNoRC },
-	{ "reply-to-followers", no_argument, 0, OptReplyToFollowers },
-	{ "raw-msg", no_argument, 0, OptRawMsg },
-	{ "timeout", required_argument, 0, OptTimeout },
-	{ "clear", no_argument, 0, OptClear },
-	{ "wait-for-msgs", no_argument, 0, OptWaitForMsgs },
-	{ "monitor", no_argument, 0, OptMonitor },
-	{ "monitor-all", no_argument, 0, OptMonitorAll },
-	{ "monitor-pin", no_argument, 0, OptMonitorPin },
-	{ "monitor-time", required_argument, 0, OptMonitorTime },
-	{ "ignore", required_argument, 0, OptIgnore },
-	{ "store-pin", required_argument, 0, OptStorePin },
-	{ "analyze-pin", required_argument, 0, OptAnalyzePin },
-	{ "no-reply", no_argument, 0, OptToggleNoReply },
-	{ "non-blocking", no_argument, 0, OptNonBlocking },
-	{ "logical-address", no_argument, 0, OptLogicalAddress },
-	{ "logical-addresses", no_argument, 0, OptLogicalAddresses },
-	{ "to", required_argument, 0, OptTo },
-	{ "from", required_argument, 0, OptFrom },
-	{ "skip-info", no_argument, 0, OptSkipInfo },
-	{ "show-raw", no_argument, 0, OptShowRaw },
-	{ "show-topology", no_argument, 0, OptShowTopology },
-	{ "list-devices", no_argument, 0, OptListDevices },
-	{ "poll", no_argument, 0, OptPoll },
-	{ "rc-tv-profile-1", no_argument, 0, OptRcTVProfile1 },
-	{ "rc-tv-profile-2", no_argument, 0, OptRcTVProfile2 },
-	{ "rc-tv-profile-3", no_argument, 0, OptRcTVProfile3 },
-	{ "rc-tv-profile-4", no_argument, 0, OptRcTVProfile4 },
-	{ "rc-src-dev-root", no_argument, 0, OptRcSrcDevRoot },
-	{ "rc-src-dev-setup", no_argument, 0, OptRcSrcDevSetup },
-	{ "rc-src-contents", no_argument, 0, OptRcSrcContents },
-	{ "rc-src-media-top", no_argument, 0, OptRcSrcMediaTop },
-	{ "rc-src-media-context", no_argument, 0, OptRcSrcMediaContext },
-	{ "feat-record-tv-screen", no_argument, 0, OptFeatRecordTVScreen },
-	{ "feat-set-osd-string", no_argument, 0, OptFeatSetOSDString },
-	{ "feat-deck-control", no_argument, 0, OptFeatDeckControl },
-	{ "feat-set-audio-rate", no_argument, 0, OptFeatSetAudioRate },
-	{ "feat-sink-has-arc-tx", no_argument, 0, OptFeatSinkHasARCTx },
-	{ "feat-source-has-arc-rx", no_argument, 0, OptFeatSourceHasARCRx },
+	{ "device", required_argument, nullptr, OptSetDevice },
+	{ "adapter", required_argument, nullptr, OptSetAdapter },
+	{ "driver", required_argument, nullptr, OptSetDriver },
+	{ "help", no_argument, nullptr, OptHelp },
+	{ "trace", no_argument, nullptr, OptTrace },
+	{ "verbose", no_argument, nullptr, OptVerbose },
+	{ "wall-clock", no_argument, nullptr, OptWallClock },
+	{ "osd-name", required_argument, nullptr, OptOsdName },
+	{ "phys-addr-from-edid-poll", required_argument, nullptr, OptPhysAddrFromEDIDPoll },
+	{ "phys-addr-from-edid", required_argument, nullptr, OptPhysAddrFromEDID },
+	{ "phys-addr", required_argument, nullptr, OptPhysAddr },
+	{ "vendor-id", required_argument, nullptr, OptVendorID },
+	{ "cec-version-1.4", no_argument, nullptr, OptCECVersion1_4 },
+	{ "allow-unreg-fallback", no_argument, nullptr, OptAllowUnregFallback },
+	{ "no-rc-passthrough", no_argument, nullptr, OptNoRC },
+	{ "reply-to-followers", no_argument, nullptr, OptReplyToFollowers },
+	{ "raw-msg", no_argument, nullptr, OptRawMsg },
+	{ "timeout", required_argument, nullptr, OptTimeout },
+	{ "clear", no_argument, nullptr, OptClear },
+	{ "wait-for-msgs", no_argument, nullptr, OptWaitForMsgs },
+	{ "monitor", no_argument, nullptr, OptMonitor },
+	{ "monitor-all", no_argument, nullptr, OptMonitorAll },
+	{ "monitor-pin", no_argument, nullptr, OptMonitorPin },
+	{ "monitor-time", required_argument, nullptr, OptMonitorTime },
+	{ "ignore", required_argument, nullptr, OptIgnore },
+	{ "store-pin", required_argument, nullptr, OptStorePin },
+	{ "analyze-pin", required_argument, nullptr, OptAnalyzePin },
+	{ "no-reply", no_argument, nullptr, OptToggleNoReply },
+	{ "non-blocking", no_argument, nullptr, OptNonBlocking },
+	{ "logical-address", no_argument, nullptr, OptLogicalAddress },
+	{ "logical-addresses", no_argument, nullptr, OptLogicalAddresses },
+	{ "to", required_argument, nullptr, OptTo },
+	{ "from", required_argument, nullptr, OptFrom },
+	{ "skip-info", no_argument, nullptr, OptSkipInfo },
+	{ "show-raw", no_argument, nullptr, OptShowRaw },
+	{ "show-topology", no_argument, nullptr, OptShowTopology },
+	{ "list-devices", no_argument, nullptr, OptListDevices },
+	{ "poll", no_argument, nullptr, OptPoll },
+	{ "rc-tv-profile-1", no_argument, nullptr, OptRcTVProfile1 },
+	{ "rc-tv-profile-2", no_argument, nullptr, OptRcTVProfile2 },
+	{ "rc-tv-profile-3", no_argument, nullptr, OptRcTVProfile3 },
+	{ "rc-tv-profile-4", no_argument, nullptr, OptRcTVProfile4 },
+	{ "rc-src-dev-root", no_argument, nullptr, OptRcSrcDevRoot },
+	{ "rc-src-dev-setup", no_argument, nullptr, OptRcSrcDevSetup },
+	{ "rc-src-contents", no_argument, nullptr, OptRcSrcContents },
+	{ "rc-src-media-top", no_argument, nullptr, OptRcSrcMediaTop },
+	{ "rc-src-media-context", no_argument, nullptr, OptRcSrcMediaContext },
+	{ "feat-record-tv-screen", no_argument, nullptr, OptFeatRecordTVScreen },
+	{ "feat-set-osd-string", no_argument, nullptr, OptFeatSetOSDString },
+	{ "feat-deck-control", no_argument, nullptr, OptFeatDeckControl },
+	{ "feat-set-audio-rate", no_argument, nullptr, OptFeatSetAudioRate },
+	{ "feat-sink-has-arc-tx", no_argument, nullptr, OptFeatSinkHasARCTx },
+	{ "feat-source-has-arc-rx", no_argument, nullptr, OptFeatSourceHasARCRx },
 
-	{ "tv", no_argument, 0, OptTV },
-	{ "record", no_argument, 0, OptRecord },
-	{ "tuner", no_argument, 0, OptTuner },
-	{ "playback", no_argument, 0, OptPlayback },
-	{ "audio", no_argument, 0, OptAudio },
-	{ "processor", no_argument, 0, OptProcessor },
-	{ "switch", no_argument, 0, OptSwitch },
-	{ "cdc-only", no_argument, 0, OptCDCOnly },
-	{ "unregistered", no_argument, 0, OptUnregistered },
-	{ "help-all", no_argument, 0, OptHelpAll },
+	{ "tv", no_argument, nullptr, OptTV },
+	{ "record", no_argument, nullptr, OptRecord },
+	{ "tuner", no_argument, nullptr, OptTuner },
+	{ "playback", no_argument, nullptr, OptPlayback },
+	{ "audio", no_argument, nullptr, OptAudio },
+	{ "processor", no_argument, nullptr, OptProcessor },
+	{ "switch", no_argument, nullptr, OptSwitch },
+	{ "cdc-only", no_argument, nullptr, OptCDCOnly },
+	{ "unregistered", no_argument, nullptr, OptUnregistered },
+	{ "help-all", no_argument, nullptr, OptHelpAll },
 
-	{ "version", no_argument, 0, OptVersion },
+	{ "version", no_argument, nullptr, OptVersion },
 
 	CEC_PARSE_LONG_OPTS
 
-	{ "vendor-remote-button-down", required_argument, 0, OptVendorRemoteButtonDown }, \
-	{ "vendor-command-with-id", required_argument, 0, OptVendorCommandWithID }, \
-	{ "vendor-command", required_argument, 0, OptVendorCommand }, \
-	{ "custom-command", required_argument, 0, OptCustomCommand }, \
+	{ "vendor-remote-button-down", required_argument, nullptr, OptVendorRemoteButtonDown }, \
+	{ "vendor-command-with-id", required_argument, nullptr, OptVendorCommandWithID }, \
+	{ "vendor-command", required_argument, nullptr, OptVendorCommand }, \
+	{ "custom-command", required_argument, nullptr, OptCustomCommand }, \
 
-	{ "test-power-cycle", optional_argument, 0, OptTestPowerCycle }, \
-	{ "stress-test-power-cycle", required_argument, 0, OptStressTestPowerCycle }, \
+	{ "test-power-cycle", optional_argument, nullptr, OptTestPowerCycle }, \
+	{ "stress-test-power-cycle", required_argument, nullptr, OptStressTestPowerCycle }, \
 
-	{ 0, 0, 0, 0 }
+	{ nullptr, 0, nullptr, 0 }
 };
 
 static void print_version()
@@ -801,9 +801,9 @@ static void wait_for_msgs(const struct node &node, __u32 monitor_time)
 	time_t t;
 
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
-	t = time(NULL) + monitor_time;
+	t = time(nullptr) + monitor_time;
 
-	while (!monitor_time || time(NULL) < t) {
+	while (!monitor_time || time(nullptr) < t) {
 		struct timeval tv = { 1, 0 };
 		int res;
 
@@ -812,7 +812,7 @@ static void wait_for_msgs(const struct node &node, __u32 monitor_time)
 		FD_ZERO(&ex_fds);
 		FD_SET(fd, &rd_fds);
 		FD_SET(fd, &ex_fds);
-		res = select(fd + 1, &rd_fds, NULL, &ex_fds, &tv);
+		res = select(fd + 1, &rd_fds, nullptr, &ex_fds, &tv);
 		if (res < 0)
 			break;
 		if (FD_ISSET(fd, &ex_fds)) {
@@ -844,7 +844,7 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 	fd_set rd_fds;
 	fd_set ex_fds;
 	int fd = node.fd;
-	FILE *fstore = NULL;
+	FILE *fstore = nullptr;
 	time_t t;
 
 	if (options[OptMonitorAll])
@@ -882,7 +882,7 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 			fstore = stdout;
 		else
 			fstore = fopen(store_pin, "w+");
-		if (fstore == NULL) {
+		if (fstore == nullptr) {
 			fprintf(stderr, "Failed to open %s: %s\n", store_pin,
 				strerror(errno));
 			std::exit(EXIT_FAILURE);
@@ -902,9 +902,9 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 		printf("\n");
 
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
-	t = time(NULL) + monitor_time;
+	t = time(nullptr) + monitor_time;
 
-	while (!monitor_time || time(NULL) < t) {
+	while (!monitor_time || time(nullptr) < t) {
 		struct timeval tv = { 1, 0 };
 		bool pin_event = false;
 		int res;
@@ -914,7 +914,7 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 		FD_ZERO(&ex_fds);
 		FD_SET(fd, &rd_fds);
 		FD_SET(fd, &ex_fds);
-		res = select(fd + 1, &rd_fds, NULL, &ex_fds, &tv);
+		res = select(fd + 1, &rd_fds, nullptr, &ex_fds, &tv);
 		if (res < 0)
 			break;
 		if (FD_ISSET(fd, &rd_fds)) {
@@ -981,7 +981,7 @@ static void analyze(const char *analyze_pin)
 		fanalyze = stdin;
 	else
 		fanalyze = fopen(analyze_pin, "r");
-	if (fanalyze == NULL) {
+	if (fanalyze == nullptr) {
 		fprintf(stderr, "Failed to open %s: %s\n", analyze_pin,
 			strerror(errno));
 		std::exit(EXIT_FAILURE);
@@ -1520,7 +1520,7 @@ static void stress_test_power_cycle(const struct node &node, unsigned cnt,
 		mod_usleep = 1000000 * (max_sleep - min_sleep) + 1;
 
 	if (!has_seed)
-		seed = time(NULL);
+		seed = time(nullptr);
 
 	if (mod_usleep)
 		printf("Randomizer seed: %u\n\n", seed);
@@ -1812,7 +1812,7 @@ static __u16 parse_phys_addr_from_edid(const char *edid_path)
 	__u16 pa = CEC_PHYS_ADDR_INVALID;
 	__u8 edid[256];
 
-	if (f == NULL)
+	if (f == nullptr)
 		return pa;
 	if (fread(edid, sizeof(edid), 1, f) == 1) {
 		unsigned int loc = cec_get_edid_spa_location(edid, sizeof(edid));
@@ -1858,7 +1858,7 @@ static void *thread_edid_poll(void *arg)
 				       cec_phys_addr_exp(phys_addr));
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 using dev_vec = std::vector<std::string>;
@@ -1874,7 +1874,7 @@ static void list_devices()
 	struct cec_caps caps;
 
 	dp = opendir("/dev");
-	if (dp == NULL) {
+	if (dp == nullptr) {
 		perror("Couldn't open the directory");
 		return;
 	}
@@ -1942,8 +1942,8 @@ static void list_devices()
 int main(int argc, char **argv)
 {
 	std::string device;
-	const char *driver = NULL;
-	const char *adapter = NULL;
+	const char *driver = nullptr;
+	const char *adapter = nullptr;
 	const struct cec_msg_args *opt;
 	msg_vec msgs;
 	char short_options[26 * 2 * 2 + 1];
@@ -1968,8 +1968,8 @@ int main(int argc, char **argv)
 	__u8 rc_tv = 0;
 	__u8 rc_src = 0;
 	const char *osd_name = "";
-	const char *store_pin = NULL;
-	const char *analyze_pin = NULL;
+	const char *store_pin = nullptr;
+	const char *analyze_pin = nullptr;
 	bool reply = true;
 	int idx = 0;
 	int fd = -1;
@@ -2022,18 +2022,18 @@ int main(int argc, char **argv)
 			verbose = true;
 			break;
 		case OptFrom:
-			from = strtoul(optarg, NULL, 0) & 0xf;
+			from = strtoul(optarg, nullptr, 0) & 0xf;
 			break;
 		case OptTo:
-			to = strtoul(optarg, NULL, 0) & 0xf;
+			to = strtoul(optarg, nullptr, 0) & 0xf;
 			if (first_to == 0xff)
 				first_to = to;
 			break;
 		case OptTimeout:
-			timeout = strtoul(optarg, NULL, 0);
+			timeout = strtoul(optarg, nullptr, 0);
 			break;
 		case OptMonitorTime:
-			monitor_time = strtoul(optarg, NULL, 0);
+			monitor_time = strtoul(optarg, nullptr, 0);
 			break;
 		case OptIgnore: {
 			bool all_la = !strncmp(optarg, "all", 3);
@@ -2044,7 +2044,7 @@ int main(int argc, char **argv)
 			if (sep)
 				all_opcodes = !strncmp(sep + 1, "all", 3);
 			if (!all_la) {
-				la = strtoul(optarg, NULL, 0);
+				la = strtoul(optarg, nullptr, 0);
 
 				if (la > 15) {
 					fprintf(stderr, "invalid logical address (> 15)\n");
@@ -2057,7 +2057,7 @@ int main(int argc, char **argv)
 				if (!strncmp(sep + 1, "poll", 4)) {
 					opcode = POLL_FAKE_OPCODE;
 				} else {
-					opcode = strtoul(sep + 1, NULL, 0);
+					opcode = strtoul(sep + 1, nullptr, 0);
 					if (opcode > 255) {
 						fprintf(stderr, "invalid opcode (> 255)\n");
 						usage();
@@ -2097,7 +2097,7 @@ int main(int argc, char **argv)
 			osd_name = optarg;
 			break;
 		case OptVendorID:
-			vendor_id = strtoul(optarg, NULL, 0) & 0x00ffffff;
+			vendor_id = strtoul(optarg, nullptr, 0) & 0x00ffffff;
 			break;
 		case OptRcTVProfile1:
 			rc_tv = CEC_OP_FEAT_RC_TV_PROFILE_1;
@@ -2174,7 +2174,7 @@ int main(int argc, char **argv)
 		case OptVendorCommand: {
 			static const char *arg_names[] = {
 				"payload",
-				NULL
+				nullptr
 			};
 			char *value, *endptr, *subs = optarg;
 			__u8 size = 0;
@@ -2190,7 +2190,7 @@ int main(int argc, char **argv)
 							break;
 						}
 						value = std::strchr(value, ':');
-						if (value == NULL)
+						if (value == nullptr)
 							break;
 						value++;
 					}
@@ -2209,7 +2209,7 @@ int main(int argc, char **argv)
 			static const char *arg_names[] = {
 				"cmd",
 				"payload",
-				NULL
+				nullptr
 			};
 			char *value, *endptr, *subs = optarg;
 			bool have_cmd = false;
@@ -2231,7 +2231,7 @@ int main(int argc, char **argv)
 							break;
 						}
 						value = std::strchr(value, ':');
-						if (value == NULL)
+						if (value == nullptr)
 							break;
 						value++;
 					}
@@ -2252,7 +2252,7 @@ int main(int argc, char **argv)
 			static const char *arg_names[] = {
 				"vendor-id",
 				"cmd",
-				NULL
+				nullptr
 			};
 			char *value, *endptr, *subs = optarg;
 			__u32 vendor_id = 0;
@@ -2262,7 +2262,7 @@ int main(int argc, char **argv)
 			while (*subs != '\0') {
 				switch (cec_parse_subopt(&subs, arg_names, &value)) {
 				case 0:
-					vendor_id = strtol(value, 0L, 0);
+					vendor_id = strtol(value, nullptr, 0);
 					break;
 				case 1:
 					while (size < sizeof(bytes)) {
@@ -2272,7 +2272,7 @@ int main(int argc, char **argv)
 							break;
 						}
 						value = std::strchr(value, ':');
-						if (value == NULL)
+						if (value == nullptr)
 							break;
 						value++;
 					}
@@ -2290,7 +2290,7 @@ int main(int argc, char **argv)
 		case OptVendorRemoteButtonDown: {
 			static const char *arg_names[] = {
 				"rc-code",
-				NULL
+				nullptr
 			};
 			char *value, *endptr, *subs = optarg;
 			__u8 size = 0;
@@ -2306,7 +2306,7 @@ int main(int argc, char **argv)
 							break;
 						}
 						value = std::strchr(value, ':');
-						if (value == NULL)
+						if (value == nullptr)
 							break;
 						value++;
 					}
@@ -2340,7 +2340,7 @@ int main(int argc, char **argv)
 			static const char *arg_names[] = {
 				"polls",
 				"sleep",
-				NULL
+				nullptr
 			};
 			char *value, *subs = optarg;
 
@@ -2351,10 +2351,10 @@ int main(int argc, char **argv)
 			while (*subs != '\0') {
 				switch (cec_parse_subopt(&subs, arg_names, &value)) {
 				case 0:
-					test_pwr_cycle_polls = strtoul(value, 0L, 0);
+					test_pwr_cycle_polls = strtoul(value, nullptr, 0);
 					break;
 				case 1:
-					test_pwr_cycle_sleep = strtoul(value, 0L, 0);
+					test_pwr_cycle_sleep = strtoul(value, nullptr, 0);
 					break;
 				default:
 					std::exit(EXIT_FAILURE);
@@ -2373,36 +2373,36 @@ int main(int argc, char **argv)
 				"sleep-before-on",
 				"sleep-before-off",
 				"polls",
-				NULL
+				nullptr
 			};
 			char *value, *subs = optarg;
 
 			while (*subs != '\0') {
 				switch (cec_parse_subopt(&subs, arg_names, &value)) {
 				case 0:
-					stress_test_pwr_cycle_cnt = strtoul(value, 0L, 0);
+					stress_test_pwr_cycle_cnt = strtoul(value, nullptr, 0);
 					break;
 				case 1:
-					stress_test_pwr_cycle_min_sleep = strtoul(value, 0L, 0);
+					stress_test_pwr_cycle_min_sleep = strtoul(value, nullptr, 0);
 					break;
 				case 2:
-					stress_test_pwr_cycle_max_sleep = strtoul(value, 0L, 0);
+					stress_test_pwr_cycle_max_sleep = strtoul(value, nullptr, 0);
 					break;
 				case 3:
 					stress_test_pwr_cycle_has_seed = true;
-					stress_test_pwr_cycle_seed = strtoul(value, 0L, 0);
+					stress_test_pwr_cycle_seed = strtoul(value, nullptr, 0);
 					break;
 				case 4:
-					stress_test_pwr_cycle_repeats = strtoul(value, 0L, 0);
+					stress_test_pwr_cycle_repeats = strtoul(value, nullptr, 0);
 					break;
 				case 5:
-					stress_test_pwr_cycle_sleep_before_on = strtod(value, NULL);
+					stress_test_pwr_cycle_sleep_before_on = strtod(value, nullptr);
 					break;
 				case 6:
-					stress_test_pwr_cycle_sleep_before_off = strtod(value, NULL);
+					stress_test_pwr_cycle_sleep_before_off = strtod(value, nullptr);
 					break;
 				case 7:
-					stress_test_pwr_cycle_polls = strtoul(value, 0L, 0);
+					stress_test_pwr_cycle_polls = strtoul(value, nullptr, 0);
 					break;
 				default:
 					std::exit(EXIT_FAILURE);
@@ -2513,7 +2513,7 @@ int main(int argc, char **argv)
 		device = "/dev/cec0";
 
 	clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
-	gettimeofday(&start_timeofday, NULL);
+	gettimeofday(&start_timeofday, nullptr);
 
 	if ((fd = open(device.c_str(), O_RDWR)) < 0) {
 		fprintf(stderr, "Failed to open %s: %s\n", device.c_str(),
@@ -2698,7 +2698,7 @@ int main(int argc, char **argv)
 
 	if (options[OptPhysAddrFromEDIDPoll]) {
 		pthread_t t;
-		int ret = pthread_create(&t, NULL, thread_edid_poll, &node);
+		int ret = pthread_create(&t, nullptr, thread_edid_poll, &node);
 		if (ret) {
 			fprintf(stderr, "Failed to start EDID poll thread: %s\n",
 				strerror(errno));

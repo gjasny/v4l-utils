@@ -45,7 +45,7 @@ static struct {
 	{ "dvr", MEDIA_TYPE_DVB_DVR },
 	{ "net", MEDIA_TYPE_DVB_NET },
 	{ "ca", MEDIA_TYPE_DTV_CA },
-	{ NULL, MEDIA_TYPE_UNKNOWN }
+	{ nullptr, MEDIA_TYPE_UNKNOWN }
 };
 
 media_type mi_media_detect_type(const char *device)
@@ -166,12 +166,12 @@ std::string mi_get_devpath_from_dev_t(dev_t dev)
 
 	FILE *uevent_fd = fopen(media_uevent_path.c_str(), "r");
 
-	if (uevent_fd == NULL) {
+	if (uevent_fd == nullptr) {
 		fprintf(stderr, "failed to open %s\n", media_uevent_path.c_str());
 		return "";
 	}
 
-	char *line = NULL;
+	char *line = nullptr;
 	size_t size = 0;
 	std::string devpath;
 
@@ -210,7 +210,7 @@ int mi_get_media_fd(int fd, const char *bus_info)
 	DIR *dp;
 	struct dirent *ep;
 	dp = opendir(media_path.c_str());
-	if (dp == NULL)
+	if (dp == nullptr)
 		return -1;
 	media_path[0] = 0;
 	while ((ep = readdir(dp))) {
@@ -237,7 +237,7 @@ int mi_get_media_fd(int fd, const char *bus_info)
 static const flag_def entity_flags_def[] = {
 	{ MEDIA_ENT_FL_DEFAULT, "default" },
 	{ MEDIA_ENT_FL_CONNECTOR, "connector" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string mi_entflags2s(__u32 flags)
@@ -267,7 +267,7 @@ static const flag_def interface_types_def[] = {
 	{ MEDIA_INTF_T_ALSA_HWDEP, "ALSA HWDEP" },
 	{ MEDIA_INTF_T_ALSA_SEQUENCER, "ALSA Sequencer" },
 	{ MEDIA_INTF_T_ALSA_TIMER, "ALSA Timer" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string mi_ifacetype2s(__u32 type)
@@ -314,7 +314,7 @@ static const flag_def entity_functions_def[] = {
 	{ MEDIA_ENT_F_PROC_VIDEO_ENCODER, "Video Encoder" },
 	{ MEDIA_ENT_F_VID_MUX, "Video Muxer" },
 	{ MEDIA_ENT_F_VID_IF_BRIDGE, "Video Interface Bridge" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string mi_entfunction2s(__u32 function, bool *is_invalid)
@@ -376,7 +376,7 @@ static const flag_def pad_flags_def[] = {
 	{ MEDIA_PAD_FL_SINK, "Sink" },
 	{ MEDIA_PAD_FL_SOURCE, "Source" },
 	{ MEDIA_PAD_FL_MUST_CONNECT, "Must Connect" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string mi_padflags2s(__u32 flags)
@@ -388,7 +388,7 @@ static const flag_def link_flags_def[] = {
 	{ MEDIA_LNK_FL_ENABLED, "Enabled" },
 	{ MEDIA_LNK_FL_IMMUTABLE, "Immutable" },
 	{ MEDIA_LNK_FL_DYNAMIC, "Dynamic" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string mi_linkflags2s(__u32 flags)
@@ -512,7 +512,7 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
 			__u32 type = link.flags & MEDIA_LNK_FL_LINK_TYPE;
 			__u32 remote_pad;
 			__u32 remote_ent_id = 0;
-			const media_v2_entity *remote_ent = NULL;
+			const media_v2_entity *remote_ent = nullptr;
 
 			if (type != MEDIA_LNK_FL_DATA_LINK ||
 			    (link.source_id != pad.id && link.sink_id != pad.id))

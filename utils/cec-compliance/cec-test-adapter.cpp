@@ -38,7 +38,7 @@ static int testCap(struct node *node)
 	struct cec_caps caps;
 
 	memset(&caps, 0xff, sizeof(caps));
-	fail_on_test(doioctl(node, CEC_ADAP_G_CAPS, NULL) != EFAULT);
+	fail_on_test(doioctl(node, CEC_ADAP_G_CAPS, nullptr) != EFAULT);
 	fail_on_test(doioctl(node, CEC_ADAP_G_CAPS, &caps));
 	fail_on_test(caps.available_log_addrs == 0 ||
 		     caps.available_log_addrs > CEC_MAX_LOG_ADDRS);
@@ -53,9 +53,9 @@ static int testInvalidIoctls(struct node *node)
 	unsigned ioc = _IOC(_IOC_NONE, type, 0xff, 0);
 	unsigned char buf[0x4000] = {};
 
-	fail_on_test(doioctl(node, ioc, NULL) != ENOTTY);
+	fail_on_test(doioctl(node, ioc, nullptr) != ENOTTY);
 	ioc = _IOC(_IOC_NONE, type, 0, 0x3fff);
-	fail_on_test(doioctl(node, ioc, NULL) != ENOTTY);
+	fail_on_test(doioctl(node, ioc, nullptr) != ENOTTY);
 	ioc = _IOC(_IOC_READ, type, 0, 0x3fff);
 	fail_on_test(doioctl(node, ioc, buf) != ENOTTY);
 	fail_on_test(check_0(buf, sizeof(buf)));
@@ -224,7 +224,7 @@ static int testAdapLogAddrs(struct node *node)
 				fail("Unknown event %d\n", ev.event);
 				break;
 			}
-			select(0, NULL, NULL, NULL, &tv);
+			select(0, nullptr, nullptr, nullptr, &tv);
 		}
 	} while (!res);
 	fail_on_test(doioctl(node, CEC_ADAP_S_LOG_ADDRS, &clear));
@@ -234,7 +234,7 @@ static int testAdapLogAddrs(struct node *node)
 		res = doioctl(node, CEC_DQEVENT, &ev);
 		fail_on_test(res && res != EAGAIN);
 		if (res)
-			select(0, NULL, NULL, NULL, &tv);
+			select(0, nullptr, nullptr, nullptr, &tv);
 	} while (res);
 	fail_on_test(ev.flags & CEC_EVENT_FL_INITIAL_STATE);
 	fail_on_test(ev.ts == 0);
@@ -249,7 +249,7 @@ static int testAdapLogAddrs(struct node *node)
 		res = doioctl(node, CEC_DQEVENT, &ev);
 		fail_on_test(res && res != EAGAIN);
 		if (res)
-			select(0, NULL, NULL, NULL, &tv);
+			select(0, nullptr, nullptr, nullptr, &tv);
 	} while (res);
 	fail_on_test(ev.flags & CEC_EVENT_FL_INITIAL_STATE);
 	fail_on_test(ev.ts == 0);
@@ -448,13 +448,13 @@ static int testTransmit(struct node *node)
 	}
 
 	if (tested_valid_la) {
-		time_t cur_t = time(NULL), t;
+		time_t cur_t = time(nullptr), t;
 		time_t last_t = cur_t + 7;
 		unsigned max_cnt = 0;
 		unsigned cnt = 0;
 
 		do {
-			t = time(NULL);
+			t = time(nullptr);
 			if (t != cur_t) {
 				if (cnt > max_cnt)
 					max_cnt = cnt;
@@ -472,13 +472,13 @@ static int testTransmit(struct node *node)
 	}
 
 	if (tested_invalid_la) {
-		time_t cur_t = time(NULL), t;
+		time_t cur_t = time(nullptr), t;
 		time_t last_t = cur_t + 7;
 		unsigned max_cnt = 0;
 		unsigned cnt = 0;
 
 		do {
-			t = time(NULL);
+			t = time(nullptr);
 			if (t != cur_t) {
 				if (cnt > max_cnt)
 					max_cnt = cnt;
@@ -1062,7 +1062,7 @@ static int testLostMsgs(struct node *node)
 			if (res == EBUSY) {
 				struct timeval tv = { 0, 10000 }; // 10 ms
 
-				select(0, NULL, NULL, NULL, &tv);
+				select(0, nullptr, nullptr, nullptr, &tv);
 				got_busy = true;
 			} else if (!got_busy) {
 				tx_queue_depth++;
@@ -1098,7 +1098,7 @@ static int testLostMsgs(struct node *node)
 	unsigned pending_tx_rx_aborted_msgs = 0;
 	unsigned pending_rx_msgs = 0;
 	unsigned pending_rx_cec_version_msgs = 0;
-	time_t start = time(NULL);
+	time_t start = time(nullptr);
 	__u8 last_init = 0xff;
 	__u64 last_ts = 0;
 	unsigned tx_repeats = 0;
@@ -1211,7 +1211,7 @@ static int testLostMsgs(struct node *node)
 		if (pending_quick_msgs < pending_msgs)
 			printf("\t\tReceived %d messages immediately, and %d over %ld seconds\n",
 			       pending_quick_msgs, pending_msgs - pending_quick_msgs,
-			       time(NULL) - start);
+			       time(nullptr) - start);
 	}
 	if (fail_msg)
 		return fail("There were %d messages in the receive queue for %d transmits\n",

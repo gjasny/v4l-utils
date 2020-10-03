@@ -63,16 +63,16 @@ void io_cmd(int ch, char *optarg)
 {
 	switch (ch) {
 		case OptSetInput:
-			input = strtol(optarg, 0L, 0);
+			input = strtol(optarg, nullptr, 0);
 			break;
 		case OptSetOutput:
-			output = strtol(optarg, 0L, 0);
+			output = strtol(optarg, nullptr, 0);
 			break;
 		case OptSetAudioInput:
-			vaudio.index = strtol(optarg, 0L, 0);
+			vaudio.index = strtol(optarg, nullptr, 0);
 			break;
 		case OptSetAudioOutput:
-			vaudout.index = strtol(optarg, 0L, 0);
+			vaudout.index = strtol(optarg, nullptr, 0);
 			break;
 	}
 }

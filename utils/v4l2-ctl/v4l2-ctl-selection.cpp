@@ -98,24 +98,24 @@ static void parse_crop(char *optarg, unsigned int &set_crop, v4l2_rect &vcrop)
 			"top",
 			"width",
 			"height",
-			NULL
+			nullptr
 		};
 
 		switch (parse_subopt(&subs, subopts, &value)) {
 		case 0:
-			vcrop.left = strtol(value, 0L, 0);
+			vcrop.left = strtol(value, nullptr, 0);
 			set_crop |= CropLeft;
 			break;
 		case 1:
-			vcrop.top = strtol(value, 0L, 0);
+			vcrop.top = strtol(value, nullptr, 0);
 			set_crop |= CropTop;
 			break;
 		case 2:
-			vcrop.width = strtol(value, 0L, 0);
+			vcrop.width = strtol(value, nullptr, 0);
 			set_crop |= CropWidth;
 			break;
 		case 3:
-			vcrop.height = strtol(value, 0L, 0);
+			vcrop.height = strtol(value, nullptr, 0);
 			set_crop |= CropHeight;
 			break;
 		default:
@@ -160,7 +160,7 @@ static int parse_selection(char *optarg, unsigned int &set_sel, v4l2_selection &
 			"top",
 			"width",
 			"height",
-			NULL
+			nullptr
 		};
 
 		switch (parse_subopt(&subs, subopts, &value)) {
@@ -176,19 +176,19 @@ static int parse_selection(char *optarg, unsigned int &set_sel, v4l2_selection &
 			set_sel |= SelectionFlags;
 			break;
 		case 2:
-			vsel.r.left = strtol(value, 0L, 0);
+			vsel.r.left = strtol(value, nullptr, 0);
 			set_sel |= SelectionLeft;
 			break;
 		case 3:
-			vsel.r.top = strtol(value, 0L, 0);
+			vsel.r.top = strtol(value, nullptr, 0);
 			set_sel |= SelectionTop;
 			break;
 		case 4:
-			vsel.r.width = strtoul(value, 0L, 0);
+			vsel.r.width = strtoul(value, nullptr, 0);
 			set_sel |= SelectionWidth;
 			break;
 		case 5:
-			vsel.r.height = strtoul(value, 0L, 0);
+			vsel.r.height = strtoul(value, nullptr, 0);
 			set_sel |= SelectionHeight;
 			break;
 		default:

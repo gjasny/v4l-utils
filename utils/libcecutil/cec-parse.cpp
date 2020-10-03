@@ -153,7 +153,7 @@ int cec_parse_subopt(char **subs, const char * const *subopts, char **value)
 		fprintf(stderr, "Invalid suboptions specified\n");
 		return -1;
 	}
-	if (*value == NULL) {
+	if (*value == nullptr) {
 		fprintf(stderr, "No value given to suboption <%s>\n",
 				subopts[opt]);
 		return -1;
@@ -164,7 +164,7 @@ int cec_parse_subopt(char **subs, const char * const *subopts, char **value)
 static unsigned parse_enum(const char *value, const struct cec_arg *a)
 {
 	if (isdigit(*value))
-		return strtoul(value, NULL, 0);
+		return strtoul(value, nullptr, 0);
 	for (int i = 0; i < a->num_enum_values; i++) {
 		if (!strcmp(value, a->values[i].type_name))
 			return a->values[i].value;
@@ -177,7 +177,7 @@ unsigned cec_parse_phys_addr(const char *value)
 	unsigned p1, p2, p3, p4;
 
 	if (!std::strchr(value, '.'))
-		return strtoul(value, NULL, 0);
+		return strtoul(value, nullptr, 0);
 	if (sscanf(value, "%x.%x.%x.%x", &p1, &p2, &p3, &p4) != 4) {
 		fprintf(stderr, "Expected a physical address of the form x.x.x.x\n");
 		return 0;

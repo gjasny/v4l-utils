@@ -64,7 +64,7 @@ static const struct board_list boards[] = {
 		sizeof(AC97_PREFIX) - 1,
 		ac97_regs,
 		ARRAY_SIZE(ac97_regs),
-		NULL,
+		nullptr,
 		0,
 	},
 	{				/* From v4l2-dbg-bttv.h */
@@ -80,7 +80,7 @@ static const struct board_list boards[] = {
 		sizeof(SAA7134_PREFIX) - 1,
 		saa7134_regs,
 		ARRAY_SIZE(saa7134_regs),
-		NULL,
+		nullptr,
 		0,
 	},
 	{				/* From v4l2-dbg-em28xx.h */
@@ -96,7 +96,7 @@ static const struct board_list boards[] = {
 		sizeof(TVP5150_PREFIX) - 1,
 		tvp5150_regs,
 		ARRAY_SIZE(tvp5150_regs),
-		NULL,
+		nullptr,
 		0,
 	},
 	{				/* From v4l2-dbg-micron.h */
@@ -104,7 +104,7 @@ static const struct board_list boards[] = {
 		sizeof(MT9V011_PREFIX) - 1,
 		mt9v011_regs,
 		ARRAY_SIZE(mt9v011_regs),
-		NULL,
+		nullptr,
 		0,
 	},
 };
@@ -138,19 +138,19 @@ static char options[OptLast];
 static unsigned capabilities;
 
 static struct option long_options[] = {
-	{"device", required_argument, 0, OptSetDevice},
-	{"help", no_argument, 0, OptHelp},
-	{"list-registers", optional_argument, 0, OptListRegisters},
-	{"get-register", required_argument, 0, OptGetRegister},
-	{"set-register", required_argument, 0, OptSetRegister},
-	{"chip", required_argument, 0, OptChip},
-	{"scan-chips", no_argument, 0, OptScanChips},
-	{"info", no_argument, 0, OptGetDriverInfo},
-	{"verbose", no_argument, 0, OptVerbose},
-	{"log-status", no_argument, 0, OptLogStatus},
-	{"list-symbols", no_argument, 0, OptListSymbols},
-	{"wide", required_argument, 0, OptSetStride},
-	{0, 0, 0, 0}
+	{"device", required_argument, nullptr, OptSetDevice},
+	{"help", no_argument, nullptr, OptHelp},
+	{"list-registers", optional_argument, nullptr, OptListRegisters},
+	{"get-register", required_argument, nullptr, OptGetRegister},
+	{"set-register", required_argument, nullptr, OptSetRegister},
+	{"chip", required_argument, nullptr, OptChip},
+	{"scan-chips", no_argument, nullptr, OptScanChips},
+	{"info", no_argument, nullptr, OptGetDriverInfo},
+	{"verbose", no_argument, nullptr, OptVerbose},
+	{"log-status", no_argument, nullptr, OptLogStatus},
+	{"list-symbols", no_argument, nullptr, OptListSymbols},
+	{"wide", required_argument, nullptr, OptSetStride},
+	{nullptr, 0, nullptr, 0}
 };
 
 static void usage()
@@ -307,7 +307,7 @@ static unsigned long long parse_reg(const struct board_list *curr_bd, const std:
 			}
 		}
 	}
-	return strtoull(reg.c_str(), NULL, 0);
+	return strtoull(reg.c_str(), nullptr, 0);
 }
 
 static const char *reg_name(const struct board_list *curr_bd, unsigned long long reg)
@@ -322,7 +322,7 @@ static const char *reg_name(const struct board_list *curr_bd, unsigned long long
 				return curr_bd->regs[i].name;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 static const char *binary(unsigned long long val)
@@ -379,7 +379,7 @@ static int parse_subopt(char **subs, const char * const *subopts, char **value)
 		usage();
 		std::exit(EXIT_FAILURE);
 	}
-	if (*value == NULL) {
+	if (*value == nullptr) {
 		fprintf(stderr, "No value given to suboption <%s>\n",
 				subopts[opt]);
 		usage();
@@ -402,7 +402,7 @@ int main(int argc, char **argv)
 	struct v4l2_dbg_register set_reg;
 	struct v4l2_dbg_register get_reg;
 	struct v4l2_dbg_chip_info chip_info;
-	const struct board_list *curr_bd = NULL;
+	const struct board_list *curr_bd = nullptr;
 	char short_options[26 * 2 * 3 + 1];
 	int idx = 0;
 	std::string reg_min_arg, reg_max_arg;
@@ -472,12 +472,12 @@ int main(int argc, char **argv)
 		case OptChip:
 			if (!memcmp(optarg, "subdev", 6) && isdigit(optarg[6])) {
 				match.type = V4L2_CHIP_MATCH_SUBDEV;
-				match.addr = strtoul(optarg + 6, NULL, 0);
+				match.addr = strtoul(optarg + 6, nullptr, 0);
 				break;
 			}
 			if (!memcmp(optarg, "bridge", 6)) {
 				match.type = V4L2_CHIP_MATCH_BRIDGE;
-				match.addr = strtoul(optarg + 6, NULL, 0);
+				match.addr = strtoul(optarg + 6, nullptr, 0);
 				break;
 			}
 			match.type = V4L2_CHIP_MATCH_BRIDGE;
@@ -493,19 +493,19 @@ int main(int argc, char **argv)
 			break;
 
 		case OptSetStride:
-			forcedstride = strtoull(optarg, 0L, 0);
+			forcedstride = strtoull(optarg, nullptr, 0);
 			break;
 
 		case OptListRegisters:
 			subs = optarg;
-			if (subs == NULL)
+			if (subs == nullptr)
 				break;
 
 			while (*subs != '\0') {
 				static const char * const subopts[] = {
 					"min",
 					"max",
-					NULL
+					nullptr
 				};
 
 				switch (parse_subopt(&subs, subopts, &value)) {
@@ -597,7 +597,7 @@ int main(int argc, char **argv)
 				    "VIDIOC_DBG_G_REGISTER") >= 0)
 				size = set_reg.size;
 
-			set_reg.val = strtoull(argv[optind++], NULL, 0);
+			set_reg.val = strtoull(argv[optind++], nullptr, 0);
 			if (doioctl(fd, VIDIOC_DBG_S_REGISTER, &set_reg,
 						"VIDIOC_DBG_S_REGISTER") >= 0) {
 				const char *name = reg_name(curr_bd, set_reg.reg);
@@ -763,7 +763,7 @@ list_done:
 		static char buf[40960];
 		int len = -1;
 
-		if (doioctl(fd, VIDIOC_LOG_STATUS, NULL, "VIDIOC_LOG_STATUS") == 0) {
+		if (doioctl(fd, VIDIOC_LOG_STATUS, nullptr, "VIDIOC_LOG_STATUS") == 0) {
 			printf("\nStatus Log:\n\n");
 #ifdef HAVE_KLOGCTL
 			len = klogctl(3, buf, sizeof(buf) - 1);
@@ -791,7 +791,7 @@ list_done:
 	}
 
 	if (options[OptListSymbols]) {
-		if (curr_bd == NULL) {
+		if (curr_bd == nullptr) {
 			printf("No symbols found for driver %s\n", vcap.driver);
 		}
 		else {

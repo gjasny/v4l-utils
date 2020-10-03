@@ -255,19 +255,19 @@ static bool wait_changing_power_status(struct node *node, unsigned me, unsigned 
 				       unsigned &unresponsive_time)
 {
 	__u8 old_status;
-	time_t t = time(NULL);
+	time_t t = time(nullptr);
 
 	announce("Checking for power status change. This may take up to %llu s.", (long long)long_timeout);
 	if (!get_power_status(node, me, la, old_status))
 		return false;
-	while (time(NULL) - t < long_timeout) {
+	while (time(nullptr) - t < long_timeout) {
 		__u8 power_status;
 
 		if (!get_power_status(node, me, la, power_status)) {
 			/* Some TVs become completely unresponsive when transitioning
 			   between power modes. Register that this happens, but continue
 			   the test. */
-			unresponsive_time = time(NULL) - t;
+			unresponsive_time = time(nullptr) - t;
 		} else if (old_status != power_status) {
 			new_status = power_status;
 			return true;
@@ -283,25 +283,25 @@ static bool poll_stable_power_status(struct node *node, unsigned me, unsigned la
 {
 	bool transient = false;
 	unsigned time_to_transient = 0;
-	time_t t = time(NULL);
+	time_t t = time(nullptr);
 
 	/* Some devices can use several seconds to transition from one power
 	   state to another, so the power state must be repeatedly polled */
 	announce("Waiting for new stable power status. This may take up to %llu s.", (long long)long_timeout);
-	while (time(NULL) - t < long_timeout) {
+	while (time(nullptr) - t < long_timeout) {
 		__u8 power_status;
 
 		if (!get_power_status(node, me, la, power_status)) {
 			/* Some TVs become completely unresponsive when transitioning
 			   between power modes. Register that this happens, but continue
 			   the test. */
-			unresponsive_time = time(NULL) - t;
+			unresponsive_time = time(nullptr) - t;
 			sleep(SLEEP_POLL_POWER_STATUS);
 			continue;
 		}
 		if (!transient && (power_status == CEC_OP_POWER_STATUS_TO_ON ||
 				   power_status == CEC_OP_POWER_STATUS_TO_STANDBY)) {
-			time_to_transient = time(NULL) - t;
+			time_to_transient = time(nullptr) - t;
 			transient = true;
 			warn_once_on_test(expected_status == CEC_OP_POWER_STATUS_ON &&
 					  power_status == CEC_OP_POWER_STATUS_TO_STANDBY);
@@ -584,7 +584,7 @@ static int power_state_transitions(struct node *node, unsigned me, unsigned la, 
 	cec_msg_init(&msg, me, la);
 	cec_msg_standby(&msg);
 	fail_on_test(!transmit_timeout(node, &msg));
-	time_t start = time(NULL);
+	time_t start = time(nullptr);
 	int res = util_receive(node, la, long_timeout * 1000, &msg, CEC_MSG_STANDBY,
 			       CEC_MSG_REPORT_POWER_STATUS);
 	fail_on_test(!res);
@@ -595,7 +595,7 @@ static int power_state_transitions(struct node *node, unsigned me, unsigned la, 
 		info("so any kernel released after January 2020 should have this fix.\n");
 		return OK_PRESUMED;
 	}
-	if (time(NULL) - start > 3)
+	if (time(nullptr) - start > 3)
 		warn("The first Report Power Status broadcast arrived > 3s after sending <Standby>\n");
 	if (msg.msg[2] == CEC_OP_POWER_STATUS_STANDBY)
 		return 0;
@@ -622,10 +622,10 @@ static int power_state_transitions(struct node *node, unsigned me, unsigned la, 
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 	}
 	fail_on_test(!(msg.tx_status & CEC_TX_STATUS_OK));
-	start = time(NULL);
+	start = time(nullptr);
 	fail_on_test(util_receive(node, la, long_timeout * 1000, &msg, opcode,
 		     CEC_MSG_REPORT_POWER_STATUS) <= 0);
-	if (time(NULL) - start > 3)
+	if (time(nullptr) - start > 3)
 		warn("The first Report Power Status broadcast arrived > 3s after sending <%s>\n",
 		     opcode == CEC_MSG_IMAGE_VIEW_ON ? "Image View On" : "Set Stream Path");
 	if (msg.msg[2] == CEC_OP_POWER_STATUS_ON)

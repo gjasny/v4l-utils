@@ -190,7 +190,7 @@ static const flag_def bufcap_def[] = {
 	{ V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS, "orphaned-bufs" },
 	{ V4L2_BUF_CAP_SUPPORTS_M2M_HOLD_CAPTURE_BUF, "m2m-hold-capture-buf" },
 	{ V4L2_BUF_CAP_SUPPORTS_MMAP_CACHE_HINTS, "mmap-cache-hints" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string bufcap2s(__u32 caps)
@@ -328,7 +328,7 @@ std::string quantization2s(int val)
 
 static const flag_def pixflags_def[] = {
 	{ V4L2_PIX_FMT_FLAG_PREMUL_ALPHA,  "premultiplied-alpha" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string pixflags2s(unsigned flags)
@@ -341,7 +341,7 @@ static const flag_def service_def[] = {
 	{ V4L2_SLICED_VPS,         "vps" },
 	{ V4L2_SLICED_CAPTION_525, "cc" },
 	{ V4L2_SLICED_WSS_625,     "wss" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string service2s(unsigned service)
@@ -401,7 +401,7 @@ static const flag_def selection_targets_def[] = {
 	{ V4L2_SEL_TGT_COMPOSE_BOUNDS, "compose_bounds" },
 	{ V4L2_SEL_TGT_COMPOSE_PADDED, "compose_padded" },
 	{ V4L2_SEL_TGT_NATIVE_SIZE, "native_size" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 bool valid_seltarget_at_idx(unsigned i)
@@ -420,7 +420,7 @@ std::string seltarget2s(__u32 target)
 {
 	int i = 0;
 
-	while (selection_targets_def[i].str != NULL) {
+	while (selection_targets_def[i].str != nullptr) {
 		if (selection_targets_def[i].flag == target)
 			return selection_targets_def[i].str;
 		i++;
@@ -432,7 +432,7 @@ const flag_def selection_flags_def[] = {
 	{ V4L2_SEL_FLAG_GE, "ge" },
 	{ V4L2_SEL_FLAG_LE, "le" },
 	{ V4L2_SEL_FLAG_KEEP_CONFIG, "keep-config" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string selflags2s(__u32 flags)
@@ -443,19 +443,19 @@ std::string selflags2s(__u32 flags)
 static const char *std_pal[] = {
 	"B", "B1", "G", "H", "I", "D", "D1", "K",
 	"M", "N", "Nc", "60",
-	NULL
+	nullptr
 };
 static const char *std_ntsc[] = {
 	"M", "M-JP", "443", "M-KR",
-	NULL
+	nullptr
 };
 static const char *std_secam[] = {
 	"B", "D", "G", "H", "K", "K1", "L", "Lc",
-	NULL
+	nullptr
 };
 static const char *std_atsc[] = {
 	"8-VSB", "16-VSB",
-	NULL
+	nullptr
 };
 
 static std::string partstd2s(const char *prefix, const char *stds[], unsigned long long std)
@@ -512,7 +512,7 @@ std::string ctrlflags2s(__u32 flags)
 		{ V4L2_CTRL_FLAG_HAS_PAYLOAD,"has-payload" },
 		{ V4L2_CTRL_FLAG_EXECUTE_ON_WRITE, "execute-on-write" },
 		{ V4L2_CTRL_FLAG_MODIFY_LAYOUT, "modify-layout" },
-		{ 0, NULL }
+		{ 0, nullptr }
 	};
 	return flags2s(flags, def);
 }
@@ -533,7 +533,7 @@ static const flag_def in_status_def[] = {
 	{ V4L2_IN_ST_MACROVISION, "macrovision" },
 	{ V4L2_IN_ST_NO_ACCESS,   "no conditional access" },
 	{ V4L2_IN_ST_VTR,         "VTR time constant" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string in_status2s(__u32 status)
@@ -545,7 +545,7 @@ static const flag_def input_cap_def[] = {
 	{ V4L2_IN_CAP_DV_TIMINGS, "DV timings" },
 	{ V4L2_IN_CAP_STD, "SDTV standards" },
 	{ V4L2_IN_CAP_NATIVE_SIZE, "Native Size" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string input_cap2s(__u32 capabilities)
@@ -557,7 +557,7 @@ static const flag_def output_cap_def[] = {
 	{ V4L2_OUT_CAP_DV_TIMINGS, "DV timings" },
 	{ V4L2_OUT_CAP_STD, "SDTV standards" },
 	{ V4L2_OUT_CAP_NATIVE_SIZE, "Native Size" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string output_cap2s(__u32 capabilities)
@@ -617,7 +617,7 @@ static const flag_def dv_standards_def[] = {
 	{ V4L2_DV_BT_STD_CVT, "CVT" },
 	{ V4L2_DV_BT_STD_GTF, "GTF" },
 	{ V4L2_DV_BT_STD_SDI, "SDI" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string dv_standards2s(__u32 flags)
@@ -661,7 +661,7 @@ static const flag_def dv_caps_def[] = {
 	{ V4L2_DV_BT_CAP_PROGRESSIVE, "Progressive" },
 	{ V4L2_DV_BT_CAP_REDUCED_BLANKING, "Reduced Blanking" },
 	{ V4L2_DV_BT_CAP_CUSTOM, "Custom Formats" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string dv_caps2s(__u32 flags)
@@ -675,7 +675,7 @@ static const flag_def tc_flags_def[] = {
 	{ V4L2_TC_USERBITS_field, "userbits-field" },
 	{ V4L2_TC_USERBITS_USERDEFINED, "userbits-userdefined" },
 	{ V4L2_TC_USERBITS_8BITCHARS, "userbits-8bitchars" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string tc_flags2s(__u32 flags)
@@ -699,7 +699,7 @@ static const flag_def buffer_flags_def[] = {
 	{ V4L2_BUF_FLAG_LAST, "last" },
 	{ V4L2_BUF_FLAG_REQUEST_FD, "request-fd" },
 	{ V4L2_BUF_FLAG_IN_REQUEST, "in-request" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string bufferflags2s(__u32 flags)
@@ -741,7 +741,7 @@ std::string bufferflags2s(__u32 flags)
 static const flag_def vbi_def[] = {
 	{ V4L2_VBI_UNSYNC,     "unsynchronized" },
 	{ V4L2_VBI_INTERLACED, "interlaced" },
-	{ 0, NULL }
+	{ 0, nullptr }
 };
 
 std::string vbiflags2s(__u32 flags)

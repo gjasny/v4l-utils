@@ -182,7 +182,7 @@ static int parse_timing_subopt(char **subopt_str, int *value)
 		"reduced-blanking",
 		"reduced-fps",
 		"clear",
-		NULL
+		nullptr
 	};
 
 	opt = getsubopt(subopt_str, (char* const*) subopt_list, &opt_str);
@@ -192,7 +192,7 @@ static int parse_timing_subopt(char **subopt_str, int *value)
 		stds_usage();
 		std::exit(EXIT_FAILURE);
 	}
-	if (opt_str == NULL && opt != CVT && opt != GTF && opt != CLEAR) {
+	if (opt_str == nullptr && opt != CVT && opt != GTF && opt != CLEAR) {
 		fprintf(stderr, "No value given to suboption <%s>\n",
 				subopt_list[opt]);
 		stds_usage();
@@ -200,7 +200,7 @@ static int parse_timing_subopt(char **subopt_str, int *value)
 	}
 
 	if (opt_str)
-		*value = strtol(opt_str, 0L, 0);
+		*value = strtol(opt_str, nullptr, 0);
 	return opt;
 }
 
@@ -446,7 +446,7 @@ void stds_cmd(int ch, char *optarg)
 				standard = V4L2_STD_SECAM;
 		}
 		else if (isdigit(optarg[0])) {
-			standard = strtol(optarg, 0L, 0) | (1ULL << 63);
+			standard = strtol(optarg, nullptr, 0) | (1ULL << 63);
 		} else {
 			fprintf(stderr, "Unknown standard '%s'\n", optarg);
 			stds_usage();
@@ -458,11 +458,11 @@ void stds_cmd(int ch, char *optarg)
 		break;
 	case OptListDvTimings:
 		if (optarg)
-			list_dv_timings_pad = strtoul(optarg, 0L, 0);
+			list_dv_timings_pad = strtoul(optarg, nullptr, 0);
 		break;
 	case OptGetDvTimingsCap:
 		if (optarg)
-			dv_timings_cap_pad = strtoul(optarg, 0L, 0);
+			dv_timings_cap_pad = strtoul(optarg, nullptr, 0);
 		break;
 	}
 }

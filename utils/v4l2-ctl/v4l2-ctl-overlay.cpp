@@ -77,7 +77,7 @@ static void find_fb(int fd)
 
 	if (doioctl(fd, VIDIOC_G_FBUF, &fbuf))
 		return;
-	if (fbuf.base == 0) {
+	if (fbuf.base == nullptr) {
 		printf("No framebuffer base address was defined\n");
 		return;
 	}
@@ -146,7 +146,7 @@ static int fbuf_fill_from_fb(struct v4l2_framebuffer &fb, const char *fb_device)
 	struct fb_var_screeninfo vi;
 	int fb_fd;
 
-	if (fb_device == NULL)
+	if (fb_device == nullptr)
 		return 0;
 	fb_fd = open(fb_device, O_RDWR);
 	if (fb_fd == -1) {
@@ -219,32 +219,32 @@ void overlay_cmd(int ch, char *optarg)
 				"width",
 				"height",
 				"field",
-				NULL
+				nullptr
 			};
 
 			switch (parse_subopt(&subs, subopts, &value)) {
 			case 0:
-				overlay_fmt.fmt.win.chromakey = strtoul(value, 0L, 0);
+				overlay_fmt.fmt.win.chromakey = strtoul(value, nullptr, 0);
 				set_overlay_fmt |= FmtChromaKey;
 				break;
 			case 1:
-				overlay_fmt.fmt.win.global_alpha = strtoul(value, 0L, 0);
+				overlay_fmt.fmt.win.global_alpha = strtoul(value, nullptr, 0);
 				set_overlay_fmt |= FmtGlobalAlpha;
 				break;
 			case 2:
-				overlay_fmt.fmt.win.w.left = strtol(value, 0L, 0);
+				overlay_fmt.fmt.win.w.left = strtol(value, nullptr, 0);
 				set_overlay_fmt |= FmtLeft;
 				break;
 			case 3:
-				overlay_fmt.fmt.win.w.top = strtol(value, 0L, 0);
+				overlay_fmt.fmt.win.w.top = strtol(value, nullptr, 0);
 				set_overlay_fmt |= FmtTop;
 				break;
 			case 4:
-				overlay_fmt.fmt.win.w.width = strtoul(value, 0L, 0);
+				overlay_fmt.fmt.win.w.width = strtoul(value, nullptr, 0);
 				set_overlay_fmt |= FmtWidth;
 				break;
 			case 5:
-				overlay_fmt.fmt.win.w.height = strtoul(value, 0L, 0);
+				overlay_fmt.fmt.win.w.height = strtoul(value, nullptr, 0);
 				set_overlay_fmt |= FmtHeight;
 				break;
 			case 6:
@@ -267,21 +267,21 @@ void overlay_cmd(int ch, char *optarg)
 				"top",
 				"width",
 				"height",
-				NULL
+				nullptr
 			};
 
 			switch (parse_subopt(&subs, subopts, &value)) {
 			case 0:
-				r.left = strtoul(value, 0L, 0);
+				r.left = strtoul(value, nullptr, 0);
 				break;
 			case 1:
-				r.top = strtoul(value, 0L, 0);
+				r.top = strtoul(value, nullptr, 0);
 				break;
 			case 2:
-				r.width = strtoul(value, 0L, 0);
+				r.width = strtoul(value, nullptr, 0);
 				break;
 			case 3:
-				r.height = strtoul(value, 0L, 0);
+				r.height = strtoul(value, nullptr, 0);
 				break;
 			default:
 				overlay_usage();
@@ -298,7 +298,7 @@ void overlay_cmd(int ch, char *optarg)
 			struct v4l2_clip c;
 
 			c.c = r;
-			c.next = NULL;
+			c.next = nullptr;
 			clips.push_back(c);
 		}
 		break;
@@ -317,33 +317,33 @@ void overlay_cmd(int ch, char *optarg)
 				"local_alpha",
 				"local_inv_alpha",
 				"fb",
-				NULL
+				nullptr
 			};
 
 			switch (parse_subopt(&subs, subopts, &value)) {
 			case 0:
 				fbuf.flags &= ~chroma_flags;
-				fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_CHROMAKEY : 0;
+				fbuf.flags |= strtol(value, nullptr, 0) ? V4L2_FBUF_FLAG_CHROMAKEY : 0;
 				set_fbuf |= chroma_flags;
 				break;
 			case 1:
 				fbuf.flags &= ~chroma_flags;
-				fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_SRC_CHROMAKEY : 0;
+				fbuf.flags |= strtol(value, nullptr, 0) ? V4L2_FBUF_FLAG_SRC_CHROMAKEY : 0;
 				set_fbuf |= chroma_flags;
 				break;
 			case 2:
 				fbuf.flags &= ~alpha_flags;
-				fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_GLOBAL_ALPHA : 0;
+				fbuf.flags |= strtol(value, nullptr, 0) ? V4L2_FBUF_FLAG_GLOBAL_ALPHA : 0;
 				set_fbuf |= alpha_flags;
 				break;
 			case 3:
 				fbuf.flags &= ~alpha_flags;
-				fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_LOCAL_ALPHA : 0;
+				fbuf.flags |= strtol(value, nullptr, 0) ? V4L2_FBUF_FLAG_LOCAL_ALPHA : 0;
 				set_fbuf |= alpha_flags;
 				break;
 			case 4:
 				fbuf.flags &= ~alpha_flags;
-				fbuf.flags |= strtol(value, 0L, 0) ? V4L2_FBUF_FLAG_LOCAL_INV_ALPHA : 0;
+				fbuf.flags |= strtol(value, nullptr, 0) ? V4L2_FBUF_FLAG_LOCAL_INV_ALPHA : 0;
 				set_fbuf |= alpha_flags;
 				break;
 			case 5:
@@ -362,7 +362,7 @@ void overlay_cmd(int ch, char *optarg)
 		}
 		break;
 	case OptOverlay:
-		overlay = strtol(optarg, 0L, 0);
+		overlay = strtol(optarg, nullptr, 0);
 		break;
 	}
 }
@@ -372,9 +372,9 @@ static void do_try_set_overlay(struct v4l2_format &fmt, int fd)
 	struct v4l2_window &win = fmt.fmt.win;
 	bool keep_old_clip = true;
 	bool keep_old_bitmap = true;
-	struct v4l2_clip *cliplist = NULL;
+	struct v4l2_clip *cliplist = nullptr;
 	unsigned stride = (win.w.width + 7) / 8;
-	unsigned char *bitmap = NULL;
+	unsigned char *bitmap = nullptr;
 	int ret;
 
 	if (((set_overlay_fmt & FmtWidth) && win.w.width != overlay_fmt.fmt.win.w.width) ||
@@ -385,7 +385,7 @@ static void do_try_set_overlay(struct v4l2_format &fmt, int fd)
 	if (options[OptClearClips] || !clips.empty())
 		keep_old_clip = false;
 
-	win.bitmap = NULL;
+	win.bitmap = nullptr;
 	if (keep_old_bitmap) {
 		bitmap = static_cast<unsigned char *>(calloc(1, stride * win.w.height));
 		win.bitmap = bitmap;
@@ -489,7 +489,7 @@ void overlay_get(cv4l_fd &_fd)
 
 	if (options[OptGetOverlayFormat]) {
 		struct v4l2_format fmt;
-		unsigned char *bitmap = NULL;
+		unsigned char *bitmap = nullptr;
 
 		memset(&fmt, 0, sizeof(fmt));
 		// You can never have both VIDEO_OVERLAY and VIDEO_OUTPUT_OVERLAY

@@ -41,7 +41,7 @@ void sdr_cmd(int ch, char *optarg)
 			vfmt.fmt.sdr.pixelformat = v4l2_fourcc(optarg[0],
 					optarg[1], optarg[2], optarg[3]);
 		} else {
-			vfmt.fmt.sdr.pixelformat = strtol(optarg, 0L, 0);
+			vfmt.fmt.sdr.pixelformat = strtol(optarg, nullptr, 0);
 		}
 		break;
 	}

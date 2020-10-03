@@ -94,7 +94,7 @@ void vidout_cmd(int ch, char *optarg)
 	case OptListOutFormats:
 	case OptListOutFormatsExt:
 		if (optarg)
-			mbus_code_out = strtoul(optarg, 0L, 0);
+			mbus_code_out = strtoul(optarg, nullptr, 0);
 		break;
 	}
 }
