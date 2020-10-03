@@ -61,8 +61,8 @@ struct v4lprocessing_filter {
 			unsigned char *buf, const struct v4l2_format *fmt);
 };
 
-extern struct v4lprocessing_filter whitebalance_filter;
-extern struct v4lprocessing_filter autogain_filter;
-extern struct v4lprocessing_filter gamma_filter;
+extern const struct v4lprocessing_filter whitebalance_filter;
+extern const struct v4lprocessing_filter autogain_filter;
+extern const struct v4lprocessing_filter gamma_filter;
 
 #endif

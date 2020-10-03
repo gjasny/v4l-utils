@@ -205,6 +205,6 @@ static int whitebalance_calculate_lookup_tables(
 	return 0; /* Should never happen */
 }
 
-struct v4lprocessing_filter whitebalance_filter = {
+const struct v4lprocessing_filter whitebalance_filter = {
 	whitebalance_active, whitebalance_calculate_lookup_tables
 };

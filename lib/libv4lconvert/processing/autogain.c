@@ -213,6 +213,6 @@ static int autogain_calculate_lookup_tables(
 	return 0;
 }
 
-struct v4lprocessing_filter autogain_filter = {
+const struct v4lprocessing_filter autogain_filter = {
 	autogain_active, autogain_calculate_lookup_tables
 };

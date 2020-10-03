@@ -1414,7 +1414,7 @@ static struct remote_subtest post_test_subtests[] = {
 };
 
 
-static struct remote_test tests[] = {
+static const struct remote_test tests[] = {
 	test_case("Core",
 		  TAG_CORE,
 		  core_subtests),

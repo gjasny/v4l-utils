@@ -27,7 +27,7 @@
 #include "libv4lprocessing-priv.h"
 #include "../libv4lconvert-priv.h" /* for PIX_FMT defines */
 
-static struct v4lprocessing_filter *filters[] = {
+static const struct v4lprocessing_filter *filters[] = {
 	&whitebalance_filter,
 	&autogain_filter,
 	&gamma_filter,

@@ -57,6 +57,6 @@ static int gamma_calculate_lookup_tables(
 	return 1;
 }
 
-struct v4lprocessing_filter gamma_filter = {
+const struct v4lprocessing_filter gamma_filter = {
 	gamma_active, gamma_calculate_lookup_tables
 };
