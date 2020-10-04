@@ -29,10 +29,9 @@ each distro.
 
 On Debian and derivated distributions, you need to install the following
 packages with apt-get or aptitude:
-	debhelper dh-autoreconf autotools-dev autoconf-archive
-        doxygen graphviz libasound2-dev
-	libtool libjpeg-dev qtbase5-dev libqt5opengl5-dev libudev-dev libx11-dev
-	pkg-config udev make gcc git
+    debhelper dh-autoreconf autotools-dev autoconf-archive doxygen graphviz
+    libasound2-dev libtool libjpeg-dev qtbase5-dev qt5-default
+    libqt5opengl5-dev libudev-dev libx11-dev pkg-config udev make gcc git
 
 
 On Fedora, the package list for a minimal install with dnf or yum is:
