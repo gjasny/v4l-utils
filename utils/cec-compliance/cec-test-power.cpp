@@ -375,6 +375,25 @@ static int standby_resume_standby_toggle(struct node *node, unsigned me, unsigne
 	fail_on_test(cec_msg_status_is_abort(&msg));
 	fail_on_test(wait_changing_power_status(node, me, la, new_status, unresponsive_time));
 	fail_on_test(new_status != CEC_OP_POWER_STATUS_STANDBY);
+
+	if (res == ENONET) {
+		struct cec_caps caps = { };
+		doioctl(node, CEC_ADAP_G_CAPS, &caps);
+		unsigned major = caps.version >> 16;
+		unsigned minor = (caps.version >> 8) & 0xff;
+		if (!strcmp(caps.driver, "pulse8-cec") &&
+		    !((major == 4 && minor == 19) || major > 5 ||
+		      (major == 5 && minor >= 4))) {
+			// The cec framework had a bug that prevented it from reliably
+			// working with displays that pull down the HPD. This was fixed
+			// in commit ac479b51f3f4 for kernel 5.5 and backported to kernels
+			// 4.19.94 and 5.4.9. We only warn when the pulse8-cec driver is used,
+			// for other CEC devices you hopefully know what you are doing...
+			warn("This display appears to pull down the HPD when in Standby. For such\n");
+			warn("displays kernel 4.19 or kernel 5.4 or higher is required.\n");
+		}
+	}
+
 	fail_on_test(interactive && !question("Is the device still in standby?"));
 	node->remote[la].in_standby = true;
 	if (unresponsive_time > 0)
@@ -571,7 +590,7 @@ static int power_state_transitions(struct node *node, unsigned me, unsigned la, 
 	fail_on_test(!res);
 	if (res < 0) {
 		warn("No Report Power Status seen when going to standby.\n");
-		info("This might be due to this bug: https://patchwork.linuxtv.org/patch/60447\n");
+		info("This might be due to the bug fix in commit cec935ce69fc\n");
 		info("However, this was fixed in 5.5 and has been backported to LTS kernels,\n");
 		info("so any kernel released after January 2020 should have this fix.\n");
 		return OK_PRESUMED;

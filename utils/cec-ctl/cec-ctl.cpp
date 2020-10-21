@@ -1258,6 +1258,27 @@ static int init_power_cycle_test(const struct node &node, unsigned repeats, unsi
 	printf("%s: ", ts2s(current_ts()).c_str());
 	printf("Physical Address: %x.%x.%x.%x\n\n",
 	       cec_phys_addr_exp(pa));
+
+	if (pa != CEC_PHYS_ADDR_INVALID)
+		return from;
+
+	struct cec_caps caps = { };
+	doioctl(&node, CEC_ADAP_G_CAPS, &caps);
+	unsigned major = caps.version >> 16;
+	unsigned minor = (caps.version >> 8) & 0xff;
+	if (!strcmp(caps.driver, "pulse8-cec") &&
+	    !((major == 4 && minor == 19) || major > 5 ||
+	      (major == 5 && minor >= 4))) {
+		// The cec framework had a bug that prevented it from reliably
+		// working with displays that pull down the HPD. This was fixed
+		// in commit ac479b51f3f4 for kernel 5.5 and backported to kernels
+		// 4.19.94 and 5.4.9. We only fail when the pulse8-cec driver is used,
+		// for other CEC devices you hopefully know what you are doing...
+		printf("FAIL: This display appears to pull down the HPD when in Standby. For such\n");
+		printf("      displays kernel 4.19 or kernel 5.4 or higher is required.\n");
+		std::exit(EXIT_FAILURE);
+	}
+
 	return from;
 }
 
