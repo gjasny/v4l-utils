@@ -437,7 +437,9 @@ int main(int argc, char **argv)
 			break;
 		case OptVersion:
 			printf("cec-follower %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
-			printf("cec-follower SHA: %s\n", STRING(GIT_SHA));
+			if (strlen(STRING(GIT_SHA)))
+				printf("cec-follower SHA: %s %s\n",
+				       STRING(GIT_SHA), STRING(GIT_COMMIT_DATE));
 			std::exit(EXIT_SUCCESS);
 		case ':':
 			fprintf(stderr, "Option '%s' requires a value\n",
@@ -488,7 +490,9 @@ int main(int argc, char **argv)
 	node.state.toggle_power_status = toggle_power_status;
 	state_init(node);
 
-	printf("cec-follower SHA                   : %s\n", STRING(GIT_SHA));
+	if (strlen(STRING(GIT_SHA)))
+		printf("cec-follower SHA                   : %s %s\n",
+		       STRING(GIT_SHA), STRING(GIT_COMMIT_DATE));
 
 	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &node.phys_addr);
 

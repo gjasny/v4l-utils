@@ -150,14 +150,11 @@ static struct option long_options[] = {
 
 static void print_sha()
 {
-	printf("v4l2-compliance SHA: %s", STRING(GIT_SHA));
-	printf(", %zd bits, %zd-bit time_t\n", sizeof(void *) * 8, sizeof(time_t) * 8);
-	printf("\n");
-}
-
-static void print_version()
-{
-	printf("v4l2-compliance %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
+	printf("v4l2-compliance %s%s, ", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
+	printf("%zd bits, %zd-bit time_t\n", sizeof(void *) * 8, sizeof(time_t) * 8);
+	if (strlen(STRING(GIT_SHA)))
+		printf("v4l2-compliance SHA: %s %s\n",
+		       STRING(GIT_SHA), STRING(GIT_COMMIT_DATE));
 }
 
 static void usage()
@@ -1659,7 +1656,6 @@ int main(int argc, char **argv)
 			no_progress = true;
 			break;
 		case OptVersion:
-			print_version();
 			print_sha();
 			std::exit(EXIT_SUCCESS);
 		case ':':
@@ -1685,6 +1681,7 @@ int main(int argc, char **argv)
 	}
 
 	print_sha();
+	printf("\n");
 
 	bool direct = !options[OptUseWrapper];
 	int fd;

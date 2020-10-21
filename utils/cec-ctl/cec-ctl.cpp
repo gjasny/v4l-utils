@@ -236,6 +236,8 @@ static void print_version()
 #define STR(x) #x
 #define STRING(x) STR(x)
 	printf("cec-ctl %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
+	if (strlen(STRING(GIT_SHA)))
+		printf("cec-ctl SHA: %s %s\n", STRING(GIT_SHA), STRING(GIT_COMMIT_DATE));
 }
 
 static void usage()
@@ -2624,6 +2626,11 @@ int main(int argc, char **argv)
 
 		if (la != CEC_LOG_ADDR_INVALID)
 			phys_addrs[la] = (phys_addr << 8) | la;
+	}
+
+	if (options[OptTestPowerCycle] || options[OptStressTestPowerCycle]) {
+		print_version();
+		printf("\n");
 	}
 
 	if (!options[OptSkipInfo]) {

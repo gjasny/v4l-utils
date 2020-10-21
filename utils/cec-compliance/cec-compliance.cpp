@@ -1257,8 +1257,11 @@ int main(int argc, char **argv)
 			show_info = true;
 			break;
 		case OptVersion:
-			printf("cec-compliance %s%s\n", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
-			printf("cec-compliance SHA: %s\n", STRING(GIT_SHA));
+			printf("cec-compliance %s%s\n",
+			       PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
+			if (strlen(STRING(GIT_SHA)))
+				printf("cec-compliance SHA: %s %s\n",
+				       STRING(GIT_SHA), STRING(GIT_COMMIT_DATE));
 			std::exit(EXIT_SUCCESS);
 		case ':':
 			fprintf(stderr, "Option '%s' requires a value\n",
@@ -1394,7 +1397,9 @@ int main(int argc, char **argv)
 	if (options[OptInteractive])
 		test_tags |= TAG_INTERACTIVE;
 
-	printf("cec-compliance SHA                 : %s\n", STRING(GIT_SHA));
+	if (strlen(STRING(GIT_SHA)))
+		printf("cec-compliance SHA                 : %s %s\n",
+		       STRING(GIT_SHA), STRING(GIT_COMMIT_DATE));
 
 	node.phys_addr = CEC_PHYS_ADDR_INVALID;
 	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &node.phys_addr);

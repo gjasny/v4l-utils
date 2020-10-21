@@ -14,7 +14,7 @@ v4l2_compliance_SOURCES = v4l2-compliance.cpp v4l2-compliance.h \
 	v4l2-test-controls.cpp v4l2-test-io-config.cpp v4l2-test-formats.cpp v4l2-test-buffers.cpp \
 	v4l2-test-codecs.cpp v4l2-test-subdevs.cpp v4l2-test-media.cpp v4l2-test-colors.cpp \
 	media-info.cpp v4l2-info.cpp
-v4l2_compliance_CPPFLAGS = -I$(top_srcdir)/utils/common $(GIT_SHA) $(GIT_COMMIT_CNT)
+v4l2_compliance_CPPFLAGS = -I$(top_srcdir)/utils/common $(GIT_SHA) $(GIT_COMMIT_CNT) $(GIT_COMMIT_DATE)
 
 if WITH_V4L2_COMPLIANCE_LIBV4L
 v4l2_compliance_LDADD = ../../lib/libv4l2/libv4l2.la ../../lib/libv4lconvert/libv4lconvert.la -lrt -lpthread
