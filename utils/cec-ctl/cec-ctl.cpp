@@ -1225,12 +1225,10 @@ static int init_power_cycle_test(const struct node &node, unsigned repeats, unsi
 			tries = 0;
 			unsigned hpd_is_low_cnt = 0;
 			for (;;) {
-				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-				if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
-					break;
-
 				ret = transmit_msg_retry(node, msg);
-				if (ret) {
+				// The first standby transmit must always succeed,
+				// later standbys may fail with ENONET
+				if (ret && (ret != ENONET || !tries)) {
 					printf("FAIL: %s\n", strerror(ret));
 					std::exit(EXIT_FAILURE);
 				}
@@ -1440,9 +1438,6 @@ static void test_power_cycle(const struct node &node, unsigned int max_tries,
 		bool first_standby = true;
 		unsigned hpd_is_low_cnt = 0;
 		for (;;) {
-			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-			if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
-				break;
 			if (!hpd_is_low)
 				hpd_is_low_cnt = 0;
 			if (wait_for_power_off(node, from, hpd_is_low_cnt))
@@ -1656,9 +1651,6 @@ static void stress_test_power_cycle(const struct node &node, unsigned cnt,
 			tries = 0;
 			unsigned hpd_is_low_cnt = 0;
 			for (;;) {
-				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
-				if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID)
-					break;
 				if (!hpd_is_low)
 					hpd_is_low_cnt = 0;
 				if (wait_for_power_off(node, from, hpd_is_low_cnt))
