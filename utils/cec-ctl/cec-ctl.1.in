@@ -278,7 +278,7 @@ between \fI<minsecs>\fR (0 is the default) and \fI<maxsecs>\fR before each <Stan
 If \fI<seed>\fR is specified, then set the randomizer seed to that value instead of
 using the current time as seed.
 If \fI<reps>\fR is specified, then repeat the <Image View On> and <Standby> up to
-\fI<reps>\fR times. Note that this test should work without needed any repeats. If a
+\fI<reps>\fR times. Note that this test should work without any repeats. If a
 non-zero \fI<reps>\fR value is needed in order to pass this test, then that indicates
 a problem.
 If \fI<secs1>\fR is specified, then sleep for <secs1> seconds before transmitting <Image View On>.
