@@ -1158,7 +1158,10 @@ static int init_power_cycle_test(const struct node &node, unsigned repeats, unsi
 	       "X   No LA claimed (HPD is likely pulled low)\n"
 	       "N   Give Device Power Status was Nacked\n"
 	       "T   Time out waiting for Report Power Status reply\n"
-	       "A   Feature Abort of Give Device Power Status \n"
+	       "A   Feature Abort of Give Device Power Status\n"
+	       "C   Active Source was Nacked\n"
+	       "S   Standby was Nacked\n"
+	       "I   Image View On was Nacked\n"
 	       "+   Reported On\n"
 	       "-   Reported In Standby\n"
 	       "/   Reported Transitioning to On\n"
@@ -1220,12 +1223,15 @@ static int init_power_cycle_test(const struct node &node, unsigned repeats, unsi
 			printf("Transmit Standby to TV: ");
 			fflush(stdout);
 			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+			static bool sent;
 			cec_msg_standby(&msg);
 
 			tries = 0;
 			unsigned hpd_is_low_cnt = 0;
 			for (;;) {
+			if (!sent) { sent=true;
 				ret = transmit_msg_retry(node, msg);
+			} else ret = 0;
 				// The first standby transmit must always succeed,
 				// later standbys may fail with ENONET
 				if (ret && (ret != ENONET || !tries)) {
@@ -1552,19 +1558,42 @@ static void stress_test_power_cycle(const struct node &node, unsigned cnt,
 			printf("%s: ", ts2s(current_ts()).c_str());
 			printf("Transmit Image View On from LA %s (iteration %u): ", cec_la2s(wakeup_la), iter);
 
-			tries = 0;
 			cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
-			cec_msg_image_view_on(&msg);
-			ret = transmit_msg_retry(node, msg);
-			if (ret == EINVAL && wakeup_la == CEC_LOG_ADDR_UNREGISTERED) {
-				// Can happen if wakeup_la == 15 and CEC just started configuring
-				printf("(EINVAL) ");
-			} else if (ret) {
-				printf("FAIL: %s\n", strerror(ret));
-				std::exit(EXIT_FAILURE);
-			}
+			tries = 0;
+			bool image_view_on_ok = false;
 
 			for (;;) {
+				if (!image_view_on_ok) {
+					cec_msg_image_view_on(&msg);
+					ret = transmit_msg_retry(node, msg);
+					if (ret == EINVAL && wakeup_la == CEC_LOG_ADDR_UNREGISTERED) {
+						// Can happen if wakeup_la == 15 and CEC just started configuring
+						printf("(EINVAL) ");
+					} else if (ret) {
+						printf("FAIL: %s\n", strerror(ret));
+						std::exit(EXIT_FAILURE);
+					}
+					// Depending on the CEC hardware, a successfully
+					// transmitted message may in some cases be marked
+					// as aborted if the HPD goes low before the transmit
+					// was marked as 'Done'. For now assume that an
+					// aborted message was really Nacked so it is retried.
+					if (msg.tx_status & CEC_TX_STATUS_ABORTED)
+						msg.tx_status = CEC_TX_STATUS_NACK;
+					if (!(msg.tx_status & (CEC_TX_STATUS_OK | CEC_TX_STATUS_NACK))) {
+						printf("FAIL: Image View On failed: %s\n",
+						       cec_status2s(msg).c_str());
+						std::exit(EXIT_FAILURE);
+					}
+					if (msg.tx_status & CEC_TX_STATUS_OK) {
+						image_view_on_ok = true;
+					} else {
+						printf("I");
+						fflush(stdout);
+						sleep(1);
+						continue;
+					}
+				}
 				doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 				if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
 					wakeup_la = from = laddrs.log_addr[0];
@@ -1631,26 +1660,60 @@ static void stress_test_power_cycle(const struct node &node, unsigned cnt,
 			}
 
 			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
-			/*
-			 * Some displays only accept Standby from the Active Source.
-			 * So make us the Active Source before sending Standby.
-			 */
-			cec_msg_active_source(&msg, pa);
-			ret = transmit_msg_retry(node, msg);
-			if (ret) {
-				printf("FAIL: Active Source Transmit failed: %s\n", strerror(ret));
-				std::exit(EXIT_FAILURE);
-			}
-			cec_msg_standby(&msg);
-			ret = transmit_msg_retry(node, msg);
-			if (ret) {
-				printf("FAIL: %s\n", strerror(ret));
-				std::exit(EXIT_FAILURE);
-			}
 
 			tries = 0;
 			unsigned hpd_is_low_cnt = 0;
+			bool active_source_ok = false;
+			bool standby_ok = false;
 			for (;;) {
+				if (!active_source_ok) {
+					/*
+					 * Some displays only accept Standby from the Active Source.
+					 * So make us the Active Source before sending Standby.
+					 */
+					cec_msg_active_source(&msg, pa);
+					ret = transmit_msg_retry(node, msg);
+					if (ret) {
+						printf("FAIL: Active Source Transmit failed: %s\n",
+						       strerror(ret));
+						std::exit(EXIT_FAILURE);
+					}
+					if (!(msg.tx_status & (CEC_TX_STATUS_OK | CEC_TX_STATUS_NACK))) {
+						printf("FAIL: Active Source Transmit failed: %s\n",
+						       cec_status2s(msg).c_str());
+						std::exit(EXIT_FAILURE);
+					}
+					if (msg.tx_status & CEC_TX_STATUS_OK) {
+						active_source_ok = true;
+					} else {
+						printf("C");
+						fflush(stdout);
+						sleep(1);
+						continue;
+					}
+				}
+				if (!standby_ok) {
+					cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+					cec_msg_standby(&msg);
+					ret = transmit_msg_retry(node, msg);
+					if (ret) {
+						printf("FAIL: %s\n", strerror(ret));
+						std::exit(EXIT_FAILURE);
+					}
+					if (!(msg.tx_status & (CEC_TX_STATUS_OK | CEC_TX_STATUS_NACK))) {
+						printf("FAIL: Standby Transmit failed: %s\n",
+						       cec_status2s(msg).c_str());
+						std::exit(EXIT_FAILURE);
+					}
+					if (msg.tx_status & CEC_TX_STATUS_OK) {
+						standby_ok = true;
+					} else {
+						printf("S");
+						fflush(stdout);
+						sleep(1);
+						continue;
+					}
+				}
 				if (!hpd_is_low)
 					hpd_is_low_cnt = 0;
 				if (wait_for_power_off(node, from, hpd_is_low_cnt))
