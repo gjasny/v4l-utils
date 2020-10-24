@@ -28,4 +28,4 @@ EXTRA_DIST = Android.mk fixme.txt v4l2-compliance.1
 nodist_v4l2_compliance_32_SOURCES = v4l2-compliance-32.c
 
 v4l2-compliance-32$(EXEEXT): $(addprefix $(top_srcdir)/utils/v4l2-compliance/,$(v4l2_compliance_SOURCES))
-	$(CXXCOMPILE) -o $@ -static -m32 -DNO_LIBV4L2 $(GIT_SHA) $(GIT_COMMIT_CNT) -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/utils/common $(addprefix $(top_srcdir)/utils/v4l2-compliance/,$(filter %.cpp,$(v4l2_compliance_SOURCES))) -lpthread
+	$(CXXCOMPILE) -o $@ -static -m32 -DNO_LIBV4L2 -I$(top_srcdir) -I$(top_srcdir)/include $(v4l2_compliance_CPPFLAGS) $(addprefix $(top_srcdir)/utils/v4l2-compliance/,$(filter %.cpp,$(v4l2_compliance_SOURCES))) -lpthread
