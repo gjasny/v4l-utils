@@ -3,7 +3,7 @@ man_MANS = v4l2-ctl.1
 DEFS :=
 
 if HAVE_M32
-if WITH_V4L2_COMPLIANCE_32
+if WITH_V4L2_CTL_32
 bin_PROGRAMS += v4l2-ctl-32
 endif
 endif
@@ -37,8 +37,8 @@ nodist_v4l2_ctl_32_SOURCES = v4l2-ctl-32.c
 
 v4l2-ctl-32$(EXEEXT): $(addprefix $(top_srcdir)/utils/v4l2-ctl/,$(v4l2_ctl_SOURCES)) media-bus-format-names.h
 	cat $(addprefix $(top_srcdir)/utils/v4l2-ctl/,$(filter %.c,$(v4l2_ctl_SOURCES))) >$@.c
-	$(COMPILE) -static -m32 -DNO_LIBV4L2 -c -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/utils/common $@.c
-	$(CXXCOMPILE) -static -m32 -DNO_LIBV4L2 -o $@ -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/utils/common $(addprefix $(top_srcdir)/utils/v4l2-ctl/,$(filter %.cpp,$(v4l2_ctl_SOURCES))) $@.o
+	$(COMPILE) -static -m32 -DNO_LIBV4L2 -c -I$(top_srcdir) -I$(top_srcdir)/include $(v4l2_ctl_CPPFLAGS) $@.c
+	$(CXXCOMPILE) -static -m32 -DNO_LIBV4L2 -o $@ -I$(top_srcdir) -I$(top_srcdir)/include $(v4l2_ctl_CPPFLAGS) $(addprefix $(top_srcdir)/utils/v4l2-ctl/,$(filter %.cpp,$(v4l2_ctl_SOURCES))) $@.o
 	rm -f $@.c $@.o
 
 EXTRA_DIST = Android.mk v4l2-ctl.1
