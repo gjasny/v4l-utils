@@ -492,7 +492,7 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
 	printf("\tName             : %s\n", ent.name);
 	printf("\tFunction         : %s\n", mi_entfunction2s(ent.function, is_invalid).c_str());
 	if (MEDIA_V2_ENTITY_HAS_FLAGS(media_version) && ent.flags)
-		printf("\tFlags         : %s\n", mi_entflags2s(ent.flags).c_str());
+		printf("\tFlags            : %s\n", mi_entflags2s(ent.flags).c_str());
 
 	// Yes, I know, lots of nested for-loops. If we get really complex
 	// devices with such large topologies that this becomes too inefficient
