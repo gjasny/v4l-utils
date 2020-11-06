@@ -1576,9 +1576,17 @@ static int testLegacyCrop(struct node *node)
 					 V4L2_SEL_TGT_COMPOSE_DEFAULT;
 	/*
 	 * If either CROPCAP or G_CROP works, then G_SELECTION should
-	 * work as well.
+	 * work as well. This was typically the case for drivers that
+	 * only implemented G_CROP and not G_SELECTION. However,
+	 * support for G_CROP was removed from the kernel and all drivers
+	 * now support G_SELECTION, so this should no longer happen.
+	 *
 	 * If neither CROPCAP nor G_CROP work, then G_SELECTION shouldn't
-	 * work either.
+	 * work either. If this fails, then this is almost certainly because
+	 * G_SELECTION doesn't support V4L2_SEL_TGT_CROP_DEFAULT and/or
+	 * V4L2_SEL_TGT_CROP_BOUNDS. CROPCAP requires both to be present.
+	 * For output devices this is of course V4L2_SEL_TGT_COMPOSE_DEFAULT
+	 * and/or V4L2_SEL_TGT_COMPOSE_BOUNDS.
 	 */
 	if (!doioctl(node, VIDIOC_CROPCAP, &cap)) {
 		fail_on_test(doioctl(node, VIDIOC_G_SELECTION, &sel));
