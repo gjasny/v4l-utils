@@ -344,7 +344,6 @@ void common_list(cv4l_fd &fd);
 void common_process_controls(cv4l_fd &fd);
 void common_control_event(const struct v4l2_event *ev);
 int common_find_ctrl_id(const char *name);
-void common_print_control(v4l2_query_ext_ctrl &qc, v4l2_ext_control &ctrl);
 
 // v4l2-ctl-tuner.cpp
 void tuner_usage(void);

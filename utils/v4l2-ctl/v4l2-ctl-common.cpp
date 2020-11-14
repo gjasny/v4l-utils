@@ -377,120 +377,254 @@ static std::string safename(const char *name)
 	return safename(reinterpret_cast<const unsigned char *>(name));
 }
 
-static void print_qctrl(int fd, struct v4l2_query_ext_ctrl *queryctrl,
-		struct v4l2_ext_control *ctrl, int show_menus)
+static bool fill_subset(const struct v4l2_query_ext_ctrl &qc, ctrl_subset &subset)
 {
-	struct v4l2_querymenu qmenu;
-	std::string s = name2var(queryctrl->name);
-	unsigned i;
+	unsigned d;
 
-	memset(&qmenu, 0, sizeof(qmenu));
-	qmenu.id = queryctrl->id;
-	switch (queryctrl->type) {
-	case V4L2_CTRL_TYPE_INTEGER:
-		printf("%31s %#8.8x (int)    : min=%lld max=%lld step=%lld default=%lld",
-				s.c_str(), queryctrl->id,
-				queryctrl->minimum, queryctrl->maximum,
-				queryctrl->step, queryctrl->default_value);
-		break;
-	case V4L2_CTRL_TYPE_INTEGER64:
-		printf("%31s %#8.8x (int64)  : min=%lld max=%lld step=%lld default=%lld",
-				s.c_str(), queryctrl->id,
-				queryctrl->minimum, queryctrl->maximum,
-				queryctrl->step, queryctrl->default_value);
-		break;
-	case V4L2_CTRL_TYPE_STRING:
-		printf("%31s %#8.8x (str)    : min=%lld max=%lld step=%lld",
-				s.c_str(), queryctrl->id,
-				queryctrl->minimum, queryctrl->maximum,
-				queryctrl->step);
-		break;
-	case V4L2_CTRL_TYPE_BOOLEAN:
-		printf("%31s %#8.8x (bool)   : default=%lld",
-				s.c_str(), queryctrl->id, queryctrl->default_value);
-		break;
-	case V4L2_CTRL_TYPE_MENU:
-		printf("%31s %#8.8x (menu)   : min=%lld max=%lld default=%lld",
-				s.c_str(), queryctrl->id,
-				queryctrl->minimum, queryctrl->maximum,
-				queryctrl->default_value);
-		break;
-	case V4L2_CTRL_TYPE_INTEGER_MENU:
-		printf("%31s %#8.8x (intmenu): min=%lld max=%lld default=%lld",
-				s.c_str(), queryctrl->id,
-				queryctrl->minimum, queryctrl->maximum,
-				queryctrl->default_value);
-		break;
-	case V4L2_CTRL_TYPE_BUTTON:
-		printf("%31s %#8.8x (button) :", s.c_str(), queryctrl->id);
-		break;
-	case V4L2_CTRL_TYPE_BITMASK:
-		printf("%31s %#8.8x (bitmask): max=0x%08llx default=0x%08llx",
-				s.c_str(), queryctrl->id, queryctrl->maximum,
-				queryctrl->default_value);
-		break;
-	case V4L2_CTRL_TYPE_U8:
-		printf("%31s %#8.8x (u8)     : min=%lld max=%lld step=%lld default=%lld",
-				s.c_str(), queryctrl->id,
-				queryctrl->minimum, queryctrl->maximum,
-				queryctrl->step, queryctrl->default_value);
-		break;
-	case V4L2_CTRL_TYPE_U16:
-		printf("%31s %#8.8x (u16)    : min=%lld max=%lld step=%lld default=%lld",
-				s.c_str(), queryctrl->id,
-				queryctrl->minimum, queryctrl->maximum,
-				queryctrl->step, queryctrl->default_value);
-		break;
-	case V4L2_CTRL_TYPE_U32:
-		printf("%31s %#8.8x (u32)    : min=%lld max=%lld step=%lld default=%lld",
-				s.c_str(), queryctrl->id,
-				queryctrl->minimum, queryctrl->maximum,
-				queryctrl->step, queryctrl->default_value);
-		break;
-	case V4L2_CTRL_TYPE_AREA:
-		printf("%31s %#8.8x (area)   :", s.c_str(), queryctrl->id);
-		break;
-	default:
-		printf("%31s %#8.8x (unknown): type=%x",
-				s.c_str(), queryctrl->id, queryctrl->type);
-		break;
+	if (qc.nr_of_dims == 0)
+		return false;
+
+	for (d = 0; d < qc.nr_of_dims; d++) {
+		subset.offset[d] = 0;
+		subset.size[d] = qc.dims[d];
 	}
-	if (queryctrl->nr_of_dims == 0) {
-		switch (queryctrl->type) {
-		case V4L2_CTRL_TYPE_INTEGER:
-		case V4L2_CTRL_TYPE_BOOLEAN:
-		case V4L2_CTRL_TYPE_MENU:
-		case V4L2_CTRL_TYPE_INTEGER_MENU:
-			printf(" value=%d", ctrl->value);
+
+	std::string s = name2var(qc.name);
+
+	if (ctrl_subsets.find(s) != ctrl_subsets.end()) {
+		unsigned ss_dims;
+
+		subset = ctrl_subsets[s];
+		for (ss_dims = 0; ss_dims < V4L2_CTRL_MAX_DIMS && subset.size[ss_dims]; ss_dims++) ;
+		if (ss_dims != qc.nr_of_dims) {
+			fprintf(stderr, "expected %d dimensions but --subset specified %d\n",
+					qc.nr_of_dims, ss_dims);
+			return true;
+		}
+		for (d = 0; d < qc.nr_of_dims; d++) {
+			if (subset.offset[d] + subset.size[d] > qc.dims[d]) {
+				fprintf(stderr, "the subset offset+size for dimension %d is out of range\n", d);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+static void print_array(const v4l2_query_ext_ctrl &qc, const v4l2_ext_control &ctrl,
+			const ctrl_subset &subset)
+{
+	std::string &name = ctrl_id2str[qc.id];
+	unsigned divide[V4L2_CTRL_MAX_DIMS] = { 0 };
+	unsigned from, to;
+	unsigned d, i;
+
+	divide[qc.nr_of_dims - 1] = 1;
+	for (d = 0; d < qc.nr_of_dims - 1; d++) {
+		divide[d] = qc.dims[d + 1];
+		for (i = 0; i < d; i++)
+			divide[i] *= divide[d];
+	}
+
+	from = subset.offset[qc.nr_of_dims - 1];
+	to = subset.offset[qc.nr_of_dims - 1] + subset.size[qc.nr_of_dims - 1] - 1;
+
+	for (unsigned idx = 0; idx < qc.elems; idx += qc.dims[qc.nr_of_dims - 1]) {
+		for (d = 0; d < qc.nr_of_dims - 1; d++) {
+			unsigned i = (idx / divide[d]) % qc.dims[d];
+
+			if (i < subset.offset[d] || i >= subset.offset[d] + subset.size[d])
+				break;
+		}
+		if (d < qc.nr_of_dims - 1)
+			continue;
+
+		printf("%s", name.c_str());
+		for (d = 0; d < qc.nr_of_dims - 1; d++)
+			printf("[%u]", (idx / divide[d]) % qc.dims[d]);
+		printf(": ");
+		switch (qc.type) {
+		case V4L2_CTRL_TYPE_U8:
+			for (i = from; i <= to; i++) {
+				printf("%4u", ctrl.p_u8[idx + i]);
+				if (i < to)
+					printf(", ");
+			}
+			printf("\n");
 			break;
-		case V4L2_CTRL_TYPE_BITMASK:
-			printf(" value=0x%08x", ctrl->value);
+		case V4L2_CTRL_TYPE_U16:
+			for (i = from; i <= to; i++) {
+				printf("%6u", ctrl.p_u16[idx + i]);
+				if (i < to)
+					printf(", ");
+			}
+			printf("\n");
 			break;
-		case V4L2_CTRL_TYPE_INTEGER64:
-			printf(" value=%lld", ctrl->value64);
-			break;
-		case V4L2_CTRL_TYPE_STRING:
-			printf(" value='%s'", safename(ctrl->string).c_str());
-			break;
-		default:
+		case V4L2_CTRL_TYPE_U32:
+			for (i = from; i <= to; i++) {
+				printf("%10u", ctrl.p_u32[idx + i]);
+				if (i < to)
+					printf(", ");
+			}
+			printf("\n");
 			break;
 		}
 	}
-	if (queryctrl->nr_of_dims) {
-		printf(" ");
-		for (i = 0; i < queryctrl->nr_of_dims; i++)
-			printf("[%u]", queryctrl->dims[i]);
+}
+
+static void print_value(int fd, const v4l2_query_ext_ctrl &qc, const v4l2_ext_control &ctrl,
+			bool show_payload, bool fill_in_subset)
+{
+	v4l2_querymenu qmenu;
+
+	if (qc.nr_of_dims) {
+		if (!show_payload)
+			return;
+		ctrl_subset subset;
+		if (fill_in_subset) {
+			if (fill_subset(qc, subset))
+				return;
+		} else {
+			memset(&subset, 0, sizeof(subset));
+			for (unsigned i = 0; i < qc.nr_of_dims; i++)
+				subset.size[i] = qc.dims[i];
+		}
+		print_array(qc, ctrl, subset);
+		return;
 	}
-	if (queryctrl->flags)
-		printf(" flags=%s", ctrlflags2s(queryctrl->flags).c_str());
+
+	if (qc.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD) {
+		switch (qc.type) {
+		case V4L2_CTRL_TYPE_U8:
+			printf("%u", *ctrl.p_u8);
+			break;
+		case V4L2_CTRL_TYPE_U16:
+			printf("%u", *ctrl.p_u16);
+			break;
+		case V4L2_CTRL_TYPE_U32:
+			printf("%u", *ctrl.p_u32);
+			break;
+		case V4L2_CTRL_TYPE_STRING:
+			printf("'%s'", safename(ctrl.string).c_str());
+			break;
+		case V4L2_CTRL_TYPE_AREA:
+			printf("%dx%d", ctrl.p_area->width, ctrl.p_area->height);
+			break;
+		default:
+			printf("unsupported payload type");
+			break;
+		}
+		return;
+	}
+	switch (qc.type) {
+	case V4L2_CTRL_TYPE_INTEGER64:
+		printf("%lld", ctrl.value64);
+		break;
+	case V4L2_CTRL_TYPE_MENU:
+	case V4L2_CTRL_TYPE_INTEGER_MENU:
+		memset(&qmenu, 0, sizeof(qmenu));
+		qmenu.id = ctrl.id;
+		qmenu.index = ctrl.value;
+		if (test_ioctl(fd, VIDIOC_QUERYMENU, &qmenu))
+			printf("%d", ctrl.value);
+		else if (qc.type == V4L2_CTRL_TYPE_MENU)
+			printf("%d (%s)", ctrl.value, qmenu.name);
+		else
+			printf("%d (%lld 0x%llx)", ctrl.value, qmenu.value, qmenu.value);
+		break;
+	default:
+		printf("%d", ctrl.value);
+		break;
+	}
+}
+
+static void print_qctrl(int fd, const v4l2_query_ext_ctrl &qc,
+			const v4l2_ext_control &ctrl, bool show_menus)
+{
+	std::string s = name2var(qc.name);
+	unsigned i;
+
+	switch (qc.type) {
+	case V4L2_CTRL_TYPE_INTEGER:
+		printf("%31s %#8.8x (int)    : min=%lld max=%lld step=%lld default=%lld",
+				s.c_str(), qc.id, qc.minimum, qc.maximum,
+				qc.step, qc.default_value);
+		break;
+	case V4L2_CTRL_TYPE_INTEGER64:
+		printf("%31s %#8.8x (int64)  : min=%lld max=%lld step=%lld default=%lld",
+				s.c_str(), qc.id, qc.minimum, qc.maximum,
+				qc.step, qc.default_value);
+		break;
+	case V4L2_CTRL_TYPE_STRING:
+		printf("%31s %#8.8x (str)    : min=%lld max=%lld step=%lld",
+				s.c_str(), qc.id, qc.minimum, qc.maximum, qc.step);
+		break;
+	case V4L2_CTRL_TYPE_BOOLEAN:
+		printf("%31s %#8.8x (bool)   : default=%lld",
+				s.c_str(), qc.id, qc.default_value);
+		break;
+	case V4L2_CTRL_TYPE_MENU:
+		printf("%31s %#8.8x (menu)   : min=%lld max=%lld default=%lld",
+				s.c_str(), qc.id, qc.minimum, qc.maximum,
+				qc.default_value);
+		break;
+	case V4L2_CTRL_TYPE_INTEGER_MENU:
+		printf("%31s %#8.8x (intmenu): min=%lld max=%lld default=%lld",
+				s.c_str(), qc.id, qc.minimum, qc.maximum,
+				qc.default_value);
+		break;
+	case V4L2_CTRL_TYPE_BUTTON:
+		printf("%31s %#8.8x (button) :", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_BITMASK:
+		printf("%31s %#8.8x (bitmask): max=0x%08llx default=0x%08llx",
+				s.c_str(), qc.id, qc.maximum, qc.default_value);
+		break;
+	case V4L2_CTRL_TYPE_U8:
+		printf("%31s %#8.8x (u8)     : min=%lld max=%lld step=%lld default=%lld",
+				s.c_str(), qc.id, qc.minimum, qc.maximum,
+				qc.step, qc.default_value);
+		break;
+	case V4L2_CTRL_TYPE_U16:
+		printf("%31s %#8.8x (u16)    : min=%lld max=%lld step=%lld default=%lld",
+				s.c_str(), qc.id, qc.minimum, qc.maximum,
+				qc.step, qc.default_value);
+		break;
+	case V4L2_CTRL_TYPE_U32:
+		printf("%31s %#8.8x (u32)    : min=%lld max=%lld step=%lld default=%lld",
+				s.c_str(), qc.id, qc.minimum, qc.maximum,
+				qc.step, qc.default_value);
+		break;
+	case V4L2_CTRL_TYPE_AREA:
+		printf("%31s %#8.8x (area)   :", s.c_str(), qc.id);
+		break;
+	default:
+		printf("%31s %#8.8x (unknown): type=%x",
+				s.c_str(), qc.id, qc.type);
+		break;
+	}
+	if (qc.nr_of_dims == 0) {
+		printf(" value=");
+		print_value(fd, qc, ctrl, false, false);
+	} else {
+		printf(" dims=");
+		for (i = 0; i < qc.nr_of_dims; i++)
+			printf("[%u]", qc.dims[i]);
+	}
+	if (qc.flags)
+		printf(" flags=%s", ctrlflags2s(qc.flags).c_str());
 	printf("\n");
-	if ((queryctrl->type == V4L2_CTRL_TYPE_MENU ||
-	     queryctrl->type == V4L2_CTRL_TYPE_INTEGER_MENU) && show_menus) {
-		for (i = queryctrl->minimum; i <= queryctrl->maximum; i++) {
+	if ((qc.type == V4L2_CTRL_TYPE_MENU ||
+	     qc.type == V4L2_CTRL_TYPE_INTEGER_MENU) && show_menus) {
+		v4l2_querymenu qmenu;
+
+		memset(&qmenu, 0, sizeof(qmenu));
+		qmenu.id = ctrl.id;
+		for (i = qc.minimum; i <= qc.maximum; i++) {
 			qmenu.index = i;
 			if (test_ioctl(fd, VIDIOC_QUERYMENU, &qmenu))
 				continue;
-			if (queryctrl->type == V4L2_CTRL_TYPE_MENU)
+			if (qc.type == V4L2_CTRL_TYPE_MENU)
 				printf("\t\t\t\t%d: %s\n", i, qmenu.name);
 			else
 				printf("\t\t\t\t%d: %lld (0x%llx)\n", i, qmenu.value, qmenu.value);
@@ -498,7 +632,7 @@ static void print_qctrl(int fd, struct v4l2_query_ext_ctrl *queryctrl,
 	}
 }
 
-static int print_control(int fd, struct v4l2_query_ext_ctrl &qctrl, int show_menus)
+static int print_control(int fd, struct v4l2_query_ext_ctrl &qctrl, bool show_menus)
 {
 	struct v4l2_control ctrl;
 	struct v4l2_ext_control ext_ctrl;
@@ -516,11 +650,7 @@ static int print_control(int fd, struct v4l2_query_ext_ctrl &qctrl, int show_men
 	ext_ctrl.id = qctrl.id;
 	if ((qctrl.flags & V4L2_CTRL_FLAG_WRITE_ONLY) ||
 	    qctrl.type == V4L2_CTRL_TYPE_BUTTON) {
-		print_qctrl(fd, &qctrl, &ext_ctrl, show_menus);
-		return 1;
-	}
-	if (qctrl.type >= V4L2_CTRL_COMPOUND_TYPES) {
-		print_qctrl(fd, &qctrl, nullptr, show_menus);
+		print_qctrl(fd, qctrl, ext_ctrl, show_menus);
 		return 1;
 	}
 	ctrls.which = V4L2_CTRL_ID2WHICH(qctrl.id);
@@ -528,12 +658,12 @@ static int print_control(int fd, struct v4l2_query_ext_ctrl &qctrl, int show_men
 	ctrls.controls = &ext_ctrl;
 	if (qctrl.type == V4L2_CTRL_TYPE_INTEGER64 ||
 	    qctrl.type == V4L2_CTRL_TYPE_STRING ||
+	    qctrl.type >= V4L2_CTRL_COMPOUND_TYPES ||
 	    (V4L2_CTRL_ID2WHICH(qctrl.id) != V4L2_CTRL_CLASS_USER &&
 	     qctrl.id < V4L2_CID_PRIVATE_BASE)) {
-		if (qctrl.type == V4L2_CTRL_TYPE_STRING) {
-		    ext_ctrl.size = qctrl.maximum + 1;
-		    ext_ctrl.string = static_cast<char *>(malloc(ext_ctrl.size));
-		    ext_ctrl.string[0] = 0;
+		if (qctrl.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD) {
+			ext_ctrl.size = qctrl.elems * qctrl.elem_size;
+			ext_ctrl.ptr = calloc(1, ext_ctrl.size);
 		}
 		if (test_ioctl(fd, VIDIOC_G_EXT_CTRLS, &ctrls)) {
 			printf("error %d getting ext_ctrl %s\n",
@@ -550,9 +680,9 @@ static int print_control(int fd, struct v4l2_query_ext_ctrl &qctrl, int show_men
 		}
 		ext_ctrl.value = ctrl.value;
 	}
-	print_qctrl(fd, &qctrl, &ext_ctrl, show_menus);
-	if (qctrl.type == V4L2_CTRL_TYPE_STRING)
-		free(ext_ctrl.string);
+	print_qctrl(fd, qctrl, ext_ctrl, show_menus);
+	if (qctrl.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD)
+		free(ext_ctrl.ptr);
 	return 1;
 }
 
@@ -602,7 +732,7 @@ static int query_ext_ctrl_ioctl(int fd, struct v4l2_query_ext_ctrl &qctrl)
 	return rc;
 }
 
-static void list_controls(int fd, int show_menus)
+static void list_controls(int fd, bool show_menus)
 {
 	const unsigned next_fl = V4L2_CTRL_FLAG_NEXT_CTRL | V4L2_CTRL_FLAG_NEXT_COMPOUND;
 	struct v4l2_query_ext_ctrl qctrl;
@@ -682,16 +812,28 @@ void common_process_controls(cv4l_fd &fd)
 
 	find_controls(fd);
 	for (const auto &get_ctrl : get_ctrls) {
-	    if (ctrl_str2q.find(get_ctrl) == ctrl_str2q.end()) {
-		fprintf(stderr, "unknown control '%s'\n", get_ctrl.c_str());
-		std::exit(EXIT_FAILURE);
-	    }
+		std::string s = get_ctrl;
+		if (isdigit(s[0])) {
+			__u32 id = strtoul(s.c_str(), nullptr, 0);
+			if (ctrl_id2str.find(id) != ctrl_id2str.end())
+				s = ctrl_id2str[id];
+		}
+		if (ctrl_str2q.find(s) == ctrl_str2q.end()) {
+			fprintf(stderr, "unknown control '%s'\n", s.c_str());
+			std::exit(EXIT_FAILURE);
+		}
 	}
 	for (const auto &set_ctrl : set_ctrls) {
-	    if (ctrl_str2q.find(set_ctrl.first) == ctrl_str2q.end()) {
-		fprintf(stderr, "unknown control '%s'\n", set_ctrl.first.c_str());
-		std::exit(EXIT_FAILURE);
-	    }
+		std::string s = set_ctrl.first;
+		if (isdigit(s[0])) {
+			__u32 id = strtoul(s.c_str(), nullptr, 0);
+			if (ctrl_id2str.find(id) != ctrl_id2str.end())
+				s = ctrl_id2str[id];
+		}
+		if (ctrl_str2q.find(s) == ctrl_str2q.end()) {
+			fprintf(stderr, "unknown control '%s'\n", s.c_str());
+			std::exit(EXIT_FAILURE);
+		}
 	}
 }
 
@@ -840,40 +982,6 @@ void common_cmd(const std::string &media_bus_info, int ch, char *optarg)
 	}
 }
 
-static bool fill_subset(const struct v4l2_query_ext_ctrl &qc, ctrl_subset &subset)
-{
-	unsigned d;
-
-	if (qc.nr_of_dims == 0)
-		return false;
-
-	for (d = 0; d < qc.nr_of_dims; d++) {
-		subset.offset[d] = 0;
-		subset.size[d] = qc.dims[d];
-	}
-
-	std::string s = name2var(qc.name);
-
-	if (ctrl_subsets.find(s) != ctrl_subsets.end()) {
-		unsigned ss_dims;
-
-		subset = ctrl_subsets[s];
-		for (ss_dims = 0; ss_dims < V4L2_CTRL_MAX_DIMS && subset.size[ss_dims]; ss_dims++) ;
-		if (ss_dims != qc.nr_of_dims) {
-			fprintf(stderr, "expected %d dimensions but --subset specified %d\n",
-					qc.nr_of_dims, ss_dims);
-			return true;
-		}
-		for (d = 0; d < qc.nr_of_dims; d++) {
-			if (subset.offset[d] + subset.size[d] > qc.dims[d]) {
-				fprintf(stderr, "the subset offset+size for dimension %d is out of range\n", d);
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
 static bool idx_in_subset(const struct v4l2_query_ext_ctrl &qc, const ctrl_subset &subset,
 			  const unsigned *divide, unsigned idx)
 {
@@ -903,8 +1011,13 @@ void common_set(cv4l_fd &_fd)
 
 		memset(&ctrls, 0, sizeof(ctrls));
 		for (const auto &set_ctrl : set_ctrls) {
+			std::string s = set_ctrl.first;
+			if (isdigit(s[0])) {
+				__u32 id = strtoul(s.c_str(), nullptr, 0);
+				s = ctrl_id2str[id];
+			}
 			struct v4l2_ext_control ctrl;
-			struct v4l2_query_ext_ctrl &qc = ctrl_str2q[set_ctrl.first];
+			struct v4l2_query_ext_ctrl &qc = ctrl_str2q[s];
 
 			memset(&ctrl, 0, sizeof(ctrl));
 			ctrl.id = qc.id;
@@ -1017,102 +1130,6 @@ void common_set(cv4l_fd &_fd)
 	}
 }
 
-static void print_array(const struct v4l2_query_ext_ctrl &qc, void *p)
-{
-	std::string &name = ctrl_id2str[qc.id];
-	ctrl_subset subset;
-	unsigned divide[V4L2_CTRL_MAX_DIMS] = { 0 };
-	unsigned from, to;
-	unsigned d, i;
-
-	if (fill_subset(qc, subset))
-		return;
-
-	divide[qc.nr_of_dims - 1] = 1;
-	for (d = 0; d < qc.nr_of_dims - 1; d++) {
-		divide[d] = qc.dims[d + 1];
-		for (i = 0; i < d; i++)
-			divide[i] *= divide[d];
-	}
-
-	from = subset.offset[qc.nr_of_dims - 1];
-	to = subset.offset[qc.nr_of_dims - 1] + subset.size[qc.nr_of_dims - 1] - 1;
-
-	for (unsigned idx = 0; idx < qc.elems; idx += qc.dims[qc.nr_of_dims - 1]) {
-		for (d = 0; d < qc.nr_of_dims - 1; d++) {
-			unsigned i = (idx / divide[d]) % qc.dims[d];
-
-			if (i < subset.offset[d] || i >= subset.offset[d] + subset.size[d])
-				break;
-		}
-		if (d < qc.nr_of_dims - 1)
-			continue;
-
-		printf("%s", name.c_str());
-		for (d = 0; d < qc.nr_of_dims - 1; d++)
-			printf("[%u]", (idx / divide[d]) % qc.dims[d]);
-		printf(": ");
-		switch (qc.type) {
-		case V4L2_CTRL_TYPE_U8:
-			for (i = from; i <= to; i++) {
-				printf("%4d", (static_cast<__u8 *>(p))[idx + i]);
-				if (i < to)
-					printf(", ");
-			}
-			printf("\n");
-			break;
-		case V4L2_CTRL_TYPE_U16:
-			for (i = from; i <= to; i++) {
-				printf("%6d", (static_cast<__u16 *>(p))[idx + i]);
-				if (i < to)
-					printf(", ");
-			}
-			printf("\n");
-			break;
-		case V4L2_CTRL_TYPE_U32:
-			for (i = from; i <= to; i++) {
-				printf("%6d", (static_cast<__u32 *>(p))[idx + i]);
-				if (i < to)
-					printf(", ");
-			}
-			printf("\n");
-			break;
-		}
-	}
-}
-
-void common_print_control(v4l2_query_ext_ctrl &qc, v4l2_ext_control &ctrl)
-{
-	std::string &name = ctrl_id2str[qc.id];
-
-	if (qc.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD) {
-		switch (qc.type) {
-		case V4L2_CTRL_TYPE_U8:
-		case V4L2_CTRL_TYPE_U16:
-		case V4L2_CTRL_TYPE_U32:
-			print_array(qc, ctrl.ptr);
-			break;
-		case V4L2_CTRL_TYPE_STRING:
-			printf("%s: '%s'\n", name.c_str(),
-			       safename(ctrl.string).c_str());
-			break;
-		case V4L2_CTRL_TYPE_AREA:
-			printf("%s: %dx%d\n", name.c_str(),
-			       ctrl.p_area->width,
-			       ctrl.p_area->height);
-			break;
-		default:
-			fprintf(stderr, "%s: unsupported payload type\n",
-				name.c_str());
-			break;
-		}
-	} else if (qc.type == V4L2_CTRL_TYPE_INTEGER64) {
-		printf("%s: %lld\n", name.c_str(), ctrl.value64);
-	} else {
-		printf("%s: %d\n", name.c_str(), ctrl.value);
-	}
-}
-
 void common_get(cv4l_fd &_fd)
 {
 	int fd = _fd.g_fd();
@@ -1124,8 +1141,13 @@ void common_get(cv4l_fd &_fd)
 
 		memset(&ctrls, 0, sizeof(ctrls));
 		for (const auto &get_ctrl : get_ctrls) {
+			std::string s = get_ctrl;
+			if (isdigit(s[0])) {
+				__u32 id = strtoul(s.c_str(), nullptr, 0);
+				s = ctrl_id2str[id];
+			}
 			struct v4l2_ext_control ctrl;
-			struct v4l2_query_ext_ctrl &qc = ctrl_str2q[get_ctrl];
+			struct v4l2_query_ext_ctrl &qc = ctrl_str2q[s];
 
 			memset(&ctrl, 0, sizeof(ctrl));
 			ctrl.id = qc.id;
@@ -1163,7 +1185,14 @@ void common_get(cv4l_fd &_fd)
 					std::string &name = ctrl_id2str[ctrl.id];
 					struct v4l2_query_ext_ctrl &qc = ctrl_str2q[name];
 
-					common_print_control(qc, ctrl);
+					if (qc.nr_of_dims) {
+						print_value(fd, qc, ctrl, true, true);
+						return;
+					}
+
+					printf("%s: ", name.c_str());
+					print_value(fd, qc, ctrl, true, false);
+					printf("\n");
 				}
 			}
 		}
