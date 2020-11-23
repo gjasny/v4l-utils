@@ -903,6 +903,17 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 		epollfd = epoll_create1(0);
 
 		fail_on_test(epollfd < 0);
+
+		/*
+		 * Many older versions of the vb2 and m2m have a bug where
+		 * EPOLLIN and EPOLLOUT events are never signaled unless they
+		 * are part of the initial EPOLL_CTL_ADD. We set an initial
+		 * empty set of events, which we then modify with EPOLL_CTL_MOD,
+		 * in order to detect that condition.
+		 */
+		ev.events = 0;
+		fail_on_test(epoll_ctl(epollfd, EPOLL_CTL_ADD, node->g_fd(), &ev));
+
 		if (node->is_m2m)
 			ev.events = EPOLLIN | EPOLLOUT | EPOLLPRI;
 		else if (v4l_type_is_output(q.g_type()))
@@ -910,7 +921,7 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 		else
 			ev.events = EPOLLIN;
 		ev.data.fd = node->g_fd();
-		fail_on_test(epoll_ctl(epollfd, EPOLL_CTL_ADD, node->g_fd(), &ev));
+		fail_on_test(epoll_ctl(epollfd, EPOLL_CTL_MOD, node->g_fd(), &ev));
 	}
 
 	if (pollmode)
@@ -944,6 +955,10 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 			can_read = FD_ISSET(node->g_fd(), &rfds);
 			have_event = FD_ISSET(node->g_fd(), &efds);
 		} else if (pollmode == POLL_MODE_EPOLL) {
+			/*
+			 * This can fail with a timeout on older kernels for
+			 * drivers using vb2_core_poll() v4l2_m2m_poll().
+			 */
 			ret = epoll_wait(epollfd, &ev, 1, 2000);
 			fail_on_test(ret == 0);
 			fail_on_test(ret < 0);
