@@ -1545,13 +1545,13 @@ int main(int argc, char **argv)
 				res = select(fd + 1, nullptr, nullptr, &fds, nullptr);
 				if (res <= 0)
 					break;
-				if (!doioctl(fd, VIDIOC_DQEVENT, &ev)) {
-					print_event(&ev);
-					if (ev.sequence > seq)
-						printf("\tMissed %d events\n",
-							ev.sequence - seq);
-					seq = ev.sequence + 1;
-				}
+				if (doioctl(fd, VIDIOC_DQEVENT, &ev))
+					break;
+				print_event(&ev);
+				if (ev.sequence > seq)
+					printf("\tMissed %d events\n",
+						ev.sequence - seq);
+				seq = ev.sequence + 1;
 			}
 		}
 	}
@@ -1584,13 +1584,13 @@ int main(int argc, char **argv)
 				res = epoll_wait(epollfd, &epoll_ev, 1, -1);
 				if (res <= 0)
 					break;
-				if (!doioctl(fd, VIDIOC_DQEVENT, &ev)) {
-					print_event(&ev);
-					if (ev.sequence > seq)
-						printf("\tMissed %d events\n",
-							ev.sequence - seq);
-					seq = ev.sequence + 1;
-				}
+				if (doioctl(fd, VIDIOC_DQEVENT, &ev))
+					break;
+				print_event(&ev);
+				if (ev.sequence > seq)
+					printf("\tMissed %d events\n",
+						ev.sequence - seq);
+				seq = ev.sequence + 1;
 			}
 		}
 		close(epollfd);
