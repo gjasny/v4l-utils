@@ -9,7 +9,6 @@
 #include "v4l2-ctl.h"
 #include "v4l-stream.h"
 #include <media-info.h>
-#include <fwht-ctrls.h>
 
 extern "C" {
 #include "v4l2-tpg.h"
@@ -819,7 +818,7 @@ static void set_fwht_stateless_params(struct v4l2_ctrl_fwht_params &fwht_params,
 	 * it is better not to reference it so the error won't propagate
 	 */
 	if (!last_bf_ts)
-		fwht_params.flags |= FWHT_FL_I_FRAME;
+		fwht_params.flags |= V4L2_FWHT_FL_I_FRAME;
 }
 
 static int alloc_fwht_req(int media_fd, unsigned index)
@@ -885,7 +884,7 @@ static int set_fwht_ext_ctrl(cv4l_fd &fd, const struct fwht_cframe_hdr *hdr,
 
 	set_fwht_stateless_params(fwht_params, hdr, last_bf_ts);
 
-	control.id = V4L2_CID_MPEG_VIDEO_FWHT_PARAMS;
+	control.id = V4L2_CID_STATELESS_FWHT_PARAMS;
 	control.ptr = &fwht_params;
 	control.size = sizeof(fwht_params);
 	controls.which = V4L2_CTRL_WHICH_REQUEST_VAL;

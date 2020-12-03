@@ -219,9 +219,7 @@ enum v4l2_colorspace {
 	V4L2_COLORSPACE_470_SYSTEM_M  = 5,
 
 	/*
-	 * EBU Tech 3213 PAL/SECAM colorspace. This only makes sense when
-	 * dealing with really old PAL/SECAM recordings. Superseded by
-	 * SMPTE 170M.
+	 * EBU Tech 3213 PAL/SECAM colorspace.
 	 */
 	V4L2_COLORSPACE_470_SYSTEM_BG = 6,
 
@@ -699,6 +697,7 @@ struct v4l2_pix_format {
 #define V4L2_PIX_FMT_HEVC     v4l2_fourcc('H', 'E', 'V', 'C') /* HEVC aka H.265 */
 #define V4L2_PIX_FMT_FWHT     v4l2_fourcc('F', 'W', 'H', 'T') /* Fast Walsh Hadamard Transform (vicodec) */
 #define V4L2_PIX_FMT_FWHT_STATELESS     v4l2_fourcc('S', 'F', 'W', 'H') /* Stateless FWHT (vicodec) */
+#define V4L2_PIX_FMT_H264_SLICE v4l2_fourcc('S', '2', '6', '4') /* H264 parsed slices */
 
 /*  Vendor-specific formats   */
 #define V4L2_PIX_FMT_CPIA1    v4l2_fourcc('C', 'P', 'I', 'A') /* cpia1 YUV */
@@ -763,6 +762,10 @@ struct v4l2_pix_format {
 #define V4L2_META_FMT_UVC         v4l2_fourcc('U', 'V', 'C', 'H') /* UVC Payload Header metadata */
 #define V4L2_META_FMT_D4XX        v4l2_fourcc('D', '4', 'X', 'X') /* D4XX Payload Header metadata */
 #define V4L2_META_FMT_VIVID	  v4l2_fourcc('V', 'I', 'V', 'D') /* Vivid Metadata */
+
+/* Vendor specific - used for RK_ISP1 camera sub-system */
+#define V4L2_META_FMT_RK_ISP1_PARAMS	v4l2_fourcc('R', 'K', '1', 'P') /* Rockchip ISP1 3A Parameters */
+#define V4L2_META_FMT_RK_ISP1_STAT_3A	v4l2_fourcc('R', 'K', '1', 'S') /* Rockchip ISP1 3A Statistics */
 
 /* priv field value to indicates that subsequent fields are valid. */
 #define V4L2_PIX_FMT_PRIV_MAGIC		0xfeedcafe
@@ -1702,6 +1705,13 @@ struct v4l2_ext_control {
 		__u16 *p_u16;
 		__u32 *p_u32;
 		struct v4l2_area *p_area;
+		struct v4l2_ctrl_h264_sps *p_h264_sps;
+		struct v4l2_ctrl_h264_pps *p_h264_pps;
+		struct v4l2_ctrl_h264_scaling_matrix *p_h264_scaling_matrix;
+		struct v4l2_ctrl_h264_pred_weights *p_h264_pred_weights;
+		struct v4l2_ctrl_h264_slice_params *p_h264_slice_params;
+		struct v4l2_ctrl_h264_decode_params *p_h264_decode_params;
+		struct v4l2_ctrl_fwht_params *p_fwht_params;
 		void *ptr;
 	};
 } __attribute__ ((packed));
@@ -1744,6 +1754,15 @@ enum v4l2_ctrl_type {
 	V4L2_CTRL_TYPE_U16	     = 0x0101,
 	V4L2_CTRL_TYPE_U32	     = 0x0102,
 	V4L2_CTRL_TYPE_AREA          = 0x0106,
+
+	V4L2_CTRL_TYPE_H264_SPS             = 0x0200,
+	V4L2_CTRL_TYPE_H264_PPS		    = 0x0201,
+	V4L2_CTRL_TYPE_H264_SCALING_MATRIX  = 0x0202,
+	V4L2_CTRL_TYPE_H264_SLICE_PARAMS    = 0x0203,
+	V4L2_CTRL_TYPE_H264_DECODE_PARAMS   = 0x0204,
+	V4L2_CTRL_TYPE_H264_PRED_WEIGHTS    = 0x0205,
+
+	V4L2_CTRL_TYPE_FWHT_PARAMS	    = 0x0220,
 };
 
 /*  Used in the VIDIOC_QUERYCTRL ioctl for querying controls */

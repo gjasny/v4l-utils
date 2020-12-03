@@ -164,6 +164,8 @@
 	case V4L2_META_FMT_UVC: return "UVC Payload Header Metadata";
 	case V4L2_META_FMT_D4XX: return "Intel D4xx UVC Metadata";
 	case V4L2_META_FMT_VIVID: return "Vivid Metadata";
+	case V4L2_META_FMT_RK_ISP1_PARAMS: return "Rockchip ISP1 3A Parameters";
+	case V4L2_META_FMT_RK_ISP1_STAT_3A: return "Rockchip ISP1 3A Statistics";
 	case V4L2_PIX_FMT_MJPEG: return "Motion-JPEG";
 	case V4L2_PIX_FMT_JPEG: return "JFIF JPEG";
 	case V4L2_PIX_FMT_DV: return "1394";
