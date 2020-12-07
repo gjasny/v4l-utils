@@ -29,6 +29,7 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QScreen>
+#include <QWindow>
 
 #include <math.h>
 
@@ -243,7 +244,7 @@ void CaptureWin::setWindowSize(QSize frameSize)
 	QDesktopWidget *screen = QApplication::desktop();
 	QRect resolution = screen->screenGeometry();
 #else
-	QScreen *screen = QGuiApplication::screenAt(mapToGlobal({width() / 2, 0}));
+	QScreen *screen = window()->windowHandle()->screen();
 	QSize resolution = screen->availableSize();
 #endif
 
