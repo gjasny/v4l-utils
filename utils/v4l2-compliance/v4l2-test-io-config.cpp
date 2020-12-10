@@ -577,7 +577,7 @@ static int checkEdid(struct node *node, unsigned pad, bool is_input)
 		fail_on_test(edid.blocks == 0 || edid.blocks >= 256);
 		fail_on_test(edid.pad != pad);
 	}
-	edid.blocks = blocks;
+	edid.blocks = 1;
 	edid.pad = pad;
 	edid.edid = nullptr;
 	ret = doioctl(node, VIDIOC_S_EDID, &edid);
