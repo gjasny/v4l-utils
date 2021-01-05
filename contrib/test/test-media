@@ -4,6 +4,7 @@
 #
 # Copyright 2019 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
 
+vidtv=0
 vivid=0
 vim2m=0
 vimc=0
@@ -51,6 +52,7 @@ if [ -z "$1" ]; then
 	echo "-32: use v4l2-ctl-32 and v4l2-compliance-32 to test the 32 bit compat layer"
 	echo
 	echo Test Targets:
+	echo "vidtv: test the vidtv driver"
 	echo "vivid: test the vivid driver"
 	echo "vim2m: test the vim2m driver"
 	echo "vimc: test the vimc driver"
@@ -96,6 +98,7 @@ while [ ! -z "$1" ]; do
 		fi
 		;;
 	all)
+		vidtv=1
 		vivid=1
 		vim2m=1
 		vimc=1
@@ -108,6 +111,9 @@ while [ ! -z "$1" ]; do
 		vim2m=1
 		vimc=1
 		vicodec=1
+		;;
+	vidtv)
+		vidtv=1
 		;;
 	vivid)
 		vivid=1
@@ -161,6 +167,72 @@ $v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=21
 $v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
 
 echo
+
+if [ $vidtv -eq 1 ]; then
+	rmmod vidtv 2&>/dev/null
+	modprobe vidtv
+	sleep 2
+	dmesg -n notice
+	echo
+
+	if ! media-ctl -d platform:vidtv -p ; then
+		echo "FAIL: the vidtv module failed to load" | tee -a $tmp
+		echo "Grand Total for vidtv: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
+		rmmod vidtv
+		exit 0
+	fi
+
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo unbind vidtv
+	echo
+	echo -n vidtv.0 >/sys/bus/platform/drivers/vidtv/unbind
+	sleep $unbind_time
+	echo
+	echo rebind vidtv
+	echo
+	echo -n vidtv.0 >/sys/bus/platform/drivers/vidtv/bind
+	sleep 1
+	echo
+	echo second unbind vidtv
+	echo
+	sleep 1
+	echo
+	echo -n vidtv.0 >/sys/bus/platform/drivers/vidtv/unbind
+	sleep $reunbind_time
+	echo
+	echo rmmod vidtv
+	echo
+	rmmod vidtv
+	sleep $rmmod_time
+	if [ $kmemleak -eq 1 ]; then
+		echo
+		echo kmemleak results for vidtv:
+		echo
+		echo scan >/sys/kernel/debug/kmemleak
+		cat /sys/kernel/debug/kmemleak
+		echo
+		echo end of kmemleak results
+		echo clear >/sys/kernel/debug/kmemleak
+	fi
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+
+fi
 
 if [ $vivid -eq 1 ]; then
 	dmesg -n notice
