@@ -1438,6 +1438,14 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 	 * 	 S_SELECTION flags tests
 	 */
 
+	if (is_vivid &&
+	    node.controls.find(VIVID_CID_DISCONNECT) != node.controls.end()) {
+		if (node.node2)
+			node.node2->close();
+		node.node2 = NULL;
+		printf("\ttest Disconnect: %s\n\n", ok(testVividDisconnect(&node)));
+	}
+
 	restoreState();
 
 show_total:

@@ -70,6 +70,10 @@ enum poll_mode {
 #define IS_ENCODER(node) ((node)->codec_mask & (JPEG_ENCODER | STATEFUL_ENCODER | STATELESS_ENCODER))
 #define IS_DECODER(node) ((node)->codec_mask & (JPEG_DECODER | STATEFUL_DECODER | STATELESS_DECODER))
 
+#define V4L2_CTRL_CLASS_VIVID 0x00f00000
+#define VIVID_CID_VIVID_BASE		(V4L2_CTRL_CLASS_VIVID | 0xf000)
+#define VIVID_CID_DISCONNECT            (VIVID_CID_VIVID_BASE + 65)
+
 struct test_query_ext_ctrl: v4l2_query_ext_ctrl {
 	__u64 menu_mask;
 };
@@ -296,6 +300,7 @@ int testQueryControls(struct node *node);
 int testSimpleControls(struct node *node);
 int testExtendedControls(struct node *node);
 int testEvents(struct node *node);
+int testVividDisconnect(struct node *node);
 int testJpegComp(struct node *node);
 
 // I/O configuration ioctl tests

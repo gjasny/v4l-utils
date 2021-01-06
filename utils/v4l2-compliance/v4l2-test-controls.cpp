@@ -23,11 +23,11 @@
 #include <vector>
 
 #include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/epoll.h>
 
 #include "compiler.h"
 #include "v4l2-compliance.h"
-
-#define V4L2_CTRL_CLASS_VIVID 0x00f00000
 
 static int checkQCtrl(struct node *node, struct test_query_ext_ctrl &qctrl)
 {
@@ -898,6 +898,89 @@ int testEvents(struct node *node)
 
 	if (node->controls.empty())
 		return ENOTTY;
+	return 0;
+}
+
+int testVividDisconnect(struct node *node)
+{
+	// Test that disconnecting a device will wake up any processes
+	// that are using select or poll.
+	//
+	// This can only be tested with the vivid driver that enabled
+	// the DISCONNECT control.
+
+	pid_t pid = fork();
+	if (pid == 0) {
+		struct timeval tv = { 5, 0 };
+		fd_set fds;
+
+		FD_ZERO(&fds);
+		FD_SET(node->g_fd(), &fds);
+		int res = select(node->g_fd() + 1, nullptr, nullptr, &fds, &tv);
+		// No POLLPRI seen
+		if (res != 1)
+			exit(1);
+		// POLLPRI seen, but didn't wake up
+		if (!tv.tv_sec)
+			exit(2);
+		v4l2_event ev = {};
+		// Woke up on POLLPRI, but VIDIOC_DQEVENT didn't return
+		// the ENODEV error.
+		if (doioctl(node, VIDIOC_DQEVENT, &ev) != ENODEV)
+			exit(3);
+		exit(0);
+	}
+	v4l2_control ctrl = { VIVID_CID_DISCONNECT, 0 };
+	sleep(1);
+	fail_on_test(doioctl(node, VIDIOC_S_CTRL, &ctrl));
+	int wstatus;
+	fail_on_test(waitpid(pid, &wstatus, 0) != pid);
+	fail_on_test(!WIFEXITED(wstatus));
+	if (WEXITSTATUS(wstatus))
+		return fail("select child exited with status %d\n", WEXITSTATUS(wstatus));
+
+	node->reopen();
+
+	pid = fork();
+	if (pid == 0) {
+		struct epoll_event ep_ev;
+		int epollfd = epoll_create1(0);
+
+		if (epollfd < 0)
+			exit(1);
+
+		ep_ev.events = 0;
+		if (epoll_ctl(epollfd, EPOLL_CTL_ADD, node->g_fd(), &ep_ev))
+			exit(2);
+
+		ep_ev.events = EPOLLPRI;
+		ep_ev.data.fd = node->g_fd();
+		if (epoll_ctl(epollfd, EPOLL_CTL_MOD, node->g_fd(), &ep_ev))
+			exit(3);
+		int ret = epoll_wait(epollfd, &ep_ev, 1, 5000);
+		if (ret == 0)
+			exit(4);
+		if (ret < 0)
+			exit(5);
+		if (ret != 1)
+			exit(6);
+		if (!(ep_ev.events & EPOLLPRI))
+			exit(7);
+		if (!(ep_ev.events & EPOLLERR))
+			exit(8);
+		v4l2_event ev = {};
+		// Woke up on POLLPRI, but VIDIOC_DQEVENT didn't return
+		// the ENODEV error.
+		if (doioctl(node, VIDIOC_DQEVENT, &ev) != ENODEV)
+			exit(9);
+		exit(0);
+	}
+	sleep(1);
+	fail_on_test(doioctl(node, VIDIOC_S_CTRL, &ctrl));
+	fail_on_test(waitpid(pid, &wstatus, 0) != pid);
+	fail_on_test(!WIFEXITED(wstatus));
+	if (WEXITSTATUS(wstatus))
+		return fail("epoll child exited with status %d\n", WEXITSTATUS(wstatus));
 	return 0;
 }
 
