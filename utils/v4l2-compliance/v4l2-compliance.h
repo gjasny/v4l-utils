@@ -229,6 +229,14 @@ private:
 			warn("%s\n", #test);		\
 	} while (0)
 
+#define warn_or_info(is_info, fmt, args...) 		\
+	do {						\
+		if (is_info)				\
+			info(fmt, ##args);		\
+		else					\
+			warn(fmt, ##args);		\
+	} while (0)
+
 #define fail(fmt, args...) 						\
 ({ 									\
 	printf("\t\t%s: %s(%d): " fmt, show_colors ?			\

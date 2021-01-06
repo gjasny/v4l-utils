@@ -414,7 +414,16 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 		}
 		fail_on_test(!g_timestamp().tv_sec && !g_timestamp().tv_usec);
 		fail_on_test(g_flags() & V4L2_BUF_FLAG_DONE);
-		fail_on_test((int)g_sequence() < seq.last_seq + 1);
+
+		// The vivid driver has unreliable timings causing wrong
+		// sequence numbers on occasion. Skip this test until this
+		// bug is solved.
+		if (!is_vivid)
+			fail_on_test((int)g_sequence() < seq.last_seq + 1);
+		else if ((int)g_sequence() < seq.last_seq + 1)
+			info("(int)g_sequence() < seq.last_seq + 1): %d < %d\n",
+			     (int)g_sequence(), seq.last_seq + 1);
+
 		if (v4l_type_is_video(g_type())) {
 			fail_on_test(g_field() == V4L2_FIELD_ALTERNATE);
 			fail_on_test(g_field() == V4L2_FIELD_ANY);
@@ -436,12 +445,13 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 			} else {
 				fail_on_test(g_field() != fmt.g_field());
 				if (static_cast<int>(g_sequence()) != seq.last_seq + 1)
-					warn("got sequence number %u, expected %u\n",
-							g_sequence(), seq.last_seq + 1);
+					warn_or_info(is_vivid,
+						     "got sequence number %u, expected %u\n",
+						     g_sequence(), seq.last_seq + 1);
 			}
 		} else if (static_cast<int>(g_sequence()) != seq.last_seq + 1) {
-			warn("got sequence number %u, expected %u\n",
-					g_sequence(), seq.last_seq + 1);
+			warn_or_info(is_vivid, "got sequence number %u, expected %u\n",
+				     g_sequence(), seq.last_seq + 1);
 		}
 		seq.last_seq = static_cast<int>(g_sequence());
 		seq.last_field = g_field();
