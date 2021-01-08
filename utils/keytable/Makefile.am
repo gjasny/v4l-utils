@@ -10,14 +10,15 @@ endif
 ir_keytable_SOURCES = keytable.c parse.h ir-encode.c ir-encode.h toml.c toml.h keymap.c keymap.h
 
 if WITH_BPF
-ir_keytable_SOURCES += bpf.c bpf_load.c bpf.h bpf_load.h
+ir_keytable_SOURCES += bpf_load.c bpf_load.h
 endif
 
 ir_keytable_LDADD = @LIBINTL@
 ir_keytable_LDFLAGS = $(ARGP_LIBS)
 
 if WITH_BPF
-ir_keytable_LDFLAGS += $(LIBELF_LIBS)
+ir_keytable_LDFLAGS += $(LIBELF_LIBS) $(LIBBPF_LIBS)
+ir_keytable_CFLAGS = $(LIBBPF_CFLAGS)
 SUBDIRS = bpf_protocols
 endif
 

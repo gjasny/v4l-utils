@@ -37,7 +37,7 @@
 #include "keymap.h"
 
 #ifdef HAVE_BPF
-#include "bpf.h"
+#include <bpf/bpf.h>
 #include "bpf_load.h"
 #endif
 

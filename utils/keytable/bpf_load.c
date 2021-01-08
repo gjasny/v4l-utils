@@ -12,10 +12,10 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <linux/bpf.h>
+#include <bpf/bpf.h>
 #include <assert.h>
 #include <argp.h>
 #include "keymap.h"
-#include "bpf.h"
 #include "bpf_load.h"
 
 #ifdef ENABLE_NLS
@@ -28,6 +28,8 @@
 # define _(string) string
 #endif
 
+#define LOG_BUF_SIZE (256 * 1024)
+
 // This should match the struct in the raw BPF decoder
 struct raw_pattern {
 	unsigned int scancode;
@@ -39,7 +41,7 @@ struct raw_pattern {
 int max_length;
 int trail_space;
 
-char bpf_log_buf[BPF_LOG_BUF_SIZE];
+char bpf_log_buf[LOG_BUF_SIZE];
 extern int debug;
 
 struct bpf_file {
@@ -58,14 +60,14 @@ struct bpf_file {
 	struct protocol_param *param;
 };
 
-static int load_and_attach(int lirc_fd, struct bpf_file *bpf_file, const char *name, struct bpf_insn *prog, int size)
+static int load_and_attach(int lirc_fd, struct bpf_file *bpf_file, struct bpf_insn *prog, int size)
 {
         size_t insns_cnt = size / sizeof(struct bpf_insn);
 	int fd, err;
 
 	fd = bpf_load_program(BPF_PROG_TYPE_LIRC_MODE2, prog, insns_cnt,
-			      name, bpf_file->license, 0,
-			      bpf_log_buf, BPF_LOG_BUF_SIZE);
+			      bpf_file->license, 0,
+			      bpf_log_buf, LOG_BUF_SIZE);
 	if (fd < 0) {
 		printf("bpf_load_program() err=%m\n%s", bpf_log_buf);
 		return -1;
@@ -548,8 +550,7 @@ int load_bpf_file(const char *path, int lirc_fd, struct protocol_param *param,
 		    !(shdr.sh_flags & SHF_EXECINSTR))
 			continue;
 
-		ret = load_and_attach(lirc_fd, &bpf_file, shname, data->d_buf,
-				      data->d_size);
+		ret = load_and_attach(lirc_fd, &bpf_file, data->d_buf, data->d_size);
 		break;
 	}
 

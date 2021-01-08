@@ -2,8 +2,6 @@
 #ifndef __BPF_LOAD_H
 #define __BPF_LOAD_H
 
-#define BPF_LOG_BUF_SIZE (256 * 1024)
-
 #define MAX_MAPS 32
 #define MAX_PROGS 64
 
