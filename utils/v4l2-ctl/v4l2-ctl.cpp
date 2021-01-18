@@ -1120,7 +1120,8 @@ int main(int argc, char **argv)
 	const char *device = "/dev/video0";	/* -d device */
 	const char *out_device = nullptr;
 	const char *export_device = nullptr;
-	struct v4l2_capability vcap;	/* list_cap */
+	struct v4l2_capability vcap = {};
+	struct v4l2_subdev_capability subdevcap = {};
 	__u32 wait_for_event = 0;	/* wait for this event */
 	const char *wait_event_id = nullptr;
 	__u32 poll_for_event = 0;	/* poll for this event */
@@ -1130,8 +1131,6 @@ int main(int argc, char **argv)
 	unsigned secs = 0;
 	char short_options[26 * 2 * 3 + 1];
 	int idx = 0;
-
-	memset(&vcap, 0, sizeof(vcap));
 
 	if (argc == 1) {
 		common_usage();
@@ -1339,10 +1338,16 @@ int main(int argc, char **argv)
 	if (!is_subdev && doioctl(fd, VIDIOC_QUERYCAP, &vcap)) {
 		fprintf(stderr, "%s: not a v4l2 node\n", device);
 		std::exit(EXIT_FAILURE);
+	} else if (is_subdev) {
+		// This ioctl was introduced in kernel 5.10, so don't
+		// exit if this ioctl returns an error.
+		doioctl(fd, VIDIOC_SUBDEV_QUERYCAP, &subdevcap);
 	}
-	capabilities = vcap.capabilities;
-	if (capabilities & V4L2_CAP_DEVICE_CAPS)
-		capabilities = vcap.device_caps;
+	if (!is_subdev) {
+		capabilities = vcap.capabilities;
+		if (capabilities & V4L2_CAP_DEVICE_CAPS)
+			capabilities = vcap.device_caps;
+	}
 
 	media_fd = mi_get_media_fd(fd);
 
@@ -1446,10 +1451,13 @@ int main(int argc, char **argv)
 
 	/* Information Opts */
 
-	if (!is_subdev && options[OptGetDriverInfo]) {
+	if (options[OptGetDriverInfo]) {
 		printf("Driver Info%s:\n",
 				options[OptUseWrapper] ? " (using libv4l2)" : "");
-		v4l2_info_capability(vcap);
+		if (is_subdev)
+			v4l2_info_subdev_capability(subdevcap);
+		else
+			v4l2_info_capability(vcap);
 	}
 	if (options[OptGetDriverInfo] && media_fd >= 0)
 		mi_media_info_for_fd(media_fd, fd);
