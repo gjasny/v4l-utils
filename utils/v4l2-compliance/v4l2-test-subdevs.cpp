@@ -25,6 +25,23 @@
 
 #include "v4l2-compliance.h"
 
+#define VALID_SUBDEV_CAPS (V4L2_SUBDEV_CAP_RO_SUBDEV)
+
+int testSubDevCap(struct node *node)
+{
+	v4l2_subdev_capability caps;
+
+	memset(&caps, 0xff, sizeof(caps));
+	// Must always be there
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_QUERYCAP, nullptr) != EFAULT);
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_QUERYCAP, &caps));
+	fail_on_test(check_0(caps.reserved, sizeof(caps.reserved)));
+	fail_on_test((caps.version >> 16) < 5);
+	fail_on_test(caps.capabilities & ~VALID_SUBDEV_CAPS);
+	node->is_ro_subdev = caps.capabilities & V4L2_SUBDEV_CAP_RO_SUBDEV;
+	return 0;
+}
+
 static int testSubDevEnumFrameInterval(struct node *node, unsigned which,
 				       unsigned pad, unsigned code,
 				       unsigned width, unsigned height)
@@ -266,6 +283,10 @@ int testSubDevFrameInterval(struct node *node, unsigned pad)
 	fail_on_test(fival.interval.numerator == ~0U || fival.interval.denominator == ~0U);
 	ival = fival.interval;
 	memset(fival.reserved, 0xff, sizeof(fival.reserved));
+	if (node->is_ro_subdev) {
+		fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival) != EPERM);
+		return 0;
+	}
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival));
 	fail_on_test(fival.pad != pad);
 	fail_on_test(ival.numerator != fival.interval.numerator);
@@ -350,6 +371,10 @@ int testSubDevFormat(struct node *node, unsigned which, unsigned pad)
 	memset(s_fmt.reserved, 0xff, sizeof(s_fmt.reserved));
 	memset(s_fmt.format.reserved, 0xff, sizeof(s_fmt.format.reserved));
 	ret = doioctl(node, VIDIOC_SUBDEV_S_FMT, &s_fmt);
+	if (node->is_ro_subdev && which == V4L2_SUBDEV_FORMAT_ACTIVE) {
+		fail_on_test(ret != EPERM);
+		return 0;
+	}
 	fail_on_test(ret && ret != ENOTTY);
 	fail_on_test(s_fmt.which != which);
 	fail_on_test(s_fmt.pad != pad);
@@ -460,6 +485,8 @@ int testSubDevSelection(struct node *node, unsigned which, unsigned pad)
 		s_sel = sel;
 		memset(s_sel.reserved, 0xff, sizeof(s_sel.reserved));
 		ret = doioctl(node, VIDIOC_SUBDEV_S_SELECTION, &s_sel);
+		if (node->is_ro_subdev && which == V4L2_SUBDEV_FORMAT_ACTIVE)
+			fail_on_test(ret != EPERM);
 		if (tgt == V4L2_SEL_TGT_CROP) {
 			crop.rect = sel.r;
 			memset(crop.reserved, 0xff, sizeof(crop.reserved));
@@ -471,6 +498,8 @@ int testSubDevSelection(struct node *node, unsigned which, unsigned pad)
 				fail_on_test(memcmp(&crop.rect, &sel.r, sizeof(sel.r)));
 			}
 		}
+		if (node->is_ro_subdev && which == V4L2_SUBDEV_FORMAT_ACTIVE)
+			continue;
 		fail_on_test(!ret && targets[tgt].readonly);
 		fail_on_test(s_sel.which != which);
 		fail_on_test(s_sel.pad != pad);

@@ -97,6 +97,7 @@ struct base_node {
 	bool is_m2m;
 	bool is_io_mc;
 	bool is_planar;
+	bool is_ro_subdev;
 	bool can_capture;
 	bool can_output;
 	bool can_scale;
@@ -335,6 +336,7 @@ int testEncIndex(struct node *node);
 int testDecoder(struct node *node);
 
 // SubDev ioctl tests
+int testSubDevCap(struct node *node);
 int testSubDevEnum(struct node *node, unsigned which, unsigned pad);
 int testSubDevFormat(struct node *node, unsigned which, unsigned pad);
 int testSubDevSelection(struct node *node, unsigned which, unsigned pad);

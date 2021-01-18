@@ -940,7 +940,8 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 	      unsigned frame_count, unsigned all_fmt_frame_count)
 {
 	struct node node2;
-	struct v4l2_capability vcap;		/* list_cap */
+	struct v4l2_capability vcap = {};
+	struct v4l2_subdev_capability subdevcap = {};
 	std::string driver;
 
 	tests_total = tests_ok = warnings = 0;
@@ -958,6 +959,8 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		if (is_vivid)
 			node.bus_info = reinterpret_cast<const char *>(vcap.bus_info);
 		determine_codec_mask(node);
+	} else if (node.is_subdev()) {
+		doioctl(&node, VIDIOC_SUBDEV_QUERYCAP, &subdevcap);
 	} else {
 		memset(&vcap, 0, sizeof(vcap));
 	}
@@ -1038,6 +1041,9 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 			printf("\tDetected Stateless Decoder\n");
 			break;
 		}
+	} else if (node.is_subdev()) {
+		printf("Driver Info:\n");
+		v4l2_info_subdev_capability(subdevcap);
 	}
 
 	__u32 ent_id = 0;
@@ -1076,10 +1082,16 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 
 	if (node.is_v4l2())
 		printf("\ttest VIDIOC_QUERYCAP: %s\n", ok(testCap(&node)));
+	else if (node.is_subdev())
+		printf("\ttest VIDIOC_SUDBEV_QUERYCAP: %s\n", ok(testSubDevCap(&node)));
+
+	if (node.is_v4l2() || node.is_subdev())
+		printf("\ttest invalid ioctls: %s\n", ok(testInvalidIoctls(&node, 'V')));
 
 	if (node.is_media()) {
 		printf("\ttest MEDIA_IOC_DEVICE_INFO: %s\n",
 		       ok(testMediaDeviceInfo(&node)));
+		printf("\ttest invalid ioctls: %s\n", ok(testInvalidIoctls(&node, '|')));
 	}
 	printf("\n");
 
@@ -1091,6 +1103,8 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 	case MEDIA_TYPE_SUBDEV:
 		printf("\ttest second %s open: %s\n", node.device,
 		       ok(node2.subdev_open(node.device, false) >= 0 ? 0 : errno));
+		if (node2.g_fd() >= 0)
+			printf("\ttest VIDIOC_SUBDEV_QUERYCAP: %s\n", ok(testSubDevCap(&node2)));
 		break;
 	case MEDIA_TYPE_MEDIA:
 		printf("\ttest second %s open: %s\n", node.device,
@@ -1113,8 +1127,8 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 
 	printf("\ttest for unlimited opens: %s\n",
 		ok(testUnlimitedOpens(&node)));
-	printf("\n");
 
+	printf("\n");
 	storeState(&node);
 
 	/* register signal handler for interrupt signal, to exit gracefully */
@@ -1137,12 +1151,9 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 			       node.topology->num_links);
 		printf("\ttest MEDIA_IOC_ENUM_ENTITIES/LINKS: %s\n", ok(testMediaEnum(&node)));
 		printf("\ttest MEDIA_IOC_SETUP_LINK: %s\n", ok(testMediaSetupLink(&node)));
-		printf("\ttest invalid ioctls: %s\n", ok(testInvalidIoctls(&node, '|')));
 		printf("\n");
 		goto show_total;
 	}
-
-	printf("\ttest invalid ioctls: %s\n", ok(testInvalidIoctls(&node, 'V')));
 
 	/* Debug ioctls */
 
