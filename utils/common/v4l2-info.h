@@ -13,6 +13,7 @@
 
 /* Print capability information */
 void v4l2_info_capability(const v4l2_capability &cap);
+void v4l2_info_subdev_capability(const v4l2_subdev_capability &subdevcap);
 
 /* Return fourcc pixelformat string */
 std::string fcc2s(__u32 val);

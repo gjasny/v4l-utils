@@ -105,6 +105,15 @@ static std::string cap2s(unsigned cap)
 	return s;
 }
 
+static std::string subdevcap2s(unsigned cap)
+{
+	std::string s;
+
+	if (cap & V4L2_SUBDEV_CAP_RO_SUBDEV)
+		s += "\t\tRead-Only Sub-Device\n";
+	return s;
+}
+
 void v4l2_info_capability(const v4l2_capability &vcap)
 {
 	printf("\tDriver name      : %s\n", vcap.driver);
@@ -120,6 +129,16 @@ void v4l2_info_capability(const v4l2_capability &vcap)
 		printf("\tDevice Caps      : 0x%08x\n", vcap.device_caps);
 		printf("%s", cap2s(vcap.device_caps).c_str());
 	}
+}
+
+void v4l2_info_subdev_capability(const v4l2_subdev_capability &subdevcap)
+{
+	printf("\tDriver version   : %d.%d.%d\n",
+	       subdevcap.version >> 16,
+	       (subdevcap.version >> 8) & 0xff,
+	       subdevcap.version & 0xff);
+	printf("\tCapabilities     : 0x%08x\n", subdevcap.capabilities);
+	printf("%s", subdevcap2s(subdevcap.capabilities).c_str());
 }
 
 std::string fcc2s(__u32 val)
