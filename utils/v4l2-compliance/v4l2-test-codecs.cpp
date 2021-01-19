@@ -28,7 +28,7 @@
 int testEncoder(struct node *node)
 {
 	struct v4l2_encoder_cmd cmd;
-	bool is_encoder = node->codec_mask & STATEFUL_ENCODER;
+	bool is_encoder = node->codec_mask & (STATEFUL_ENCODER | JPEG_ENCODER);
 	int ret;
 
 	memset(&cmd, 0xff, sizeof(cmd));
@@ -39,7 +39,7 @@ int testEncoder(struct node *node)
 		fail_on_test(doioctl(node, VIDIOC_TRY_ENCODER_CMD, &cmd) != ENOTTY);
 		return ret;
 	}
-	fail_on_test(node->codec_mask & STATEFUL_DECODER);
+	fail_on_test(IS_DECODER(node));
 	fail_on_test(ret != EINVAL);
 	ret = doioctl(node, VIDIOC_TRY_ENCODER_CMD, &cmd);
 	fail_on_test(ret == ENOTTY);
@@ -95,7 +95,7 @@ int testEncIndex(struct node *node)
 int testDecoder(struct node *node)
 {
 	struct v4l2_decoder_cmd cmd;
-	bool is_decoder = node->codec_mask & STATEFUL_DECODER;
+	bool is_decoder = node->codec_mask & (STATEFUL_DECODER | JPEG_DECODER);
 	int ret;
 
 	memset(&cmd, 0xff, sizeof(cmd));
@@ -106,7 +106,7 @@ int testDecoder(struct node *node)
 		fail_on_test(doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd) != ENOTTY);
 		return ret;
 	}
-	fail_on_test(node->codec_mask & STATEFUL_ENCODER);
+	fail_on_test(IS_ENCODER(node));
 	fail_on_test(ret != EINVAL);
 	ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
 	fail_on_test(ret == ENOTTY);
