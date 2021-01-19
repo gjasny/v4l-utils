@@ -36,6 +36,7 @@ int testEncoder(struct node *node)
 	ret = doioctl(node, VIDIOC_ENCODER_CMD, &cmd);
 	if (ret == ENOTTY) {
 		fail_on_test(is_encoder);
+		fail_on_test(doioctl(node, VIDIOC_TRY_ENCODER_CMD, &cmd) != ENOTTY);
 		return ret;
 	}
 	fail_on_test(node->codec_mask & STATEFUL_DECODER);
@@ -102,6 +103,7 @@ int testDecoder(struct node *node)
 	ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
 	if (ret == ENOTTY) {
 		fail_on_test(is_decoder);
+		fail_on_test(doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd) != ENOTTY);
 		return ret;
 	}
 	fail_on_test(node->codec_mask & STATEFUL_ENCODER);
