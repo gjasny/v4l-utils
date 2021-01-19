@@ -1360,6 +1360,13 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 					fmt.s_sizeimage(fmt.g_sizeimage(p) * 2, p);
 			}
 			fail_on_test(q.create_bufs(node, 1, &fmt));
+			if (node->is_video) {
+				buffer buf(q);
+
+				fail_on_test(buf.querybuf(node, q.g_buffers() - 1));
+				for (unsigned p = 0; p < fmt.g_num_planes(); p++)
+					fail_on_test(buf.g_length(p) < fmt.g_sizeimage(p));
+			}
 			fail_on_test(q.reqbufs(node, 2));
 		}
 		if (v4l_type_is_output(type))
