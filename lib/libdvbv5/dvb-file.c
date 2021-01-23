@@ -674,21 +674,18 @@ static int fill_entry(struct dvb_entry *entry, char *key, char *value)
 		if (!type)
 			return 0;
 
-		len = 0;
-
 		p = strtok(value," \t");
 		if (!p)
 			return 0;
 		while (p) {
 			entry->other_el_pid = realloc(entry->other_el_pid,
-						      (len + 1) *
+						      (entry->other_el_pid_len + 1) *
 						      sizeof (*entry->other_el_pid));
-			entry->other_el_pid[len].type = type;
-			entry->other_el_pid[len].pid = atol(p);
+			entry->other_el_pid[entry->other_el_pid_len].type = type;
+			entry->other_el_pid[entry->other_el_pid_len].pid = atol(p);
 			p = strtok(NULL, " \t\n");
-			len++;
+			entry->other_el_pid_len++;
 		}
-		entry->other_el_pid_len = len;
 	}
 
 	if (!is_video && !is_audio) {
