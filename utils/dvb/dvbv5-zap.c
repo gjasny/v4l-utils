@@ -92,7 +92,7 @@ struct arguments {
 	int lna, lnb, sat_number;
 	unsigned diseqc_wait, silent, verbose, frontend_only, freq_bpf;
 	unsigned timeout, dvr, rec_psi, exit_after_tuning;
-	unsigned n_apid, n_vpid, all_pids;
+	unsigned n_apid, n_vpid, extra_pids, all_pids;
 	enum dvb_file_formats input_format, output_format;
 	unsigned traffic_monitor, low_traffic, non_human, port;
 	char *search, *server;
@@ -106,6 +106,7 @@ static const struct argp_option options[] = {
 	{"adapter",	'a', N_("adapter#"),		0, N_("use given adapter (default 0)"), 0},
 	{"audio_pid",	'A', N_("audio_pid#"),		0, N_("audio pid program to use (default 0)"), 0},
 	{"channels",	'c', N_("file"),		0, N_("read channels list from 'file'"), 0},
+	{"extra-pids",	'E', NULL,			0, N_("output all channel pids"), 0 },
 	{"demux",	'd', N_("demux#"),		0, N_("use given demux (default 0)"), 0},
 	{"frontend",	'f', N_("frontend#"),		0, N_("use given frontend (default 0)"), 0},
 	{"input-format", 'I',	N_("format"),		0, N_("Input format: ZAP, CHANNEL, DVBV5 (default: DVBV5)"), 0},
@@ -165,15 +166,23 @@ static int timeout_flag = 0;
 	} while (0)
 
 
+/*
+ * Find channel configuration.
+ * On success, the caller must dvb_file_free(*out_file).
+ */
 static int parse(struct arguments *args,
 		 struct dvb_v5_fe_parms *parms,
-		 char *channel,
-		 int *vpid, int *apid, int *sid)
+		 const char *channel,
+		 struct dvb_file **out_file,
+		 const struct dvb_entry **out_entry)
 {
 	struct dvb_file *dvb_file;
 	struct dvb_entry *entry;
 	int i;
 	uint32_t sys;
+
+	*out_file = NULL;
+	*out_entry = NULL;
 
 	/* This is used only when reading old formats */
 	switch (parms->current_sys) {
@@ -265,18 +274,6 @@ static int parse(struct arguments *args,
 	if (parms->sat_number < 0 && entry->sat_number >= 0)
 		parms->sat_number = entry->sat_number;
 
-	if (entry->video_pid) {
-		if (args->n_vpid < entry->video_pid_len)
-			*vpid = entry->video_pid[args->n_vpid];
-		else
-			*vpid = entry->video_pid[0];
-	}
-	if (entry->audio_pid) {
-		if (args->n_apid < entry->audio_pid_len)
-			*apid = entry->audio_pid[args->n_apid];
-		else
-		*apid = entry->audio_pid[0];
-	}
 	if (entry->other_el_pid) {
 		int i, type = -1;
 		for (i = 0; i < entry->other_el_pid_len; i++) {
@@ -290,7 +287,6 @@ static int parse(struct arguments *args,
 		}
 		fprintf(stderr, "\n");
 	}
-	*sid = entry->service_id;
 
         /* First of all, set the delivery system */
 	dvb_retrieve_entry_prop(entry, DTV_DELIVERY_SYSTEM, &sys);
@@ -335,7 +331,8 @@ static int parse(struct arguments *args,
 		}
 	}
 
-	dvb_file_free(dvb_file);
+	*out_file = dvb_file;
+	*out_entry = entry;
 	return 0;
 }
 
@@ -691,8 +688,11 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 'V':
 		args->n_vpid = strtoul(optarg, NULL, 0);
 		break;
+	case 'E':
+		args->extra_pids = 1;
+		break;
 	case 'P':
-		args->all_pids++;
+		args->all_pids = 1;
 		break;
 	case 'm':
 		args->traffic_monitor = 1;
@@ -1032,12 +1032,12 @@ int main(int argc, char **argv)
 	char *homedir = getenv("HOME");
 	char *channel = NULL;
 	int lnb = -1, idx = -1;
-	int vpid = -1, apid = -1, sid = -1;
 	int pmtpid = 0;
+	struct dvb_file *dvb_file = NULL;
+	const struct dvb_entry *dvb_entry = NULL;
 	struct dvb_open_descriptor *pat_fd = NULL, *pmt_fd = NULL;
 	struct dvb_open_descriptor *sdt_fd = NULL;
 	struct dvb_open_descriptor *sid_fd = NULL, *dvr_fd = NULL;
-	struct dvb_open_descriptor *audio_fd = NULL, *video_fd = NULL;
 	int file_fd = -1;
 	int err = -1;
 	int r, ret;
@@ -1167,7 +1167,7 @@ int main(int argc, char **argv)
 	if (r < 0)
 		fprintf(stderr, _("Failed to set the country code:%s\n"), args.cc);
 
-	if (parse(&args, parms, channel, &vpid, &apid, &sid))
+	if (parse(&args, parms, channel, &dvb_file, &dvb_entry))
 		goto err;
 
 	if (setup_frontend(&args, parms) < 0)
@@ -1197,23 +1197,16 @@ int main(int argc, char **argv)
 	}
 
 	if (args.rec_psi) {
-		if (sid < 0) {
-			fprintf(stderr, _("Service id 0x%04x was not specified at the file\n"),
-				sid);
-			goto err;
-		}
-
 		sid_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
 		if (!sid_fd) {
 			ERROR("opening sid demux failed");
 			return -1;
 		}
-		pmtpid = dvb_dev_dmx_get_pmt_pid(sid_fd, sid);
+		pmtpid = dvb_dev_dmx_get_pmt_pid(sid_fd, dvb_entry->service_id);
 		dvb_dev_close(sid_fd);
 		if (pmtpid <= 0) {
 			fprintf(stderr, _("couldn't find pmt-pid for sid %04x\n"),
-				sid);
-
+				dvb_entry->service_id);
 			goto err;
 		}
 
@@ -1251,58 +1244,112 @@ int main(int argc, char **argv)
 			goto err;
 	}
 
-	if (args.all_pids++) {
-		vpid = 0x2000;
-		apid = 0;
-	}
-	if (vpid >= 0) {
-		if (args.silent < 2) {
-			if (vpid == 0x2000)
-				fprintf(stderr, _("pass all PID's to TS\n"));
-			else
-				fprintf(stderr, _("video pid %d\n"), vpid);
-		}
-		video_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
+	if (args.all_pids) {
+		struct dvb_open_descriptor *video_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
 		if (!video_fd) {
 			ERROR("failed opening '%s'", args.demux_dev);
 			goto err;
 		}
 
-		if (args.silent < 2)
-			fprintf(stderr, _("  dvb_set_pesfilter %d\n"), vpid);
-
 		fprintf(stderr, _("dvb_dev_set_bufsize: buffer set to %d\n"), DVB_BUF_SIZE);
 		dvb_dev_set_bufsize(video_fd, DVB_BUF_SIZE);
 
-		if (vpid == 0x2000) {
-			if (dvb_dev_dmx_set_pesfilter(video_fd, vpid, DMX_PES_OTHER,
-					      DMX_OUT_TS_TAP, 0) < 0)
+		if (args.silent < 2) {
+			fprintf(stderr, _("pass all PIDs to TS\n"));
+			fprintf(stderr, _("  dvb_set_pesfilter %d\n"), 0x2000);
+		}
+
+		if (dvb_dev_dmx_set_pesfilter(video_fd, 0x2000, DMX_PES_OTHER,
+				      DMX_OUT_TS_TAP, 0) < 0) {
+			goto err;
+		}
+	} else {
+		if (dvb_entry->video_pid_len) {
+			struct dvb_open_descriptor *video_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
+			if (!video_fd) {
+				ERROR("failed opening '%s'", args.demux_dev);
 				goto err;
-		} else {
-			if (dvb_dev_dmx_set_pesfilter(video_fd, vpid, DMX_PES_VIDEO,
-				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
-				args.dvr ? 64 * 1024 : 0) < 0)
-				goto err;
+			}
+
+			fprintf(stderr, _("dvb_dev_set_bufsize: buffer set to %d\n"), DVB_BUF_SIZE);
+			dvb_dev_set_bufsize(video_fd, DVB_BUF_SIZE);
+
+			if (args.n_vpid >= dvb_entry->video_pid_len) {
+				args.n_vpid = 0;
+			}
+
+			for (int i = 0; i < dvb_entry->video_pid_len; i++) {
+				if (!args.extra_pids && i != args.n_vpid) {
+					continue;
+				}
+
+				if (args.silent < 2) {
+					fprintf(stderr, _("video%2$s pid %1$d\n"),
+						dvb_entry->video_pid[i], i == args.n_vpid ? "" : "+");
+				}
+
+				if (dvb_dev_dmx_set_pesfilter(video_fd, dvb_entry->video_pid[i],
+					i == args.n_vpid ? DMX_PES_VIDEO : DMX_PES_OTHER,
+					args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
+					args.dvr ? 1024 * 1024 : 0) < 0) {
+					goto err;
+				}
+			}
+		}
+
+		if (dvb_entry->audio_pid_len) {
+			if (args.n_apid >= dvb_entry->audio_pid_len) {
+				args.n_apid = 0;
+			}
+
+			for (int i = 0; i < dvb_entry->audio_pid_len; i++) {
+				if (!args.extra_pids && i != args.n_apid) {
+					continue;
+				}
+
+				struct dvb_open_descriptor *audio_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
+				if (!audio_fd) {
+					ERROR("failed opening '%s'", args.demux_dev);
+					goto err;
+				}
+
+				if (args.silent < 2) {
+					fprintf(stderr, _("audio%2$s pid %1$d\n"),
+						dvb_entry->audio_pid[i], i == args.n_apid ? "" : "+");
+				}
+
+				if (dvb_dev_dmx_set_pesfilter(audio_fd, dvb_entry->audio_pid[i],
+						i == args.n_apid ? DMX_PES_AUDIO : DMX_PES_OTHER,
+						args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
+						args.dvr ? 64 * 1024 : 0) < 0) {
+					goto err;
+				}
+			}
+		}
+
+		if (args.extra_pids && dvb_entry->other_el_pid_len) {
+			for (int i = dvb_entry->other_el_pid_len - 1; i >= 0; i--) {
+				struct dvb_open_descriptor * other_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
+				if (!other_fd) {
+					ERROR("failed opening '%s'", args.demux_dev);
+					goto err;
+				}
+
+				if (args.silent < 2) {
+					fprintf(stderr, _("other pid %d (%d)\n"),
+						dvb_entry->other_el_pid[i].pid, dvb_entry->other_el_pid[i].type);
+				}
+
+				if (dvb_dev_dmx_set_pesfilter(other_fd, dvb_entry->other_el_pid[i].pid, DMX_PES_OTHER,
+						args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
+						args.dvr ? 64 * 1024 : 0) < 0) {
+					goto err;
+				}
+			}
 		}
 	}
 
-	if (apid > 0) {
-		if (args.silent < 2)
-			fprintf(stderr, _("audio pid %d\n"), apid);
-		audio_fd = dvb_dev_open(dvb, args.demux_dev, O_RDWR);
-		if (!audio_fd) {
-			ERROR("failed opening '%s'", args.demux_dev);
-			goto err;
-		}
-		if (args.silent < 2)
-			fprintf(stderr, _("  dvb_set_pesfilter %d\n"), apid);
-		if (dvb_dev_dmx_set_pesfilter(audio_fd, apid, DMX_PES_AUDIO,
-				args.dvr ? DMX_OUT_TS_TAP : DMX_OUT_DECODER,
-				args.dvr ? 64 * 1024 : 0) < 0)
-			goto err;
-	}
-
-	if (((vpid >= 0 && vpid != 0x2000) || apid) && !args.rec_psi) {
+	if ((dvb_entry->video_pid_len || dvb_entry->audio_pid_len) && !args.all_pids && !args.rec_psi) {
 		printf(_("PMT record is disabled.\n"
 		         "Please notice that some streams can only be decoded with PMT data.\n"
 			 "Use '-p' option to also record PMT.\n"));
@@ -1403,6 +1450,10 @@ int main(int argc, char **argv)
 
 err:
 	dvb_dev_free(dvb);
+
+	if (dvb_file) {
+		dvb_file_free(dvb_file);
+	}
 
 	/*
 	 * Just to make Valgrind happier. It should be noticed
