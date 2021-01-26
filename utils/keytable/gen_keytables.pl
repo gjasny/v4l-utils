@@ -36,10 +36,14 @@ sub flush($$)
 	my $filename = shift;
 	my $legacy = shift;
 	my $defined;
+	my $relative_filename = $filename;
 
 	return if (!$keyname || !$out);
-	print "Creating $dir/$keyname.toml\n";
+	$relative_filename =~ s/^$kernel_dir//;
+	$relative_filename =~ s/^\///;
+	print "Creating $dir/$keyname.toml from $relative_filename\n";
 	open OUT, ">$dir/$keyname.toml";
+	print OUT "# Generated with gen_keytables.pl from $relative_filename\n";
 	print OUT "[[protocols]]\n";
 	print OUT "name = \"$keyname\"\n";
 	print OUT "protocol = \"$type\"\n";
