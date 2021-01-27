@@ -221,6 +221,7 @@ enum Option {
 	OptStreamToHdr,
 	OptStreamToHost,
 	OptStreamLossless,
+	OptStreamShowDeltaNow,
 	OptStreamBufCaps,
 	OptStreamMmap,
 	OptStreamUser,

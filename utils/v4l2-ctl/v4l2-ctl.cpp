@@ -242,6 +242,7 @@ static struct option long_options[] = {
 	{"stream-to-host", required_argument, nullptr, OptStreamToHost},
 #endif
 	{"stream-buf-caps", no_argument, nullptr, OptStreamBufCaps},
+	{"stream-show-delta-now", no_argument, nullptr, OptStreamShowDeltaNow},
 	{"stream-mmap", optional_argument, nullptr, OptStreamMmap},
 	{"stream-user", optional_argument, nullptr, OptStreamUser},
 	{"stream-dmabuf", no_argument, nullptr, OptStreamDmaBuf},

@@ -268,6 +268,10 @@ void streaming_usage()
 #endif
 	       "  --stream-poll      use non-blocking mode and select() to stream.\n"
 	       "  --stream-buf-caps  show capture buffer capabilities\n"
+	       "  --stream-show-delta-now\n"
+	       "                     output the difference between the buffer timestamp and current\n"
+	       "                     clock, if the buffer timestamp source is the monotonic clock.\n"
+	       "                     Requires --verbose as well.\n"
 	       "  --stream-mmap <count>\n"
 	       "                     capture video using mmap() [VIDIOC_(D)QBUF]\n"
 	       "                     count: the number of buffers to allocate. The default is 3.\n"
@@ -557,6 +561,15 @@ static void print_concise_buffer(FILE *f, cv4l_buffer &buf, cv4l_fmt &fmt,
 		fprintf(f, " ts: %.06f", ts);
 		if (last_ts != 0.0)
 			fprintf(f, " delta: %.03f ms", (ts - last_ts) * 1000.0);
+		if (options[OptStreamShowDeltaNow] &&
+		    (buf.g_flags() & V4L2_BUF_FLAG_TIMESTAMP_MASK) ==
+		    V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC) {
+			timespec ts_clock;
+
+			clock_gettime(CLOCK_MONOTONIC, &ts_clock);
+			fprintf(f, " delta now: %+.03f ms",
+				((ts_clock.tv_sec + ts_clock.tv_nsec / 1000000000.0) - ts) * 1000.0);
+		}
 		last_ts = ts;
 
 		if (fps_ts.has_fps(true))
