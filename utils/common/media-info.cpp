@@ -362,7 +362,6 @@ bool mi_func_requires_intf(__u32 function)
 	case MEDIA_ENT_F_DTV_DEMOD:
 	case MEDIA_ENT_F_TS_DEMUX:
 	case MEDIA_ENT_F_DTV_CA:
-	case MEDIA_ENT_F_IO_DTV:
 	case MEDIA_ENT_F_IO_V4L:
 	case MEDIA_ENT_F_IO_VBI:
 	case MEDIA_ENT_F_IO_SWRADIO:
