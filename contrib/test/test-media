@@ -168,72 +168,6 @@ $v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=21
 
 echo
 
-if [ $vidtv -eq 1 ]; then
-	rmmod vidtv 2&>/dev/null
-	modprobe vidtv
-	sleep 2
-	dmesg -n notice
-	echo
-
-	if ! media-ctl -d platform:vidtv -p ; then
-		echo "FAIL: the vidtv module failed to load" | tee -a $tmp
-		echo "Grand Total for vidtv: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
-		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
-		rmmod vidtv
-		exit 0
-	fi
-
-	echo
-	echo
-	echo
-	echo
-	echo
-	echo
-	echo
-	echo
-	echo
-	echo unbind vidtv
-	echo
-	echo -n vidtv.0 >/sys/bus/platform/drivers/vidtv/unbind
-	sleep $unbind_time
-	echo
-	echo rebind vidtv
-	echo
-	echo -n vidtv.0 >/sys/bus/platform/drivers/vidtv/bind
-	sleep 1
-	echo
-	echo second unbind vidtv
-	echo
-	sleep 1
-	echo
-	echo -n vidtv.0 >/sys/bus/platform/drivers/vidtv/unbind
-	sleep $reunbind_time
-	echo
-	echo rmmod vidtv
-	echo
-	rmmod vidtv
-	sleep $rmmod_time
-	if [ $kmemleak -eq 1 ]; then
-		echo
-		echo kmemleak results for vidtv:
-		echo
-		echo scan >/sys/kernel/debug/kmemleak
-		cat /sys/kernel/debug/kmemleak
-		echo
-		echo end of kmemleak results
-		echo clear >/sys/kernel/debug/kmemleak
-	fi
-	echo
-	echo
-	echo
-	echo
-	echo
-	echo
-	echo
-	echo
-
-fi
-
 if [ $vivid -eq 1 ]; then
 	dmesg -n notice
 	echo
@@ -680,6 +614,77 @@ echo rmmod vivid | tee /dev/kmsg
 echo
 rmmod vivid
 sleep $rmmod_time
+
+if [ $vidtv -eq 1 ]; then
+	rmmod dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod 2&>/dev/null
+	modprobe vidtv
+	sleep 2
+	dmesg -n notice
+	echo
+
+	if ! media-ctl -d platform:vidtv ; then
+		echo "FAIL: the vidtv module failed to load" | tee -a $tmp
+		echo "Grand Total for vidtv: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
+		rmmod dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod 2&>/dev/null
+		exit 0
+	fi
+
+	echo vidtv media controller compliance tests | tee /dev/kmsg
+	echo
+	date
+	stdbuf -oL $v4l2_compliance -M platform:vidtv 2>&1 | tee -a $tmp
+
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo unbind vidtv
+	echo
+	echo -n vidtv.0 >/sys/bus/platform/drivers/vidtv/unbind
+	sleep $unbind_time
+	echo
+	echo rebind vidtv
+	echo
+	echo -n vidtv.0 >/sys/bus/platform/drivers/vidtv/bind
+	sleep 1
+	echo
+	echo second unbind vidtv
+	echo
+	sleep 1
+	echo
+	echo -n vidtv.0 >/sys/bus/platform/drivers/vidtv/unbind
+	sleep $reunbind_time
+	echo
+	echo rmmod dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod
+	echo
+	rmmod dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod
+	sleep $rmmod_time
+	if [ $kmemleak -eq 1 ]; then
+		echo
+		echo kmemleak results for vidtv:
+		echo
+		echo scan >/sys/kernel/debug/kmemleak
+		cat /sys/kernel/debug/kmemleak
+		echo
+		echo end of kmemleak results
+		echo clear >/sys/kernel/debug/kmemleak
+	fi
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+
+fi
 
 date
 echo
