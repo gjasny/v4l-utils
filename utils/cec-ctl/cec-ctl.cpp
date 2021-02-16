@@ -698,7 +698,7 @@ static int showTopology(struct node *node)
 
 	memcpy(pas, phys_addrs, sizeof(pas));
 	std::sort(pas, pas + 16);
-	unsigned level = 0;
+	int level = 0;
 	unsigned last_pa_mask = 0;
 
 	if ((pas[0] >> 8) == 0xffff)
@@ -723,7 +723,9 @@ static int showTopology(struct node *node)
 			level--;
 		}
 		printf("\t");
-		for (unsigned j = 0; j < level; j++)
+		if (level < 1)
+			level = 1;
+		for (int j = 0; j < level; j++)
 			printf("    ");
 		printf("%x.%x.%x.%x: %s\n", cec_phys_addr_exp(pa),
 		       cec_la2s(la));
