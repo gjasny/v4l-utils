@@ -532,9 +532,11 @@ static void determine_codec_mask(struct node &node)
 			case V4L2_PIX_FMT_FWHT:
 				mask |= STATEFUL_ENCODER;
 				break;
+#if 0 	// There are no stateless encoders (yet)
 			case V4L2_PIX_FMT_MPEG2_SLICE:
 				mask |= STATELESS_ENCODER;
 				break;
+#endif
 			default:
 				return;
 			}
@@ -571,6 +573,7 @@ static void determine_codec_mask(struct node &node)
 				mask |= STATEFUL_DECODER;
 				break;
 			case V4L2_PIX_FMT_MPEG2_SLICE:
+			case V4L2_PIX_FMT_H264_SLICE:
 			case V4L2_PIX_FMT_FWHT_STATELESS:
 				mask |= STATELESS_DECODER;
 				break;
