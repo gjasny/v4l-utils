@@ -734,7 +734,7 @@ int __dvb_fe_get_parms(struct dvb_v5_fe_parms *p)
 	int i, n = 0;
 	const unsigned int *sys_props;
 	struct dtv_properties prop;
-	struct dvb_frontend_parameters v3_parms;
+	struct dvb_frontend_parameters v3_parms = { 0 };
 	uint32_t bw;
 
 	sys_props = dvb_v5_delivery_system[parms->p.current_sys];
