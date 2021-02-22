@@ -731,7 +731,7 @@ static void *read_data(void *privdata)
 			if (read_ret < 0)
 				dbg("#%d: read error: %d on %p", fd, read_ret, open_dev);
 			else
-				dbg("#%d: read %d bytes (count %d)", fd, read_ret, count);
+				dbg("#%d: read %ul bytes (count %d)", fd, read_ret, count);
 		}
 
 		/* Initialize to the start of the buffer */
@@ -845,7 +845,7 @@ static int dev_open(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 		uid = 0;
 	}
 	if (*p != desc) {
-		err("uid %d was already opened!");
+		err("uid %d was already opened!", uid);
 	}
 
 	pthread_mutex_unlock(&msg_mutex);
@@ -1351,11 +1351,15 @@ static void *start_server(void *fd_pointer)
 
 	/* Set a large buffer for read() to work better */
 	bufsize = REMOTE_BUF_SIZE;
-	setsockopt(fd, SOL_SOCKET, SO_SNDBUF,
-		   (void *)&bufsize, (int)sizeof(bufsize));
+	if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF,
+		       (void *)&bufsize, (int)sizeof(bufsize))) {
+		dbg("Failed to set a large buffer size");
+	};
 
 	/* Disable Naggle algorithm, as we want errors to be sent ASAP */
-	setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+	if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int))) {
+		dbg("Failed to avoid TCP delays");
+	};
 
 	/* Command dispatcher */
 	do {
@@ -1371,7 +1375,7 @@ static void *start_server(void *fd_pointer)
 		ret = scan_data(buf, size, "%i%s",  &seq, cmd);
 		if (ret < 0) {
 			if (verbose)
-				dbg("message too short: %d", size);
+				dbg("message too short: %ld", size);
 			send_data(fd, "%i%s%i%s", 0, "log", LOG_ERR,
 				  "msg too short");
 			continue;
