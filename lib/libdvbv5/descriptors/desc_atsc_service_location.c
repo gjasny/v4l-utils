@@ -34,7 +34,7 @@ int atsc_desc_service_location_init(struct dvb_v5_fe_parms *parms,
 	size_t len;
 
 	len = sizeof(*s_loc) - offsetof(struct atsc_desc_service_location, bitfield);
-	memcpy(&s_loc->bitfield, p, len);
+	memcpy(&s_loc, p, len);
 	p += len;
 
 	bswap16(s_loc->bitfield);
