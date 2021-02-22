@@ -74,8 +74,12 @@ int dvb_store_entry_prop(struct dvb_entry *entry,
 	}
 	if (i == entry->n_props) {
 		if (i == DTV_MAX_COMMAND) {
-			fprintf(stderr, _("Can't add property %s\n"),
-			       dvb_v5_name[cmd]);
+			if (cmd < ARRAY_SIZE(dvb_v5_name))
+				fprintf(stderr, _("Can't add property %s\n"),
+				        dvb_v5_name[cmd]);
+			else
+				fprintf(stderr, _("Can't add property %d\n"),
+				        cmd);
 			return -1;
 		}
 		entry->n_props++;
