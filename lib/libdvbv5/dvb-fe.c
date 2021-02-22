@@ -1311,7 +1311,7 @@ static enum dvb_quality dvbv_fe_cnr_to_quality(struct dvb_v5_fe_parms_priv *parm
 		dvb_fe_retrieve_parm(&parms->p, DTV_INNER_FEC, &fec);
 		qual = cnr_arr_to_qual(modulation, fec, cnr->svalue,
 			               dvb_s2_cnr_2_qual,
-				       ARRAY_SIZE(dvb_s_cnr_2_qual));
+				       ARRAY_SIZE(dvb_s2_cnr_2_qual));
 		break;
 	case SYS_ISDBT:
 		dvb_fe_retrieve_parm(&parms->p, DTV_ISDBT_LAYERA_MODULATION, &modulation);
@@ -1327,7 +1327,7 @@ static enum dvb_quality dvbv_fe_cnr_to_quality(struct dvb_v5_fe_parms_priv *parm
 		dvb_fe_retrieve_parm(&parms->p, DTV_CODE_RATE_LP, &fec);
 		qual = cnr_arr_to_qual(modulation, fec, cnr->svalue,
 			               dvb_t_cnr_2_qual,
-				       ARRAY_SIZE(isdb_t_cnr_2_qual));
+				       ARRAY_SIZE(dvb_t_cnr_2_qual));
 		break;
 	case SYS_DVBT2:
 	case SYS_TURBO:
