@@ -557,6 +557,10 @@ static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 	long long int rc = 0LL;
 	struct timespec start, *elapsed;
 
+	/* Initialize start time, due to -EOVERFLOW with first == 1 */
+	if (clock_gettime(CLOCK_MONOTONIC, &start))
+		return NULL;
+
 	while (timeout_flag == 0) {
 		r = dvb_dev_read(in_fd, buf, sizeof(buf));
 		if (r < 0) {
@@ -580,6 +584,8 @@ static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 		 * ensure that a program record will have the start amount of
 		 * time specified by the user is to restart the timeout alarm
 		 * here, after the first succeded read.
+		 *
+		 * So, let's reset the start time here.
 		 */
 		if (first) {
 			if (timeout > 0)
