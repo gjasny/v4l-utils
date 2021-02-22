@@ -251,6 +251,7 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 		dvb_logdbg("buffer to short for int32_t");
 		stack_dump(parms);
 		pthread_mutex_unlock(&priv->lock_io);
+		free(msg);
 		return NULL;
 	}
 	memcpy(p, &i32, 4);
@@ -263,6 +264,7 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 				p - buf, len, sizeof(buf));
 		stack_dump(parms);
 		pthread_mutex_unlock(&priv->lock_io);
+		free(msg);
 		return NULL;
 	}
 	i32 = htobe32(len);
@@ -279,6 +281,7 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 
 	if (ret < 0) {
 		pthread_mutex_unlock(&priv->lock_io);
+		free(msg);
 		return NULL;
 	}
 
@@ -1041,8 +1044,10 @@ static struct dvb_open_descriptor *dvb_remote_open(struct dvb_device_priv *dvb,
 	open_dev = &ringbuf->open_dev;
 
 	msg = send_fmt(dvb, priv->fd, "dev_open", "%s%i", sysname, flags);
-	if (!msg)
+	if (!msg) {
+		free(ringbuf);
 		return NULL;
+	}
 
 	ret = pthread_cond_wait(&msg->cond, &msg->lock);
 	if (ret < 0) {
@@ -1077,6 +1082,7 @@ error:
 	pthread_mutex_unlock(&msg->lock);
 
 	free_msg(dvb, msg);
+	free(ringbuf);
 	return NULL;
 }
 
