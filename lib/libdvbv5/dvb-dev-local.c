@@ -77,7 +77,8 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	struct dvb_dev_local_priv *priv = dvb->priv;
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct udev_device *parent = NULL;
-	struct dvb_dev_list dev_list, *dvb_dev;
+	struct dvb_dev_list dev_list = { 0 };
+	struct dvb_dev_list *dvb_dev = &dev_list;
 	enum dvb_dev_change_type type;
 	const char *bus_type, *p, *sysname;
 	char *buf;
@@ -126,45 +127,48 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	}
 
 	/* Fill mandatory fields: path, sysname, dvb_type, bus_type */
-	dvb_dev = &dev_list;
-	memset(dvb_dev, 0, sizeof(*dvb_dev));
-
 	if (!syspath) {
 		syspath = udev_device_get_devnode(dev);
 		if (!syspath) {
 			dvb_logwarn(_("Can't get device node filename"));
-			goto err;
+			return -ENODEV;
 		}
 	}
-	dvb_dev->syspath = strdup(syspath);
+	dev_list.syspath = strdup(syspath);
+	if (!dev_list.syspath)
+		return -ENODEV;
 
 	p = udev_device_get_devnode(dev);
 	if (!p || !*p) {
 		dvb_logwarn(_("Can't get device node filename"));
-		goto err;
+		goto err_syspath;
 	}
-	dvb_dev->path = strdup(p);
+	dev_list.path = strdup(p);
+	if (!dev_list.path)
+		goto err_syspath;
 
 	p = udev_device_get_property_value(dev, "DVB_DEVICE_TYPE");
 	if (!p)
-		goto err;
+		goto err_path;
 	for (i = 0; i < dev_type_names_size; i++) {
 		if (!strcmp(p, dev_type_names[i])) {
-			dvb_dev->dvb_type = i;
+			dev_list.dvb_type = i;
 			break;
 		}
 	}
 	if (i == dev_type_names_size) {
-		dvb_logwarn(_("Ignoring device %s"), dvb_dev->path);
-		goto err;
+		dvb_logwarn(_("Ignoring device %s"), dev_list.path);
+		goto err_path;
 	}
 
 	p = udev_device_get_sysname(dev);
 	if (!p) {
-		dvb_logwarn(_("Can't get sysname for device %s"), dvb_dev->path);
-		goto err;
+		dvb_logwarn(_("Can't get sysname for device %s"), dev_list.path);
+		goto err_path;
 	}
-	dvb_dev->sysname = strdup(p);
+	dev_list.sysname = strdup(p);
+	if (!dev_list.sysname)
+		goto err_path;
 
 	parent = udev_device_get_parent(dev);
 	if (!parent)
@@ -172,23 +176,23 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 
 	bus_type = udev_device_get_subsystem(parent);
 	if (!bus_type) {
-		dvb_logwarn(_("Can't get bus type for device %s"), dvb_dev->path);
+		dvb_logwarn(_("Can't get bus type for device %s"), dev_list.path);
 		goto added;
 	}
 
 	ret = asprintf(&buf, "%s:%s", bus_type, udev_device_get_sysname(parent));
 	if (ret < 0) {
 		dvb_logerr(_("error %d when storing bus address"), errno);
-		goto err;
+		goto err_sysname;
 	}
 
-	dvb_dev->bus_addr = buf;
+	dev_list.bus_addr = buf;
 
 	/* Detect dvbloopback and ignore its control interface */
-	if (!strcmp(dvb_dev->bus_addr, "platform:dvbloopback")) {
-		char c = dvb_dev->path[strlen(dvb_dev->path) - 1] - '0';
+	if (!strcmp(dev_list.bus_addr, "platform:dvbloopback")) {
+		char c = dev_list.path[strlen(dev_list.path) - 1] - '0';
 		if (c)
-			goto err;
+			goto err_sysname;
 	}
 
 	/* Add new element */
@@ -196,7 +200,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	dvb_dev = realloc(dvb->d.devices, sizeof(*dvb->d.devices) * dvb->d.num_devices);
 	if (!dvb_dev) {
 		dvb_logerr(_("Not enough memory to store the list of DVB devices"));
-		goto err;
+		goto err_sysname;
 	}
 
 	dvb->d.devices = dvb_dev;
@@ -251,8 +255,12 @@ added:
 
 	return 0;
 
-err:
-	free_dvb_dev(dvb_dev);
+err_sysname:
+	free(dev_list.sysname);
+err_path:
+	free(dev_list.path);
+err_syspath:
+	free(dev_list.syspath);
 	return -ENODEV;
 }
 
