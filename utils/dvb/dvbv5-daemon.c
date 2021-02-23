@@ -79,6 +79,8 @@
 const char *argp_program_version = PROGRAM_NAME " version " V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@kernel.org>";
 
+#define CMD_SIZE	80
+
 static const char doc[] = N_(
 	"\nA DVB remote daemon using API version 5\n");
 
@@ -1341,7 +1343,7 @@ static void *start_server(void *fd_pointer)
 {
 	const struct method_types *method;
 	int fd = *(int *)fd_pointer, ret, flag = 1;
-	char buf[REMOTE_BUF_SIZE + 8], cmd[80], *p;
+	char buf[REMOTE_BUF_SIZE + 8], cmd[CMD_SIZE], *p;
 	ssize_t size;
 	uint32_t seq;
 	int bufsize;

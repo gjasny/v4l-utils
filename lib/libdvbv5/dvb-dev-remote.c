@@ -79,9 +79,10 @@ struct ringbuffer {
 	pthread_mutex_t lock;
 };
 
+#define CMD_SIZE	80
 struct queued_msg {
 	int seq;
-	char cmd[80];
+	char cmd[CMD_SIZE];
 	int retval;
 
 	pthread_mutex_t lock;
@@ -112,6 +113,16 @@ struct dvb_dev_remote_priv {
 	/* private user data, used by event notifier*/
 	void *user_priv;
 };
+
+char *my_strlcpy(char *dst, const char *src, size_t siz)
+{
+	char *rc;
+
+	rc = strncpy(dst, src, siz);
+	dst[siz - 1] = '\0';
+
+	return rc;
+}
 
 void stack_dump(struct dvb_v5_fe_parms_priv *parms)
 {
@@ -217,11 +228,11 @@ static ssize_t prepare_data(struct dvb_v5_fe_parms_priv *parms,
 }
 
 static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
-				   const char *cmd, const char *fmt, ...)
+				   const char cmd[CMD_SIZE], const char *fmt, ...)
 	__attribute__ (( format( printf, 4, 5 )));
 
 static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
-				   const char *cmd, const char *fmt, ...)
+				   const char cmd[CMD_SIZE], const char *fmt, ...)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_dev_remote_priv *priv = dvb->priv;
@@ -240,7 +251,7 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 
 	pthread_mutex_init(&msg->lock, NULL);
 	pthread_cond_init(&msg->cond, NULL);
-	strcpy(msg->cmd, cmd);
+	my_strlcpy(msg->cmd, cmd, sizeof(*msg->cmd));
 
 	pthread_mutex_lock(&priv->lock_io);
 	msg->seq = ++priv->seq;
@@ -317,7 +328,7 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 }
 
 static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
-				   const char *cmd,
+				   const char cmd[CMD_SIZE],
 				   const char *in_buf, const size_t in_size)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
@@ -336,7 +347,7 @@ static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
 
 	pthread_mutex_init(&msg->lock, NULL);
 	pthread_cond_init(&msg->cond, NULL);
-	strcpy(msg->cmd, cmd);
+	my_strlcpy(msg->cmd, cmd, sizeof(*msg->cmd));
 
 	pthread_mutex_lock(&priv->lock_io);
 	msg->seq = ++priv->seq;
