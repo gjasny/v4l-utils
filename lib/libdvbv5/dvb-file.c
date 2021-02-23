@@ -553,9 +553,9 @@ int dvb_write_format_oneline(const char *fname,
 						}
 					} else {
 						data = entry->props[j].u.data;
+					}
 
 					fprintf(fp, "%d", data);
-				}
 					break;
 				}
 			}
