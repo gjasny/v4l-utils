@@ -27,26 +27,35 @@
 
 int dvb_desc_ca_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
-	size_t size = offsetof(struct dvb_desc_ca, dvb_desc_ca_field_last) - offsetof(struct dvb_desc_ca, dvb_desc_ca_field_first);
 	struct dvb_desc_ca *d = (struct dvb_desc_ca *) desc;
+	const uint8_t *p = buf;
+	size_t len, dlen = desc->length;
+	size_t start;
 
-	memcpy(((uint8_t *) d ) + sizeof(struct dvb_desc), buf, size);
+	start = offsetof(struct dvb_desc_ca, ca_id);
+	len = sizeof(d->ca_id) + sizeof(d->bitfield1);
+
+	if (dlen < len) {
+		dvb_logwarn("CA descriptor is too short wrong: expected %zu, received %zu",
+			    len, dlen);
+		return -1;
+	}
+	memcpy(((uint8_t *) d) + start, buf, len);
+	p += len;
 	bswap16(d->ca_id);
 	bswap16(d->bitfield1);
 
-	if (d->length > size) {
-		size = d->length - size;
-		d->privdata = malloc(size);
+	len = dlen - len;
+	if (len) {
+		d->privdata = malloc(len);
 		if (!d->privdata)
 			return -1;
-		d->privdata_len = size;
-		memcpy(d->privdata, buf + 4, size);
+		d->privdata_len = len;
+		memcpy(d->privdata, p, len);
 	} else {
 		d->privdata = NULL;
 		d->privdata_len = 0;
 	}
-	/*dvb_hexdump(parms, "desc ca ", buf, desc->length);*/
-	/*dvb_desc_ca_print(parms, desc);*/
 	return 0;
 }
 
