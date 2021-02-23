@@ -29,14 +29,12 @@
 int dvb_desc_network_name_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_network_name *net = (struct dvb_desc_network_name *) desc;
-	uint8_t len;  /* the length of the string in the input data */
-	uint8_t len1; /* the lenght of the output strings */
+	uint8_t len;
 
 	len = desc->length;
-	len1 = len;
 	net->network_name = NULL;
 	net->network_name_emph = NULL;
-	dvb_parse_string(parms, &net->network_name, &net->network_name_emph, buf, len1);
+	dvb_parse_string(parms, &net->network_name, &net->network_name_emph, buf, len);
 	buf += len;
 	return 0;
 }
