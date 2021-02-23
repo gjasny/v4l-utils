@@ -193,6 +193,11 @@ int dvb_desc_parse(struct dvb_v5_fe_parms *parms, const uint8_t *buf,
 		}
 		dvb_desc_init(desc_type, desc_len, current); /* initialize the standard header */
 		if (init(parms, ptr, current) != 0) {
+			dvb_logwarn("Couldn't handle descriptor type 0x%02x (%s?), size %d",
+				desc_type, dvb_descriptors[desc_type].name, desc_len);
+			if (parms->verbose)
+				dvb_hexdump(parms, "content: ", ptr, desc_len);
+
 			free(current);
 			return -4;
 		}
