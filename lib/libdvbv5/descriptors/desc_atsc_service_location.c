@@ -19,6 +19,7 @@
 
 #include <libdvbv5/desc_atsc_service_location.h>
 #include <libdvbv5/dvb-fe.h>
+#include <ctype.h>
 
 #if __GNUC__ >= 9
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
@@ -31,16 +32,33 @@ int atsc_desc_service_location_init(struct dvb_v5_fe_parms *parms,
 	struct atsc_desc_service_location_elementary *el;
 	unsigned char *p = (unsigned char *)buf;
 	int i;
-	size_t len;
+	size_t len, dlen = desc->length;
 
-	len = sizeof(*s_loc) - offsetof(struct atsc_desc_service_location, bitfield);
-	memcpy(&s_loc, p, len);
+	len = sizeof(*s_loc);
+	if (dlen < len) {
+		dvb_logwarn("ATSC service location descriptor is too small");
+		return -1;
+	}
+
+	memcpy(s_loc, p, len);
 	p += len;
+	dlen -= len;
 
 	bswap16(s_loc->bitfield);
 
+	len = s_loc->number_elements * sizeof(*s_loc->elementary);
+	if (dlen < len) {
+		dvb_logwarn("ATSC service location descriptor is too small");
+		return -1;
+	}
+	if (dlen > len) {
+		dvb_logwarn("ATSC service location descriptor %zu bytes bigger than expected",
+			    dlen - len);
+		return -1;
+	}
+
 	if (s_loc->number_elements) {
-		s_loc->elementary = malloc(s_loc->number_elements * sizeof(*s_loc->elementary));
+		s_loc->elementary = malloc(len);
 		if (!s_loc->elementary) {
 			dvb_perror("Can't allocate space for ATSC service location elementary data");
 			return -1;
@@ -61,6 +79,8 @@ int atsc_desc_service_location_init(struct dvb_v5_fe_parms *parms,
 	return 0;
 }
 
+#define prt_char(x) (isprint(x) ? x : '.')
+
 void atsc_desc_service_location_print(struct dvb_v5_fe_parms *parms, const struct dvb_desc *desc)
 {
 	const struct atsc_desc_service_location *s_loc = (const struct atsc_desc_service_location *) desc;
@@ -73,10 +93,13 @@ void atsc_desc_service_location_print(struct dvb_v5_fe_parms *parms, const struc
 		dvb_loginfo("|-  elementary %d", i);
 		dvb_loginfo("|-      | stream type 0x%02x", el[i].stream_type);
 		dvb_loginfo("|-      | PID         %d", el[i].elementary_pid);
-		dvb_loginfo("|-      | Language    %c%c%c",
-			el[i].ISO_639_language_code[0],
-			el[i].ISO_639_language_code[1],
-			el[i].ISO_639_language_code[2]);
+		dvb_loginfo("|-      | Language    %c%c%c (0x%02x 0x%02x 0x%02x)",
+			    prt_char(el[i].ISO_639_language_code[0]),
+			    prt_char(el[i].ISO_639_language_code[1]),
+			    prt_char(el[i].ISO_639_language_code[2]),
+			    el[i].ISO_639_language_code[0],
+			    el[i].ISO_639_language_code[1],
+			    el[i].ISO_639_language_code[2]);
 	}
 }
 

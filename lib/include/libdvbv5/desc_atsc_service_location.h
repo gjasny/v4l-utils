@@ -57,7 +57,7 @@ struct atsc_desc_service_location_elementary {
 			uint16_t reserved:3;
 		} __attribute__((packed));
 	} __attribute__((packed));
-	char ISO_639_language_code[3];
+	unsigned char ISO_639_language_code[3];
 } __attribute__((packed));
 
 /**
