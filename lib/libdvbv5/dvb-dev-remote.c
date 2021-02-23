@@ -347,6 +347,7 @@ static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
 		dvb_logdbg("buffer to short for int32_t");
 		stack_dump(parms);
 		pthread_mutex_unlock(&priv->lock_io);
+		free(msg);
 		return NULL;
 	}
 	memcpy(p, &i32, 4);
@@ -359,6 +360,7 @@ static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
 				p - buf, len, sizeof(buf));
 		stack_dump(parms);
 		pthread_mutex_unlock(&priv->lock_io);
+		free(msg);
 		return NULL;
 	}
 	i32 = htobe32(len);
@@ -372,6 +374,7 @@ static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
 		dvb_logdbg("buffer to big!");
 		stack_dump(parms);
 		pthread_mutex_unlock(&priv->lock_io);
+		free(msg);
 		return NULL;
 	}
 
