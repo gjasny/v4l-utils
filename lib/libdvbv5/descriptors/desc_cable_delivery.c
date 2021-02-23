@@ -29,10 +29,20 @@
 int dvb_desc_cable_delivery_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_cable_delivery *cable = (struct dvb_desc_cable_delivery *) desc;
+	size_t len, dlen = desc->length;
+	size_t start;
+
+	start =  offsetof(struct dvb_desc_cable_delivery, frequency);
+	len = sizeof(*cable) - start;
+
+	if (len != dlen) {
+		dvb_logwarn("cable delivery descriptor size is wrong: expected %zu, received %zu",
+			    len, dlen);
+		return -1;
+	}
+
 	/* copy only the data - length already initialize */
-	memcpy(((uint8_t *) cable ) + sizeof(cable->type) + sizeof(cable->next) + sizeof(cable->length),
-			buf,
-			cable->length);
+	memcpy(((uint8_t *) cable) + start, buf, dlen);
 	bswap32(cable->frequency);
 	bswap16(cable->bitfield1);
 	bswap32(cable->bitfield2);
