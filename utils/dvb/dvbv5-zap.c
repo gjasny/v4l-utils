@@ -1418,7 +1418,7 @@ err:
 	if (args.search)
 		free(args.search);
 	if (args.server)
-		free(args.search);
+		free(args.server);
 	if (args.dvr_pipe != default_dvr_pipe)
 		free(args.dvr_pipe);
 
