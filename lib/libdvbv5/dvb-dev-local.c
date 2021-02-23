@@ -78,7 +78,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct udev_device *parent = NULL;
 	struct dvb_dev_list dev_list = { 0 };
-	struct dvb_dev_list *dvb_dev = &dev_list;
+	struct dvb_dev_list *d, *dvb_dev = &dev_list;
 	enum dvb_dev_change_type type;
 	const char *bus_type, *p, *sysname;
 	char *buf;
@@ -105,12 +105,13 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 					free(dvb->d.devices);
 					dvb->d.devices = NULL;
 				} else {
-					p = realloc(dvb->d.devices,
-						sizeof(*dvb->d.devices) * dvb->d.num_devices);
-					if (!p) {
+					d = realloc(dvb->d.devices,
+						    sizeof(*dvb->d.devices) * dvb->d.num_devices);
+					if (!d) {
 						dvb_logerr(_("Can't remove a device from the list of DVB devices"));
 						return -ENODEV;
 					}
+					dvb->d.devices = d;
 				}
 				break;
 			}
