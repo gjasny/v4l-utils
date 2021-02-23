@@ -501,6 +501,11 @@ static int check_frontend(struct arguments *args,
 
 		status = 0;
 		rc = dvb_fe_retrieve_stats(parms, DTV_STATUS, &status);
+		if (rc) {
+			ERROR("dvb_fe_retrieve_stats failed");
+			usleep(1000000);
+			continue;
+		}
 		if (!args->silent)
 			print_frontend_stats(stderr, args, parms);
 		if (status & FE_HAS_LOCK)
