@@ -1753,8 +1753,10 @@ int dvb_dev_remote_init(struct dvb_device *d, char *server, int port)
 
 	/* Set large buffer for read() to work better */
 	bufsize = REMOTE_BUF_SIZE;
-	setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
-		   (void *)&bufsize, (int)sizeof(bufsize));
+	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF,
+		       (void *)&bufsize, (int)sizeof(bufsize))) {
+		dvb_perror("can't set buffer size");
+	}
 
 	/* Start receiving messsages from the server */
 	pthread_mutex_init(&priv->lock_io, NULL);
