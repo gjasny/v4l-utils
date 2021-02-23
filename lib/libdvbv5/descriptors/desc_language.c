@@ -28,6 +28,15 @@
 int dvb_desc_language_init(struct dvb_v5_fe_parms *parms, const uint8_t *buf, struct dvb_desc *desc)
 {
 	struct dvb_desc_language *lang = (struct dvb_desc_language *) desc;
+	size_t len, dlen = desc->length;
+
+	len = sizeof(lang->language) - 1 + sizeof(lang->audio_type);
+
+	if (len != dlen) {
+		dvb_logwarn("language descriptor size is wrong: expected %zu, received %zu",
+			    len, dlen);
+		return -1;
+	}
 
 	lang->language[0] = buf[0];
 	lang->language[1] = buf[1];
