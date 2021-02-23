@@ -1004,7 +1004,7 @@ static char *dvb_vchannel(struct dvb_v5_fe_parms_priv *parms,
 		}
 	}
 
-	dvb_desc_find(struct dvb_desc_ts_info, desc, nit, TS_Information_descriptior) {
+	dvb_desc_find(struct dvb_desc_ts_info, desc, nit, TS_Information_descriptor) {
 		const struct dvb_desc_ts_info *d = (const void *) desc;
 		const struct dvb_desc_ts_info_transmission_type *t;
 		int r;

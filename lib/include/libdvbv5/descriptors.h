@@ -509,7 +509,7 @@ extern const struct dvb_descriptor dvb_descriptors[];
  *	@brief	CA_contract_information descriptor - ABNT NBR 15603-1 2007
  * @var CA_service_descriptor
  *	@brief	CA_service descriptor - ABNT NBR 15603-1 2007
- * @var TS_Information_descriptior
+ * @var TS_Information_descriptor
  *	@brief transport_stream_information descriptor - ABNT NBR 15603-1 2007
  * @var extended_broadcaster_descriptor
  *	@brief	extended_broadcaster descriptor - ABNT NBR 15603-1 2007
@@ -725,7 +725,7 @@ enum descriptors {
 	CA_EMM_TS_descriptor				= 0xca,
 	CA_contract_information_descriptor		= 0xcb,
 	CA_service_descriptor				= 0xcc,
-	TS_Information_descriptior			= 0xcd,
+	TS_Information_descriptor			= 0xcd,
 	extended_broadcaster_descriptor			= 0xce,
 	logo_transmission_descriptor			= 0xcf,
 	basic_local_event_descriptor			= 0xd0,
@@ -767,6 +767,13 @@ enum descriptors {
 	atsc_ATSC_private_information_descriptor	= 0xad,
 	atsc_genre_descriptor				= 0xab,
 };
+
+
+/*
+ * NOTE: this is here just to avoid API break. There was a typo
+ * on the name of this descriptor
+ */
+#define TS_Information_descriptior TS_Information_descriptor
 
 /* Please see desc_extension.h for extension_descriptor types */
 

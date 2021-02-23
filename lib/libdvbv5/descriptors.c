@@ -1074,8 +1074,8 @@ const struct dvb_descriptor dvb_descriptors[] = {
 		.free  = NULL,
 		.size  = 0,
 	},
-	[TS_Information_descriptior] = {
-		.name  = "TS_Information_descriptior",
+	[TS_Information_descriptor] = {
+		.name  = "TS_Information_descriptor",
 		.init  = dvb_desc_ts_info_init,
 		.print = dvb_desc_ts_info_print,
 		.free  = dvb_desc_ts_info_free,
