@@ -897,9 +897,6 @@ int do_traffic_monitor(struct arguments *args, struct dvb_device *dvb,
 			if (pid < 0x1fff && h->adaptation_field_control & 1) {
 				int discontinued = 0;
 
-				if (err_cnt[pid] < 0)
-					err_cnt[pid] = 0;
-
 				if (h->adaptation_field_control & 2) {
 					if (h->adaptation_field_length >= 1) {
 						discontinued = h->discontinued;
