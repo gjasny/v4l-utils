@@ -558,8 +558,7 @@ static void copy_to_file(struct dvb_open_descriptor *in_fd, int out_fd,
 	struct timespec start, *elapsed;
 
 	/* Initialize start time, due to -EOVERFLOW with first == 1 */
-	if (clock_gettime(CLOCK_MONOTONIC, &start))
-		return NULL;
+	clock_gettime(CLOCK_MONOTONIC, &start);
 
 	while (timeout_flag == 0) {
 		r = dvb_dev_read(in_fd, buf, sizeof(buf));
