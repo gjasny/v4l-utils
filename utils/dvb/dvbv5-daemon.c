@@ -845,8 +845,7 @@ static int dev_open(uint32_t seq, char *cmd, int fd, char *buf, ssize_t size)
 	if (!p) {
 		local_perror("tsearch");
 		uid = 0;
-	}
-	if (*p != desc) {
+	} else if (*p != desc) {
 		err("uid %d was already opened!", uid);
 	}
 
