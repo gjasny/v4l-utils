@@ -22,7 +22,7 @@ clean-local:
 	-rm -vf moc_*.cpp qrc_*.cpp qrc_*.o ui_*.h v4l2-convert.h formats.h
 
 v4l2-convert.h: v4l2-convert.glsl v4l2-convert.pl
-	perl \$(top_srcdir)/utils/qvidcap/v4l2-convert.pl \$(top_srcdir)/utils/qvidcap/v4l2-convert.glsl >$@
+	$(AM_V_GEN) perl \$(top_srcdir)/utils/qvidcap/v4l2-convert.pl \$(top_srcdir)/utils/qvidcap/v4l2-convert.glsl >$@
 
 paint.cpp: v4l2-convert.h
 

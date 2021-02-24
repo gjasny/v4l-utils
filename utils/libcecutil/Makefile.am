@@ -16,7 +16,7 @@ $(CEC_GEN_HDRS): gen.intermediate ;
 .INTERMEDIATE: gen.intermediate
 
 gen.intermediate: cec-gen.pl $(CEC_GEN_PREREQS)
-	$(top_srcdir)/utils/libcecutil/cec-gen.pl $(CEC_GEN_PREREQS)
+	$(AM_V_GEN) $(top_srcdir)/utils/libcecutil/cec-gen.pl $(CEC_GEN_PREREQS)
 
 clean-local:
 	-rm -vf $(CEC_GEN_HDRS)

@@ -1,5 +1,6 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
+AM_MAKEFLAGS = $(word 1, $(subst 1, -w, $(filter 1, $(V))) --no-print-directory)
 
 SUBDIRS = v4l-utils-po libdvbv5-po lib
 
@@ -13,4 +14,3 @@ EXTRA_DIST = android-config.h sync-with-kernel.sh bootstrap.sh \
 	TODO.libdvbv5 doc/libdvbv5-index.doc
 
 include $(top_srcdir)/aminclude.am
-

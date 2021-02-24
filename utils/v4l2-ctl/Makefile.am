@@ -17,7 +17,7 @@ v4l2_ctl_SOURCES = v4l2-ctl.cpp v4l2-ctl.h v4l2-ctl-common.cpp v4l2-ctl-tuner.cp
 v4l2_ctl_CPPFLAGS = -I$(top_srcdir)/utils/common $(GIT_COMMIT_CNT)
 
 media-bus-format-names.h: $(top_srcdir)/include/linux/media-bus-format.h
-	sed -e '/#define MEDIA_BUS_FMT/ ! d; s/.*FMT_//; /FIXED/ d; s/\t.*//; s/.*/{ \"&\", MEDIA_BUS_FMT_& },/;' \
+	$(AM_V_GEN) sed -e '/#define MEDIA_BUS_FMT/ ! d; s/.*FMT_//; /FIXED/ d; s/\t.*//; s/.*/{ \"&\", MEDIA_BUS_FMT_& },/;' \
 	< $< > $@
 
 BUILT_SOURCES = media-bus-format-names.h
@@ -36,7 +36,7 @@ endif
 nodist_v4l2_ctl_32_SOURCES = v4l2-ctl-32.c
 
 v4l2-ctl-32$(EXEEXT): $(addprefix $(top_srcdir)/utils/v4l2-ctl/,$(v4l2_ctl_SOURCES)) media-bus-format-names.h
-	cat $(addprefix $(top_srcdir)/utils/v4l2-ctl/,$(filter %.c,$(v4l2_ctl_SOURCES))) >$@.c
+	$(AM_V_GEN) cat $(addprefix $(top_srcdir)/utils/v4l2-ctl/,$(filter %.c,$(v4l2_ctl_SOURCES))) >$@.c
 	$(COMPILE) -static -m32 -DNO_LIBV4L2 -c -I$(top_srcdir) -I$(top_srcdir)/include $(v4l2_ctl_CPPFLAGS) $@.c
 	$(CXXCOMPILE) -static -m32 -DNO_LIBV4L2 -o $@ -I$(top_srcdir) -I$(top_srcdir)/include $(v4l2_ctl_CPPFLAGS) $(addprefix $(top_srcdir)/utils/v4l2-ctl/,$(filter %.cpp,$(v4l2_ctl_SOURCES))) $@.o
 	rm -f $@.c $@.o
