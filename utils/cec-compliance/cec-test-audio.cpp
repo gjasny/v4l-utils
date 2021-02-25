@@ -48,6 +48,13 @@ static int dal_request_current_latency(struct node *node, unsigned me, unsigned 
 		fail_on_test(audio_out_delay == 0 || audio_out_delay > 251);
 		// Warn if the delay is more than 50 ms
 		warn_on_test(audio_out_delay > (50 / 2) + 1);
+	} else {
+		// Although this value will be ignored, it shouldn't use
+		// reserved values.
+		warn_on_test(audio_out_delay == 0 || audio_out_delay > 251);
+		if (audio_out_delay > 1 && audio_out_delay <= 251)
+			warn("Audio out delay is %d (%dms), but value 1 is recommended when this field is unused\n",
+			     audio_out_delay, (audio_out_delay - 1) * 2);
 	}
 	fail_on_test(video_latency == 0 || video_latency > 251);
 	// Warn if the delay is more than 50 ms and low latency mode is set
