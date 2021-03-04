@@ -388,7 +388,15 @@ AC_ARG_WITH(udevdir,
 AC_ARG_WITH(systemdsystemunitdir,
 	AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [set systemd system unit directory]),
 	[],
-	[with_systemdsystemunitdir=`$PKG_CONFIG --variable=systemdsystemunitdir systemd || echo /lib/systemd/system`])
+	[with_systemdsystemunitdir=auto])
+AS_IF([test "x$with_systemdsystemunitdir" = "xyes" -o "x$with_systemdsystemunitdir" = "xauto"],
+      [def_systemdsystemunitdir=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)
+       AS_IF([test "x$def_systemdsystemunitdir" = "x"],
+             [AS_IF([test "x$with_systemdsystemunitdir" = "xyes"],
+                    [AC_MSG_ERROR([systemd support requested but pkg-config unable to query systemd package])])
+              with_systemdsystemunitdir=no],
+             [with_systemdsystemunitdir="$def_systemdsystemunitdir"])])
+AM_CONDITIONAL([HAVE_SYSTEMD], [test "x$with_systemdsystemunitdir" != "xno"])
 
 # Generic check: works with most distributions
 def_gconv_dir=`for i in /lib64 /usr/lib64 /usr/local/lib64 /lib /usr/lib /usr/local/lib; do if @<:@ -d \$i/gconv @:>@; then echo \$i/gconv; break; fi; done`
