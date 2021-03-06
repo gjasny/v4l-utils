@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-total-media-in-hand.c
 [[protocols]]
 name = "total_media_in_hand"
 protocol = "nec"

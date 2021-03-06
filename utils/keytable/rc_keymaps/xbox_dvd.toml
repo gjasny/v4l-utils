@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-xbox-dvd.c
 [[protocols]]
 name = "xbox_dvd"
 protocol = "xbox_dvd"

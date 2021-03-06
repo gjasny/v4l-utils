@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-technisat-usb2.c
 [[protocols]]
 name = "technisat_usb2"
 protocol = "rc5"

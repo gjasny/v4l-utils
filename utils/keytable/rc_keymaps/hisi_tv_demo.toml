@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-hisi-tv-demo.c
 [[protocols]]
 name = "hisi_tv_demo"
 protocol = "nec"

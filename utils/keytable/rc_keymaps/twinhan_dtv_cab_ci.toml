@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-twinhan-dtv-cab-ci.c
 [[protocols]]
 name = "twinhan_dtv_cab_ci"
 protocol = "unknown"

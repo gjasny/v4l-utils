@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-msi-digivox-iii.c
 [[protocols]]
 name = "msi_digivox_iii"
 protocol = "nec"

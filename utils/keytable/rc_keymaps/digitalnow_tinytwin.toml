@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-digitalnow-tinytwin.c
 [[protocols]]
 name = "digitalnow_tinytwin"
 protocol = "nec"

@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-proteus-2309.c
 [[protocols]]
 name = "proteus_2309"
 protocol = "unknown"

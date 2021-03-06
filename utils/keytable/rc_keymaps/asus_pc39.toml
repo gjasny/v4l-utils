@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-asus-pc39.c
 [[protocols]]
 name = "asus_pc39"
 protocol = "rc5"

@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-genius-tvgo-a11mce.c
 [[protocols]]
 name = "genius_tvgo_a11mce"
 protocol = "unknown"

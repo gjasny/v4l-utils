@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-adstech-dvb-t-pci.c
 [[protocols]]
 name = "adstech_dvb_t_pci"
 protocol = "unknown"

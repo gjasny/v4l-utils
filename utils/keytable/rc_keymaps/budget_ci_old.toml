@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-budget-ci-old.c
 [[protocols]]
 name = "budget_ci_old"
 protocol = "unknown"

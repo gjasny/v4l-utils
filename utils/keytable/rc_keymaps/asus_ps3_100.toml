@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-asus-ps3-100.c
 [[protocols]]
 name = "asus_ps3_100"
 protocol = "rc5"

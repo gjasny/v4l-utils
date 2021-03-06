@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-videomate-tv-pvr.c
 [[protocols]]
 name = "videomate_tv_pvr"
 protocol = "unknown"

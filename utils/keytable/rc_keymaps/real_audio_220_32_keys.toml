@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-real-audio-220-32-keys.c
 [[protocols]]
 name = "real_audio_220_32_keys"
 protocol = "unknown"

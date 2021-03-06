@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-apac-viewcomp.c
 [[protocols]]
 name = "apac_viewcomp"
 protocol = "unknown"

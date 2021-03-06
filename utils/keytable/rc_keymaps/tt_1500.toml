@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-tt-1500.c
 [[protocols]]
 name = "tt_1500"
 protocol = "rc5"

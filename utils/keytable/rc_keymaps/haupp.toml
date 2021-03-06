@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/usb/dvb-usb/nova-t-usb2.c
 [[protocols]]
 name = "haupp"
 protocol = "unknown"

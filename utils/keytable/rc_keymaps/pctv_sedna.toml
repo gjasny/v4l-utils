@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-pctv-sedna.c
 [[protocols]]
 name = "pctv_sedna"
 protocol = "unknown"

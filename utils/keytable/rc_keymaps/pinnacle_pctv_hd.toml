@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-pinnacle-pctv-hd.c
 [[protocols]]
 name = "pinnacle_pctv_hd"
 protocol = "rc5"

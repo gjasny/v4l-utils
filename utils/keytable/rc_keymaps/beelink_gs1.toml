@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-beelink-gs1.c
 [[protocols]]
 name = "beelink_gs1"
 protocol = "nec"

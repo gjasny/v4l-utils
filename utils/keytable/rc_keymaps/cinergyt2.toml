@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/usb/dvb-usb/cinergyT2-core.c
 [[protocols]]
 name = "cinergyt2"
 protocol = "unknown"

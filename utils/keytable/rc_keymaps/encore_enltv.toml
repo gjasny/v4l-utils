@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-encore-enltv.c
 [[protocols]]
 name = "encore_enltv"
 protocol = "unknown"

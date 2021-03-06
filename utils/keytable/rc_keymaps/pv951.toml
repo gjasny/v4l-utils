@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-pv951.c
 [[protocols]]
 name = "pv951"
 protocol = "unknown"

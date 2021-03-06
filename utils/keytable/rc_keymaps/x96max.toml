@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-x96max.c
 [[protocols]]
 name = "x96max"
 protocol = "nec"

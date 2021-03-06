@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/usb/dvb-usb/vp702x.c
 [[protocols]]
 name = "vp702x"
 protocol = "unknown"

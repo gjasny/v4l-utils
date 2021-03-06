@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-leadtek-y04g0051.c
 [[protocols]]
 name = "leadtek_y04g0051"
 protocol = "nec"

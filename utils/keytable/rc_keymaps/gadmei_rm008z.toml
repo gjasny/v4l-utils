@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-gadmei-rm008z.c
 [[protocols]]
 name = "gadmei_rm008z"
 protocol = "unknown"

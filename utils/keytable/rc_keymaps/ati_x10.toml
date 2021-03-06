@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-ati-x10.c
 [[protocols]]
 name = "ati_x10"
 protocol = "other"

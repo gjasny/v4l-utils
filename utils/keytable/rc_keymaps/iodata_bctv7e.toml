@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-iodata-bctv7e.c
 [[protocols]]
 name = "iodata_bctv7e"
 protocol = "unknown"

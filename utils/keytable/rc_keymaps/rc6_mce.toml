@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-rc6-mce.c
 [[protocols]]
 name = "rc6_mce"
 protocol = "rc6"

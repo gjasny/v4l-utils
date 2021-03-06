@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-wetek-hub.c
 [[protocols]]
 name = "wetek_hub"
 protocol = "nec"

@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-azurewave-ad-tu700.c
 [[protocols]]
 name = "azurewave_ad_tu700"
 protocol = "nec"

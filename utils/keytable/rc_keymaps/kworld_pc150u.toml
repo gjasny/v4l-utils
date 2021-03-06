@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-kworld-pc150u.c
 [[protocols]]
 name = "kworld_pc150u"
 protocol = "unknown"

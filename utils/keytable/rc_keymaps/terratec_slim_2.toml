@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-terratec-slim-2.c
 [[protocols]]
 name = "terratec_slim_2"
 protocol = "nec"

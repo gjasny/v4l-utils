@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-nec-terratec-cinergy-xs.c
 [[protocols]]
 name = "nec_terratec_cinergy_xs"
 protocol = "nec"

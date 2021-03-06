@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-videomate-s350.c
 [[protocols]]
 name = "videomate_s350"
 protocol = "unknown"

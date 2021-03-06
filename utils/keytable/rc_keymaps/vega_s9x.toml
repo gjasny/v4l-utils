@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-vega-s9x.c
 [[protocols]]
 name = "vega_s9x"
 protocol = "nec"

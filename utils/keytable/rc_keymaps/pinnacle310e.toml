@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/usb/dvb-usb/m920x.c
 [[protocols]]
 name = "pinnacle310e"
 protocol = "unknown"

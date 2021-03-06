@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-tanix-tx3mini.c
 [[protocols]]
 name = "tanix_tx3mini"
 protocol = "nec"

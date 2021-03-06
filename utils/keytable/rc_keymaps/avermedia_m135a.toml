@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-avermedia-m135a.c
 [[protocols]]
 name = "avermedia_m135a"
 protocol = "nec"

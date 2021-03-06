@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-avertv-303.c
 [[protocols]]
 name = "avertv_303"
 protocol = "unknown"

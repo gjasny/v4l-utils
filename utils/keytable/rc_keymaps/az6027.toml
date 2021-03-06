@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/usb/dvb-usb/az6027.c
 [[protocols]]
 name = "az6027"
 protocol = "unknown"

@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-evga-indtube.c
 [[protocols]]
 name = "evga_indtube"
 protocol = "unknown"

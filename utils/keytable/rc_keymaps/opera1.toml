@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/usb/dvb-usb/opera1.c
 [[protocols]]
 name = "opera1"
 protocol = "unknown"

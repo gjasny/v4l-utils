@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-gotview7135.c
 [[protocols]]
 name = "gotview7135"
 protocol = "unknown"

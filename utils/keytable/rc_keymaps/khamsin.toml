@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-khamsin.c
 [[protocols]]
 name = "khamsin"
 protocol = "nec"

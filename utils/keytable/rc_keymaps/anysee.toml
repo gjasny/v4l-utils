@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-anysee.c
 [[protocols]]
 name = "anysee"
 protocol = "nec"

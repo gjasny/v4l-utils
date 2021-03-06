@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-dib0700-rc5.c
 [[protocols]]
 name = "dib0700_rc5"
 protocol = "rc5"

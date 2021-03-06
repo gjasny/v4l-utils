@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-medion-x10-or2x.c
 [[protocols]]
 name = "medion_x10_or2x"
 protocol = "other"

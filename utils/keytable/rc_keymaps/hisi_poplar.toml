@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-hisi-poplar.c
 [[protocols]]
 name = "hisi_poplar"
 protocol = "nec"

@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-dntv-live-dvb-t.c
 [[protocols]]
 name = "dntv_live_dvb_t"
 protocol = "unknown"

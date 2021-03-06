@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-avermedia-a16d.c
 [[protocols]]
 name = "avermedia_a16d"
 protocol = "unknown"

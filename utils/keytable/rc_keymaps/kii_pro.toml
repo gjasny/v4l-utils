@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-videostrong-kii-pro.c
 [[protocols]]
 name = "kii_pro"
 protocol = "nec"

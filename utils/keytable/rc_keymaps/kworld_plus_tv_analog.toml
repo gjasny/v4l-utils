@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-kworld-plus-tv-analog.c
 [[protocols]]
 name = "kworld_plus_tv_analog"
 protocol = "unknown"

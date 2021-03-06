@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-alink-dtu-m.c
 [[protocols]]
 name = "alink_dtu_m"
 protocol = "nec"

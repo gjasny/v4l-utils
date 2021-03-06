@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-avermedia-m733a-rm-k6.c
 [[protocols]]
 name = "avermedia_m733a_rm_k6"
 protocol = "nec"

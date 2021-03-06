@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-winfast-usbii-deluxe.c
 [[protocols]]
 name = "winfast_usbii_deluxe"
 protocol = "unknown"

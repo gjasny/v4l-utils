@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-dvbsky.c
 [[protocols]]
 name = "dvbsky"
 protocol = "rc5"

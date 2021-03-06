@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-snapstream-firefly.c
 [[protocols]]
 name = "snapstream_firefly"
 protocol = "other"

@@ -1,3 +1,4 @@
+# Generated with gen_keytables.pl from drivers/media/rc/keymaps/rc-astrometa-t2hybrid.c
 [[protocols]]
 name = "astrometa_t2hybrid"
 protocol = "nec"
