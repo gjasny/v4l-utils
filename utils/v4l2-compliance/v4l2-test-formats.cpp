@@ -255,6 +255,14 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 			return fail("fmtdesc.description not set\n");
 		if (!fmtdesc.pixelformat)
 			return fail("fmtdesc.pixelformat not set\n");
+
+		// Check that the driver does not overwrites the kernel pixelformat description
+		std::string descr = pixfmt2s(fmtdesc.pixelformat);
+		if (strcmp(descr.c_str(), (const char *)fmtdesc.description) &&
+		    memcmp(descr.c_str(), "Unknown", 7))
+			return fail("fmtdesc.description mismatch: was '%s', expected '%s'\n",
+				    fmtdesc.description, descr.c_str());
+
 		if (node->g_direct() && (fmtdesc.flags & V4L2_FMT_FLAG_EMULATED))
 			return fail("drivers must never set the emulated flag\n");
 		if (fmtdesc.flags & ~(V4L2_FMT_FLAG_COMPRESSED | V4L2_FMT_FLAG_EMULATED |
