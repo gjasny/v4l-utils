@@ -173,6 +173,7 @@
 	case V4L2_PIX_FMT_H264: return "H.264";
 	case V4L2_PIX_FMT_H264_NO_SC: return "H.264 (No Start Codes)";
 	case V4L2_PIX_FMT_H264_MVC: return "H.264 MVC";
+	case V4L2_PIX_FMT_H264_SLICE: return "H.264 Parsed Slice Data";
 	case V4L2_PIX_FMT_H263: return "H.263";
 	case V4L2_PIX_FMT_MPEG1: return "MPEG-1 ES";
 	case V4L2_PIX_FMT_MPEG2: return "MPEG-2 ES";
