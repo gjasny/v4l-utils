@@ -231,11 +231,11 @@ int testQueryExtControls(struct node *node)
 		}
 		if (V4L2_CTRL_DRIVER_PRIV(id)) {
 			node->priv_controls++;
-			if (qctrl.type >= V4L2_CTRL_COMPOUND_TYPES)
+			if (qctrl.type >= V4L2_CTRL_COMPOUND_TYPES || qctrl.nr_of_dims)
 				node->priv_compound_controls++;
 		} else {
 			node->std_controls++;
-			if (qctrl.type >= V4L2_CTRL_COMPOUND_TYPES)
+			if (qctrl.type >= V4L2_CTRL_COMPOUND_TYPES || qctrl.nr_of_dims)
 				node->std_compound_controls++;
 		}
 		node->controls[qctrl.id] = qctrl;
@@ -246,6 +246,42 @@ int testQueryExtControls(struct node *node)
 		result = fail("missing control class for class %08x\n", which);
 	if (which && !class_count)
 		return fail("no controls in class %08x\n", which);
+
+	id = 0;
+	unsigned regular_ctrls = 0;
+	for (;;) {
+		memset(&qctrl, 0xff, sizeof(qctrl));
+		qctrl.id = id | V4L2_CTRL_FLAG_NEXT_CTRL;
+		ret = doioctl(node, VIDIOC_QUERY_EXT_CTRL, &qctrl);
+		if (ret)
+			break;
+		id = qctrl.id;
+		if (qctrl.type >= V4L2_CTRL_COMPOUND_TYPES || qctrl.nr_of_dims)
+			return fail("V4L2_CTRL_FLAG_NEXT_CTRL enumerates compound controls!\n");
+		regular_ctrls++;
+	}
+	unsigned num_compound_ctrls = node->std_compound_controls + node->priv_compound_controls;
+	unsigned num_regular_ctrls = node->std_controls + node->priv_controls - num_compound_ctrls;
+	if (regular_ctrls != num_regular_ctrls)
+		return fail("expected to find %d standard controls, got %d instead\n",
+			    num_regular_ctrls, regular_ctrls);
+
+	id = 0;
+	unsigned compound_ctrls = 0;
+	for (;;) {
+		memset(&qctrl, 0xff, sizeof(qctrl));
+		qctrl.id = id | V4L2_CTRL_FLAG_NEXT_COMPOUND;
+		ret = doioctl(node, VIDIOC_QUERY_EXT_CTRL, &qctrl);
+		if (ret)
+			break;
+		id = qctrl.id;
+		if (qctrl.type < V4L2_CTRL_COMPOUND_TYPES && !qctrl.nr_of_dims)
+			return fail("V4L2_CTRL_FLAG_NEXT_COMPOUND enumerates regular controls!\n");
+		compound_ctrls++;
+	}
+	if (compound_ctrls != num_compound_ctrls)
+		return fail("expected to find %d compound controls, got %d instead\n",
+			    num_compound_ctrls, compound_ctrls);
 
 	for (id = V4L2_CID_BASE; id < V4L2_CID_LASTP1; id++) {
 		memset(&qctrl, 0xff, sizeof(qctrl));
@@ -294,8 +330,12 @@ int testQueryControls(struct node *node)
 {
 	struct v4l2_queryctrl qctrl;
 	unsigned controls = 0;
+	unsigned compound_controls = 0;
 	__u32 id = 0;
 	int ret;
+
+	unsigned num_compound_ctrls = node->std_compound_controls + node->priv_compound_controls;
+	unsigned num_regular_ctrls = node->std_controls + node->priv_controls - num_compound_ctrls;
 
 	for (;;) {
 		memset(&qctrl, 0xff, sizeof(qctrl));
@@ -312,8 +352,21 @@ int testQueryControls(struct node *node)
 		fail_on_test(qctrl.step < 0);
 		controls++;
 	}
-	fail_on_test(node->controls.size() !=
-		     controls + node->std_compound_controls + node->priv_compound_controls);
+	fail_on_test(controls != num_regular_ctrls);
+
+	id = 0;
+	for (;;) {
+		memset(&qctrl, 0xff, sizeof(qctrl));
+		qctrl.id = id | V4L2_CTRL_FLAG_NEXT_COMPOUND;
+		ret = doioctl(node, VIDIOC_QUERYCTRL, &qctrl);
+		if (ret)
+			break;
+		id = qctrl.id;
+		fail_on_test(node->controls.find(qctrl.id) == node->controls.end());
+		fail_on_test(qctrl.step || qctrl.minimum || qctrl.maximum || qctrl.default_value);
+		compound_controls++;
+	}
+	fail_on_test(compound_controls != num_compound_ctrls);
 
 	for (id = V4L2_CID_BASE; id < V4L2_CID_LASTP1; id++) {
 		memset(&qctrl, 0xff, sizeof(qctrl));

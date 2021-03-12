@@ -1304,7 +1304,11 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		printf("\ttest VIDIOC_(UN)SUBSCRIBE_EVENT/DQEVENT: %s\n", ok(testEvents(&node)));
 		printf("\ttest VIDIOC_G/S_JPEGCOMP: %s\n", ok(testJpegComp(&node)));
 		printf("\tStandard Controls: %d Private Controls: %d\n",
-				node.std_controls, node.priv_controls);
+		       node.std_controls - node.std_compound_controls,
+		       node.priv_controls - node.priv_compound_controls);
+		if (node.std_compound_controls || node.priv_compound_controls)
+			printf("\tStandard Compound Controls: %d Private Compound Controls: %d\n",
+			       node.std_compound_controls, node.priv_compound_controls);
 		printf("\n");
 
 		/* Format ioctls */
