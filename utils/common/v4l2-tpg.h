@@ -28,12 +28,10 @@ typedef __s8 s8;
 #define pr_info printf
 #define noinline
 
-#ifndef min
-#define min(a,b)	((a) < (b) ? (a) : (b))
-#define max(a,b)	((a) > (b) ? (a) : (b))
-#endif /* !min */
-#define min3(x, y, z) min((typeof(x))min(x, y), z)
-#define max3(x, y, z) max((typeof(x))max(x, y), z)
+#define tpg_min(a,b)	((a) < (b) ? (a) : (b))
+#define tpg_max(a,b)	((a) > (b) ? (a) : (b))
+#define min3(x, y, z) tpg_min((typeof(x))tpg_min(x, y), z)
+#define max3(x, y, z) tpg_max((typeof(x))tpg_max(x, y), z)
 #define array_size(a, b) ((a) * (b))
 #define array3_size(a, b, c) ((a) * (b) * (c))
 

@@ -167,7 +167,7 @@ diff --git a/utils/common/v4l2-tpg.h b/utils/common/v4l2-tpg.h
 index 0b0ddb87..91da74ec 100644
 --- a/utils/common/v4l2-tpg.h
 +++ b/utils/common/v4l2-tpg.h
-@@ -8,13 +8,61 @@
+@@ -8,13 +8,59 @@
  #ifndef _V4L2_TPG_H_
  #define _V4L2_TPG_H_
  
@@ -196,12 +196,10 @@ index 0b0ddb87..91da74ec 100644
 +#define pr_info printf
 +#define noinline
 +
-+#ifndef min
-+#define min(a,b)	((a) < (b) ? (a) : (b))
-+#define max(a,b)	((a) > (b) ? (a) : (b))
-+#endif /* !min */
-+#define min3(x, y, z) min((typeof(x))min(x, y), z)
-+#define max3(x, y, z) max((typeof(x))max(x, y), z)
++#define tpg_min(a,b)	((a) < (b) ? (a) : (b))
++#define tpg_max(a,b)	((a) > (b) ? (a) : (b))
++#define min3(x, y, z) tpg_min((typeof(x))tpg_min(x, y), z)
++#define max3(x, y, z) tpg_max((typeof(x))tpg_max(x, y), z)
 +#define array_size(a, b) ((a) * (b))
 +#define array3_size(a, b, c) ((a) * (b) * (c))
 +
