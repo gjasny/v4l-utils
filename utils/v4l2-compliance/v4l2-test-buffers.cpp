@@ -449,7 +449,10 @@ int buffer::check(unsigned type, unsigned memory, unsigned index,
 						     "got sequence number %u, expected %u\n",
 						     g_sequence(), seq.last_seq + 1);
 			}
-		} else if (static_cast<int>(g_sequence()) != seq.last_seq + 1) {
+		} else if (!v4l_type_is_meta(g_type()) && static_cast<int>(g_sequence()) != seq.last_seq + 1) {
+			// Don't do this for meta streams: the sequence counter is typically
+			// linked to the video capture to sync the metadata with the video
+			// data. So the sequence counter would start at a non-zero value.
 			warn_or_info(is_vivid, "got sequence number %u, expected %u\n",
 				     g_sequence(), seq.last_seq + 1);
 		}
