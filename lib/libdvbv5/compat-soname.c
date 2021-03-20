@@ -78,3 +78,8 @@ struct dvb_dev_list *dvb_remote_seek_by_sysname(struct dvb_device_priv *dvb,
 {
 	return dvb_remote_seek_by_adapter(dvb, adapter, num, type);
 }
+
+void stack_dump()
+{
+        /* preserve soname compatibility until next soname bump */
+}

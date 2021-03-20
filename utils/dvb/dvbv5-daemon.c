@@ -216,7 +216,7 @@ static nfds_t numfds = 0;
 static char output_charset[256] = "utf-8";
 static char default_charset[256] = "iso-8859-1";
 
-void stack_dump()
+static void stack_dump(void)
 {
 #ifdef HAVE_BACKTRACE
 	int i, nptrs = 0;

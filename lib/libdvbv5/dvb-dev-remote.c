@@ -124,7 +124,7 @@ static char *my_strlcpy(char *dst, const char *src, size_t siz)
 	return rc;
 }
 
-void stack_dump(struct dvb_v5_fe_parms_priv *parms)
+static void stack_dump(struct dvb_v5_fe_parms_priv *parms)
 {
 #ifdef HAVE_BACKTRACE
 	int i, nptrs = 0;
