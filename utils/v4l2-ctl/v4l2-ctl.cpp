@@ -217,6 +217,7 @@ static struct option long_options[] = {
 	{"clear-edid", optional_argument, nullptr, OptClearEdid},
 	{"get-edid", optional_argument, nullptr, OptGetEdid},
 	{"info-edid", optional_argument, nullptr, OptInfoEdid},
+	{"show-edid", required_argument, nullptr, OptShowEdid},
 	{"fix-edid-checksums", no_argument, nullptr, OptFixEdidChecksums},
 	{"tuner-index", required_argument, nullptr, OptTunerIndex},
 	{"list-buffers", no_argument, nullptr, OptListBuffers},

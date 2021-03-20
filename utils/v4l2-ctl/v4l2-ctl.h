@@ -194,6 +194,7 @@ enum Option {
 	OptClearEdid,
 	OptGetEdid,
 	OptInfoEdid,
+	OptShowEdid,
 	OptFixEdidChecksums,
 	OptFreqSeek,
 	OptEncoderCmd,
