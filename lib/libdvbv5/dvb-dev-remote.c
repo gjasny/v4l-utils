@@ -114,7 +114,7 @@ struct dvb_dev_remote_priv {
 	void *user_priv;
 };
 
-char *my_strlcpy(char *dst, const char *src, size_t siz)
+static char *my_strlcpy(char *dst, const char *src, size_t siz)
 {
 	char *rc;
 
