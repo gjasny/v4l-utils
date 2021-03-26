@@ -244,8 +244,14 @@ void CaptureWin::setWindowSize(QSize frameSize)
 	QDesktopWidget *screen = QApplication::desktop();
 	QRect resolution = screen->screenGeometry();
 #else
-	QScreen *screen = window()->windowHandle()->screen();
-	QSize resolution = screen->availableSize();
+	QSize resolution(1920, 1080);
+
+	// window()->windowHandle() can be NULL, for example when
+	// using X11 forwarding.
+	if (window()->windowHandle()) {
+		QScreen *screen = window()->windowHandle()->screen();
+		resolution = screen->availableSize();
+	}
 #endif
 
 	QSize windowSize =  pixelAspectFrameSize(cropSize(frameSize)) + margins;
