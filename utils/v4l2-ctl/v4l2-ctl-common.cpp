@@ -599,6 +599,27 @@ static void print_qctrl(int fd, const v4l2_query_ext_ctrl &qc,
 	case V4L2_CTRL_TYPE_AREA:
 		printf("%31s %#8.8x (area)   :", s.c_str(), qc.id);
 		break;
+	case V4L2_CTRL_TYPE_H264_SPS:
+		printf("%31s %#8.8x (h264-sps):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_H264_PPS:
+		printf("%31s %#8.8x (h264-pps):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_H264_SCALING_MATRIX:
+		printf("%31s %#8.8x (h264-scaling-matrix):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_H264_SLICE_PARAMS:
+		printf("%31s %#8.8x (h264-slice-params):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_H264_DECODE_PARAMS:
+		printf("%31s %#8.8x (h264-decode-params):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_H264_PRED_WEIGHTS:
+		printf("%31s %#8.8x (h264-pred-weights):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_FWHT_PARAMS:
+		printf("%31s %#8.8x (fwht-params):", s.c_str(), qc.id);
+		break;
 	default:
 		printf("%31s %#8.8x (unknown): type=%x",
 				s.c_str(), qc.id, qc.type);
