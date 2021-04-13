@@ -147,6 +147,8 @@ sub process_func
 					$logswitch .= "\t\tlog_digital(\"$dash_name\", &$name);\n";
 				} elsif ($name eq "ui_cmd") {
 					$logswitch .= "\t\tlog_ui_command(\"$dash_name\", &$name);\n";
+				} elsif ($name eq "vendor_id") {
+					$logswitch .= "\t\tlog_vendor_id(\"$dash_name\", $name);\n";
 				} elsif ($name eq "rec_src") {
 					$logswitch .= "\t\tlog_rec_src(\"$dash_name\", &$name);\n";
 				} elsif ($name eq "tuner_dev_info") {

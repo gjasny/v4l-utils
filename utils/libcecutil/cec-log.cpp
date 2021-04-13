@@ -104,6 +104,7 @@ static void log_rec_src(const char *arg_name, const struct cec_op_record_src *re
 static void log_tuner_dev_info(const char *arg_name, const struct cec_op_tuner_device_info *tuner_dev_info);
 static void log_features(const struct cec_arg *arg, const char *arg_name, const __u8 *p);
 static void log_ui_command(const char *arg_name, const struct cec_op_ui_command *ui_cmd);
+static void log_vendor_id(const char *arg_name, __u32 vendor_id);
 static void log_descriptors(const char *arg_name, unsigned num, const __u32 *descriptors);
 static void log_u8_array(const char *arg_name, unsigned num, const __u8 *vals);
 static void log_unknown_msg(const struct cec_msg *msg);
@@ -226,6 +227,16 @@ static void log_ui_command(const char *arg_name,
 	}
 }
 
+static void log_vendor_id(const char *arg_name, __u32 vendor_id)
+{
+	const char *vendor = cec_vendor2s(vendor_id);
+
+	if (vendor)
+		printf("\t%s: 0x%08x, %s\n", arg_name, vendor_id, vendor);
+	else
+		printf("\t%s: 0x%08x, %u\n", arg_name, vendor_id, vendor_id);
+}
+
 static void log_descriptors(const char *arg_name, unsigned num, const __u32 *descriptors)
 {
 	for (unsigned i = 0; i < num; i++)
@@ -248,7 +259,7 @@ static void log_htng_unknown_msg(const struct cec_msg *msg)
 	cec_ops_vendor_command_with_id(msg, &vendor_id, &size, &bytes);
 	printf("VENDOR_COMMAND_WITH_ID (0x%02x):\n",
 	       CEC_MSG_VENDOR_COMMAND_WITH_ID);
-	log_arg(&arg_vendor_id, "vendor-id", vendor_id);
+	log_vendor_id("vendor-id", vendor_id);
 	printf("\tvendor-specific-data:");
 	for (i = 0; i < size; i++)
 		printf(" 0x%02x", bytes[i]);
@@ -282,7 +293,7 @@ static void log_unknown_msg(const struct cec_msg *msg)
 		default:
 			printf("VENDOR_COMMAND_WITH_ID (0x%02x):\n",
 			       CEC_MSG_VENDOR_COMMAND_WITH_ID);
-			log_arg(&arg_vendor_id, "vendor-id", vendor_id);
+			log_vendor_id("vendor-id", vendor_id);
 			printf("\tvendor-specific-data:");
 			for (i = 0; i < size; i++)
 				printf(" 0x%02x", bytes[i]);

@@ -561,12 +561,17 @@ static int showTopologyDevice(struct node *node, unsigned i, unsigned la)
 	cec_msg_give_device_vendor_id(&msg, true);
 	doioctl(node, CEC_TRANSMIT, &msg);
 	printf("\t\tVendor ID                  : ");
-	if (!cec_msg_status_is_ok(&msg))
+	if (!cec_msg_status_is_ok(&msg)) {
 		printf("%s\n", cec_status2s(msg).c_str());
-	else
-		printf("0x%02x%02x%02x %s\n",
-		       msg.msg[2], msg.msg[3], msg.msg[4],
-		       cec_vendor2s(msg.msg[2] << 16 | msg.msg[3] << 8 | msg.msg[4]));
+	} else {
+		__u32 vendor_id = msg.msg[2] << 16 | msg.msg[3] << 8 | msg.msg[4];
+		const char *vendor = cec_vendor2s(vendor_id);
+
+		if (vendor)
+			printf("0x%06x, %s\n", vendor_id, vendor);
+		else
+			printf("0x%06x, %u\n", vendor_id, vendor_id);
+	}
 
 	cec_msg_init(&msg, la, i);
 	cec_msg_give_osd_name(&msg, true);
