@@ -299,7 +299,7 @@ AC_ARG_WITH([libudev],
 have_libudev=no
 
 AS_IF([test "x$with_libudev" != xno -o "x$enable_libdvbv5" != xno],
-      [PKG_CHECK_MODULES(libudev, libudev, have_libudev=yes, [])
+      [PKG_CHECK_MODULES(libudev, libudev, have_libudev=yes, have_libudev=no)
        AS_IF([test "x$have_libudev" = xyes],
              [AC_DEFINE([HAVE_LIBUDEV], [], [Use libudev])
               LIBUDEV_CFLAGS="$libudev_CFLAGS"
