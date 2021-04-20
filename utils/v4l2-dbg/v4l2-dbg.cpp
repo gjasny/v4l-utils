@@ -46,66 +46,58 @@
 #include "v4l2-dbg-tvp5150.h"
 #include "v4l2-dbg-micron.h"
 
-#define ARRAY_SIZE(arr) ((int)(sizeof(arr) / sizeof((arr)[0])))
-
 struct board_list {
 	const char *name;
 	int prefix; 		/* Register prefix size */
-	const struct board_regs *regs;
-	int regs_size;
-	const struct board_regs *alt_regs;
-	int alt_regs_size;
+	const std::vector<board_regs> &regs;
+	const std::vector<board_regs> &alt_regs;
 };
 
-static const struct board_list boards[] = {
+static const std::vector<board_regs> empty{};
+
+static const std::vector<board_list> boards{
 #define AC97_BOARD 0
-	{				/* From v4l2-dbg-ac97.h */
+	{
+		/* From v4l2-dbg-ac97.h */
 		AC97_IDENT,
 		sizeof(AC97_PREFIX) - 1,
 		ac97_regs,
-		ARRAY_SIZE(ac97_regs),
-		nullptr,
-		0,
+		empty,
 	},
-	{				/* From v4l2-dbg-bttv.h */
+	{
+		/* From v4l2-dbg-bttv.h */
 		BTTV_IDENT,
 		sizeof(BTTV_PREFIX) - 1,
 		bt8xx_regs,
-		ARRAY_SIZE(bt8xx_regs),
 		bt8xx_regs_other,
-		ARRAY_SIZE(bt8xx_regs_other),
 	},
-	{				/* From v4l2-dbg-saa7134.h */
+	{
+		/* From v4l2-dbg-saa7134.h */
 		SAA7134_IDENT,
 		sizeof(SAA7134_PREFIX) - 1,
 		saa7134_regs,
-		ARRAY_SIZE(saa7134_regs),
-		nullptr,
-		0,
+		empty,
 	},
-	{				/* From v4l2-dbg-em28xx.h */
+	{
+		/* From v4l2-dbg-em28xx.h */
 		EM28XX_IDENT,
 		sizeof(EM28XX_PREFIX) - 1,
 		em28xx_regs,
-		ARRAY_SIZE(em28xx_regs),
 		em28xx_alt_regs,
-		ARRAY_SIZE(em28xx_alt_regs),
 	},
-	{				/* From v4l2-dbg-tvp5150.h */
+	{
+		/* From v4l2-dbg-tvp5150.h */
 		TVP5150_IDENT,
 		sizeof(TVP5150_PREFIX) - 1,
 		tvp5150_regs,
-		ARRAY_SIZE(tvp5150_regs),
-		nullptr,
-		0,
+		empty,
 	},
-	{				/* From v4l2-dbg-micron.h */
+	{
+		/* From v4l2-dbg-micron.h */
 		MT9V011_IDENT,
 		sizeof(MT9V011_PREFIX) - 1,
 		mt9v011_regs,
-		ARRAY_SIZE(mt9v011_regs),
-		nullptr,
-		0,
+		empty,
 	},
 };
 
@@ -294,16 +286,16 @@ static void print_name(struct v4l2_dbg_chip_info *chip)
 static unsigned long long parse_reg(const struct board_list *curr_bd, const std::string &reg)
 {
 	if (curr_bd) {
-		for (int i = 0; i < curr_bd->regs_size; i++) {
-			if (!strcasecmp(reg.c_str(), curr_bd->regs[i].name) ||
-			    !strcasecmp(reg.c_str(), curr_bd->regs[i].name + curr_bd->prefix)) {
-				return curr_bd->regs[i].reg;
+		for (const auto &curr : curr_bd->regs) {
+			if (!strcasecmp(reg.c_str(), curr.name) ||
+			    !strcasecmp(reg.c_str(), curr.name + curr_bd->prefix)) {
+				return curr.reg;
 			}
 		}
-		for (int i = 0; i < curr_bd->alt_regs_size; i++) {
-			if (!strcasecmp(reg.c_str(), curr_bd->alt_regs[i].name) ||
-			    !strcasecmp(reg.c_str(), curr_bd->alt_regs[i].name + curr_bd->prefix)) {
-				return curr_bd->alt_regs[i].reg;
+		for (const auto &curr : curr_bd->alt_regs) {
+			if (!strcasecmp(reg.c_str(), curr.name) ||
+			    !strcasecmp(reg.c_str(), curr.name + curr_bd->prefix)) {
+				return curr.reg;
 			}
 		}
 	}
@@ -313,13 +305,13 @@ static unsigned long long parse_reg(const struct board_list *curr_bd, const std:
 static const char *reg_name(const struct board_list *curr_bd, unsigned long long reg)
 {
 	if (curr_bd) {
-		for (int i = 0; i < curr_bd->regs_size; i++) {
-			if (reg == curr_bd->regs[i].reg)
-				return curr_bd->regs[i].name;
+		for (const auto &curr : curr_bd->regs) {
+			if (reg == curr.reg)
+				return curr.name;
 		}
-		for (int i = 0; i < curr_bd->alt_regs_size; i++) {
-			if (reg == curr_bd->regs[i].reg)
-				return curr_bd->regs[i].name;
+		for (const auto &curr : curr_bd->regs) {
+			if (reg == curr.reg)
+				return curr.name;
 		}
 	}
 	return nullptr;
@@ -572,7 +564,7 @@ int main(int argc, char **argv)
 		if (!strncasecmp(match.name, "ac97", 4)) {
 			curr_bd = &boards[AC97_BOARD];
 		} else {
-			for (int board = ARRAY_SIZE(boards) - 1; board >= 0; board--) {
+			for (size_t board = boards.size() - 1; board >= 0; board--) {
 				if (!strcasecmp(chip_info.name, boards[board].name)) {
 					curr_bd = &boards[board];
 					break;
@@ -685,9 +677,9 @@ int main(int argc, char **argv)
 			else
 				reg_max = parse_reg(curr_bd, reg_max_arg);
 
-			for (int i = 0; i < curr_bd->regs_size; i++) {
-				if (reg_min_arg.empty() || ((curr_bd->regs[i].reg >= reg_min) && curr_bd->regs[i].reg <= reg_max)) {
-					get_reg.reg = curr_bd->regs[i].reg;
+			for (const auto &curr : curr_bd->regs) {
+				if (reg_min_arg.empty() || ((curr.reg >= reg_min) && curr.reg <= reg_max)) {
+					get_reg.reg = curr.reg;
 
 					if (ioctl(fd, VIDIOC_DBG_G_REGISTER, &get_reg) < 0)
 						fprintf(stderr, "ioctl: VIDIOC_DBG_G_REGISTER "
@@ -796,10 +788,10 @@ list_done:
 		}
 		else {
 			printf("Symbols for driver %s:\n", curr_bd->name);
-			for (int i = 0; i < curr_bd->regs_size; i++)
-				printf("0x%08x: %s\n", curr_bd->regs[i].reg, curr_bd->regs[i].name);
-			for (int i = 0; i < curr_bd->alt_regs_size; i++)
-				printf("0x%08x: %s\n", curr_bd->alt_regs[i].reg, curr_bd->alt_regs[i].name);
+			for (const auto &curr : curr_bd->regs)
+				printf("0x%08x: %s\n", curr.reg, curr.name);
+			for (const auto &curr : curr_bd->alt_regs)
+				printf("0x%08x: %s\n", curr.reg, curr.name);
 		}
 	}
 
