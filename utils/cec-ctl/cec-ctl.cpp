@@ -148,7 +148,7 @@ struct node {
 
 bool verbose;
 
-typedef std::vector<cec_msg> msg_vec;
+using msg_vec = std::vector<cec_msg>;
 
 static struct option long_options[] = {
 	{ "device", required_argument, nullptr, OptSetDevice },

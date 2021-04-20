@@ -78,10 +78,10 @@ struct test_query_ext_ctrl: v4l2_query_ext_ctrl {
 	__u64 menu_mask;
 };
 
-typedef std::map<__u32, struct test_query_ext_ctrl> qctrl_map;
-typedef std::map<__u32, __u32> pixfmt_map;
-typedef std::set<__u64> frmsizes_set;
-typedef std::map<__u32, unsigned> frmsizes_count_map;
+using qctrl_map = std::map<__u32, test_query_ext_ctrl>;
+using pixfmt_map = std::map<__u32, __u32>;
+using frmsizes_set = std::set<__u64>;
+using frmsizes_count_map = std::map<__u32, unsigned>;
 
 struct base_node;
 

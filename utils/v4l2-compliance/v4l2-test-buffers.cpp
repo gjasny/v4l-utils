@@ -93,7 +93,7 @@ enum QueryBufMode {
 	Dequeued
 };
 
-typedef std::map<struct timeval, struct v4l2_buffer> buf_info_map;
+using buf_info_map = std::map<struct timeval, struct v4l2_buffer>;
 static buf_info_map buffer_info;
 
 #define FILE_HDR_ID			v4l2_fourcc('V', 'h', 'd', 'r')

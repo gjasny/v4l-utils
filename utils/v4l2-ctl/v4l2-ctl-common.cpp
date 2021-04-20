@@ -22,7 +22,7 @@ struct ctrl_subset {
 	unsigned size[V4L2_CTRL_MAX_DIMS];
 };
 
-typedef std::map<unsigned, std::vector<struct v4l2_ext_control> > class2ctrls_map;
+using class2ctrls_map = std::map<unsigned int, std::vector<struct v4l2_ext_control> >;
 
 using ctrl_qmap = std::map<std::string, struct v4l2_query_ext_ctrl>;
 static ctrl_qmap ctrl_str2q;

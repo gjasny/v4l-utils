@@ -73,7 +73,7 @@ static int checkDevice(__u32 major, __u32 minor, bool iface, __u32 id)
 	return 0;
 }
 
-typedef std::set<__u32> id_set;
+using id_set = std::set<__u32>;
 
 static media_v2_topology topology;
 static media_v2_entity *v2_ents;

@@ -51,10 +51,10 @@ class VbiTab;
 class QCloseEvent;
 class CaptureWin;
 
-typedef std::vector<unsigned> ClassIDVec;
-typedef std::map<unsigned, ClassIDVec> ClassMap;
-typedef std::map<unsigned, struct v4l2_query_ext_ctrl> CtrlMap;
-typedef std::map<unsigned, QWidget *> WidgetMap;
+using ClassIDVec = std::vector<unsigned>;
+using ClassMap = std::map<unsigned, ClassIDVec>;
+using CtrlMap = std::map<unsigned, v4l2_query_ext_ctrl>;
+using WidgetMap = std::map<unsigned, QWidget *>;
 
 enum {
 	CTRL_UPDATE_ON_CHANGE = 0x10,

@@ -29,7 +29,7 @@
 
 #define ARRAY_SIZE(arr) ((int)(sizeof(arr) / sizeof((arr)[0])))
 
-typedef std::vector<std::string> dev_vec;
+using dev_vec = std::vector<std::string>;
 using dev_map = std::map<std::string, std::string>;
 
 /* Short option list

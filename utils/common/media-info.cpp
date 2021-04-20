@@ -139,10 +139,10 @@ std::string mi_media_get_device(__u32 major, __u32 minor)
 	return "";
 }
 
-typedef struct {
+struct flag_def {
 	unsigned flag;
 	const char *str;
-} flag_def;
+};
 
 static std::string flags2s(unsigned val, const flag_def *def)
 {
