@@ -6,6 +6,7 @@
 #include <cerrno>
 #include <ctime>
 #include <string>
+#include <vector>
 
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -95,13 +96,10 @@ static int power_status_report(struct node *node, unsigned me, unsigned la, bool
 	return OK_PRESUMED;
 }
 
-struct remote_subtest power_status_subtests[] = {
+const stvec power_status_subtests{
 	{ "Give Device Power Status", CEC_LOG_ADDR_MASK_ALL, power_status_give },
 	{ "Report Device Power Status", CEC_LOG_ADDR_MASK_ALL, power_status_report },
 };
-
-const unsigned power_status_subtests_size = ARRAY_SIZE(power_status_subtests);
-
 
 /* One Touch Play */
 
@@ -233,7 +231,7 @@ static int one_touch_play_req_active_source(struct node *node, unsigned me, unsi
 	return 0;
 }
 
-struct remote_subtest one_touch_play_subtests[] = {
+const stvec one_touch_play_subtests{
 	{ "Image View On", CEC_LOG_ADDR_MASK_TV, one_touch_play_image_view_on },
 	{ "Text View On", CEC_LOG_ADDR_MASK_TV, one_touch_play_text_view_on },
 	{ "Wakeup on Image View On", CEC_LOG_ADDR_MASK_TV, one_touch_play_image_view_on_wakeup },
@@ -242,9 +240,6 @@ struct remote_subtest one_touch_play_subtests[] = {
 	{ "Input change on Text View On", CEC_LOG_ADDR_MASK_TV, one_touch_play_text_view_on_change },
 	{ "Active Source and Request Active Source", CEC_LOG_ADDR_MASK_ALL, one_touch_play_req_active_source },
 };
-
-const unsigned one_touch_play_subtests_size = ARRAY_SIZE(one_touch_play_subtests);
-
 
 /* Standby / Resume */
 
@@ -638,7 +633,7 @@ static int power_state_transitions(struct node *node, unsigned me, unsigned la, 
 	return 0;
 }
 
-struct remote_subtest standby_resume_subtests[] = {
+const stvec standby_resume_subtests{
 	{ "Standby", CEC_LOG_ADDR_MASK_ALL, standby_resume_standby },
 	{ "Repeated Standby message does not wake up", CEC_LOG_ADDR_MASK_ALL, standby_resume_standby_toggle },
 	{ "Standby: Feature aborts unknown messages", CEC_LOG_ADDR_MASK_ALL, core_unknown, true },
@@ -652,10 +647,8 @@ struct remote_subtest standby_resume_subtests[] = {
 	{ "Standby: Get Menu Language", CEC_LOG_ADDR_MASK_ALL, system_info_get_menu_lang, true },
 	{ "Standby: Give Device Features", CEC_LOG_ADDR_MASK_ALL, system_info_give_features, true },
 	{ "No wakeup on Active Source", CEC_LOG_ADDR_MASK_ALL, standby_resume_active_source_nowake },
-	{ "Wake up", CEC_LOG_ADDR_MASK_ALL, standby_resume_wakeup},
+	{ "Wake up", CEC_LOG_ADDR_MASK_ALL, standby_resume_wakeup },
 	{ "Wake up TV on Image View On", CEC_LOG_ADDR_MASK_TV, standby_resume_wakeup_image_view_on },
 	{ "Wake up TV on Text View On", CEC_LOG_ADDR_MASK_TV, standby_resume_wakeup_text_view_on },
 	{ "Power State Transitions", CEC_LOG_ADDR_MASK_TV, power_state_transitions, false, true },
 };
-
-const unsigned standby_resume_subtests_size = ARRAY_SIZE(standby_resume_subtests);

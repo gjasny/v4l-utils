@@ -82,13 +82,10 @@ static int dal_req_current_latency_invalid(struct node *node, unsigned me, unsig
 	return 0;
 }
 
-struct remote_subtest dal_subtests[] = {
+const stvec dal_subtests{
 	{ "Request Current Latency", CEC_LOG_ADDR_MASK_ALL, dal_request_current_latency },
 	{ "Request Current Latency with invalid PA", CEC_LOG_ADDR_MASK_ALL, dal_req_current_latency_invalid },
 };
-
-const unsigned dal_subtests_size = ARRAY_SIZE(dal_subtests);
-
 
 /* Audio Return Channel Control */
 
@@ -274,15 +271,12 @@ static int arc_terminate_rx(struct node *node, unsigned me, unsigned la, bool in
 	return 0;
 }
 
-struct remote_subtest arc_subtests[] = {
+const stvec arc_subtests{
 	{ "Initiate ARC (RX)", CEC_LOG_ADDR_MASK_ALL, arc_initiate_rx },
 	{ "Terminate ARC (RX)", CEC_LOG_ADDR_MASK_ALL, arc_terminate_rx },
 	{ "Initiate ARC (TX)", CEC_LOG_ADDR_MASK_ALL, arc_initiate_tx },
 	{ "Terminate ARC (TX)", CEC_LOG_ADDR_MASK_ALL, arc_terminate_tx },
 };
-
-const unsigned arc_subtests_size = ARRAY_SIZE(arc_subtests);
-
 
 /* System Audio Control */
 
@@ -762,65 +756,98 @@ static int sac_system_audio_mode_req_off(struct node *node, unsigned me, unsigne
 	return 0;
 }
 
-struct remote_subtest sac_subtests[] = {
-	{ "Request Short Audio Descriptor",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
-	  sac_request_sad_probe },
-	{ "Request Short Audio Descriptor, invalid",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
-	  sac_request_sad_invalid },
-	{ "Report Short Audio Descriptor consistency",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
-	  sac_sad_format_check },
-	{ "Report Short Audio Descriptor, multiple requests in one",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
-	  sac_sad_req_multiple },
-	{ "Set System Audio Mode (directly addressed)",
-	  CEC_LOG_ADDR_MASK_TV,
-	  sac_set_system_audio_mode_direct },
-	{ "Set System Audio Mode (broadcast on)",
-	  CEC_LOG_ADDR_MASK_TV,
-	  sac_set_system_audio_mode_broadcast_on },
-	{ "System Audio Mode Status",
-	  CEC_LOG_ADDR_MASK_TV,
-	  sac_system_audio_mode_status },
-	{ "System Audio Mode Request (on)",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
-	  sac_system_audio_mode_req_on },
-	{ "Give System Audio Mode Status",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
-	  sac_give_system_audio_mode_status },
-	{ "Give Audio Status",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
-	  sac_give_audio_status },
-	{ "User Control Pressed (Volume Up)",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
-	  sac_user_control_press_vol_up },
-	{ "User Control Pressed (Volume Down)",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
-	  sac_user_control_press_vol_down },
-	{ "User Control Pressed (Mute)",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
-	  sac_user_control_press_mute },
-	{ "User Control Pressed (Restore Volume Function)",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
-	  sac_user_control_press_restore_volume_function },
-	{ "User Control Pressed (Mute Function)",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
-	  sac_user_control_press_mute_function },
-	{ "User Control Released (Audio)",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
-	  sac_user_control_release },
-	{ "Set System Audio Mode (broadcast off)",
-	  CEC_LOG_ADDR_MASK_TV,
-	  sac_set_system_audio_mode_broadcast_off },
-	{ "System Audio Mode Request (off)",
-	  CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
-	  sac_system_audio_mode_req_off },
+const stvec sac_subtests{
+	{
+		"Request Short Audio Descriptor",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
+		sac_request_sad_probe,
+	},
+	{
+		"Request Short Audio Descriptor, invalid",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
+		sac_request_sad_invalid,
+	},
+	{
+		"Report Short Audio Descriptor consistency",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
+		sac_sad_format_check,
+	},
+	{
+		"Report Short Audio Descriptor, multiple requests in one",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
+		sac_sad_req_multiple,
+	},
+	{
+		"Set System Audio Mode (directly addressed)",
+		CEC_LOG_ADDR_MASK_TV,
+		sac_set_system_audio_mode_direct,
+	},
+	{
+		"Set System Audio Mode (broadcast on)",
+		CEC_LOG_ADDR_MASK_TV,
+		sac_set_system_audio_mode_broadcast_on,
+	},
+	{
+		"System Audio Mode Status",
+		CEC_LOG_ADDR_MASK_TV,
+		sac_system_audio_mode_status,
+	},
+	{
+		"System Audio Mode Request (on)",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
+		sac_system_audio_mode_req_on,
+	},
+	{
+		"Give System Audio Mode Status",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
+		sac_give_system_audio_mode_status,
+	},
+	{
+		"Give Audio Status",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
+		sac_give_audio_status,
+	},
+	{
+		"User Control Pressed (Volume Up)",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
+		sac_user_control_press_vol_up,
+	},
+	{
+		"User Control Pressed (Volume Down)",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
+		sac_user_control_press_vol_down,
+	},
+	{
+		"User Control Pressed (Mute)",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
+		sac_user_control_press_mute,
+	},
+	{
+		"User Control Pressed (Restore Volume Function)",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
+		sac_user_control_press_restore_volume_function,
+	},
+	{
+		"User Control Pressed (Mute Function)",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
+		sac_user_control_press_mute_function,
+	},
+	{
+		"User Control Released (Audio)",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM | CEC_LOG_ADDR_MASK_TV,
+		sac_user_control_release,
+	},
+	{
+		"Set System Audio Mode (broadcast off)",
+		CEC_LOG_ADDR_MASK_TV,
+		sac_set_system_audio_mode_broadcast_off,
+	},
+	{
+		"System Audio Mode Request (off)",
+		CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
+		sac_system_audio_mode_req_off,
+	},
 };
-
-const unsigned sac_subtests_size = ARRAY_SIZE(sac_subtests);
-
 
 /* Audio Rate Control */
 
@@ -848,10 +875,10 @@ static int audio_rate_ctl_set_audio_rate(struct node *node, unsigned me, unsigne
 	return OK_PRESUMED;
 }
 
-struct remote_subtest audio_rate_ctl_subtests[] = {
-	{ "Set Audio Rate",
-	  CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD | CEC_LOG_ADDR_MASK_TUNER,
-	  audio_rate_ctl_set_audio_rate },
+const stvec audio_rate_ctl_subtests{
+	{
+		"Set Audio Rate",
+		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD | CEC_LOG_ADDR_MASK_TUNER,
+		audio_rate_ctl_set_audio_rate,
+	},
 };
-
-const unsigned audio_rate_ctl_subtests_size = ARRAY_SIZE(audio_rate_ctl_subtests);

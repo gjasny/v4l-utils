@@ -13,14 +13,10 @@
 
 #include "cec-compliance.h"
 
-#define test_case(name, tags, subtests) {name, tags, subtests, ARRAY_SIZE(subtests)}
-#define test_case_ext(name, tags, subtests) {name, tags, subtests, subtests##_size}
-
 struct remote_test {
 	const char *name;
 	const unsigned tags;
-	struct remote_subtest *subtests;
-	unsigned num_subtests;
+	const stvec &subtests;
 };
 
 
@@ -178,7 +174,7 @@ int system_info_give_features(struct node *node, unsigned me, unsigned la, bool 
 	return 0;
 }
 
-static struct remote_subtest system_info_subtests[] = {
+static const stvec system_info_subtests{
 	{ "Polling Message", CEC_LOG_ADDR_MASK_ALL, system_info_polling },
 	{ "Give Physical Address", CEC_LOG_ADDR_MASK_ALL, system_info_phys_addr },
 	{ "Give CEC Version", CEC_LOG_ADDR_MASK_ALL, system_info_version },
@@ -186,7 +182,6 @@ static struct remote_subtest system_info_subtests[] = {
 	{ "Set Menu Language", CEC_LOG_ADDR_MASK_ALL, system_info_set_menu_lang },
 	{ "Give Device Features", CEC_LOG_ADDR_MASK_ALL, system_info_give_features },
 };
-
 
 /* Core behavior */
 
@@ -237,11 +232,10 @@ int core_abort(struct node *node, unsigned me, unsigned la, bool interactive)
 	return 0;
 }
 
-static struct remote_subtest core_subtests[] = {
+static const stvec core_subtests{
 	{ "Feature aborts unknown messages", CEC_LOG_ADDR_MASK_ALL, core_unknown },
 	{ "Feature aborts Abort message", CEC_LOG_ADDR_MASK_ALL, core_abort },
 };
-
 
 /* Vendor Specific Commands */
 
@@ -265,10 +259,9 @@ int vendor_specific_commands_id(struct node *node, unsigned me, unsigned la, boo
 	return 0;
 }
 
-static struct remote_subtest vendor_specific_subtests[] = {
+static const stvec vendor_specific_subtests{
 	{ "Give Device Vendor ID", CEC_LOG_ADDR_MASK_ALL, vendor_specific_commands_id },
 };
-
 
 /* Device OSD Transfer */
 
@@ -317,11 +310,10 @@ int device_osd_transfer_give(struct node *node, unsigned me, unsigned la, bool i
 	return 0;
 }
 
-static struct remote_subtest device_osd_transfer_subtests[] = {
+static const stvec device_osd_transfer_subtests{
 	{ "Set OSD Name", CEC_LOG_ADDR_MASK_ALL, device_osd_transfer_set },
 	{ "Give OSD Name", CEC_LOG_ADDR_MASK_ALL, device_osd_transfer_give },
 };
-
 
 /* OSD Display */
 
@@ -418,12 +410,11 @@ static int osd_string_invalid(struct node *node, unsigned me, unsigned la, bool 
 	return 0;
 }
 
-static struct remote_subtest osd_string_subtests[] = {
+static const stvec osd_string_subtests{
 	{ "Set OSD String with default timeout", CEC_LOG_ADDR_MASK_TV, osd_string_set_default },
 	{ "Set OSD String with no timeout", CEC_LOG_ADDR_MASK_TV, osd_string_set_until_clear },
 	{ "Set OSD String with invalid operand", CEC_LOG_ADDR_MASK_TV, osd_string_invalid },
 };
-
 
 /* Routing Control */
 
@@ -525,13 +516,12 @@ static int routing_control_set_stream_path(struct node *node, unsigned me, unsig
 	return OK_PRESUMED;
 }
 
-static struct remote_subtest routing_control_subtests[] = {
+static const stvec routing_control_subtests{
 	{ "Active Source", CEC_LOG_ADDR_MASK_TV, routing_control_active_source },
 	{ "Request Active Source", CEC_LOG_ADDR_MASK_ALL, routing_control_req_active_source },
 	{ "Inactive Source", CEC_LOG_ADDR_MASK_TV, routing_control_inactive_source },
 	{ "Set Stream Path", CEC_LOG_ADDR_MASK_ALL, routing_control_set_stream_path },
 };
-
 
 /* Remote Control Passthrough */
 
@@ -573,11 +563,10 @@ static int rc_passthrough_user_ctrl_released(struct node *node, unsigned me, uns
 	return OK_PRESUMED;
 }
 
-static struct remote_subtest rc_passthrough_subtests[] = {
+static const stvec rc_passthrough_subtests{
 	{ "User Control Pressed", CEC_LOG_ADDR_MASK_ALL, rc_passthrough_user_ctrl_pressed },
 	{ "User Control Released", CEC_LOG_ADDR_MASK_ALL, rc_passthrough_user_ctrl_released },
 };
-
 
 /* Device Menu Control */
 
@@ -604,12 +593,11 @@ static int dev_menu_ctl_request(struct node *node, unsigned me, unsigned la, boo
 	return 0;
 }
 
-static struct remote_subtest dev_menu_ctl_subtests[] = {
+static const stvec dev_menu_ctl_subtests{
 	{ "Menu Request", static_cast<__u16>(~CEC_LOG_ADDR_MASK_TV), dev_menu_ctl_request },
 	{ "User Control Pressed", CEC_LOG_ADDR_MASK_ALL, rc_passthrough_user_ctrl_pressed },
 	{ "User Control Released", CEC_LOG_ADDR_MASK_ALL, rc_passthrough_user_ctrl_released },
 };
-
 
 /* Deck Control */
 
@@ -704,21 +692,12 @@ static int deck_ctl_play(struct node *node, unsigned me, unsigned la, bool inter
 	return OK_PRESUMED;
 }
 
-static struct remote_subtest deck_ctl_subtests[] = {
-	{ "Give Deck Status",
-	  CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD,
-	  deck_ctl_give_status },
-	{ "Deck Status",
-	  CEC_LOG_ADDR_MASK_ALL,
-	  deck_ctl_deck_status },
-	{ "Deck Control",
-	  CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD,
-	  deck_ctl_deck_ctl },
-	{ "Play",
-	  CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD,
-	  deck_ctl_play },
+static const stvec deck_ctl_subtests{
+	{ "Give Deck Status", CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD, deck_ctl_give_status },
+	{ "Deck Status", CEC_LOG_ADDR_MASK_ALL, deck_ctl_deck_status },
+	{ "Deck Control", CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD, deck_ctl_deck_ctl },
+	{ "Play", CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD, deck_ctl_play },
 };
-
 
 /* Tuner Control */
 
@@ -957,10 +936,9 @@ static int tuner_ctl_test(struct node *node, unsigned me, unsigned la, bool inte
 	return 0;
 }
 
-static struct remote_subtest tuner_ctl_subtests[] = {
+static const stvec tuner_ctl_subtests{
 	{ "Tuner Control", CEC_LOG_ADDR_MASK_TUNER | CEC_LOG_ADDR_MASK_TV, tuner_ctl_test },
 };
-
 
 /* One Touch Record */
 
@@ -1061,13 +1039,12 @@ static int one_touch_rec_status(struct node *node, unsigned me, unsigned la, boo
 	return 0;
 }
 
-static struct remote_subtest one_touch_rec_subtests[] = {
+static const stvec one_touch_rec_subtests{
 	{ "Record TV Screen", CEC_LOG_ADDR_MASK_TV, one_touch_rec_tv_screen },
 	{ "Record On", CEC_LOG_ADDR_MASK_RECORD, one_touch_rec_on },
 	{ "Record Off", CEC_LOG_ADDR_MASK_RECORD, one_touch_rec_off },
 	{ "Record Status", CEC_LOG_ADDR_MASK_ALL, one_touch_rec_status },
 };
-
 
 /* Timer Programming */
 
@@ -1281,7 +1258,7 @@ static int timer_prog_timer_clear_status(struct node *node, unsigned me, unsigne
 	return OK_PRESUMED;
 }
 
-static struct remote_subtest timer_prog_subtests[] = {
+static const stvec timer_prog_subtests{
 	{ "Set Analogue Timer", CEC_LOG_ADDR_MASK_RECORD, timer_prog_set_analog_timer },
 	{ "Set Digital Timer", CEC_LOG_ADDR_MASK_RECORD, timer_prog_set_digital_timer },
 	{ "Set Timer Program Title", CEC_LOG_ADDR_MASK_RECORD, timer_prog_set_prog_title },
@@ -1384,10 +1361,9 @@ static int cdc_hec_discover(struct node *node, unsigned me, unsigned la, bool pr
 	return OK_NOT_SUPPORTED;
 }
 
-static struct remote_subtest cdc_subtests[] = {
+static const stvec cdc_subtests{
 	{ "CDC_HEC_Discover", CEC_LOG_ADDR_MASK_ALL, cdc_hec_discover },
 };
-
 
 /* Post-test checks */
 
@@ -1409,78 +1385,32 @@ static int post_test_check_recognized(struct node *node, unsigned me, unsigned l
 	return 0;
 }
 
-static struct remote_subtest post_test_subtests[] = {
+static const stvec post_test_subtests{
 	{ "Recognized/unrecognized message consistency", CEC_LOG_ADDR_MASK_ALL, post_test_check_recognized },
 };
 
-
-static const struct remote_test tests[] = {
-	test_case("Core",
-		  TAG_CORE,
-		  core_subtests),
-	test_case_ext("Give Device Power Status feature",
-		      TAG_POWER_STATUS,
-		      power_status_subtests),
-	test_case("System Information feature",
-		  TAG_SYSTEM_INFORMATION,
-		  system_info_subtests),
-	test_case("Vendor Specific Commands feature",
-		  TAG_VENDOR_SPECIFIC_COMMANDS,
-		  vendor_specific_subtests),
-	test_case("Device OSD Transfer feature",
-		  TAG_DEVICE_OSD_TRANSFER,
-		  device_osd_transfer_subtests),
-	test_case("OSD String feature",
-		  TAG_OSD_DISPLAY,
-		  osd_string_subtests),
-	test_case("Remote Control Passthrough feature",
-		  TAG_REMOTE_CONTROL_PASSTHROUGH,
-		  rc_passthrough_subtests),
-	test_case("Device Menu Control feature",
-		  TAG_DEVICE_MENU_CONTROL,
-		  dev_menu_ctl_subtests),
-	test_case("Deck Control feature",
-		  TAG_DECK_CONTROL,
-		  deck_ctl_subtests),
-	test_case("Tuner Control feature",
-		  TAG_TUNER_CONTROL,
-		  tuner_ctl_subtests),
-	test_case("One Touch Record feature",
-		  TAG_ONE_TOUCH_RECORD,
-		  one_touch_rec_subtests),
-	test_case("Timer Programming feature",
-		  TAG_TIMER_PROGRAMMING,
-		  timer_prog_subtests),
-	test_case("Capability Discovery and Control feature",
-		  TAG_CAP_DISCOVERY_CONTROL,
-		  cdc_subtests),
-	test_case_ext("Dynamic Auto Lipsync feature",
-		      TAG_DYNAMIC_AUTO_LIPSYNC,
-		      dal_subtests),
-	test_case_ext("Audio Return Channel feature",
-		      TAG_ARC_CONTROL,
-		      arc_subtests),
-	test_case_ext("System Audio Control feature",
-		      TAG_SYSTEM_AUDIO_CONTROL,
-		      sac_subtests),
-	test_case_ext("Audio Rate Control feature",
-		      TAG_AUDIO_RATE_CONTROL,
-		      audio_rate_ctl_subtests),
-	test_case_ext("One Touch Play feature",
-		      TAG_ONE_TOUCH_PLAY,
-		      one_touch_play_subtests),
-	test_case("Routing Control feature",
-		  TAG_ROUTING_CONTROL,
-		  routing_control_subtests),
-	test_case_ext("Standby/Resume and Power Status",
-		      TAG_POWER_STATUS | TAG_STANDBY_RESUME,
-		      standby_resume_subtests),
-	test_case("Post-test checks",
-		  TAG_CORE,
-		  post_test_subtests),
+static const remote_test tests[] = {
+	{ "Core", TAG_CORE, core_subtests },
+	{ "Give Device Power Status feature", TAG_POWER_STATUS, power_status_subtests },
+	{ "System Information feature", TAG_SYSTEM_INFORMATION, system_info_subtests },
+	{ "Vendor Specific Commands feature", TAG_VENDOR_SPECIFIC_COMMANDS, vendor_specific_subtests },
+	{ "Device OSD Transfer feature", TAG_DEVICE_OSD_TRANSFER, device_osd_transfer_subtests },
+	{ "OSD String feature", TAG_OSD_DISPLAY, osd_string_subtests },
+	{ "Remote Control Passthrough feature", TAG_REMOTE_CONTROL_PASSTHROUGH, rc_passthrough_subtests },
+	{ "Device Menu Control feature", TAG_DEVICE_MENU_CONTROL, dev_menu_ctl_subtests },
+	{ "Deck Control feature", TAG_DECK_CONTROL, deck_ctl_subtests },
+	{ "Tuner Control feature", TAG_TUNER_CONTROL, tuner_ctl_subtests },
+	{ "One Touch Record feature", TAG_ONE_TOUCH_RECORD, one_touch_rec_subtests },
+	{ "Timer Programming feature", TAG_TIMER_PROGRAMMING, timer_prog_subtests },
+	{ "Capability Discovery and Control feature", TAG_CAP_DISCOVERY_CONTROL, cdc_subtests },
+	{ "Dynamic Auto Lipsync feature", TAG_DYNAMIC_AUTO_LIPSYNC, dal_subtests },
+	{ "Audio Return Channel feature", TAG_ARC_CONTROL, arc_subtests },
+	{ "System Audio Control feature", TAG_SYSTEM_AUDIO_CONTROL, sac_subtests },
+	{ "Audio Rate Control feature", TAG_AUDIO_RATE_CONTROL, audio_rate_ctl_subtests },
+	{ "Routing Control feature", TAG_ROUTING_CONTROL, routing_control_subtests },
+	{ "Standby/Resume and Power Status", TAG_POWER_STATUS | TAG_STANDBY_RESUME, standby_resume_subtests },
+	{ "Post-test checks", TAG_CORE, post_test_subtests },
 };
-
-static const unsigned num_tests = sizeof(tests) / sizeof(struct remote_test);
 
 static std::map<std::string, int> mapTests;
 static std::map<std::string, bool> mapTestsNoWarnings;
@@ -1490,14 +1420,13 @@ void collectTests()
 	std::map<std::string, __u64> mapTestFuncs;
 
 	for (const auto &test : tests) {
-		for (unsigned j = 0; j < test.num_subtests; j++) {
-			std::string name = safename(test.subtests[j].name);
-			auto func = (__u64)test.subtests[j].test_fn;
+		for (const auto &subtest : test.subtests) {
+			std::string name = safename(subtest.name);
+			auto func = (__u64)subtest.test_fn;
 
 			if (mapTestFuncs.find(name) != mapTestFuncs.end() &&
 			    mapTestFuncs[name] != func) {
-				fprintf(stderr, "Duplicate subtest name, but different tests: %s\n",
-					test.subtests[j].name);
+				fprintf(stderr, "Duplicate subtest name, but different tests: %s\n", subtest.name);
 				std::exit(EXIT_FAILURE);
 			}
 			mapTestFuncs[name] = func;
@@ -1511,10 +1440,8 @@ void listTests()
 {
 	for (const auto &test : tests) {
 		printf("%s:\n", test.name);
-		for (unsigned j = 0; j < test.num_subtests; j++) {
-			std::string name = safename(test.subtests[j].name);
-
-			printf("\t%s\n", name.c_str());
+		for (const auto &subtest : test.subtests) {
+			printf("\t%s\n", safename(subtest.name).c_str());
 		}
 	}
 }
@@ -1558,27 +1485,26 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 			continue;
 
 		printf("\t%s:\n", test.name);
-		for (unsigned j = 0; j < test.num_subtests; j++) {
-			const char *name = test.subtests[j].name;
+		for (const auto &subtest : test.subtests) {
+			const char *name = subtest.name;
 
-			if (test.subtests[j].for_cec20 &&
-			    (node->remote[la].cec_version < CEC_OP_CEC_VERSION_2_0 ||
-			     !node->has_cec20))
+			if (subtest.for_cec20 &&
+			    (node->remote[la].cec_version < CEC_OP_CEC_VERSION_2_0 || !node->has_cec20))
 				continue;
 
-			if (test.subtests[j].in_standby) {
+			if (subtest.in_standby) {
 				struct cec_log_addrs laddrs = { };
 				doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 
 				if (!laddrs.log_addr_mask)
 					continue;
 			}
-			node->in_standby = test.subtests[j].in_standby;
+			node->in_standby = subtest.in_standby;
 			mode_set_initiator(node);
 			unsigned old_warnings = warnings;
-			ret = test.subtests[j].test_fn(node, me, la, interactive);
+			ret = subtest.test_fn(node, me, la, interactive);
 			bool has_warnings = old_warnings < warnings;
-			if (!(test.subtests[j].la_mask & (1 << la)) && !ret)
+			if (!(subtest.la_mask & (1 << la)) && !ret)
 				ret = OK_UNEXPECTED;
 
 			if (mapTests[safename(name)] != DONT_CARE) {

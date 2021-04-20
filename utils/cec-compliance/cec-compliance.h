@@ -19,6 +19,8 @@
 
 #include <cec-info.h>
 
+#include <vector>
+
 #define TAG_AUDIO_RATE_CONTROL		1
 #define TAG_ARC_CONTROL 		(1 << 1)
 #define TAG_CAP_DISCOVERY_CONTROL 	(1 << 2)
@@ -173,6 +175,8 @@ struct remote_subtest {
 	bool in_standby;
 	bool for_cec20;
 };
+
+using stvec = std::vector<remote_subtest>;
 
 #define OK			0
 #define FAIL			1
@@ -456,25 +460,17 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 			     bool interactive);
 
 // cec-test-audio.cpp
-extern struct remote_subtest sac_subtests[];
-extern const unsigned sac_subtests_size;
-extern struct remote_subtest dal_subtests[];
-extern const unsigned dal_subtests_size;
-extern struct remote_subtest arc_subtests[];
-extern const unsigned arc_subtests_size;
-extern struct remote_subtest audio_rate_ctl_subtests[];
-extern const unsigned audio_rate_ctl_subtests_size;
+extern const stvec sac_subtests;
+extern const stvec dal_subtests;
+extern const stvec arc_subtests;
+extern const stvec audio_rate_ctl_subtests;
 
 // cec-test-power.cpp
 bool util_interactive_ensure_power_state(struct node *node, unsigned me, unsigned la, bool interactive,
 					 __u8 target_pwr);
-extern struct remote_subtest standby_subtests[];
-extern const unsigned standby_subtests_size;
-extern struct remote_subtest one_touch_play_subtests[];
-extern const unsigned one_touch_play_subtests_size;
-extern struct remote_subtest power_status_subtests[];
-extern const unsigned power_status_subtests_size;
-extern struct remote_subtest standby_resume_subtests[];
-extern const unsigned standby_resume_subtests_size;
+extern const stvec standby_subtests;
+extern const stvec one_touch_play_subtests;
+extern const stvec power_status_subtests;
+extern const stvec standby_resume_subtests;
 
 #endif
