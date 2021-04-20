@@ -588,13 +588,13 @@ fi
 CPPFLAGS="-I\$(top_srcdir)/lib/include -Wall -Wpointer-arith -D_GNU_SOURCE $CPPFLAGS"
 
 # Obtain git SHA of HEAD
-AC_SUBST(GIT_SHA, ["-DGIT_SHA=\$(shell if test -d \$(top_srcdir)/.git ; then git -C \$(top_srcdir) rev-parse --short=12 HEAD ; fi)"])
+AC_SUBST(GIT_SHA, ["-DGIT_SHA=\$(shell if test -e \$(top_srcdir)/.git ; then git -C \$(top_srcdir) rev-parse --short=12 HEAD ; fi)"])
 
 # Obtain git commit count of HEAD
-AC_SUBST(GIT_COMMIT_CNT, ["-DGIT_COMMIT_CNT=\$(shell if test -d \$(top_srcdir)/.git ; then printf '-'; git -C \$(top_srcdir) rev-list --count HEAD ; fi)"])
+AC_SUBST(GIT_COMMIT_CNT, ["-DGIT_COMMIT_CNT=\$(shell if test -e \$(top_srcdir)/.git ; then printf '-'; git -C \$(top_srcdir) rev-list --count HEAD ; fi)"])
 
 # Obtain git commit date of HEAD
-AC_SUBST(GIT_COMMIT_DATE, ["-DGIT_COMMIT_DATE=\$(shell if test -d \$(top_srcdir)/.git ; then printf '\"'; TZ=UTC git -C \$(top_srcdir) show --quiet --date='format-local:%F %T\"' --format=\"%cd\"; fi)"])
+AC_SUBST(GIT_COMMIT_DATE, ["-DGIT_COMMIT_DATE=\$(shell if test -e \$(top_srcdir)/.git ; then printf '\"'; TZ=UTC git -C \$(top_srcdir) show --quiet --date='format-local:%F %T\"' --format=\"%cd\"; fi)"])
 
 AM_COND_IF([WITH_LIBDVBV5], [USE_LIBDVBV5="yes"], [USE_LIBDVBV5="no"])
 AM_COND_IF([WITH_DVBV5_REMOTE], [USE_DVBV5_REMOTE="yes"
