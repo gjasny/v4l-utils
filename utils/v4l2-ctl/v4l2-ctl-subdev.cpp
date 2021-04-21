@@ -5,7 +5,7 @@ struct mbus_name {
 	__u32 code;
 };
 
-static struct mbus_name mbus_names[] = {
+static const struct mbus_name mbus_names[] = {
 	{ "Fixed", MEDIA_BUS_FMT_FIXED },
 #include "media-bus-format-names.h"
 	{ nullptr, 0 }
@@ -568,9 +568,8 @@ static void print_mbus_code(__u32 code)
 
 static void print_mbus_codes(int fd, __u32 pad)
 {
-	struct v4l2_subdev_mbus_code_enum mbus_code;
+	struct v4l2_subdev_mbus_code_enum mbus_code = {};
 
-	memset(&mbus_code, 0, sizeof(mbus_code));
 	mbus_code.pad = pad;
 	mbus_code.which = V4L2_SUBDEV_FORMAT_TRY;
 
