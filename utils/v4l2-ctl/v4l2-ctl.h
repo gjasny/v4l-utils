@@ -277,11 +277,6 @@ extern __u32 vidcap_buftype;
 extern __u32 vidout_buftype;
 extern int verbose;
 
-struct flag_def {
-	unsigned flag;
-	const char *str;
-};
-
 /* fmts specified */
 #define FmtWidth		(1L<<0)
 #define FmtHeight		(1L<<1)
