@@ -168,7 +168,7 @@ const char *cec_vendor2s(unsigned vendor)
 	case 0x8065e9:
 		return "Benq";
 	default:
-		return NULL;
+		return nullptr;
 	}
 }
 
