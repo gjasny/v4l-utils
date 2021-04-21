@@ -16,7 +16,7 @@
 struct remote_test {
 	const char *name;
 	const unsigned tags;
-	const stvec &subtests;
+	const vec_remote_subtests &subtests;
 };
 
 
@@ -174,7 +174,7 @@ int system_info_give_features(struct node *node, unsigned me, unsigned la, bool 
 	return 0;
 }
 
-static const stvec system_info_subtests{
+static const vec_remote_subtests system_info_subtests{
 	{ "Polling Message", CEC_LOG_ADDR_MASK_ALL, system_info_polling },
 	{ "Give Physical Address", CEC_LOG_ADDR_MASK_ALL, system_info_phys_addr },
 	{ "Give CEC Version", CEC_LOG_ADDR_MASK_ALL, system_info_version },
@@ -232,7 +232,7 @@ int core_abort(struct node *node, unsigned me, unsigned la, bool interactive)
 	return 0;
 }
 
-static const stvec core_subtests{
+static const vec_remote_subtests core_subtests{
 	{ "Feature aborts unknown messages", CEC_LOG_ADDR_MASK_ALL, core_unknown },
 	{ "Feature aborts Abort message", CEC_LOG_ADDR_MASK_ALL, core_abort },
 };
@@ -259,7 +259,7 @@ int vendor_specific_commands_id(struct node *node, unsigned me, unsigned la, boo
 	return 0;
 }
 
-static const stvec vendor_specific_subtests{
+static const vec_remote_subtests vendor_specific_subtests{
 	{ "Give Device Vendor ID", CEC_LOG_ADDR_MASK_ALL, vendor_specific_commands_id },
 };
 
@@ -310,7 +310,7 @@ int device_osd_transfer_give(struct node *node, unsigned me, unsigned la, bool i
 	return 0;
 }
 
-static const stvec device_osd_transfer_subtests{
+static const vec_remote_subtests device_osd_transfer_subtests{
 	{ "Set OSD Name", CEC_LOG_ADDR_MASK_ALL, device_osd_transfer_set },
 	{ "Give OSD Name", CEC_LOG_ADDR_MASK_ALL, device_osd_transfer_give },
 };
@@ -410,7 +410,7 @@ static int osd_string_invalid(struct node *node, unsigned me, unsigned la, bool 
 	return 0;
 }
 
-static const stvec osd_string_subtests{
+static const vec_remote_subtests osd_string_subtests{
 	{ "Set OSD String with default timeout", CEC_LOG_ADDR_MASK_TV, osd_string_set_default },
 	{ "Set OSD String with no timeout", CEC_LOG_ADDR_MASK_TV, osd_string_set_until_clear },
 	{ "Set OSD String with invalid operand", CEC_LOG_ADDR_MASK_TV, osd_string_invalid },
@@ -516,7 +516,7 @@ static int routing_control_set_stream_path(struct node *node, unsigned me, unsig
 	return OK_PRESUMED;
 }
 
-static const stvec routing_control_subtests{
+static const vec_remote_subtests routing_control_subtests{
 	{ "Active Source", CEC_LOG_ADDR_MASK_TV, routing_control_active_source },
 	{ "Request Active Source", CEC_LOG_ADDR_MASK_ALL, routing_control_req_active_source },
 	{ "Inactive Source", CEC_LOG_ADDR_MASK_TV, routing_control_inactive_source },
@@ -563,7 +563,7 @@ static int rc_passthrough_user_ctrl_released(struct node *node, unsigned me, uns
 	return OK_PRESUMED;
 }
 
-static const stvec rc_passthrough_subtests{
+static const vec_remote_subtests rc_passthrough_subtests{
 	{ "User Control Pressed", CEC_LOG_ADDR_MASK_ALL, rc_passthrough_user_ctrl_pressed },
 	{ "User Control Released", CEC_LOG_ADDR_MASK_ALL, rc_passthrough_user_ctrl_released },
 };
@@ -593,7 +593,7 @@ static int dev_menu_ctl_request(struct node *node, unsigned me, unsigned la, boo
 	return 0;
 }
 
-static const stvec dev_menu_ctl_subtests{
+static const vec_remote_subtests dev_menu_ctl_subtests{
 	{ "Menu Request", static_cast<__u16>(~CEC_LOG_ADDR_MASK_TV), dev_menu_ctl_request },
 	{ "User Control Pressed", CEC_LOG_ADDR_MASK_ALL, rc_passthrough_user_ctrl_pressed },
 	{ "User Control Released", CEC_LOG_ADDR_MASK_ALL, rc_passthrough_user_ctrl_released },
@@ -692,7 +692,7 @@ static int deck_ctl_play(struct node *node, unsigned me, unsigned la, bool inter
 	return OK_PRESUMED;
 }
 
-static const stvec deck_ctl_subtests{
+static const vec_remote_subtests deck_ctl_subtests{
 	{ "Give Deck Status", CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD, deck_ctl_give_status },
 	{ "Deck Status", CEC_LOG_ADDR_MASK_ALL, deck_ctl_deck_status },
 	{ "Deck Control", CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD, deck_ctl_deck_ctl },
@@ -936,7 +936,7 @@ static int tuner_ctl_test(struct node *node, unsigned me, unsigned la, bool inte
 	return 0;
 }
 
-static const stvec tuner_ctl_subtests{
+static const vec_remote_subtests tuner_ctl_subtests{
 	{ "Tuner Control", CEC_LOG_ADDR_MASK_TUNER | CEC_LOG_ADDR_MASK_TV, tuner_ctl_test },
 };
 
@@ -1039,7 +1039,7 @@ static int one_touch_rec_status(struct node *node, unsigned me, unsigned la, boo
 	return 0;
 }
 
-static const stvec one_touch_rec_subtests{
+static const vec_remote_subtests one_touch_rec_subtests{
 	{ "Record TV Screen", CEC_LOG_ADDR_MASK_TV, one_touch_rec_tv_screen },
 	{ "Record On", CEC_LOG_ADDR_MASK_RECORD, one_touch_rec_on },
 	{ "Record Off", CEC_LOG_ADDR_MASK_RECORD, one_touch_rec_off },
@@ -1258,7 +1258,7 @@ static int timer_prog_timer_clear_status(struct node *node, unsigned me, unsigne
 	return OK_PRESUMED;
 }
 
-static const stvec timer_prog_subtests{
+static const vec_remote_subtests timer_prog_subtests{
 	{ "Set Analogue Timer", CEC_LOG_ADDR_MASK_RECORD, timer_prog_set_analog_timer },
 	{ "Set Digital Timer", CEC_LOG_ADDR_MASK_RECORD, timer_prog_set_digital_timer },
 	{ "Set Timer Program Title", CEC_LOG_ADDR_MASK_RECORD, timer_prog_set_prog_title },
@@ -1361,7 +1361,7 @@ static int cdc_hec_discover(struct node *node, unsigned me, unsigned la, bool pr
 	return OK_NOT_SUPPORTED;
 }
 
-static const stvec cdc_subtests{
+static const vec_remote_subtests cdc_subtests{
 	{ "CDC_HEC_Discover", CEC_LOG_ADDR_MASK_ALL, cdc_hec_discover },
 };
 
@@ -1385,7 +1385,7 @@ static int post_test_check_recognized(struct node *node, unsigned me, unsigned l
 	return 0;
 }
 
-static const stvec post_test_subtests{
+static const vec_remote_subtests post_test_subtests{
 	{ "Recognized/unrecognized message consistency", CEC_LOG_ADDR_MASK_ALL, post_test_check_recognized },
 };
 

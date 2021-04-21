@@ -96,7 +96,7 @@ static int power_status_report(struct node *node, unsigned me, unsigned la, bool
 	return OK_PRESUMED;
 }
 
-const stvec power_status_subtests{
+const vec_remote_subtests power_status_subtests{
 	{ "Give Device Power Status", CEC_LOG_ADDR_MASK_ALL, power_status_give },
 	{ "Report Device Power Status", CEC_LOG_ADDR_MASK_ALL, power_status_report },
 };
@@ -231,7 +231,7 @@ static int one_touch_play_req_active_source(struct node *node, unsigned me, unsi
 	return 0;
 }
 
-const stvec one_touch_play_subtests{
+const vec_remote_subtests one_touch_play_subtests{
 	{ "Image View On", CEC_LOG_ADDR_MASK_TV, one_touch_play_image_view_on },
 	{ "Text View On", CEC_LOG_ADDR_MASK_TV, one_touch_play_text_view_on },
 	{ "Wakeup on Image View On", CEC_LOG_ADDR_MASK_TV, one_touch_play_image_view_on_wakeup },
@@ -633,7 +633,7 @@ static int power_state_transitions(struct node *node, unsigned me, unsigned la, 
 	return 0;
 }
 
-const stvec standby_resume_subtests{
+const vec_remote_subtests standby_resume_subtests{
 	{ "Standby", CEC_LOG_ADDR_MASK_ALL, standby_resume_standby },
 	{ "Repeated Standby message does not wake up", CEC_LOG_ADDR_MASK_ALL, standby_resume_standby_toggle },
 	{ "Standby: Feature aborts unknown messages", CEC_LOG_ADDR_MASK_ALL, core_unknown, true },

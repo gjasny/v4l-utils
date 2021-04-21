@@ -176,7 +176,7 @@ struct remote_subtest {
 	bool for_cec20;
 };
 
-using stvec = std::vector<remote_subtest>;
+using vec_remote_subtests = std::vector<remote_subtest>;
 
 #define OK			0
 #define FAIL			1
@@ -460,17 +460,17 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 			     bool interactive);
 
 // cec-test-audio.cpp
-extern const stvec sac_subtests;
-extern const stvec dal_subtests;
-extern const stvec arc_subtests;
-extern const stvec audio_rate_ctl_subtests;
+extern const vec_remote_subtests sac_subtests;
+extern const vec_remote_subtests dal_subtests;
+extern const vec_remote_subtests arc_subtests;
+extern const vec_remote_subtests audio_rate_ctl_subtests;
 
 // cec-test-power.cpp
 bool util_interactive_ensure_power_state(struct node *node, unsigned me, unsigned la, bool interactive,
 					 __u8 target_pwr);
-extern const stvec standby_subtests;
-extern const stvec one_touch_play_subtests;
-extern const stvec power_status_subtests;
-extern const stvec standby_resume_subtests;
+extern const vec_remote_subtests standby_subtests;
+extern const vec_remote_subtests one_touch_play_subtests;
+extern const vec_remote_subtests power_status_subtests;
+extern const vec_remote_subtests standby_resume_subtests;
 
 #endif

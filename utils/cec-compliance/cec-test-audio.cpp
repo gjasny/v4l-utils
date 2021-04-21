@@ -82,7 +82,7 @@ static int dal_req_current_latency_invalid(struct node *node, unsigned me, unsig
 	return 0;
 }
 
-const stvec dal_subtests{
+const vec_remote_subtests dal_subtests{
 	{ "Request Current Latency", CEC_LOG_ADDR_MASK_ALL, dal_request_current_latency },
 	{ "Request Current Latency with invalid PA", CEC_LOG_ADDR_MASK_ALL, dal_req_current_latency_invalid },
 };
@@ -271,7 +271,7 @@ static int arc_terminate_rx(struct node *node, unsigned me, unsigned la, bool in
 	return 0;
 }
 
-const stvec arc_subtests{
+const vec_remote_subtests arc_subtests{
 	{ "Initiate ARC (RX)", CEC_LOG_ADDR_MASK_ALL, arc_initiate_rx },
 	{ "Terminate ARC (RX)", CEC_LOG_ADDR_MASK_ALL, arc_terminate_rx },
 	{ "Initiate ARC (TX)", CEC_LOG_ADDR_MASK_ALL, arc_initiate_tx },
@@ -756,7 +756,7 @@ static int sac_system_audio_mode_req_off(struct node *node, unsigned me, unsigne
 	return 0;
 }
 
-const stvec sac_subtests{
+const vec_remote_subtests sac_subtests{
 	{
 		"Request Short Audio Descriptor",
 		CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
@@ -875,7 +875,7 @@ static int audio_rate_ctl_set_audio_rate(struct node *node, unsigned me, unsigne
 	return OK_PRESUMED;
 }
 
-const stvec audio_rate_ctl_subtests{
+const vec_remote_subtests audio_rate_ctl_subtests{
 	{
 		"Set Audio Rate",
 		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD | CEC_LOG_ADDR_MASK_TUNER,
