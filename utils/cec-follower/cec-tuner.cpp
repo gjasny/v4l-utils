@@ -3,6 +3,7 @@
  * Copyright 2016 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <array>
 #include <ctime>
 #include <string>
 
@@ -13,10 +14,8 @@
 
 #define NUM_ANALOG_FREQS 3
 #define NUM_DIGITAL_CHANS 3
-#define TOT_ANALOG_FREQS (sizeof(analog_freqs_khz) / sizeof(analog_freqs_khz[0][0][0]))
-#define TOT_DIGITAL_CHANS ((sizeof(digital_arib_data) / sizeof(digital_arib_data[0][0])) + \
-			   (sizeof(digital_atsc_data) / sizeof(digital_atsc_data[0][0])) + \
-			   (sizeof(digital_dvb_data) / sizeof(digital_dvb_data[0][0])))
+#define TOT_ANALOG_FREQS analog_freqs_khz[0][0].size()
+#define TOT_DIGITAL_CHANS digital_arib_data[0].size() + digital_atsc_data[0].size() + digital_dvb_data[0].size()
 
 struct service_info {
 	unsigned tsid;
@@ -45,22 +44,22 @@ struct service_info {
  *
  * https://sichbopvr.com/frequency-tables/Brazil/Rio%20de%20Janeiro/Rio%20De%20Janeiro
  */
-static const struct service_info digital_arib_data[2][NUM_DIGITAL_CHANS] =
-{
+using arib = std::array<service_info, NUM_DIGITAL_CHANS>;
+static constexpr std::array<arib, 2> digital_arib_data{
 	// satellite, arib-bs
-	{
+	arib{
 		// tsid, onid, sid, fmt, major, minor
-		{ 1032, 1, 30203, 1, 0, 30203 },
-		{ 1046, 1, 30505, 1, 0, 30505 },
-		{ 1060, 1, 30609, 1, 0, 30609 }
+		service_info{ 1032, 1, 30203, 1, 0, 30203 },
+		service_info{ 1046, 1, 30505, 1, 0, 30505 },
+		service_info{ 1060, 1, 30609, 1, 0, 30609 },
 	},
 	// terrestrial, arib-t
-	{
+	arib{
 		// tsid, onid, sid, fmt, major, minor
-		{ 1519, 1519, 48608, 1, 0, 48608 },
-		{ 1624, 1624, 51992, 1, 0, 51992 },
-		{ 1905, 1905, 60960, 1, 0, 60960 }
-	}
+		service_info{ 1519, 1519, 48608, 1, 0, 48608 },
+		service_info{ 1624, 1624, 51992, 1, 0, 51992 },
+		service_info{ 1905, 1905, 60960, 1, 0, 60960 },
+	},
 };
 
 /*
@@ -84,22 +83,22 @@ static const struct service_info digital_arib_data[2][NUM_DIGITAL_CHANS] =
  * ATSC does not use ONIDs and SID will be used as the program number.  All ATSC
  * channel number formats are 2 part.
  */
-static const struct service_info digital_atsc_data[2][NUM_DIGITAL_CHANS] =
-{
+using atsc = std::array<service_info, NUM_DIGITAL_CHANS>;
+static constexpr std::array<atsc, 2> digital_atsc_data{
 	// satellite, atsc-sat
-	{
+	atsc{
 		// tsid, onid, sid, fmt, major, minor
-		{ 2065, 0, 50316, 2, 3, 50316 },
-		{ 2090, 0, 50882, 2, 3, 50882 },
-		{ 2122, 0, 55295, 2, 3, 55295 }
+		service_info{ 2065, 0, 50316, 2, 3, 50316 },
+		service_info{ 2090, 0, 50882, 2, 3, 50882 },
+		service_info{ 2122, 0, 55295, 2, 3, 55295 },
 	},
 	// terrestrial, atsc-t
-	{
+	atsc{
 		// tsid, onid, sid, fmt, major, minor
-		{ 1675, 0, 1, 2, 4, 1 },
-		{ 1675, 0, 2, 2, 4, 2 },
-		{ 1675, 0, 3, 2, 4, 3 }
-	}
+		service_info{ 1675, 0, 1, 2, 4, 1 },
+		service_info{ 1675, 0, 2, 2, 4, 2 },
+		service_info{ 1675, 0, 3, 2, 4, 3 },
+	},
 };
 
 /*
@@ -119,22 +118,22 @@ static const struct service_info digital_atsc_data[2][NUM_DIGITAL_CHANS] =
  * https://sichbopvr.com/frequency-tables/Sweden/Skane%20Lan/Malm%c3%b6
  *
  */
-static const struct service_info digital_dvb_data[2][NUM_DIGITAL_CHANS] =
-{
+using dvb = std::array<service_info, NUM_DIGITAL_CHANS>;
+static constexpr std::array<dvb, 2> digital_dvb_data{
 	// satellite, dvb-s2
-	{
+	dvb{
 		// tsid, onid, sid, fmt, major, minor
-		{ 61, 70, 7193, 1, 0, 24 },
-		{ 65, 70, 7040, 1, 0, 72 },
-		{ 28, 70, 7012, 1, 0, 101 }
+		service_info{ 61, 70, 7193, 1, 0, 24 },
+		service_info{ 65, 70, 7040, 1, 0, 72 },
+		service_info{ 28, 70, 7012, 1, 0, 101 },
 	},
 	// terrestrial, dvb-t
-	{
+	dvb{
 		// tsid, onid, sid, fmt, major, minor
-		{ 1002, 8400, 2025, 1, 0, 21 },
-		{ 1004, 8400, 84, 1, 0, 31 },
-		{ 1004, 8945, 1040, 1, 0, 1040 }
-	}
+		service_info{ 1002, 8400, 2025, 1, 0, 21 },
+		service_info{ 1004, 8400, 84, 1, 0, 31 },
+		service_info{ 1004, 8945, 1040, 1, 0, 1040 },
+	},
 };
 
 /*
@@ -150,71 +149,72 @@ static const struct service_info digital_dvb_data[2][NUM_DIGITAL_CHANS] =
  *
  * https://en.wikipedia.org/wiki/Television_channel_frequencies
  */
-static unsigned int analog_freqs_khz[3][9][NUM_ANALOG_FREQS] =
-{
+using khz = std::array<unsigned int, NUM_ANALOG_FREQS>;
+using freqs = std::array<khz, 9>;
+static constexpr std::array<freqs, 3> analog_freqs_khz{
 	// cable
-	{
+	freqs{
 		// pal-bg
-		{ 471250, 479250, 487250 },
+		khz{ 471250, 479250, 487250 },
 		// secam-lq
-		{ 615250, 623250, 631250 },
+		khz{ 615250, 623250, 631250 },
 		// pal-m
-		{ 501250, 507250, 513250 },
+		khz{ 501250, 507250, 513250 },
 		// ntsc-m
-		{ 519250, 525250, 531250 },
+		khz{ 519250, 525250, 531250 },
 		// pal-i
-		{ 45750, 53750, 61750 },
+		khz{ 45750, 53750, 61750 },
 		// secam-dk
-		{ 759250, 767250, 775250 },
+		khz{ 759250, 767250, 775250 },
 		// secam-bg
-		{ 495250, 503250, 511250 },
+		khz{ 495250, 503250, 511250 },
 		// secam-l
-		{ 639250, 647250, 655250 },
+		khz{ 639250, 647250, 655250 },
 		// pal-dk
-		{ 783250, 791250, 799250 }
+		khz{ 783250, 791250, 799250 },
 	},
 	// satellite
-	{
+	freqs{
 		// pal-bg
-		{ 519250, 527250, 535250 },
+		khz{ 519250, 527250, 535250 },
 		// secam-lq
-		{ 663250, 671250, 679250 },
+		khz{ 663250, 671250, 679250 },
 		// pal-m
-		{ 537250, 543250, 549250 },
+		khz{ 537250, 543250, 549250 },
 		// ntsc-m
-		{ 555250, 561250, 567250 },
+		khz{ 555250, 561250, 567250 },
 		// pal-i
-		{ 175250, 183250, 191250 },
+		khz{ 175250, 183250, 191250 },
 		// secam-dk
-		{ 807250, 815250, 823250 },
+		khz{ 807250, 815250, 823250 },
 		// secam-bg
-		{ 543250, 551250, 559250 },
+		khz{ 543250, 551250, 559250 },
 		// secam-l
-		{ 687250, 695250, 703250 },
+		khz{ 687250, 695250, 703250 },
 		// pal-dk
-		{ 831250, 839250, 847250 }
+		khz{ 831250, 839250, 847250 },
 	},
 	// terrestrial
-	{
+	freqs{
 		// pal-bg
-		{ 567250, 575250, 583250 },
+		khz{ 567250, 575250, 583250 },
 		// secam-lq
-		{ 711250, 719250, 727250 },
+		khz{ 711250, 719250, 727250 },
 		// pal-m
-		{ 573250, 579250, 585250 },
+		khz{ 573250, 579250, 585250 },
 		// ntsc-m
-		{ 591250, 597250, 603250 },
+		khz{ 591250, 597250, 603250 },
 		// pal-i
-		{ 199250, 207250, 215250 },
+		khz{ 199250, 207250, 215250 },
 		// secam-dk
-		{ 145250, 153250, 161250 },
+		khz{ 145250, 153250, 161250 },
 		// secam-bg
-		{ 591250, 599250, 607250 },
+		khz{ 591250, 599250, 607250 },
 		// secam-l
-		{ 735250, 743250, 751250 },
+		khz{ 735250, 743250, 751250 },
 		// pal-dk
-		{ 169250, 177250, 185250 }
-	}
+		khz{ 169250, 177250, 185250 },
+	},
 };
 
 void tuner_dev_info_init(struct state *state)
