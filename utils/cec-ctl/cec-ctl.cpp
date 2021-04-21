@@ -1833,7 +1833,7 @@ static __u16 parse_phys_addr_from_edid(const char *edid_path)
 
 static void *thread_edid_poll(void *arg)
 {
-	struct node *node = static_cast<struct node *>(arg);
+	auto node = static_cast<struct node *>(arg);
 	__u16 phys_addr;
 	bool has_edid;
 	char dummy;
