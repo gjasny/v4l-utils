@@ -27,8 +27,6 @@
 #include <linux/videodev2.h>
 #include <libv4l2rds.h>
 
-#define ARRAY_SIZE(arr) ((int)(sizeof(arr) / sizeof((arr)[0])))
-
 using dev_vec = std::vector<std::string>;
 using dev_map = std::map<std::string, std::string>;
 

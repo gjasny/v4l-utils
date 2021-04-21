@@ -29,9 +29,6 @@
 /* Time between each polling message sent to a device */
 #define POLL_PERIOD 15000
 
-#define ARRAY_SIZE(a) \
-	(sizeof(a) / sizeof(*a))
-
 struct cec_enum_values {
 	const char *type_name;
 	__u8 value;

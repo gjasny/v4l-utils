@@ -17,8 +17,6 @@
 #include "cec-ctl.h"
 #include "cec-log.h"
 
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-
 static std::string find_opcode_name(__u8 opcode)
 {
 	const char *name = cec_opcode2s(opcode);

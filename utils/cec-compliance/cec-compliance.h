@@ -191,9 +191,6 @@ using vec_remote_subtests = std::vector<remote_subtest>;
 
 #define CEC_LOG_ADDR_MASK_ALL 0xffff
 
-#define ARRAY_SIZE(a) \
-	(sizeof(a) / sizeof(*a))
-
 #define COLOR_GREEN(s) "\033[32m" s "\033[0m"
 #define COLOR_RED(s) "\033[1;31m" s "\033[0m"
 #define COLOR_BOLD(s) "\033[1m" s "\033[0m"
