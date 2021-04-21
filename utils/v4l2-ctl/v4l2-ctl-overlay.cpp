@@ -1,3 +1,4 @@
+#include <array>
 #include <vector>
 
 #include <linux/fb.h>
@@ -121,16 +122,15 @@ struct bitfield2fmt {
 	__u32 pixfmt;
 };
 
-static const struct bitfield2fmt fb_formats[] = {
-	{ 10, 5,  5, 5,  0, 5, 15, 1, V4L2_PIX_FMT_ARGB555 },
-	{ 11, 5,  5, 6,  0, 5,  0, 0, V4L2_PIX_FMT_RGB565 },
-	{  1, 5,  6, 5, 11, 5,  0, 1, V4L2_PIX_FMT_RGB555X },
-	{  0, 5,  5, 6, 11, 5,  0, 0, V4L2_PIX_FMT_RGB565X },
-	{ 16, 8,  8, 8,  0, 8,  0, 0, V4L2_PIX_FMT_BGR24 },
-	{  0, 8,  8, 8, 16, 8,  0, 0, V4L2_PIX_FMT_RGB24 },
-	{ 16, 8,  8, 8,  0, 8, 24, 8, V4L2_PIX_FMT_ABGR32 },
-	{  8, 8, 16, 8, 24, 8,  0, 8, V4L2_PIX_FMT_ARGB32 },
-	{ }
+static constexpr std::array<bitfield2fmt, 8> fb_formats{
+	bitfield2fmt{ 10, 5, 5, 5, 0, 5, 15, 1, V4L2_PIX_FMT_ARGB555 },
+	bitfield2fmt{ 11, 5, 5, 6, 0, 5, 0, 0, V4L2_PIX_FMT_RGB565 },
+	bitfield2fmt{ 1, 5, 6, 5, 11, 5, 0, 1, V4L2_PIX_FMT_RGB555X },
+	bitfield2fmt{ 0, 5, 5, 6, 11, 5, 0, 0, V4L2_PIX_FMT_RGB565X },
+	bitfield2fmt{ 16, 8, 8, 8, 0, 8, 0, 0, V4L2_PIX_FMT_BGR24 },
+	bitfield2fmt{ 0, 8, 8, 8, 16, 8, 0, 0, V4L2_PIX_FMT_RGB24 },
+	bitfield2fmt{ 16, 8, 8, 8, 0, 8, 24, 8, V4L2_PIX_FMT_ABGR32 },
+	bitfield2fmt{ 8, 8, 16, 8, 24, 8, 0, 8, V4L2_PIX_FMT_ARGB32 },
 };
 
 static bool match_bitfield(const struct fb_bitfield &bf, unsigned off, unsigned len)
@@ -182,9 +182,7 @@ static int fbuf_fill_from_fb(struct v4l2_framebuffer &fb, const char *fb_device)
 			if (vi.bits_per_pixel == 8)
 				fb.fmt.pixelformat = V4L2_PIX_FMT_GREY;
 		} else {
-			for (int i = 0; fb_formats[i].pixfmt; i++) {
-				const struct bitfield2fmt &p = fb_formats[i];
-
+			for (const auto &p : fb_formats) {
 				if (match_bitfield(vi.blue, p.blue_off, p.blue_len) &&
 				    match_bitfield(vi.green, p.green_off, p.green_len) &&
 				    match_bitfield(vi.red, p.red_off, p.red_len) &&
