@@ -878,7 +878,8 @@ static int audio_rate_ctl_set_audio_rate(struct node *node, unsigned me, unsigne
 const vec_remote_subtests audio_rate_ctl_subtests{
 	{
 		"Set Audio Rate",
-		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD | CEC_LOG_ADDR_MASK_TUNER,
+		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD |
+		CEC_LOG_ADDR_MASK_TUNER | CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
 		audio_rate_ctl_set_audio_rate,
 	},
 };
