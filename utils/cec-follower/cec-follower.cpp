@@ -314,6 +314,7 @@ void state_init(struct node &node)
 	node.state.volume = 50;
 	node.state.mute = false;
 	tuner_dev_info_init(&node.state);
+	node.state.last_aud_rate_rx_ts = 0;
 }
 
 int main(int argc, char **argv)

@@ -851,10 +851,6 @@ const vec_remote_subtests sac_subtests{
 
 /* Audio Rate Control */
 
-/*
-  TODO: These are very rudimentary tests which should be expanded.
- */
-
 static int audio_rate_ctl_set_audio_rate(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = {};
@@ -875,11 +871,41 @@ static int audio_rate_ctl_set_audio_rate(struct node *node, unsigned me, unsigne
 	return OK_PRESUMED;
 }
 
+static int audio_rate_ctl_active_sensing(struct node *node, unsigned me, unsigned la, bool interactive)
+{
+	/*
+	 * The source shall go back to Rate Control Off if no Set Audio Rate message is
+	 * received for more than 2 seconds.
+	 */
+	if (!node->remote[la].has_aud_rate)
+		return NOTAPPLICABLE;
+
+	struct cec_msg msg = {};
+
+	cec_msg_init(&msg, me, la);
+
+	/*
+	 * Since this subtest runs immediately after Set Audio Rate, delaying the interval
+	 * between the two tests is sufficient to test that the Source turns off rate control.
+	 */
+	sleep(3);
+	cec_msg_set_audio_rate(&msg, CEC_OP_AUD_RATE_OFF);
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test_v2(node->remote[la].cec_version, unrecognized_op(&msg));
+	return OK_PRESUMED;
+}
+
 const vec_remote_subtests audio_rate_ctl_subtests{
 	{
 		"Set Audio Rate",
 		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD |
 		CEC_LOG_ADDR_MASK_TUNER | CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
 		audio_rate_ctl_set_audio_rate,
+	},
+	{
+		"Audio Rate Active Sensing",
+		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD |
+		CEC_LOG_ADDR_MASK_TUNER | CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
+		audio_rate_ctl_active_sensing,
 	},
 };

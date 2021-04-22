@@ -51,6 +51,7 @@ struct state {
 	bool tuner_report_changes;
 	bool deck_report_changes;
 	unsigned toggle_power_status;
+	__u64 last_aud_rate_rx_ts;
 };
 
 struct node {

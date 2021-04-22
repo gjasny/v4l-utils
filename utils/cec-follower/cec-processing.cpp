@@ -29,6 +29,9 @@
 /* Time between each polling message sent to a device */
 #define POLL_PERIOD 15000
 
+/* The maximum interval in seconds between audio rate messages as defined in the spec */
+#define MAX_AUD_RATE_MSG_INTERVAL 2
+
 struct cec_enum_values {
 	const char *type_name;
 	__u8 value;
@@ -228,6 +231,22 @@ static __u8 current_power_state(struct node *node)
 	if (node->state.power_status == CEC_OP_POWER_STATUS_ON)
 		return CEC_OP_POWER_STATUS_TO_ON;
 	return CEC_OP_POWER_STATUS_TO_STANDBY;
+}
+
+static void aud_rate_msg_interval_check(__u64 ts_new, __u64 ts_old)
+{
+	/*
+	 * The interval between messages is not relevant if this is the
+	 * first audio rate control message or if the previous message
+	 * turned off the audio rate control.
+	 */
+	if (ts_old) {
+		unsigned interval = (ts_new - ts_old) / 1000000000;
+		if (interval > MAX_AUD_RATE_MSG_INTERVAL) {
+			warn("The interval between Audio Rate Control messages was greater\n");
+			warn("than the Maxiumum Audio Rate Message Interval (2s).\n");
+		}
+	}
 }
 
 static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
@@ -775,18 +794,27 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		return;
 
 
-		/*
-		  Audio Rate Control
-
-		  This is only a basic implementation.
-
-		  TODO: Set Audio Rate shall be sent at least every 2 seconds by
-		  the controlling device. This should be checked and kept track of.
-		*/
+		/* Audio Rate Control */
 
 	case CEC_MSG_SET_AUDIO_RATE:
-		if (node->has_aud_rate)
+		if (!node->has_aud_rate)
+			break;
+
+		switch (msg.msg[2]) {
+		case CEC_OP_AUD_RATE_OFF:
+			aud_rate_msg_interval_check(msg.rx_ts, node->state.last_aud_rate_rx_ts);
+			node->state.last_aud_rate_rx_ts = 0;
 			return;
+		case CEC_OP_AUD_RATE_WIDE_STD:
+		case CEC_OP_AUD_RATE_WIDE_FAST:
+		case CEC_OP_AUD_RATE_WIDE_SLOW:
+		case CEC_OP_AUD_RATE_NARROW_STD:
+		case CEC_OP_AUD_RATE_NARROW_FAST:
+		case CEC_OP_AUD_RATE_NARROW_SLOW:
+			aud_rate_msg_interval_check(msg.rx_ts, node->state.last_aud_rate_rx_ts);
+			node->state.last_aud_rate_rx_ts = msg.rx_ts;
+			return;
+		}
 		break;
 
 
