@@ -895,6 +895,25 @@ static int audio_rate_ctl_active_sensing(struct node *node, unsigned me, unsigne
 	return OK_PRESUMED;
 }
 
+static int audio_rate_ctl_invalid(struct node *node, unsigned me, unsigned la, bool interactive)
+{
+	if (!node->remote[la].has_aud_rate)
+		return NOTAPPLICABLE;
+
+	struct cec_msg msg = {};
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_set_audio_rate(&msg, 0xa); /* Invalid Audio Rate Control message operand */
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(timed_out(&msg));
+	fail_on_test(!cec_msg_status_is_abort(&msg));
+	if (abort_reason(&msg) != CEC_OP_ABORT_INVALID_OP) {
+		warn("Expected Feature Abort [Invalid operand]\n");
+		return FAIL;
+	}
+	return OK;
+}
+
 const vec_remote_subtests audio_rate_ctl_subtests{
 	{
 		"Set Audio Rate",
@@ -907,5 +926,11 @@ const vec_remote_subtests audio_rate_ctl_subtests{
 		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD |
 		CEC_LOG_ADDR_MASK_TUNER | CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
 		audio_rate_ctl_active_sensing,
+	},
+	{
+		"Audio Rate Invalid Operand",
+		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD |
+		CEC_LOG_ADDR_MASK_TUNER | CEC_LOG_ADDR_MASK_AUDIOSYSTEM,
+		audio_rate_ctl_invalid,
 	},
 };

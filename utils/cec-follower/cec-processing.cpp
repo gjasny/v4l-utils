@@ -814,6 +814,10 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 			aud_rate_msg_interval_check(msg.rx_ts, node->state.last_aud_rate_rx_ts);
 			node->state.last_aud_rate_rx_ts = msg.rx_ts;
 			return;
+		default:
+			cec_msg_reply_feature_abort(&msg, CEC_OP_ABORT_INVALID_OP);
+			transmit(node, &msg);
+			break;
 		}
 		break;
 
