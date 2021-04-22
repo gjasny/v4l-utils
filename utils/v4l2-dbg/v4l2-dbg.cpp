@@ -564,9 +564,9 @@ int main(int argc, char **argv)
 		if (!strncasecmp(match.name, "ac97", 4)) {
 			curr_bd = &boards[AC97_BOARD];
 		} else {
-			for (size_t board = boards.size() - 1; board >= 0; board--) {
-				if (!strcasecmp(chip_info.name, boards[board].name)) {
-					curr_bd = &boards[board];
+			for (size_t board = boards.size(); board; board--) {
+				if (!strcasecmp(chip_info.name, boards[board - 1].name)) {
+					curr_bd = &boards[board - 1];
 					break;
 				}
 			}
