@@ -97,7 +97,7 @@ void subdev_cmd(int ch, char *optarg)
 	case OptListSubDevFrameSizes:
 		subs = optarg;
 		while (*subs != '\0') {
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"pad",
 				"code",
 				nullptr
@@ -119,7 +119,7 @@ void subdev_cmd(int ch, char *optarg)
 	case OptListSubDevFrameIntervals:
 		subs = optarg;
 		while (*subs != '\0') {
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"pad",
 				"code",
 				"width",
@@ -153,7 +153,7 @@ void subdev_cmd(int ch, char *optarg)
 	case OptGetSubDevSelection:
 		subs = optarg;
 		while (*subs != '\0') {
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"pad",
 				"target",
 				nullptr
@@ -187,7 +187,7 @@ void subdev_cmd(int ch, char *optarg)
 		ffmt.field = V4L2_FIELD_ANY;
 		subs = optarg;
 		while (*subs != '\0') {
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"width",
 				"height",
 				"code",
@@ -256,7 +256,7 @@ void subdev_cmd(int ch, char *optarg)
 		subs = optarg;
 
 		while (*subs != '\0') {
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"target",
 				"flags",
 				"left",
@@ -309,7 +309,7 @@ void subdev_cmd(int ch, char *optarg)
 		subs = optarg;
 
 		while (*subs != '\0') {
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"pad",
 				"fps",
 				nullptr

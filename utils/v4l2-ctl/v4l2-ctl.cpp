@@ -523,7 +523,7 @@ void printfmt(int fd, const struct v4l2_format &vfmt)
 
 static std::string frmtype2s(unsigned type)
 {
-	static const char *types[] = {
+	static constexpr const char *types[] = {
 		"Unknown",
 		"Discrete",
 		"Continuous",
@@ -764,7 +764,7 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 	flags = 0;
 	subs = optarg;
 	while (*subs != '\0') {
-		static const char *const subopts[] = {
+		static constexpr const char *subopts[] = {
 			"width",
 			"height",
 			"pixelformat",
@@ -1033,7 +1033,7 @@ static int open_media_bus_info(const std::string &bus_info)
 }
 
 static const char *make_devname(const char *device, const char *devname,
-				const std::string &media_bus_info)
+				      const std::string &media_bus_info)
 {
 	if (device[0] >= '0' && device[0] <= '9' && strlen(device) <= 3) {
 		static char newdev[32];

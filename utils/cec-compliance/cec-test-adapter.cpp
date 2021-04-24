@@ -14,8 +14,8 @@
 
 #include "cec-compliance.h"
 
-static const __u8 tx_ok_retry_mask = CEC_TX_STATUS_OK | CEC_TX_STATUS_MAX_RETRIES;
-static const __u32 msg_fl_mask = CEC_MSG_FL_REPLY_TO_FOLLOWERS | CEC_MSG_FL_RAW;
+static constexpr __u8 tx_ok_retry_mask = CEC_TX_STATUS_OK | CEC_TX_STATUS_MAX_RETRIES;
+static constexpr __u32 msg_fl_mask = CEC_MSG_FL_REPLY_TO_FOLLOWERS | CEC_MSG_FL_RAW;
 
 // Flush any pending messages
 static int flush_pending_msgs(struct node *node)
@@ -107,24 +107,24 @@ static int testAdapPhysAddr(struct node *node)
 
 static int testAdapLogAddrs(struct node *node)
 {
-	static const __u8 la_types[] = {
+	static constexpr __u8 la_types[] = {
 		CEC_LOG_ADDR_TYPE_TV,
 		CEC_LOG_ADDR_TYPE_RECORD,
 		CEC_LOG_ADDR_TYPE_TUNER,
 		CEC_LOG_ADDR_TYPE_AUDIOSYSTEM
 	};
-	static const __u8 prim_dev_types[] = {
+	static constexpr __u8 prim_dev_types[] = {
 		CEC_OP_PRIM_DEVTYPE_TV,
 		CEC_OP_PRIM_DEVTYPE_RECORD,
 		CEC_OP_PRIM_DEVTYPE_TUNER,
 		CEC_OP_PRIM_DEVTYPE_AUDIOSYSTEM
 	};
-	static const __u8 all_dev_types[2] = {
+	static constexpr __u8 all_dev_types[2] = {
 		CEC_OP_ALL_DEVTYPE_TV | CEC_OP_ALL_DEVTYPE_RECORD |
 		CEC_OP_ALL_DEVTYPE_AUDIOSYSTEM,
 		CEC_OP_ALL_DEVTYPE_RECORD | CEC_OP_ALL_DEVTYPE_AUDIOSYSTEM,
 	};
-	static const __u8 features[12] = {
+	static constexpr __u8 features[12] = {
 		0x90, 0x00, 0x8e, 0x00,
 		0xff, 0xff, 0xff, 0xff,
 		0xff, 0xff, 0xff, 0xff

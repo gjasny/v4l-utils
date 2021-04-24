@@ -157,7 +157,7 @@ static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
 	char *subs = optarg;
 
 	while (*subs != '\0') {
-		static const char *const subopts[] = {
+		static constexpr const char *subopts[] = {
 			"dir",
 			"wrap",
 			"spacing",

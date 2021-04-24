@@ -201,7 +201,7 @@ std::string buftype2s(int type)
 	}
 }
 
-static const flag_def bufcap_def[] = {
+static constexpr flag_def bufcap_def[] = {
 	{ V4L2_BUF_CAP_SUPPORTS_MMAP, "mmap" },
 	{ V4L2_BUF_CAP_SUPPORTS_USERPTR, "userptr" },
 	{ V4L2_BUF_CAP_SUPPORTS_DMABUF, "dmabuf" },
@@ -345,7 +345,7 @@ std::string quantization2s(int val)
 	}
 }
 
-static const flag_def pixflags_def[] = {
+static constexpr flag_def pixflags_def[] = {
 	{ V4L2_PIX_FMT_FLAG_PREMUL_ALPHA,  "premultiplied-alpha" },
 	{ 0, nullptr }
 };
@@ -355,7 +355,7 @@ std::string pixflags2s(unsigned flags)
 	return flags2s(flags, pixflags_def);
 }
 
-static const flag_def service_def[] = {
+static constexpr flag_def service_def[] = {
 	{ V4L2_SLICED_TELETEXT_B,  "teletext" },
 	{ V4L2_SLICED_VPS,         "vps" },
 	{ V4L2_SLICED_CAPTION_525, "cc" },
@@ -369,7 +369,7 @@ std::string service2s(unsigned service)
 }
 
 #define FMTDESC_DEF(enc_type)							\
-static const flag_def fmtdesc_ ## enc_type ## _def[] = { 			\
+static constexpr flag_def fmtdesc_ ## enc_type ## _def[] = { 			\
 	{ V4L2_FMT_FLAG_COMPRESSED, "compressed" }, 				\
 	{ V4L2_FMT_FLAG_EMULATED, "emulated" }, 				\
 	{ V4L2_FMT_FLAG_CONTINUOUS_BYTESTREAM, "continuous-bytestream" }, 	\
@@ -393,7 +393,7 @@ std::string fmtdesc2s(unsigned flags, bool is_hsv)
 }
 
 #define MBUS_DEF(enc_type)						\
-static const flag_def mbus_ ## enc_type ## _def[] = { 			\
+static constexpr flag_def mbus_ ## enc_type ## _def[] = { 			\
 	{ V4L2_SUBDEV_MBUS_CODE_CSC_COLORSPACE, "csc-colorspace" }, 	\
 	{ V4L2_SUBDEV_MBUS_CODE_CSC_YCBCR_ENC, "csc-"#enc_type },	\
 	{ V4L2_SUBDEV_MBUS_CODE_CSC_QUANTIZATION, "csc-quantization" }, \
@@ -411,7 +411,7 @@ std::string mbus2s(unsigned flags, bool is_hsv)
 	return flags2s(flags, mbus_ycbcr_def);
 }
 
-static const flag_def selection_targets_def[] = {
+static constexpr flag_def selection_targets_def[] = {
 	{ V4L2_SEL_TGT_CROP_ACTIVE, "crop" },
 	{ V4L2_SEL_TGT_CROP_DEFAULT, "crop_default" },
 	{ V4L2_SEL_TGT_CROP_BOUNDS, "crop_bounds" },
@@ -519,7 +519,7 @@ std::string std2s(v4l2_std_id std, const char *sep)
 
 std::string ctrlflags2s(__u32 flags)
 {
-	static const flag_def def[] = {
+	static constexpr flag_def def[] = {
 		{ V4L2_CTRL_FLAG_GRABBED,    "grabbed" },
 		{ V4L2_CTRL_FLAG_DISABLED,   "disabled" },
 		{ V4L2_CTRL_FLAG_READ_ONLY,  "read-only" },
@@ -536,7 +536,7 @@ std::string ctrlflags2s(__u32 flags)
 	return flags2s(flags, def);
 }
 
-static const flag_def in_status_def[] = {
+static constexpr flag_def in_status_def[] = {
 	{ V4L2_IN_ST_NO_POWER,    "no power" },
 	{ V4L2_IN_ST_NO_SIGNAL,   "no signal" },
 	{ V4L2_IN_ST_NO_COLOR,    "no color" },
@@ -560,7 +560,7 @@ std::string in_status2s(__u32 status)
 	return status ? flags2s(status, in_status_def) : "ok";
 }
 
-static const flag_def input_cap_def[] = {
+static constexpr flag_def input_cap_def[] = {
 	{ V4L2_IN_CAP_DV_TIMINGS, "DV timings" },
 	{ V4L2_IN_CAP_STD, "SDTV standards" },
 	{ V4L2_IN_CAP_NATIVE_SIZE, "Native Size" },
@@ -572,7 +572,7 @@ std::string input_cap2s(__u32 capabilities)
 	return capabilities ? flags2s(capabilities, input_cap_def) : "not defined";
 }
 
-static const flag_def output_cap_def[] = {
+static constexpr flag_def output_cap_def[] = {
 	{ V4L2_OUT_CAP_DV_TIMINGS, "DV timings" },
 	{ V4L2_OUT_CAP_STD, "SDTV standards" },
 	{ V4L2_OUT_CAP_NATIVE_SIZE, "Native Size" },
@@ -630,7 +630,7 @@ std::string fbufflags2s(unsigned fl)
 	return s;
 }
 
-static const flag_def dv_standards_def[] = {
+static constexpr flag_def dv_standards_def[] = {
 	{ V4L2_DV_BT_STD_CEA861, "CTA-861" },
 	{ V4L2_DV_BT_STD_DMT, "DMT" },
 	{ V4L2_DV_BT_STD_CVT, "CVT" },
@@ -675,7 +675,7 @@ std::string dvflags2s(unsigned vsync, int val)
 	return s;
 }
 
-static const flag_def dv_caps_def[] = {
+static constexpr flag_def dv_caps_def[] = {
 	{ V4L2_DV_BT_CAP_INTERLACED, "Interlaced" },
 	{ V4L2_DV_BT_CAP_PROGRESSIVE, "Progressive" },
 	{ V4L2_DV_BT_CAP_REDUCED_BLANKING, "Reduced Blanking" },
@@ -688,7 +688,7 @@ std::string dv_caps2s(__u32 flags)
 	return flags2s(flags, dv_caps_def);
 }
 
-static const flag_def tc_flags_def[] = {
+static constexpr flag_def tc_flags_def[] = {
 	{ V4L2_TC_FLAG_DROPFRAME, "dropframe" },
 	{ V4L2_TC_FLAG_COLORFRAME, "colorframe" },
 	{ V4L2_TC_USERBITS_field, "userbits-field" },
@@ -702,7 +702,7 @@ std::string tc_flags2s(__u32 flags)
 	return flags2s(flags, tc_flags_def);
 }
 
-static const flag_def buffer_flags_def[] = {
+static constexpr flag_def buffer_flags_def[] = {
 	{ V4L2_BUF_FLAG_MAPPED, "mapped" },
 	{ V4L2_BUF_FLAG_QUEUED, "queued" },
 	{ V4L2_BUF_FLAG_DONE, "done" },

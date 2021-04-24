@@ -178,7 +178,7 @@ void misc_cmd(int ch, char *optarg)
 	case OptSetJpegComp:
 		subs = optarg;
 		while (*subs != '\0') {
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"app0", "app1", "app2", "app3",
 				"app4", "app5", "app6", "app7",
 				"app8", "app9", "appa", "appb",
@@ -235,7 +235,7 @@ void misc_cmd(int ch, char *optarg)
 	case OptTryEncoderCmd:
 		subs = optarg;
 		while (*subs != '\0') {
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"cmd",
 				"flags",
 				nullptr
@@ -258,7 +258,7 @@ void misc_cmd(int ch, char *optarg)
 	case OptTryDecoderCmd:
 		subs = optarg;
 		while (*subs != '\0') {
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"cmd",
 				"flags",
 				"stop_pts",

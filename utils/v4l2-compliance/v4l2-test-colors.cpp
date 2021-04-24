@@ -59,22 +59,22 @@ struct color {
 	double r, g, b, a;
 };
 
-static const double bt601[3][3] = {
+static constexpr double bt601[3][3] = {
 	{ 1, 0,       1.4020  },
 	{ 1, -0.3441, -0.7141 },
 	{ 1, 1.7720,  0       },
 };
-static const double rec709[3][3] = {
+static constexpr double rec709[3][3] = {
 	{ 1, 0,       1.5748  },
 	{ 1, -0.1873, -0.4681 },
 	{ 1, 1.8556,  0       },
 };
-static const double smpte240m[3][3] = {
+static constexpr double smpte240m[3][3] = {
 	{ 1, 0,       1.5756  },
 	{ 1, -0.2253, -0.4767 },
 	{ 1, 1.8270,  0       },
 };
-static const double bt2020[3][3] = {
+static constexpr double bt2020[3][3] = {
 	{ 1, 0,       1.4746  },
 	{ 1, -0.1646, -0.5714 },
 	{ 1, 1.8814,  0       },
@@ -465,7 +465,7 @@ static void getColor(const cv4l_fmt &fmt, __u8 * const planes[3],
 	}
 }
 
-static const char * const colors[] = {
+static constexpr const char *colors[] = {
 	"red",
 	"green",
 	"blue"

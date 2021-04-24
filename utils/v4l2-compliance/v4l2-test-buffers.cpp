@@ -845,7 +845,7 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 		cv4l_queue &m2m_q, unsigned frame_count, int pollmode,
 		unsigned &capture_count)
 {
-	static const char *pollmode_str[] = {
+	static constexpr const char *pollmode_str[] = {
 		"",
 		" (select)",
 		" (epoll)",

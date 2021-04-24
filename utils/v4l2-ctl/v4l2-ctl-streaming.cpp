@@ -503,7 +503,7 @@ static void print_buffer(FILE *f, struct v4l2_buffer &buf)
 		static_cast<__u64>(buf.timestamp.tv_sec), static_cast<__u64>(buf.timestamp.tv_usec),
 		timestamp_type2s(buf.flags).c_str(), timestamp_src2s(buf.flags).c_str());
 	if (buf.flags & V4L2_BUF_FLAG_TIMECODE) {
-		static const int fps_types[] = { 0, 24, 25, 30, 50, 60 };
+		static constexpr int fps_types[] = { 0, 24, 25, 30, 50, 60 };
 		int fps = buf.timecode.type;
 
 		if (fps > 5)

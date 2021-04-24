@@ -2179,7 +2179,7 @@ int main(int argc, char **argv)
 			usage();
 			return 1;
 		case OptVendorCommand: {
-			static const char *arg_names[] = {
+			static constexpr const char *arg_names[] = {
 				"payload",
 				nullptr
 			};
@@ -2213,7 +2213,7 @@ int main(int argc, char **argv)
 			break;
 		}
 		case OptCustomCommand: {
-			static const char *arg_names[] = {
+			static constexpr const char *arg_names[] = {
 				"cmd",
 				"payload",
 				nullptr
@@ -2256,7 +2256,7 @@ int main(int argc, char **argv)
 			break;
 		}
 		case OptVendorCommandWithID: {
-			static const char *arg_names[] = {
+			static constexpr const char *arg_names[] = {
 				"vendor-id",
 				"cmd",
 				nullptr
@@ -2295,7 +2295,7 @@ int main(int argc, char **argv)
 			break;
 		}
 		case OptVendorRemoteButtonDown: {
-			static const char *arg_names[] = {
+			static constexpr const char *arg_names[] = {
 				"rc-code",
 				nullptr
 			};
@@ -2344,7 +2344,7 @@ int main(int argc, char **argv)
 			break;
 
 		case OptTestPowerCycle: {
-			static const char *arg_names[] = {
+			static constexpr const char *arg_names[] = {
 				"polls",
 				"sleep",
 				nullptr
@@ -2371,7 +2371,7 @@ int main(int argc, char **argv)
 		}
 
 		case OptStressTestPowerCycle: {
-			static const char *arg_names[] = {
+			static constexpr const char *arg_names[] = {
 				"cnt",
 				"min-sleep",
 				"max-sleep",

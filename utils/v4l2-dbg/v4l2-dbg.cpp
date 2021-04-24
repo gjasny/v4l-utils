@@ -494,7 +494,7 @@ int main(int argc, char **argv)
 				break;
 
 			while (*subs != '\0') {
-				static const char * const subopts[] = {
+				static constexpr const char *subopts[] = {
 					"min",
 					"max",
 					nullptr

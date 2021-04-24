@@ -133,7 +133,7 @@ void vidcap_cmd(int ch, char *optarg)
 	case OptListFrameIntervals:
 		subs = optarg;
 		while (*subs != '\0') {
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"width",
 				"height",
 				"pixelformat",
@@ -395,7 +395,7 @@ void vidcap_list(cv4l_fd &fd)
 
 void print_touch_buffer(FILE *f, cv4l_buffer &buf, cv4l_fmt &fmt, cv4l_queue &q)
 {
-	static const char img[16] = {
+	static constexpr char img[16] = {
 		'.', ',', ':', ';', '!', '|', 'i', 'c',
 		'n', 'o', 'm', 'I', 'C', 'N', 'O', 'M',
 	};

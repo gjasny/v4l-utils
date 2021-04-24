@@ -209,7 +209,7 @@ void overlay_cmd(int ch, char *optarg)
 	case OptTryOverlayFormat:
 		subs = optarg;
 		while (subs && *subs != '\0') {
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"chromakey",
 				"global_alpha",
 				"left",
@@ -260,7 +260,7 @@ void overlay_cmd(int ch, char *optarg)
 		subs = optarg;
 		memset(&r, 0, sizeof(r));
 		while (*subs != '\0') {
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"left",
 				"top",
 				"width",
@@ -303,12 +303,12 @@ void overlay_cmd(int ch, char *optarg)
 	case OptSetFBuf:
 		subs = optarg;
 		while (*subs != '\0') {
-			const unsigned chroma_flags = V4L2_FBUF_FLAG_CHROMAKEY |
+			constexpr unsigned chroma_flags = V4L2_FBUF_FLAG_CHROMAKEY |
 						      V4L2_FBUF_FLAG_SRC_CHROMAKEY;
-			const unsigned alpha_flags = V4L2_FBUF_FLAG_GLOBAL_ALPHA |
+			constexpr unsigned alpha_flags = V4L2_FBUF_FLAG_GLOBAL_ALPHA |
 						     V4L2_FBUF_FLAG_LOCAL_ALPHA |
 						     V4L2_FBUF_FLAG_LOCAL_INV_ALPHA;
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"chromakey",
 				"src_chromakey",
 				"global_alpha",

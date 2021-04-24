@@ -160,7 +160,7 @@ static int parse_timing_subopt(char **subopt_str, int *value)
 	int opt;
 	char *opt_str;
 
-	static const char * const subopt_list[] = {
+	static constexpr const char *subopt_list[] = {
 		"width",
 		"height",
 		"interlaced",

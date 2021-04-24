@@ -123,7 +123,7 @@ void vbi_cmd(int ch, char *optarg)
 		subs = optarg;
 		memset(&raw->fmt.vbi, 0, sizeof(raw->fmt.vbi));
 		while (*subs != '\0') {
-			static const char *const subopts[] = {
+			static constexpr const char *subopts[] = {
 				"samplingrate",
 				"offset",
 				"samplesperline",

@@ -1618,7 +1618,7 @@ int main(int argc, char **argv)
 		case OptStreamAllColorTest:
 			subs = optarg;
 			while (*subs != '\0') {
-				static const char *const subopts[] = {
+				static constexpr const char *subopts[] = {
 					"color",
 					"skip",
 					"perc",

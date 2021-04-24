@@ -93,7 +93,7 @@ static void parse_crop(char *optarg, unsigned int &set_crop, v4l2_rect &vcrop)
 	char *subs = optarg;
 
 	while (*subs != '\0') {
-		static const char *const subopts[] = {
+		static constexpr const char *subopts[] = {
 			"left",
 			"top",
 			"width",
@@ -153,7 +153,7 @@ static int parse_selection(char *optarg, unsigned int &set_sel, v4l2_selection &
 	char *subs = optarg;
 
 	while (*subs != '\0') {
-		static const char *const subopts[] = {
+		static constexpr const char *subopts[] = {
 			"target",
 			"flags",
 			"left",

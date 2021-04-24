@@ -41,8 +41,8 @@ struct la_info la_info[15];
 
 static struct timespec start_monotonic;
 static struct timeval start_timeofday;
-static const time_t time_to_transient = 1;
-static const time_t time_to_stable = 8;
+static constexpr time_t time_to_transient = 1;
+static constexpr time_t time_to_stable = 8;
 
 static const char *get_ui_cmd_string(__u8 ui_cmd)
 {

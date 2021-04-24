@@ -27,7 +27,7 @@
 #include "compiler.h"
 #include "v4l2-compliance.h"
 
-static const __u32 buftype2cap[] = {
+static constexpr __u32 buftype2cap[] = {
 	0,
 	V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_M2M,
 	V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_M2M,

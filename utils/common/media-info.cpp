@@ -33,7 +33,7 @@ static std::string num2s(unsigned num, bool is_hex = true)
 	return buf;
 }
 
-static struct {
+static constexpr struct {
 	const char *devname;
 	enum media_type type;
 } media_types[] = {
@@ -255,7 +255,7 @@ int mi_get_media_fd(int fd, const char *bus_info)
 	return media_fd;
 }
 
-static const flag_def entity_flags_def[] = {
+static constexpr flag_def entity_flags_def[] = {
 	{ MEDIA_ENT_FL_DEFAULT, "default" },
 	{ MEDIA_ENT_FL_CONNECTOR, "connector" },
 	{ 0, nullptr }
@@ -266,7 +266,7 @@ std::string mi_entflags2s(__u32 flags)
 	return flags2s(flags, entity_flags_def);
 }
 
-static const flag_def interface_types_def[] = {
+static constexpr flag_def interface_types_def[] = {
 	{ MEDIA_INTF_T_DVB_FE, "DVB Front End" },
 	{ MEDIA_INTF_T_DVB_DEMUX, "DVB Demuxer" },
 	{ MEDIA_INTF_T_DVB_DVR, "DVB DVR" },
@@ -299,7 +299,7 @@ std::string mi_ifacetype2s(__u32 type)
 	return "FAIL: Unknown (" + num2s(type) + ")";
 }
 
-static const flag_def entity_functions_def[] = {
+static constexpr flag_def entity_functions_def[] = {
 	{ MEDIA_ENT_F_UNKNOWN, "FAIL: Uninitialized Function" },
 	{ MEDIA_ENT_F_V4L2_SUBDEV_UNKNOWN, "FAIL: Unknown V4L2 Sub-Device" },
 	{ MEDIA_ENT_T_DEVNODE_UNKNOWN, "FAIL: Unknown Device Node" },
@@ -392,7 +392,7 @@ bool mi_func_requires_intf(__u32 function)
 	}
 }
 
-static const flag_def pad_flags_def[] = {
+static constexpr flag_def pad_flags_def[] = {
 	{ MEDIA_PAD_FL_SINK, "Sink" },
 	{ MEDIA_PAD_FL_SOURCE, "Source" },
 	{ MEDIA_PAD_FL_MUST_CONNECT, "Must Connect" },
@@ -404,7 +404,7 @@ std::string mi_padflags2s(__u32 flags)
 	return flags2s(flags, pad_flags_def);
 }
 
-static const flag_def link_flags_def[] = {
+static constexpr flag_def link_flags_def[] = {
 	{ MEDIA_LNK_FL_ENABLED, "Enabled" },
 	{ MEDIA_LNK_FL_IMMUTABLE, "Immutable" },
 	{ MEDIA_LNK_FL_DYNAMIC, "Dynamic" },
