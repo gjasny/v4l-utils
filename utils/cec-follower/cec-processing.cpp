@@ -29,8 +29,8 @@
 /* Time between each polling message sent to a device */
 #define POLL_PERIOD 15000
 
-/* The maximum interval in seconds between audio rate messages as defined in the spec */
-#define MAX_AUD_RATE_MSG_INTERVAL 2
+/* The maximum interval in nanoseconds between audio rate messages as defined in the spec */
+#define MAX_AUD_RATE_MSG_INTERVAL_NS (2 * 1000000000ULL)
 
 struct cec_enum_values {
 	const char *type_name;
@@ -241,8 +241,8 @@ static void aud_rate_msg_interval_check(__u64 ts_new, __u64 ts_old)
 	 * turned off the audio rate control.
 	 */
 	if (ts_old) {
-		unsigned interval = (ts_new - ts_old) / 1000000000;
-		if (interval > MAX_AUD_RATE_MSG_INTERVAL) {
+		__u64 interval = ts_new - ts_old;
+		if (interval > MAX_AUD_RATE_MSG_INTERVAL_NS) {
 			warn("The interval between Audio Rate Control messages was greater\n");
 			warn("than the Maxiumum Audio Rate Message Interval (2s).\n");
 		}
