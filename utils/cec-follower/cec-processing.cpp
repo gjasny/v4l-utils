@@ -233,18 +233,21 @@ static __u8 current_power_state(struct node *node)
 	return CEC_OP_POWER_STATUS_TO_STANDBY;
 }
 
-static void aud_rate_msg_interval_check(__u64 ts_new, __u64 ts_old)
+static void aud_rate_msg_interval_check(struct node *node, __u64 ts_new)
 {
 	/*
-	 * The interval between messages is not relevant if this is the
-	 * first audio rate control message or if the previous message
-	 * turned off the audio rate control.
+	 * The interval since the last audio rate message is only relevant
+	 * if the Source is currently in audio rate controlled mode
+	 * (i.e. state.last_aud_rate_rx_ts != 0).
 	 */
+	__u64 ts_old = node->state.last_aud_rate_rx_ts;
+
 	if (ts_old) {
 		__u64 interval = ts_new - ts_old;
+
 		if (interval > MAX_AUD_RATE_MSG_INTERVAL_NS) {
-			warn("The interval between Audio Rate Control messages was greater\n");
-			warn("than the Maxiumum Audio Rate Message Interval (2s).\n");
+			warn("The interval since the last Audio Rate Control message was > 2s.\n");
+			node->state.last_aud_rate_rx_ts = 0;
 		}
 	}
 }
@@ -802,7 +805,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 
 		switch (msg.msg[2]) {
 		case CEC_OP_AUD_RATE_OFF:
-			aud_rate_msg_interval_check(msg.rx_ts, node->state.last_aud_rate_rx_ts);
+			aud_rate_msg_interval_check(node, msg.rx_ts);
 			node->state.last_aud_rate_rx_ts = 0;
 			return;
 		case CEC_OP_AUD_RATE_WIDE_STD:
@@ -811,7 +814,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		case CEC_OP_AUD_RATE_NARROW_STD:
 		case CEC_OP_AUD_RATE_NARROW_FAST:
 		case CEC_OP_AUD_RATE_NARROW_SLOW:
-			aud_rate_msg_interval_check(msg.rx_ts, node->state.last_aud_rate_rx_ts);
+			aud_rate_msg_interval_check(node, msg.rx_ts);
 			node->state.last_aud_rate_rx_ts = msg.rx_ts;
 			return;
 		default:
@@ -1033,6 +1036,9 @@ void testProcessing(struct node *node, bool wallclock)
 				node->state.rc_state = NOPRESS;
 			}
 		}
+
+		if (node->has_aud_rate)
+			aud_rate_msg_interval_check(node, ts_now);
 	}
 	mode = CEC_MODE_INITIATOR;
 	doioctl(node, CEC_S_MODE, &mode);
