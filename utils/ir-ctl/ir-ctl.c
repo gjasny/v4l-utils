@@ -314,7 +314,7 @@ static struct send *read_file_pulse_space(struct arguments *args, const char *fn
 			continue;
 		}
 
-		if (strcmp(keyword, "space") == 0) {
+		if (!strcmp(keyword, "space") || !strcmp(keyword, "timeout")) {
 			if (arg == 0) {
 				fprintf(stderr, _("warning: %s:%d: invalid argument to space '%d'\n"), fname, lineno, arg);
 				continue;
@@ -331,7 +331,7 @@ static struct send *read_file_pulse_space(struct arguments *args, const char *fn
 			}
 			lastspace = lineno;
 			expect_pulse = true;
-		} else if (strcmp(keyword, "pulse") == 0) {
+		} else if (!strcmp(keyword, "pulse")) {
 			if (arg == 0) {
 				fprintf(stderr, _("warning: %s:%d: invalid argument to pulse '%d'\n"), fname, lineno, arg);
 				continue;
@@ -341,7 +341,7 @@ static struct send *read_file_pulse_space(struct arguments *args, const char *fn
 			else
 				f->buf[len++] = arg;
 			expect_pulse = false;
-		} else if (strcmp(keyword, "carrier") == 0) {
+		} else if (!strcmp(keyword, "carrier")) {
 			if (f->carrier != UNSET && f->carrier != arg) {
 				fprintf(stderr, _("warning: %s:%d: carrier already specified\n"), fname, lineno);
 			} else {
@@ -1200,10 +1200,9 @@ int lirc_receive(struct arguments *args, int fd, unsigned features)
 			} else {
 				switch (msg) {
 				case LIRC_MODE2_TIMEOUT:
+					fprintf(out, "-%u\n", val);
 					if (carrier)
-						fprintf(out, "# carrier %uHz, timeout %u\n", carrier, val);
-					else
-						fprintf(out, "# timeout %u\n", val);
+						fprintf(out, " # carrier %uHz, timeout %u\n", carrier, val);
 					leading_space = true;
 					carrier = 0;
 					break;
