@@ -232,9 +232,9 @@ static void log_vendor_id(const char *arg_name, __u32 vendor_id)
 	const char *vendor = cec_vendor2s(vendor_id);
 
 	if (vendor)
-		printf("\t%s: 0x%08x, %s\n", arg_name, vendor_id, vendor);
+		printf("\t%s: 0x%06x, %s\n", arg_name, vendor_id, vendor);
 	else
-		printf("\t%s: 0x%08x, %u\n", arg_name, vendor_id, vendor_id);
+		printf("\t%s: 0x%06x, %u\n", arg_name, vendor_id, vendor_id);
 }
 
 static void log_descriptors(const char *arg_name, unsigned num, const __u32 *descriptors)
