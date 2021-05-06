@@ -429,7 +429,7 @@ void cec_driver_info(const struct cec_caps &caps,
 		const char *vendor = cec_vendor2s(laddrs.vendor_id);
 
 		if (vendor)
-			printf("\tVendor ID                  : 0x%06x, %s\n",
+			printf("\tVendor ID                  : 0x%06x (%s)\n",
 			       laddrs.vendor_id, vendor);
 		else
 			printf("\tVendor ID                  : 0x%06x, %u\n",

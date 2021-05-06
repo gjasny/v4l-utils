@@ -1051,16 +1051,15 @@ static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 		printf("%s\n", cec_status2s(msg).c_str());
 		node->remote[i].vendor_id = CEC_VENDOR_ID_NONE;
 	} else {
-		node->remote[i].vendor_id = (msg.msg[2] << 16) |
-			(msg.msg[3] << 8) | msg.msg[4];
+		__u32 vendor_id = (msg.msg[2] << 16) | (msg.msg[3] << 8) | msg.msg[4];
+		node->remote[i].vendor_id = vendor_id;
 
-		const char *vendor = cec_vendor2s(node->remote[i].vendor_id);
+		const char *vendor = cec_vendor2s(vendor_id);
 
 		if (vendor)
-			printf("0x%06x (%s)\n",
-			       node->remote[i].vendor_id, vendor);
+			printf("0x%06x (%s)\n", node->remote[i].vendor_id, vendor);
 		else
-			printf("0x%06x\n", node->remote[i].vendor_id);
+			printf("0x%06x, %u\n", vendor_id, vendor_id);
 	}
 
 	cec_msg_init(&msg, la, i);

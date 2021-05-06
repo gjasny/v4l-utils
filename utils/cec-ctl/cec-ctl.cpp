@@ -568,7 +568,7 @@ static int showTopologyDevice(struct node *node, unsigned i, unsigned la)
 		const char *vendor = cec_vendor2s(vendor_id);
 
 		if (vendor)
-			printf("0x%06x, %s\n", vendor_id, vendor);
+			printf("0x%06x (%s)\n", vendor_id, vendor);
 		else
 			printf("0x%06x, %u\n", vendor_id, vendor_id);
 	}
