@@ -121,6 +121,7 @@ void edid_usage()
 	       "  --set-edid pad=<pad>[,type=<type>|file=<file>][,format=<fmt>][modifiers]\n"
 	       "                     <pad> is the input index for which to set the EDID.\n"
 	       "                     <type> can be one of:\n"
+	       "                     list: list all EDID types\n"
 	       "                     vga: Base Block supporting VGA interface (1920x1200p60)\n"
 	       "                     dvid: Base Block supporting DVI-D interface (1920x1200p60)\n"
 	       "                     hdmi: CTA-861 with HDMI support up to 1080p60\n"
@@ -1191,6 +1192,20 @@ void edid_cmd(int ch, char *optarg)
 				} else if (!strcmp(value, "displayport")) {
 					sedid.edid = displayport_edid;
 					sedid.blocks = sizeof(displayport_edid) / 128;
+				} else if (!strcmp(value, "list")) {
+					printf("EDID types:\n");
+					printf("vga: Base Block supporting VGA interface (1920x1200p60)\n");
+					printf("dvid: Base Block supporting DVI-D interface (1920x1200p60)\n");
+					printf("hdmi: CTA-861 with HDMI support up to 1080p60\n");
+					printf("hdmi-4k-170mhz: CTA-861 with HDMI support up to 1080p60 or 4kp30 4:2:0\n");
+					printf("hdmi-4k-300mhz: CTA-861 with HDMI support up to 4kp30\n");
+					printf("hdmi-4k-600mhz: CTA-861 with HDMI support up to 4kp60\n");
+					printf("hdmi-4k-600mhz-with-displayid: Block Map Extension Block, CTA-861 with\n");
+					printf("\tHDMI support up to 4kp60, DisplayID Extension Block\n");
+					printf("displayport: DisplayID supporting a DisplayPort interface (1920x1200)\n");
+					printf("displayport-with-cta861: DisplayID supporting a DisplayPort interface,\n");
+					printf("\tCTA-861 Extension Block (1080p60)\n");
+					std::exit(EXIT_FAILURE);
 				} else {
 					edid_usage();
 					std::exit(EXIT_FAILURE);
