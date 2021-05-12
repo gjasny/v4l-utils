@@ -18,9 +18,7 @@ There is also a wiki page for the v4l-utils:
 
 ## Building
 
-Temporarily, both meson and autotools build systems are supported in parallel.
-*NOTE*: Packagers should be aware that autotools support will be dropped soon,
-to be fully replaced by meson.
+v4l-utils uses the meson build system.
 
 A number of packages is required to fully build v4l-utils. The first step is to
 install those packages. The package names are different on each distro.
@@ -29,15 +27,15 @@ On Debian and derivated distributions, you need to install the following
 packages with `apt-get` or `aptitude`:
 
 ```
-debhelper dh-autoreconf doxygen graphviz libasound2-dev libtool libjpeg-dev
-qtbase5-dev qt5-default libqt5opengl5-dev libudev-dev libx11-dev pkg-config
-udev gcc git
+debhelper doxygen gcc git graphviz libasound2-dev libjpeg-dev
+libqt5opengl5-dev libudev-dev libx11-dev meson pkg-config qt5-default
+qtbase5-dev udev
 ```
 
 On Fedora, the package list for a minimal install with `dnf` or `yum` is:
 
 ```
-git libtool gcc gcc-c++ which perl gettext-devel
+gcc gcc-c++ gettext-devel git meson perl which
 ```
 
 (git is only requiried if you're cloning from the main git repository at
@@ -54,18 +52,6 @@ mesa-libGLU-devel
 The v4l2-tracer also needs the json-c library. On Debian: `libjson-c-dev' ; on
 Fedora: `json-c-devel`.
 
-### Meson build
-
-Extra packages required for meson:
-
-```
-# On Debian/Ubuntu
-apt-get install meson ninja-build
-
-# On Fedora
-dnf install meson ninja-build
-```
-
 After downloading and installing the needed packages on your distribution, you
 should run:
 
@@ -80,52 +66,15 @@ And, to install on your system:
 sudo ninja -C build/ install
 ```
 
-### Autotools build
-
-Extra packages required for autotools:
-
-```
-# On Debian/Ubuntu
-apt-get install autotools-dev autoconf-archive make
-
-# On Fedora
-dnf install automake autoconf make
-```
-
-After downloading and installing the needed packages on your distribution, you
-should run:
-
-```
-./bootstrap.sh
-./configure
-make
-```
-
-If `./configure` exit with some errors try:
-
-```
-autoreconf -i --force
-./configure
-```
-
-And, to install on your system:
-
-```
-sudo make install
-```
-
 ### Optional features
 
 Please notice that there's an extra feature to add an extra table to decode
 Japanese DVB tables via iconv. This is meant to be used when the iconv itself
 doesn't come with the *ARIB-STD-B24* and *EN300-468-TAB00* tables.
 
-That requires not only the gconv package, but it also needs to be manually
-enabled running autoconf with `--enable-gconv` option.
-
-In meson, gconv is an auto feature, so it will be auto-enabled in case the
-dependencies are satisfied. However, the gconv feature can be forced to enabled
-by running the following command during configuration step:
+gconv is an auto feature, so it will be auto-enabled in case the dependencies
+are satisfied. However, the gconv feature can be forced to enabled by running
+the following command during configuration step:
 
 ```
 meson configure -Dgconv=enabled build/
@@ -194,15 +143,9 @@ The libv4l is released under the GNU Lesser General Public License.
 This library is meant to be used by digital TV applications that need to talk
 with media hardware.
 
-Full documentation is provided via Doxygen. It can be built, after configuring
-the package with autotools, running:
-
-```
-make doxygen-run
-```
-
-In meson, Doxygen documentation is enabled by the auto feature: `doxygen-doc`.
-If enabled, it will be built within the project.
+Full documentation is provided via Doxygen. Building documentation is enabled
+by the auto feature: `doxygen-doc`. If enabled, it will be built within the
+project.
 
 It is possible to generate documentation in html, man pages and pdf formats.
 

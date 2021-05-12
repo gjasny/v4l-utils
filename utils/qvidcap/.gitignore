@@ -1,6 +1,0 @@
-Makefile
-moc_capture.cpp
-qrc_qvidcap.cpp
-qvidcap
-qvidcap.1
-v4l2-convert.h
