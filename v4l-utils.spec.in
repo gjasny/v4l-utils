@@ -138,7 +138,7 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/qv4l2.desktop
 %ldconfig_scriptlets -n libdvbv5
 
 %files -f %{name}.lang
-%doc README
+%doc README.md
 %dir %{_sysconfdir}/rc_keymaps
 %config(noreplace) %{_sysconfdir}/rc_maps.cfg
 %{_udevrulesdir}/70-infrared.rules
@@ -160,14 +160,14 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/qv4l2.desktop
 %exclude %{_mandir}/man1/v4l2-compliance.1*
 
 %files devel-tools
-%doc README
+%doc README.md
 %{_bindir}/decode_tm6000
 %{_bindir}/v4l2-compliance
 %{_mandir}/man1/v4l2-compliance.1*
 %{_sbindir}/v4l2-dbg
 
 %files -n qv4l2
-%doc README
+%doc README.md
 %{_bindir}/qv4l2
 %{_bindir}/qvidcap
 %{_datadir}/applications/qv4l2.desktop
