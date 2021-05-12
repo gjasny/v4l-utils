@@ -58,6 +58,7 @@ v4l2_utils_incdir = include_directories(v4l2_utils_incdir_arr)
 
 prog_bash = find_program('bash')
 prog_clang = find_program('clang', required : get_option('bpf'))
+prog_doxygen = find_program('doxygen', required : get_option('doxygen-doc'))
 prog_git = find_program('git')
 prog_grep = find_program('grep')
 prog_perl = find_program('perl')
@@ -336,6 +337,8 @@ if get_option('v4l-utils')
     subdir('utils')
     subdir('contrib')
 endif
+
+subdir('doc')
 
 configure_file(output : 'config.h', configuration : conf)
 

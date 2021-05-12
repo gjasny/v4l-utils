@@ -38,7 +38,7 @@ PROJECT_NAME           = libdvbv5
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER         = $(VERSION)
+PROJECT_NUMBER         = @VERSION@
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer a
@@ -58,7 +58,7 @@ PROJECT_LOGO           =
 # entered, it will be relative to the location where doxygen was started. If
 # left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = $(DOCDIR)
+OUTPUT_DIRECTORY       = @DOCDIR@
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create 4096 sub-
 # directories (in 2 levels) under the output directory of each output format and
@@ -144,7 +144,7 @@ FULL_PATH_NAMES        = YES
 # will be relative from the directory where doxygen is started.
 # This tag requires that the tag FULL_PATH_NAMES is set to YES.
 
-STRIP_FROM_PATH        = $(SRCDIR)
+STRIP_FROM_PATH        = @SRCDIR@
 
 # The STRIP_FROM_INC_PATH tag can be used to strip a user-defined part of the
 # path mentioned in the documentation of a class, which tells the reader which
@@ -737,52 +737,52 @@ WARN_LOGFILE           =
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = $(SRCDIR)/doc/libdvbv5-index.doc \
-			 $(SRCDIR)/lib/include/libdvbv5/dvb-demux.h \
-			 $(SRCDIR)/lib/include/libdvbv5/dvb-dev.h \
-			 $(SRCDIR)/lib/include/libdvbv5/dvb-fe.h \
-			 $(SRCDIR)/lib/include/libdvbv5/dvb-file.h \
-			 $(SRCDIR)/lib/include/libdvbv5/dvb-log.h \
-			 $(SRCDIR)/lib/include/libdvbv5/dvb-sat.h \
-			 $(SRCDIR)/lib/include/libdvbv5/dvb-scan.h \
-			 $(SRCDIR)/lib/include/libdvbv5/dvb-v5-std.h \
-			 $(SRCDIR)/lib/include/libdvbv5/descriptors.h \
-			 $(SRCDIR)/lib/include/libdvbv5/header.h \
-			 $(SRCDIR)/lib/include/libdvbv5/atsc_header.h \
-			 $(SRCDIR)/lib/include/libdvbv5/atsc_eit.h \
-			 $(SRCDIR)/lib/include/libdvbv5/cat.h \
-			 $(SRCDIR)/lib/include/libdvbv5/eit.h \
-			 $(SRCDIR)/lib/include/libdvbv5/mgt.h \
-			 $(SRCDIR)/lib/include/libdvbv5/nit.h \
-			 $(SRCDIR)/lib/include/libdvbv5/pat.h \
-			 $(SRCDIR)/lib/include/libdvbv5/pmt.h \
-			 $(SRCDIR)/lib/include/libdvbv5/sdt.h \
-			 $(SRCDIR)/lib/include/libdvbv5/vct.h \
-			 $(SRCDIR)/lib/include/libdvbv5/crc32.h \
-			 $(SRCDIR)/lib/include/libdvbv5/countries.h \
-			 $(SRCDIR)/lib/include/libdvbv5/mpeg_es.h \
-			 $(SRCDIR)/lib/include/libdvbv5/mpeg_pes.h \
-			 $(SRCDIR)/lib/include/libdvbv5/mpeg_ts.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_atsc_service_location.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_ca.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_ca_identifier.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_cable_delivery.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_event_extended.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_event_short.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_extension.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_frequency_list.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_hierarchy.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_isdbt_delivery.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_language.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_logical_channel.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_network_name.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_partial_reception.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_registration_id.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_sat.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_service.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_t2_delivery.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_terrestrial_delivery.h \
-			 $(SRCDIR)/lib/include/libdvbv5/desc_ts_info.h \
+INPUT                  = @SRCDIR@/doc/libdvbv5-index.doc \
+			 @SRCDIR@/lib/include/libdvbv5/dvb-demux.h \
+			 @SRCDIR@/lib/include/libdvbv5/dvb-dev.h \
+			 @SRCDIR@/lib/include/libdvbv5/dvb-fe.h \
+			 @SRCDIR@/lib/include/libdvbv5/dvb-file.h \
+			 @SRCDIR@/lib/include/libdvbv5/dvb-log.h \
+			 @SRCDIR@/lib/include/libdvbv5/dvb-sat.h \
+			 @SRCDIR@/lib/include/libdvbv5/dvb-scan.h \
+			 @SRCDIR@/lib/include/libdvbv5/dvb-v5-std.h \
+			 @SRCDIR@/lib/include/libdvbv5/descriptors.h \
+			 @SRCDIR@/lib/include/libdvbv5/header.h \
+			 @SRCDIR@/lib/include/libdvbv5/atsc_header.h \
+			 @SRCDIR@/lib/include/libdvbv5/atsc_eit.h \
+			 @SRCDIR@/lib/include/libdvbv5/cat.h \
+			 @SRCDIR@/lib/include/libdvbv5/eit.h \
+			 @SRCDIR@/lib/include/libdvbv5/mgt.h \
+			 @SRCDIR@/lib/include/libdvbv5/nit.h \
+			 @SRCDIR@/lib/include/libdvbv5/pat.h \
+			 @SRCDIR@/lib/include/libdvbv5/pmt.h \
+			 @SRCDIR@/lib/include/libdvbv5/sdt.h \
+			 @SRCDIR@/lib/include/libdvbv5/vct.h \
+			 @SRCDIR@/lib/include/libdvbv5/crc32.h \
+			 @SRCDIR@/lib/include/libdvbv5/countries.h \
+			 @SRCDIR@/lib/include/libdvbv5/mpeg_es.h \
+			 @SRCDIR@/lib/include/libdvbv5/mpeg_pes.h \
+			 @SRCDIR@/lib/include/libdvbv5/mpeg_ts.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_atsc_service_location.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_ca.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_ca_identifier.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_cable_delivery.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_event_extended.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_event_short.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_extension.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_frequency_list.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_hierarchy.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_isdbt_delivery.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_language.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_logical_channel.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_network_name.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_partial_reception.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_registration_id.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_sat.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_service.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_t2_delivery.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_terrestrial_delivery.h \
+			 @SRCDIR@/lib/include/libdvbv5/desc_ts_info.h \
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -850,7 +850,7 @@ EXCLUDE_SYMBOLS        =
 # that contain example code fragments that are included (see the \include
 # command).
 
-EXAMPLE_PATH           = $(SRCDIR)/utils/dvb/
+EXAMPLE_PATH           = @SRCDIR@/utils/dvb/
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp and
@@ -1032,7 +1032,7 @@ IGNORE_PREFIX          =
 # If the GENERATE_HTML tag is set to YES doxygen will generate HTML output
 # The default value is: YES.
 
-GENERATE_HTML          = $(GENERATE_HTML)
+GENERATE_HTML          = @GENERATE_HTML@
 
 # The HTML_OUTPUT tag is used to specify where the HTML docs will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of
@@ -1231,14 +1231,14 @@ DOCSET_PUBLISHER_NAME  = Publisher
 # The default value is: NO.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-GENERATE_HTMLHELP      = $(GENERATE_HTMLHELP)
+GENERATE_HTMLHELP      = NO
 
 # The CHM_FILE tag can be used to specify the file name of the resulting .chm
 # file. You can add a path in front of the file if the result should not be
 # written to the html output directory.
 # This tag requires that the tag GENERATE_HTMLHELP is set to YES.
 
-CHM_FILE               = ../$(PROJECT).chm
+CHM_FILE               =
 
 # The HHC_LOCATION tag can be used to specify the location (absolute path
 # including file name) of the HTML help compiler ( hhc.exe). If non-empty
@@ -1246,14 +1246,14 @@ CHM_FILE               = ../$(PROJECT).chm
 # The file has to be specified with full path.
 # This tag requires that the tag GENERATE_HTMLHELP is set to YES.
 
-HHC_LOCATION           = $(HHC_PATH)
+HHC_LOCATION           =
 
 # The GENERATE_CHI flag controls if a separate .chi index file is generated (
 # YES) or that it should be included in the master .chm file ( NO).
 # The default value is: NO.
 # This tag requires that the tag GENERATE_HTMLHELP is set to YES.
 
-GENERATE_CHI           = $(GENERATE_CHI)
+GENERATE_CHI           = NO
 
 # The CHM_INDEX_ENCODING is used to encode HtmlHelp index ( hhk), content ( hhc)
 # and project file content.
@@ -1572,7 +1572,7 @@ EXTRA_SEARCH_MAPPINGS  =
 # If the GENERATE_LATEX tag is set to YES doxygen will generate LaTeX output.
 # The default value is: YES.
 
-GENERATE_LATEX         = $(GENERATE_LATEX)
+GENERATE_LATEX         = NO
 
 # The LATEX_OUTPUT tag is used to specify where the LaTeX docs will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of
@@ -1615,7 +1615,7 @@ COMPACT_LATEX          = YES
 # The default value is: a4.
 # This tag requires that the tag GENERATE_LATEX is set to YES.
 
-PAPER_TYPE             = $(PAPER_SIZE)
+PAPER_TYPE             = a4
 
 # The EXTRA_PACKAGES tag can be used to specify one or more LaTeX package names
 # that should be included in the LaTeX output. To get the times font for
@@ -1674,7 +1674,7 @@ PDF_HYPERLINKS         = YES
 # The default value is: YES.
 # This tag requires that the tag GENERATE_LATEX is set to YES.
 
-USE_PDFLATEX           = $(GENERATE_PDF)
+USE_PDFLATEX           = YES
 
 # If the LATEX_BATCHMODE tag is set to YES, doxygen will add the \batchmode
 # command to the generated LaTeX files. This will instruct LaTeX to keep running
@@ -1709,7 +1709,7 @@ LATEX_BIB_STYLE        = plain
 # readers/editors.
 # The default value is: NO.
 
-GENERATE_RTF           = $(GENERATE_RTF)
+GENERATE_RTF           = NO
 
 # The RTF_OUTPUT tag is used to specify where the RTF docs will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of
@@ -1764,7 +1764,7 @@ RTF_EXTENSIONS_FILE    =
 # classes and files.
 # The default value is: NO.
 
-GENERATE_MAN           = $(GENERATE_MAN)
+GENERATE_MAN           = @GENERATE_MAN@
 
 # The MAN_OUTPUT tag is used to specify where the man pages will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of
@@ -1801,7 +1801,7 @@ MAN_LINKS              = NO
 # captures the structure of the code including all documentation.
 # The default value is: NO.
 
-GENERATE_XML           = $(GENERATE_XML)
+GENERATE_XML           = NO
 
 # The XML_OUTPUT tag is used to specify where the XML pages will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of
@@ -1993,7 +1993,7 @@ TAGFILES               =
 # tag file that is based on the input files it reads. See section "Linking to
 # external documentation" for more information about the usage of tag files.
 
-GENERATE_TAGFILE       = $(DOCDIR)/$(PROJECT).tag
+GENERATE_TAGFILE       = @DOCDIR@/@PROJECT@.tag
 
 # If the ALLEXTERNALS tag is set to YES all external class will be listed in the
 # class index. If set to NO only the inherited external classes will be listed.
@@ -2039,7 +2039,7 @@ HIDE_UNDOC_RELATIONS   = YES
 # set to NO
 # The default value is: NO.
 
-HAVE_DOT               = $(HAVE_DOT)
+HAVE_DOT               = NO
 
 # The DOT_NUM_THREADS specifies the number of dot invocations doxygen is allowed
 # to run in parallel. When set to 0 doxygen will base this on the number of
@@ -2211,7 +2211,7 @@ INTERACTIVE_SVG        = NO
 # found. If left blank, it is assumed the dot tool can be found in the path.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOT_PATH               = $(DOT_PATH)
+DOT_PATH               =
 
 # The DOTFILE_DIRS tag can be used to specify one or more directories that
 # contain dot files that are included in the documentation (see the \dotfile

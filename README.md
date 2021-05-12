@@ -201,6 +201,9 @@ the package with autotools, running:
 make doxygen-run
 ```
 
+In meson, Doxygen documentation is enabled by the auto feature: `doxygen-doc`.
+If enabled, it will be built within the project.
+
 It is possible to generate documentation in html, man pages and pdf formats.
 
 The documentation is also available via web, at:

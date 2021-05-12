@@ -44,3 +44,11 @@ option('systemdsystemunitdir', type : 'string',
        description : 'Set systemd system unit directory')
 option('udevdir', type : 'string',
        description : 'Set udev directory')
+
+# Doxygen options
+option('doxygen-doc', type : 'feature', value : 'auto',
+       description : 'Generate doxygen project documentation')
+option('doxygen-html', type : 'boolean',
+       description : 'Generate doxygen plain HTML documentation')
+option('doxygen-man', type : 'boolean', value : false,
+       description : 'Generate doxygen manual pages')
