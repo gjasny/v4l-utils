@@ -1,0 +1,156 @@
+libdvbv5_option = get_option('libdvbv5')
+if libdvbv5_option.disabled() or not dep_libudev.found()
+    dep_libdvbv5 = dependency('', required : false)
+    subdir_done()
+endif
+
+libdvbv5_sources = files(
+    'compat-soname.c',
+    'countries.c',
+    'crc32.c',
+    'descriptors.c',
+    'descriptors/desc_atsc_service_location.c',
+    'descriptors/desc_ca.c',
+    'descriptors/desc_ca_identifier.c',
+    'descriptors/desc_cable_delivery.c',
+    'descriptors/desc_event_extended.c',
+    'descriptors/desc_event_short.c',
+    'descriptors/desc_extension.c',
+    'descriptors/desc_frequency_list.c',
+    'descriptors/desc_hierarchy.c',
+    'descriptors/desc_isdbt_delivery.c',
+    'descriptors/desc_language.c',
+    'descriptors/desc_logical_channel.c',
+    'descriptors/desc_network_name.c',
+    'descriptors/desc_partial_reception.c',
+    'descriptors/desc_registration_id.c',
+    'descriptors/desc_sat.c',
+    'descriptors/desc_service.c',
+    'descriptors/desc_t2_delivery.c',
+    'descriptors/desc_terrestrial_delivery.c',
+    'descriptors/desc_ts_info.c',
+    'dvb-demux.c',
+    'dvb-dev-local.c',
+    'dvb-dev-priv.h',
+    'dvb-dev-remote.c',
+    'dvb-dev.c',
+    'dvb-fe-priv.h',
+    'dvb-fe.c',
+    'dvb-file.c',
+    'dvb-legacy-channel-format.c',
+    'dvb-log.c',
+    'dvb-sat.c',
+    'dvb-scan.c',
+    'dvb-v5-std.c',
+    'dvb-v5.c',
+    'dvb-v5.h',
+    'dvb-vdr-format.c',
+    'dvb-zap-format.c',
+    'parse_string.c',
+    'parse_string.h',
+    'tables/atsc_eit.c',
+    'tables/cat.c',
+    'tables/eit.c',
+    'tables/header.c',
+    'tables/mgt.c',
+    'tables/mpeg_es.c',
+    'tables/mpeg_pes.c',
+    'tables/mpeg_ts.c',
+    'tables/nit.c',
+    'tables/pat.c',
+    'tables/pmt.c',
+    'tables/sdt.c',
+    'tables/vct.c',
+)
+
+configure_file(
+    output : 'libdvb-version.h',
+    input : '../include/libdvbv5/libdvb-version.h.in',
+    configuration : conf,
+    install: true,
+    install_dir: 'include/libdvbv5',
+)
+
+libdvbv5_api = files(
+    '../include/libdvbv5/atsc_eit.h',
+    '../include/libdvbv5/atsc_header.h',
+    '../include/libdvbv5/cat.h',
+    '../include/libdvbv5/countries.h',
+    '../include/libdvbv5/crc32.h',
+    '../include/libdvbv5/desc_atsc_service_location.h',
+    '../include/libdvbv5/desc_ca.h',
+    '../include/libdvbv5/desc_ca_identifier.h',
+    '../include/libdvbv5/desc_cable_delivery.h',
+    '../include/libdvbv5/desc_event_extended.h',
+    '../include/libdvbv5/desc_event_short.h',
+    '../include/libdvbv5/desc_extension.h',
+    '../include/libdvbv5/desc_frequency_list.h',
+    '../include/libdvbv5/desc_hierarchy.h',
+    '../include/libdvbv5/desc_isdbt_delivery.h',
+    '../include/libdvbv5/desc_language.h',
+    '../include/libdvbv5/desc_logical_channel.h',
+    '../include/libdvbv5/desc_network_name.h',
+    '../include/libdvbv5/desc_partial_reception.h',
+    '../include/libdvbv5/desc_registration_id.h',
+    '../include/libdvbv5/desc_sat.h',
+    '../include/libdvbv5/desc_service.h',
+    '../include/libdvbv5/desc_t2_delivery.h',
+    '../include/libdvbv5/desc_terrestrial_delivery.h',
+    '../include/libdvbv5/desc_ts_info.h',
+    '../include/libdvbv5/descriptors.h',
+    '../include/libdvbv5/dvb-demux.h',
+    '../include/libdvbv5/dvb-dev.h',
+    '../include/libdvbv5/dvb-fe.h',
+    '../include/libdvbv5/dvb-file.h',
+    '../include/libdvbv5/dvb-frontend.h',
+    '../include/libdvbv5/dvb-log.h',
+    '../include/libdvbv5/dvb-sat.h',
+    '../include/libdvbv5/dvb-scan.h',
+    '../include/libdvbv5/dvb-v5-std.h',
+    '../include/libdvbv5/eit.h',
+    '../include/libdvbv5/header.h',
+    '../include/libdvbv5/mgt.h',
+    '../include/libdvbv5/mpeg_es.h',
+    '../include/libdvbv5/mpeg_pes.h',
+    '../include/libdvbv5/mpeg_ts.h',
+    '../include/libdvbv5/nit.h',
+    '../include/libdvbv5/pat.h',
+    '../include/libdvbv5/pmt.h',
+    '../include/libdvbv5/sdt.h',
+    '../include/libdvbv5/vct.h',
+)
+
+install_headers(libdvbv5_api, subdir: 'libdvbv5')
+
+libdvbv5_deps = [
+    dep_iconv,
+    dep_libm,
+    dep_librt,
+    dep_libudev,
+    dep_threads,
+]
+
+libdvbv5_c_args = [
+    '-DHAVE_DVBV5_REMOTE',
+    '-DHAVE_PTHREAD',
+    '-DLIBDVBV5_DOMAIN="libdvbv5"',
+]
+
+libdvbv5 = library('dvbv5',
+                   libdvbv5_sources,
+                   soversion: '0',
+                   version: '0.0.0',
+                   install : true,
+                   dependencies : libdvbv5_deps,
+                   c_args : libdvbv5_c_args,
+                   include_directories : v4l2_utils_incdir)
+
+dep_libdvbv5 = declare_dependency(link_with : libdvbv5)
+meson.override_dependency('libdvbv5', dep_libdvbv5)
+
+pkg.generate(
+    libdvbv5,
+    name : 'libdvbv5',
+    version : meson.project_version(),
+    requires_private : 'libudev',
+    description : 'DVBv5 utility library')

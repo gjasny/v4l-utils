@@ -18,6 +18,10 @@ There is also a wiki page for the v4l-utils:
 
 ## Building
 
+Temporarily, both meson and autotools build systems are supported in parallel.
+*NOTE*: Packagers should be aware that autotools support will be dropped soon,
+to be fully replaced by meson.
+
 A number of packages is required to fully build v4l-utils. The first step is to
 install those packages. The package names are different on each distro.
 
@@ -25,15 +29,15 @@ On Debian and derivated distributions, you need to install the following
 packages with `apt-get` or `aptitude`:
 
 ```
-debhelper dh-autoreconf autotools-dev autoconf-archive doxygen graphviz
-libasound2-dev libtool libjpeg-dev qtbase5-dev qt5-default libqt5opengl5-dev
-libudev-dev libx11-dev pkg-config udev make gcc git
+debhelper dh-autoreconf doxygen graphviz libasound2-dev libtool libjpeg-dev
+qtbase5-dev qt5-default libqt5opengl5-dev libudev-dev libx11-dev pkg-config
+udev gcc git
 ```
 
 On Fedora, the package list for a minimal install with `dnf` or `yum` is:
 
 ```
-git automake autoconf libtool make gcc gcc-c++ which perl gettext-devel
+git libtool gcc gcc-c++ which perl gettext-devel
 ```
 
 (git is only requiried if you're cloning from the main git repository at
@@ -50,7 +54,46 @@ mesa-libGLU-devel
 The v4l2-tracer also needs the json-c library. On Debian: `libjson-c-dev' ; on
 Fedora: `json-c-devel`.
 
-After downloading and installing the needed packages, you should run:
+### Meson build
+
+Extra packages required for meson:
+
+```
+# On Debian/Ubuntu
+apt-get install meson ninja-build
+
+# On Fedora
+dnf install meson ninja-build
+```
+
+After downloading and installing the needed packages on your distribution, you
+should run:
+
+```
+meson build/
+ninja -C build/
+```
+
+And, to install on your system:
+
+```
+sudo ninja -C build/ install
+```
+
+### Autotools build
+
+Extra packages required for autotools:
+
+```
+# On Debian/Ubuntu
+apt-get install autotools-dev autoconf-archive make
+
+# On Fedora
+dnf install automake autoconf make
+```
+
+After downloading and installing the needed packages on your distribution, you
+should run:
 
 ```
 ./bootstrap.sh
@@ -78,7 +121,15 @@ Japanese DVB tables via iconv. This is meant to be used when the iconv itself
 doesn't come with the *ARIB-STD-B24* and *EN300-468-TAB00* tables.
 
 That requires not only the gconv package, but it also needs to be manually
-enabled with `--enable-gconv`.
+enabled running autoconf with `--enable-gconv` option.
+
+In meson, gconv is an auto feature, so it will be auto-enabled in case the
+dependencies are satisfied. However, the gconv feature can be forced to enabled
+by running the following command during configuration step:
+
+```
+meson configure -Dgconv=enabled build/
+```
 
 ## Versioning
 
@@ -144,7 +195,7 @@ This library is meant to be used by digital TV applications that need to talk
 with media hardware.
 
 Full documentation is provided via Doxygen. It can be built, after configuring
-the package, with:
+the package with autotools, running:
 
 ```
 make doxygen-run
@@ -181,7 +232,7 @@ v4l-utils includes the following utilities:
 
 Decodes tm6000 proprietary format streams.
 
-Installed by make install under `<prefix>/bin`.
+Installed under `<prefix>/bin`.
 
 ### ir-keytable
 
@@ -189,7 +240,7 @@ Dump, Load or Modify ir receiver input tables. The ir tables for remotes which
 are known by the kernel (and loaded by default depending on dvb card type) can
 be found under `utils/keytable/keycodes`.
 
-v4l-keytable does not get installed by `make install`.
+v4l-keytable does not get installed during the install step.
 
 ### ir-ctl
 
@@ -199,25 +250,25 @@ A swiss-knife tool to handle raw IR and to set lirc options.
 
 QT v4l2 control panel application.
 
-Installed by `make install` under `<prefix>/bin`.
+Installed under `<prefix>/bin`.
 
 ### rds-saa6588
 
 Poll i2c RDS receiver [Philips saa6588].
 
-rds-saa6588 does not get installed by `make install`.
+rds-saa6588 does not get installed during the install step.
 
 ### v4l2-compliance
 
 Tool to test v4l2 API compliance of drivers.
 
-Installed by `make install` under `<prefix>/bin`.
+Installed under `<prefix>/bin`.
 
 ### v4l2-ctl
 
 Tool to control v4l2 controls from the cmdline.
 
-Installed by `make install` under `<prefix>/bin`.
+Installed under `<prefix>/bin`.
 
 ### v4l2-dbg
 
@@ -225,13 +276,13 @@ Tool to directly get and set registers of v4l2 devices, this requires a
 *kernel >= 2.6.29* with the `ADV_DEBUG` option enabled. This tool can only be
 used by root and is meant for development purposes only!
 
-Installed by `make install` under `<prefix>/sbin`.
+Installed under `<prefix>/sbin`.
 
 ### v4l2-sysfs-path
 
 *FIXME* add description.
 
-Installed by `make install` under `<prefix>/bin`.
+Installed under `<prefix>/bin`.
 
 ### v4l2-tracer
 
@@ -244,7 +295,7 @@ Installed by `make install` under `<prefix>/bin`.
 
 Xceive XC2028/3028 tuner module firmware manipulation tool.
 
-xc3028-firmware does not get installed by `make install`.
+xc3028-firmware does not get installed during the install step.
 
 ## Syncing with Kernel
 
