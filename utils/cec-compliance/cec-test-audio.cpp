@@ -39,6 +39,11 @@ static int dal_request_current_latency(struct node *node, unsigned me, unsigned 
 
 	cec_ops_report_current_latency(&msg, &phys_addr, &video_latency, &low_latency_mode,
 				       &audio_out_compensated, &audio_out_delay);
+	// cec_ops_report_current_latency will hardcode audio_out_delay
+	// if it is unused, but for this test we want the real value, so
+	// get it from the actual message.
+	if (msg.len >= 7)
+		audio_out_delay = msg.msg[6];
 	fail_on_test(phys_addr != node->remote[la].phys_addr);
 	info("Video latency: %d (%dms)\n", video_latency, (video_latency - 1) * 2);
 	info("Low latency mode: %d\n", low_latency_mode);
