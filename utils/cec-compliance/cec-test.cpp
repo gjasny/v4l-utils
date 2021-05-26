@@ -1514,7 +1514,7 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 					       result_name(mapTests[safename(name)], false),
 					       result_name(ret, false));
 				else if (has_warnings && mapTestsNoWarnings[safename(name)])
-					printf("\t    %s: %s (Expected no warnings, got %d warnings)\n",
+					printf("\t    %s: %s (Expected no warnings, but got %d)\n",
 					       name, ok(FAIL), warnings - old_warnings);
 				else if (ret == FAIL)
 					printf("\t    %s: %s\n", name, ok(OK_EXPECTED_FAIL));
