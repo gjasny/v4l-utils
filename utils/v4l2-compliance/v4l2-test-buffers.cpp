@@ -39,7 +39,7 @@ static bool stream_use_hdr;
 static unsigned max_bytesused[VIDEO_MAX_PLANES];
 static unsigned min_data_offset[VIDEO_MAX_PLANES];
 
-bool operator<(struct timeval const& n1, struct timeval const& n2)
+static bool operator<(struct timeval const& n1, struct timeval const& n2)
 {
 	return n1.tv_sec < n2.tv_sec ||
 		(n1.tv_sec == n2.tv_sec && n1.tv_usec < n2.tv_usec);

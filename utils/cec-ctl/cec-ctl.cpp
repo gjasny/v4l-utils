@@ -409,7 +409,7 @@ static __u64 current_ts()
 	return ts.tv_sec * 1000000000ULL + ts.tv_nsec;
 }
 
-int cec_named_ioctl(int fd, const char *name,
+static int cec_named_ioctl(int fd, const char *name,
 		    unsigned long int request, void *parm)
 {
 	int retval = ioctl(fd, request, parm);

@@ -503,7 +503,7 @@ status:
 		printf("\t%s\n", cec_status2s(*msg).c_str());
 }
 
-void log_htng_msg(const struct cec_msg *msg)
+static void log_htng_msg(const struct cec_msg *msg)
 {
 	if ((msg->tx_status && !(msg->tx_status & CEC_TX_STATUS_OK)) ||
 	    (msg->rx_status && !(msg->rx_status & (CEC_RX_STATUS_OK | CEC_RX_STATUS_FEATURE_ABORT))))

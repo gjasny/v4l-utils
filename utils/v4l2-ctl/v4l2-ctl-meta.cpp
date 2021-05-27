@@ -102,7 +102,7 @@ void meta_set(cv4l_fd &_fd)
 		   options[OptTryMetaOutFormat], V4L2_BUF_TYPE_META_OUTPUT);
 }
 
-void __meta_get(cv4l_fd &fd, __u32 type)
+static void __meta_get(cv4l_fd &fd, __u32 type)
 {
 	vfmt.type = type;
 	if (doioctl(fd.g_fd(), VIDIOC_G_FMT, &vfmt) == 0)
