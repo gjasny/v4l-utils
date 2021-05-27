@@ -599,6 +599,12 @@ static void print_qctrl(int fd, const v4l2_query_ext_ctrl &qc,
 	case V4L2_CTRL_TYPE_AREA:
 		printf("%31s %#8.8x (area)   :", s.c_str(), qc.id);
 		break;
+	case V4L2_CTRL_TYPE_HDR10_CLL_INFO:
+		printf("%31s %#8.8x (hdr10-cll-info):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_HDR10_MASTERING_DISPLAY:
+		printf("%31s %#8.8x (hdr10-mastering-display):", s.c_str(), qc.id);
+		break;
 	case V4L2_CTRL_TYPE_H264_SPS:
 		printf("%31s %#8.8x (h264-sps):", s.c_str(), qc.id);
 		break;
@@ -616,6 +622,18 @@ static void print_qctrl(int fd, const v4l2_query_ext_ctrl &qc,
 		break;
 	case V4L2_CTRL_TYPE_H264_PRED_WEIGHTS:
 		printf("%31s %#8.8x (h264-pred-weights):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_VP8_FRAME:
+		printf("%31s %#8.8x (vp8-frame):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_MPEG2_QUANTISATION:
+		printf("%31s %#8.8x (mpeg2-quantisation):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_MPEG2_SEQUENCE:
+		printf("%31s %#8.8x (mpeg2-sequence):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_MPEG2_PICTURE:
+		printf("%31s %#8.8x (mpeg2-picture):", s.c_str(), qc.id);
 		break;
 	case V4L2_CTRL_TYPE_FWHT_PARAMS:
 		printf("%31s %#8.8x (fwht-params):", s.c_str(), qc.id);
