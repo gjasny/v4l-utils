@@ -65,6 +65,7 @@
 	case V4L2_PIX_FMT_YUV444: return "16-bit A/XYUV 4-4-4-4";
 	case V4L2_PIX_FMT_YUV555: return "16-bit A/XYUV 1-5-5-5";
 	case V4L2_PIX_FMT_YUV565: return "16-bit YUV 5-6-5";
+	case V4L2_PIX_FMT_YUV24: return "24-bit YUV 4:4:4 8-8-8";
 	case V4L2_PIX_FMT_YUV32: return "32-bit A/XYUV 8-8-8-8";
 	case V4L2_PIX_FMT_AYUV32: return "32-bit AYUV 8-8-8-8";
 	case V4L2_PIX_FMT_XYUV32: return "32-bit XYUV 8-8-8-8";
