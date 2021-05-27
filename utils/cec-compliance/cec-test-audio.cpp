@@ -44,6 +44,8 @@ static int dal_request_current_latency(struct node *node, unsigned me, unsigned 
 	// get it from the actual message.
 	if (msg.len >= 7)
 		audio_out_delay = msg.msg[6];
+	else
+		audio_out_delay = 1;
 	fail_on_test(phys_addr != node->remote[la].phys_addr);
 	info("Video latency: %d (%dms)\n", video_latency, (video_latency - 1) * 2);
 	info("Low latency mode: %d\n", low_latency_mode);
