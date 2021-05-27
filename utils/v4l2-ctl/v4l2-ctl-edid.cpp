@@ -3,6 +3,7 @@
 
 #include <linux/v4l2-subdev.h>
 
+#include "compiler.h"
 #include "v4l2-ctl.h"
 
 /*
@@ -1300,7 +1301,7 @@ void edid_cmd(int ch, char *optarg)
 					 sedid.pad = strtoul(value, nullptr, 0);
 					 break;
 				 }
-				 // fall through
+				 fallthrough;
 			default:
 				 edid_usage();
 				 std::exit(EXIT_FAILURE);
