@@ -60,7 +60,7 @@ static int dal_request_current_latency(struct node *node, unsigned me, unsigned 
 		// reserved values.
 		if (audio_out_delay == 0 || audio_out_delay > 251)
 			warn("Audio out delay is set to a reserved value (%d), set it to 1 instead (recommended value when this field is unused).\n", audio_out_delay);
-		else
+		else if (audio_out_delay != 1)
 			warn("Audio out delay is %d (%dms), but value 1 is recommended when this field is unused.\n",
 			     audio_out_delay, (audio_out_delay - 1) * 2);
 	}
