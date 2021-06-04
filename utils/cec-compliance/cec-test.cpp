@@ -601,10 +601,6 @@ static const vec_remote_subtests dev_menu_ctl_subtests{
 
 /* Deck Control */
 
-/*
-  TODO: These are very rudimentary tests which should be expanded.
- */
-
 static int deck_ctl_give_status(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = {};
@@ -613,12 +609,11 @@ static int deck_ctl_give_status(struct node *node, unsigned me, unsigned la, boo
 	cec_msg_give_deck_status(&msg, true, CEC_OP_STATUS_REQ_ONCE);
 	fail_on_test(!transmit_timeout(node, &msg));
 	fail_on_test(timed_out(&msg));
-	if (is_playback_or_rec(la)) {
-		fail_on_test_v2(node->remote[la].cec_version,
-				node->remote[la].has_deck_ctl && cec_msg_status_is_abort(&msg));
-		fail_on_test_v2(node->remote[la].cec_version,
-				!node->remote[la].has_deck_ctl && !unrecognized_op(&msg));
-	}
+
+	fail_on_test_v2(node->remote[la].cec_version,
+	                node->remote[la].has_deck_ctl && cec_msg_status_is_abort(&msg));
+	fail_on_test_v2(node->remote[la].cec_version,
+	                !node->remote[la].has_deck_ctl && !unrecognized_op(&msg));
 	if (unrecognized_op(&msg))
 		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
@@ -626,7 +621,51 @@ static int deck_ctl_give_status(struct node *node, unsigned me, unsigned la, boo
 	if (cec_msg_status_is_abort(&msg))
 		return OK_PRESUMED;
 
-	return 0;
+	__u8 deck_info;
+
+	cec_ops_deck_status(&msg, &deck_info);
+	fail_on_test(deck_info < CEC_OP_DECK_INFO_PLAY || deck_info > CEC_OP_DECK_INFO_OTHER);
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_give_deck_status(&msg, true, CEC_OP_STATUS_REQ_ON);
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(timed_out(&msg));
+	cec_ops_deck_status(&msg, &deck_info);
+	fail_on_test(deck_info < CEC_OP_DECK_INFO_PLAY || deck_info > CEC_OP_DECK_INFO_OTHER);
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_give_deck_status(&msg, true, CEC_OP_STATUS_REQ_OFF);
+	/*
+	 * Reply would not normally be expected for CEC_OP_STATUS_REQ_OFF.
+	 * If a reply is received, then the follower failed to turn off
+	 * status reporting as required.
+	 */
+	msg.reply = CEC_MSG_DECK_STATUS;
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(!timed_out(&msg));
+
+	return OK;
+}
+
+static int deck_ctl_give_status_invalid(struct node *node, unsigned me, unsigned la, bool interactive)
+{
+	struct cec_msg msg = {};
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_give_deck_status(&msg, true, 0); /* Invalid Operand */
+	fail_on_test(!transmit_timeout(node, &msg));
+	if (unrecognized_op(&msg))
+		return OK_NOT_SUPPORTED;
+	fail_on_test(!cec_msg_status_is_abort(&msg));
+	fail_on_test(abort_reason(&msg) != CEC_OP_ABORT_INVALID_OP);
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_give_deck_status(&msg, true, 4); /* Invalid Operand */
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(!cec_msg_status_is_abort(&msg));
+	fail_on_test(abort_reason(&msg) != CEC_OP_ABORT_INVALID_OP);
+
+	return OK;
 }
 
 static int deck_ctl_deck_status(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -693,7 +732,16 @@ static int deck_ctl_play(struct node *node, unsigned me, unsigned la, bool inter
 }
 
 static const vec_remote_subtests deck_ctl_subtests{
-	{ "Give Deck Status", CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD, deck_ctl_give_status },
+	{
+		"Give Deck Status",
+		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD,
+		deck_ctl_give_status,
+	},
+	{
+		"Give Deck Status Invalid Operand",
+		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD,
+		deck_ctl_give_status_invalid,
+	},
 	{ "Deck Status", CEC_LOG_ADDR_MASK_ALL, deck_ctl_deck_status },
 	{ "Deck Control", CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD, deck_ctl_deck_ctl },
 	{ "Play", CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD, deck_ctl_play },

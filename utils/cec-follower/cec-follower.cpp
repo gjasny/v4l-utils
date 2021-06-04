@@ -313,6 +313,8 @@ void state_init(struct node &node)
 	node.state.sac_active = false;
 	node.state.volume = 50;
 	node.state.mute = false;
+	node.state.deck_report_changes = false;
+	node.state.deck_state = CEC_OP_DECK_INFO_STOP;
 	tuner_dev_info_init(&node.state);
 	node.state.last_aud_rate_rx_ts = 0;
 }

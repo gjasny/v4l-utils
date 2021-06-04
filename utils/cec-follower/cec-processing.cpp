@@ -505,36 +505,31 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		break;
 
 
-		/*
-		  Deck Control
-
-		  This is only a basic implementation.
-
-		  TODO: Device state should reflect whether we are playing,
-		  fast forwarding, etc.
-		*/
+		/* Deck Control */
 
 	case CEC_MSG_GIVE_DECK_STATUS:
-		if (node->has_deck_ctl) {
-			__u8 status_req;
+		if (!node->has_deck_ctl)
+			break;
 
-			cec_ops_give_deck_status(&msg, &status_req);
-			if (status_req < CEC_OP_STATUS_REQ_ON ||
-			    status_req > CEC_OP_STATUS_REQ_ONCE) {
-				reply_feature_abort(node, &msg, CEC_OP_ABORT_INVALID_OP);
-				return;
-			}
-			if (status_req != CEC_OP_STATUS_REQ_ONCE)
-				node->state.deck_report_changes =
-					status_req == CEC_OP_STATUS_REQ_ON;
-			if (status_req == CEC_OP_STATUS_REQ_OFF)
-				return;
+		__u8 status_req;
+		cec_ops_give_deck_status(&msg, &status_req);
+
+		switch (status_req) {
+		case CEC_OP_STATUS_REQ_ON:
+			node->state.deck_report_changes = true;
+			fallthrough;
+		case CEC_OP_STATUS_REQ_ONCE:
 			cec_msg_set_reply_to(&msg, &msg);
-			cec_msg_deck_status(&msg, CEC_OP_DECK_INFO_STOP);
+			cec_msg_deck_status(&msg, node->state.deck_state);
 			transmit(node, &msg);
 			return;
+		case CEC_OP_STATUS_REQ_OFF:
+			node->state.deck_report_changes = false;
+			return;
+		default:
+			reply_feature_abort(node, &msg, CEC_OP_ABORT_INVALID_OP);
+			return;
 		}
-		break;
 	case CEC_MSG_PLAY:
 		if (node->has_deck_ctl)
 			return;
