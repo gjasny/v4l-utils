@@ -448,8 +448,6 @@ void cec_driver_info(const struct cec_caps &caps,
 		       cec_prim_type2s(laddrs.primary_device_type[i]));
 		printf("\t    Logical Address Type   : %s\n",
 		       cec_la_type2s(laddrs.log_addr_type[i]));
-		if (laddrs.cec_version < CEC_OP_CEC_VERSION_2_0)
-			continue;
 		printf("\t    All Device Types       : %s\n",
 		       cec_all_dev_types2s(laddrs.all_device_types[i]).c_str());
 
