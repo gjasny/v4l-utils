@@ -413,8 +413,6 @@ static inline unsigned get_ts_ms()
 const char *result_name(int res, bool show_colors);
 const char *ok(int res);
 const char *power_status2s(__u8 power_status);
-std::string short_audio_desc2s(const struct short_audio_desc &sad);
-void sad_decode(struct short_audio_desc *sad, __u32 descriptor);
 const char *bcast_system2s(__u8 bcast_system);
 const char *dig_bcast_system2s(__u8 bcast_system);
 const char *hec_func_state2s(__u8 hfs);

@@ -4,12 +4,210 @@
  */
 
 #include <ctime>
+#include <sstream>
 #include <string>
 
 #include <sys/ioctl.h>
 #include <unistd.h>
 
 #include "cec-compliance.h"
+#include "compiler.h"
+
+static std::string audio_format_code2s(__u8 format_code)
+{
+	switch (format_code) {
+	case 0:
+		return "Reserved";
+	case SAD_FMT_CODE_LPCM:
+		return "L-PCM";
+	case SAD_FMT_CODE_AC3:
+		return "AC-3";
+	case SAD_FMT_CODE_MPEG1:
+		return "MPEG-1";
+	case SAD_FMT_CODE_MP3:
+		return "MP3";
+	case SAD_FMT_CODE_MPEG2:
+		return "MPEG2";
+	case SAD_FMT_CODE_AAC_LC:
+		return "AAC LC";
+	case SAD_FMT_CODE_DTS:
+		return "DTS";
+	case SAD_FMT_CODE_ATRAC:
+		return "ATRAC";
+	case SAD_FMT_CODE_ONE_BIT_AUDIO:
+		return "One Bit Audio";
+	case SAD_FMT_CODE_ENHANCED_AC3:
+		return "Enhanced AC-3";
+	case SAD_FMT_CODE_DTS_HD:
+		return "DTS-HD";
+	case SAD_FMT_CODE_MAT:
+		return "MAT";
+	case SAD_FMT_CODE_DST:
+		return "DST";
+	case SAD_FMT_CODE_WMA_PRO:
+		return "WMA Pro";
+	case SAD_FMT_CODE_EXTENDED:
+		return "Extended";
+	default:
+		return "Illegal";
+	}
+}
+
+static std::string extension_type_code2s(__u8 type_code)
+{
+	switch (type_code) {
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+		return "Not in use";
+	case SAD_EXT_TYPE_MPEG4_HE_AAC:
+		return "MPEG-4 HE AAC";
+	case SAD_EXT_TYPE_MPEG4_HE_AACv2:
+		return "MPEG-4 HE AAC v2";
+	case SAD_EXT_TYPE_MPEG4_AAC_LC:
+		return "MPEG-4 AAC LC";
+	case SAD_EXT_TYPE_DRA:
+		return "DRA";
+	case SAD_EXT_TYPE_MPEG4_HE_AAC_SURROUND:
+		return "MPEG-4 HE AAC + MPEG Surround";
+	case SAD_EXT_TYPE_MPEG4_AAC_LC_SURROUND:
+		return "MPEG-4 AAC LC + MPEG Surround";
+	case SAD_EXT_TYPE_MPEG_H_3D_AUDIO:
+		return "MPEG-H 3D Audio";
+	case SAD_EXT_TYPE_AC_4:
+		return "AC-4";
+	case SAD_EXT_TYPE_LPCM_3D_AUDIO:
+		return "L-PCM 3D Audio";
+	default:
+		return "Reserved";
+	}
+}
+
+static std::string short_audio_desc2s(const struct short_audio_desc &sad)
+{
+	std::stringstream oss;
+
+	if (sad.format_code != SAD_FMT_CODE_EXTENDED)
+		oss << audio_format_code2s(sad.format_code);
+	else
+		oss << extension_type_code2s(sad.extension_type_code);
+	oss << ", " << static_cast<int>(sad.num_channels) << " channels";
+
+	oss << ", sampling rates (kHz): ";
+	if (sad.sample_freq_mask & SAD_SAMPLE_FREQ_MASK_32)
+		oss << "32,";
+	if (sad.sample_freq_mask & SAD_SAMPLE_FREQ_MASK_44_1)
+		oss << "44.1,";
+	if (sad.sample_freq_mask & SAD_SAMPLE_FREQ_MASK_48)
+		oss << "48,";
+	if (sad.sample_freq_mask & SAD_SAMPLE_FREQ_MASK_88_2)
+		oss << "88.2,";
+	if (sad.sample_freq_mask & SAD_SAMPLE_FREQ_MASK_96)
+		oss << "96,";
+	if (sad.sample_freq_mask & SAD_SAMPLE_FREQ_MASK_176_4)
+		oss << "176.4,";
+	if (sad.sample_freq_mask & SAD_SAMPLE_FREQ_MASK_192)
+		oss << "192,";
+	if (sad.sample_freq_mask & (1 << 7))
+		oss << "Reserved,";
+	oss << "\b \b";
+
+	if (sad.format_code == SAD_FMT_CODE_LPCM ||
+	    (sad.format_code == SAD_FMT_CODE_EXTENDED &&
+	     sad.extension_type_code == SAD_EXT_TYPE_LPCM_3D_AUDIO)) {
+		oss << ", bit depth: ";
+		if (sad.bit_depth_mask & SAD_BIT_DEPTH_MASK_16)
+			oss << "16,";
+		if (sad.bit_depth_mask & SAD_BIT_DEPTH_MASK_20)
+			oss << "20,";
+		if (sad.bit_depth_mask & SAD_BIT_DEPTH_MASK_24)
+			oss << "24,";
+		oss << "\b \b";
+	} else if (sad.format_code >= 2 && sad.format_code <= 8)
+		oss << " max bitrate (kbit/s): " << 8 * sad.max_bitrate;
+
+	if (sad.format_code == SAD_FMT_CODE_EXTENDED) {
+		switch (sad.extension_type_code) {
+		case 4:
+		case 5:
+		case 6:
+		case 8:
+		case 10:
+			oss << ", frame length: ";
+			if (sad.frame_length_mask & SAD_FRAME_LENGTH_MASK_960)
+				oss << "960,";
+			if (sad.frame_length_mask & SAD_FRAME_LENGTH_MASK_1024)
+				oss << "1024,";
+			oss << "\b";
+			break;
+		}
+
+		if (sad.extension_type_code == 8 || sad.extension_type_code == 10)
+			oss << ", MPS";
+	}
+
+	return oss.str();
+}
+
+static void sad_decode(struct short_audio_desc *sad, __u32 descriptor)
+{
+	__u8 b1 = (descriptor >> 16) & 0xff;
+	__u8 b2 = (descriptor >> 8) & 0xff;
+	__u8 b3 = descriptor & 0xff;
+
+	sad->num_channels = (b1 & 0x07) + 1;
+	sad->format_code = (b1 >> 3) & 0x0f;
+	sad->sample_freq_mask = b2;
+
+	switch (sad->format_code) {
+	case SAD_FMT_CODE_LPCM:
+		sad->bit_depth_mask = b3 & 0x07;
+		break;
+	case 2:
+	case 3:
+	case 4:
+	case 5:
+	case 6:
+	case 7:
+	case 8:
+		sad->max_bitrate = b3;
+		break;
+	case 9:
+	case 10:
+	case 11:
+	case 12:
+	case 13:
+		sad->format_dependent = b3;
+		break;
+	case SAD_FMT_CODE_WMA_PRO:
+		sad->wma_profile = b3 & 0x03;
+		break;
+	case SAD_FMT_CODE_EXTENDED:
+	        sad->extension_type_code = (b3 >> 3) & 0x1f;
+
+		switch (sad->extension_type_code) {
+		case 4:
+		case 5:
+		case 6:
+			sad->frame_length_mask = (b3 >> 1) & 0x03;
+			break;
+		case 8:
+		case 10:
+			sad->frame_length_mask = (b3 >> 1) & 0x03;
+			sad->mps = b3 & 1;
+			break;
+		case SAD_EXT_TYPE_MPEG_H_3D_AUDIO:
+		case SAD_EXT_TYPE_AC_4:
+			sad->format_dependent = b3 & 0x07;
+			fallthrough;
+		case SAD_EXT_TYPE_LPCM_3D_AUDIO:
+			sad->bit_depth_mask = b3 & 0x07;
+			break;
+		}
+		break;
+	}
+}
 
 /* Dynamic Auto Lipsync */
 
@@ -402,7 +600,7 @@ static int sac_sad_format_check(struct node *node, unsigned me, unsigned la, boo
 				warn("The device has CEC version < 2.0 but reports audio format(s) introduced in CEC 2.0.\n");
 
 			for (int j = 0; j < num_descriptors; j++) {
-				struct short_audio_desc sad;
+				struct short_audio_desc sad = {};
 
 				sad_decode(&sad, descriptors[j]);
 				if ((id == 0 && sad.format_code != fmt_code) ||
