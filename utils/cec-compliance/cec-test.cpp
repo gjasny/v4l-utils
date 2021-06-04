@@ -1270,6 +1270,66 @@ static const vec_remote_subtests timer_prog_subtests{
 	{ "Timer Cleared Status", CEC_LOG_ADDR_MASK_RECORD, timer_prog_timer_clear_status },
 };
 
+static const char *hec_func_state2s(__u8 hfs)
+{
+	switch (hfs) {
+	case CEC_OP_HEC_FUNC_STATE_NOT_SUPPORTED:
+		return "HEC Not Supported";
+	case CEC_OP_HEC_FUNC_STATE_INACTIVE:
+		return "HEC Inactive";
+	case CEC_OP_HEC_FUNC_STATE_ACTIVE:
+		return "HEC Active";
+	case CEC_OP_HEC_FUNC_STATE_ACTIVATION_FIELD:
+		return "HEC Activation Field";
+	default:
+		return "Unknown";
+	}
+}
+
+static const char *host_func_state2s(__u8 hfs)
+{
+	switch (hfs) {
+	case CEC_OP_HOST_FUNC_STATE_NOT_SUPPORTED:
+		return "Host Not Supported";
+	case CEC_OP_HOST_FUNC_STATE_INACTIVE:
+		return "Host Inactive";
+	case CEC_OP_HOST_FUNC_STATE_ACTIVE:
+		return "Host Active";
+	default:
+		return "Unknown";
+	}
+}
+
+static const char *enc_func_state2s(__u8 efs)
+{
+	switch (efs) {
+	case CEC_OP_ENC_FUNC_STATE_EXT_CON_NOT_SUPPORTED:
+		return "Ext Con Not Supported";
+	case CEC_OP_ENC_FUNC_STATE_EXT_CON_INACTIVE:
+		return "Ext Con Inactive";
+	case CEC_OP_ENC_FUNC_STATE_EXT_CON_ACTIVE:
+		return "Ext Con Active";
+	default:
+		return "Unknown";
+	}
+}
+
+static const char *cdc_errcode2s(__u8 cdc_errcode)
+{
+	switch (cdc_errcode) {
+	case CEC_OP_CDC_ERROR_CODE_NONE:
+		return "No error";
+	case CEC_OP_CDC_ERROR_CODE_CAP_UNSUPPORTED:
+		return "Initiator does not have requested capability";
+	case CEC_OP_CDC_ERROR_CODE_WRONG_STATE:
+		return "Initiator is in wrong state";
+	case CEC_OP_CDC_ERROR_CODE_OTHER:
+		return "Other error";
+	default:
+		return "Unknown";
+	}
+}
+
 static int cdc_hec_discover(struct node *node, unsigned me, unsigned la, bool print)
 {
 	/* TODO: For future use cases, it might be necessary to store the results

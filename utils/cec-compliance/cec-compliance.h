@@ -415,10 +415,6 @@ const char *ok(int res);
 const char *power_status2s(__u8 power_status);
 const char *bcast_system2s(__u8 bcast_system);
 const char *dig_bcast_system2s(__u8 bcast_system);
-const char *hec_func_state2s(__u8 hfs);
-const char *host_func_state2s(__u8 hfs);
-const char *enc_func_state2s(__u8 efs);
-const char *cdc_errcode2s(__u8 cdc_errcode);
 int check_0(const void *p, int len);
 int util_receive(struct node *node, unsigned la, unsigned timeout,
 		 struct cec_msg *msg, __u8 sent_msg,
