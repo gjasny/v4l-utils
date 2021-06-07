@@ -1557,7 +1557,7 @@ static void stress_test_power_cycle(const struct node &node, unsigned cnt,
 		iter++;
 
 		if (usecs1)
-			printf("%s: Sleep %.2fs\n", ts2s(current_ts()).c_str(),
+			printf("%s: Sleep %.2fs before Image View On\n", ts2s(current_ts()).c_str(),
 			       usecs1 / 1000000.0);
 		fflush(stdout);
 		usleep(usecs1);
@@ -1647,7 +1647,7 @@ static void stress_test_power_cycle(const struct node &node, unsigned cnt,
 			break;
 
 		if (usecs2)
-			printf("%s: Sleep %.2fs\n", ts2s(current_ts()).c_str(),
+			printf("%s: Sleep %.2fs before Standby\n", ts2s(current_ts()).c_str(),
 			       usecs2 / 1000000.0);
 		fflush(stdout);
 		usleep(usecs2);
