@@ -1,0 +1,15 @@
+diff --git a/include/linux/v4l2-controls.h b/include/linux/v4l2-controls.h
+index e329974..9db08be 100644
+--- a/include/linux/v4l2-controls.h
++++ b/include/linux/v4l2-controls.h
+@@ -53,6 +53,10 @@
+ #include <linux/const.h>
+ #include <linux/types.h>
+ 
++#ifndef _BITUL
++#define _BITUL(x)    (1U << (x))
++#endif
++
+ /* Control classes */
+ #define V4L2_CTRL_CLASS_USER		0x00980000	/* Old-style 'user' controls */
+ #define V4L2_CTRL_CLASS_CODEC		0x00990000	/* Stateful codec controls */
