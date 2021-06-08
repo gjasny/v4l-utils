@@ -1508,7 +1508,7 @@ static void test_power_cycle(const struct node &node, unsigned int max_tries,
 }
 
 static void stress_test_power_cycle(const struct node &node, unsigned cnt,
-				    unsigned min_sleep, unsigned max_sleep, unsigned max_tries,
+				    double min_sleep, double max_sleep, unsigned max_tries,
 				    bool has_seed, unsigned seed, unsigned repeats,
 				    double sleep_before_on, double sleep_before_off)
 {
@@ -1516,7 +1516,7 @@ static void stress_test_power_cycle(const struct node &node, unsigned cnt,
 	struct cec_msg msg;
 	unsigned tries = 0;
 	unsigned iter = 0;
-	unsigned min_usleep = 1000000 * (max_sleep ? min_sleep : 0);
+	unsigned min_usleep = 1000000.0 * (max_sleep ? min_sleep : 0);
 	unsigned mod_usleep = 0;
 	unsigned wakeup_la;
 	__u16 pa, prev_pa;
@@ -1524,7 +1524,7 @@ static void stress_test_power_cycle(const struct node &node, unsigned cnt,
 	int ret;
 
 	if (max_sleep)
-		mod_usleep = 1000000 * (max_sleep - min_sleep) + 1;
+		mod_usleep = 1000000.0 * (max_sleep - min_sleep) + 1;
 
 	if (!has_seed)
 		seed = time(nullptr);
@@ -1958,8 +1958,8 @@ int main(int argc, char **argv)
 	__u32 monitor_time = 0;
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
 	unsigned int stress_test_pwr_cycle_cnt = 0;
-	unsigned int stress_test_pwr_cycle_min_sleep = 0;
-	unsigned int stress_test_pwr_cycle_max_sleep = 0;
+	double stress_test_pwr_cycle_min_sleep = 0;
+	double stress_test_pwr_cycle_max_sleep = 0;
 	unsigned int stress_test_pwr_cycle_polls = 30;
 	bool stress_test_pwr_cycle_has_seed = false;
 	unsigned int stress_test_pwr_cycle_seed = 0;
@@ -2390,10 +2390,10 @@ int main(int argc, char **argv)
 					stress_test_pwr_cycle_cnt = strtoul(value, nullptr, 0);
 					break;
 				case 1:
-					stress_test_pwr_cycle_min_sleep = strtoul(value, nullptr, 0);
+					stress_test_pwr_cycle_min_sleep = strtod(value, nullptr);
 					break;
 				case 2:
-					stress_test_pwr_cycle_max_sleep = strtoul(value, nullptr, 0);
+					stress_test_pwr_cycle_max_sleep = strtod(value, nullptr);
 					break;
 				case 3:
 					stress_test_pwr_cycle_has_seed = true;
