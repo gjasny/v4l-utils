@@ -738,7 +738,8 @@ int testExtendedControls(struct node *node)
 			if (checkExtendedCtrl(ctrl, qctrl))
 				return fail("s_ext_ctrls returned invalid control contents (%08x)\n", qctrl.id);
 		}
-		if (qctrl.type == V4L2_CTRL_TYPE_STRING)
+
+		if (qctrl.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD)
 			delete [] ctrl.string;
 		ctrl.string = nullptr;
 	}

@@ -1950,12 +1950,22 @@ int testRequests(struct node *node, bool test_streaming)
 	struct test_query_ext_ctrl valid_qctrl;
 	v4l2_ext_controls ctrls;
 	v4l2_ext_control ctrl;
+	v4l2_ext_control vivid_ro_ctrl = {
+		.id = VIVID_CID_RO_INTEGER,
+	};
+	v4l2_ext_controls vivid_ro_ctrls = {
+		.which = V4L2_CTRL_WHICH_REQUEST_VAL,
+		.count = 1,
+		.controls = &vivid_ro_ctrl,
+	};
 	bool have_controls;
 	int ret;
 
+	// If requests are supported, then there must be a media device
 	if (node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS)
 		fail_on_test(media_fd < 0);
 
+	// Check if the driver has controls that can be used to test requests
 	memset(&valid_qctrl, 0, sizeof(valid_qctrl));
 	memset(&ctrls, 0, sizeof(ctrls));
 	memset(&ctrl, 0, sizeof(ctrl));
@@ -1982,42 +1992,57 @@ int testRequests(struct node *node, bool test_streaming)
 			0 : ENOTTY;
 	}
 
+	// Test if V4L2_CTRL_WHICH_REQUEST_VAL is supported
 	ctrls.which = V4L2_CTRL_WHICH_REQUEST_VAL;
 	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
 	fail_on_test(ret != EINVAL && ret != EBADR && ret != ENOTTY);
 	have_controls = ret != ENOTTY;
 
 	if (media_fd < 0 || ret == EBADR) {
+		// Should not happen if requests are supported
 		fail_on_test(node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS);
 		return ENOTTY;
 	}
 	if (have_controls) {
 		ctrls.request_fd = 10;
+		// Test that querying controls with an invalid request_fd
+		// returns EINVAL
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EINVAL);
 	}
 	ret = doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &req_fd);
 	if (ret == ENOTTY) {
+		// Should not happen if requests are supported
 		fail_on_test(node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS);
 		return ENOTTY;
 	}
+	// Check that a request was allocated with a valid fd
 	fail_on_test(ret);
-	fhs.add(req_fd);
 	fail_on_test(req_fd < 0);
+	fhs.add(req_fd);
 	if (have_controls) {
 		ctrls.request_fd = req_fd;
+		// The request is in unqueued state, so this should return EACCES
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EACCES);
 	}
+	// You cannot queue a request that has no buffer
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, nullptr) != ENOENT);
+	// REINIT must work for an unqueued request
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, nullptr));
+	// Close media_fd
 	fhs.del(media_fd);
+	// This should have no effect on req_fd
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, nullptr) != ENOENT);
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, nullptr));
+	// Close req_fd
 	fhs.del(req_fd);
+	// G_EXT_CTRLS must now return EINVAL for req_fd since it no longer exists
 	if (have_controls)
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EINVAL);
+	// And the media request ioctls now must return EBADF
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_QUEUE, nullptr) != EBADF);
 	fail_on_test(doioctl_fd(req_fd, MEDIA_REQUEST_IOC_REINIT, nullptr) != EBADF);
 
+	// Open media_fd and alloc a request again
 	media_fd = fhs.add(mi_get_media_fd(node->g_fd(), node->bus_info));
 	fail_on_test(doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &req_fd));
 	fhs.add(req_fd);
@@ -2026,29 +2051,40 @@ int testRequests(struct node *node, bool test_streaming)
 	if (have_controls) {
 		ctrl.value = valid_qctrl.minimum;
 		ctrls.which = 0;
+		// Set control without requests
 		fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
 		ctrl.value = valid_qctrl.maximum;
 		ctrls.which = V4L2_CTRL_WHICH_REQUEST_VAL;
 		ctrls.request_fd = req_fd;
+		// Set control for a request
 		fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
 		ctrl.value = valid_qctrl.minimum;
 		ctrls.request_fd = req_fd;
+		// But you cannot get the value of an unqueued request
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EACCES);
 		ctrls.which = 0;
+		// But you can without a request
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
 		fail_on_test(ctrl.value != valid_qctrl.minimum);
 		ctrls.request_fd = req_fd;
 		ctrls.which = V4L2_CTRL_WHICH_REQUEST_VAL;
 		ctrl.id = 1;
+		// Setting an invalid control in a request must fail
 		fail_on_test(!doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+		// And also when trying to read an invalid control of a request
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != EACCES);
 	}
 	ctrl.id = valid_qctrl.id;
+	// Close req_fd and media_fd and reopen device node
 	fhs.del(req_fd);
 	fhs.del(media_fd);
 	node->reopen();
 
 	int type = node->g_type();
+	// For m2m devices g_type() will return the capture type, so
+	// we need to invert it to get the output type.
+	// At the moment only the output type of an m2m device can use
+	// requests.
 	if (node->is_m2m)
 		type = v4l_type_invert(type);
 	if (v4l_type_is_vbi(type)) {
@@ -2059,6 +2095,8 @@ int testRequests(struct node *node, bool test_streaming)
 	}
 
 	if (!(node->valid_buftypes & (1 << type))) {
+		// If the type is not supported, then check that requests
+		// are also not supported.
 		fail_on_test(node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS);
 		return ENOTTY;
 	}
@@ -2067,46 +2105,60 @@ int testRequests(struct node *node, bool test_streaming)
 	buffer_info.clear();
 
 	cv4l_queue q(type, V4L2_MEMORY_MMAP);
+	// For m2m devices q is the output queue and m2m_q is the capture queue
 	cv4l_queue m2m_q(v4l_type_invert(type));
 
 	q.init(type, V4L2_MEMORY_MMAP);
-	fail_on_test(q.reqbufs(node, 2));
+	fail_on_test(q.reqbufs(node, 15));
 
 	unsigned min_bufs = q.g_buffers();
-	fail_on_test(q.reqbufs(node, min_bufs + 4));
+	fail_on_test(q.reqbufs(node, min_bufs + 6));
 	unsigned num_bufs = q.g_buffers();
+	// Create twice as many requests as there are buffers
 	unsigned num_requests = 2 * num_bufs;
 	last_seq.init();
 
 	media_fd = fhs.add(mi_get_media_fd(node->g_fd(), node->bus_info));
 
+	// Allocate the requests
 	for (unsigned i = 0; i < num_requests; i++) {
 		fail_on_test(doioctl_fd(media_fd, MEDIA_IOC_REQUEST_ALLOC, &buf_req_fds[i]));
 		fhs.add(buf_req_fds[i]);
 		fail_on_test(buf_req_fds[i] < 0);
+		// Check that empty requests can't be queued
 		fail_on_test(!doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, nullptr));
 	}
+	// close the media fd, should not be needed anymore
 	fhs.del(media_fd);
 
 	buffer buf(q);
 
 	fail_on_test(buf.querybuf(node, 0));
+	// Queue a buffer without using requests
 	ret = buf.qbuf(node);
+	// If this fails, then that can only happen if the queue
+	// requires requests. In that case EBADR is returned.
 	fail_on_test(ret && ret != EBADR);
 	fail_on_test(buf.querybuf(node, 1));
+	// Now try to queue the buffer to the request
 	buf.s_flags(V4L2_BUF_FLAG_REQUEST_FD);
 	buf.s_request_fd(buf_req_fds[1]);
+	// If requests are required, then this must now work
+	// If requests are optional, then this must now fail since the
+	// queue in is non-request mode.
 	if (ret == EBADR)
 		fail_on_test(buf.qbuf(node));
 	else
 		fail_on_test(!buf.qbuf(node));
 
+	// Reopen device node, clearing any pending requests
 	node->reopen();
 
 	q.init(type, V4L2_MEMORY_MMAP);
 	fail_on_test(q.reqbufs(node, num_bufs));
 
 	if (node->is_m2m) {
+		// Setup the capture queue
 		fail_on_test(m2m_q.reqbufs(node, 2));
 		fail_on_test(node->streamon(m2m_q.g_type()));
 
@@ -2115,6 +2167,9 @@ int testRequests(struct node *node, bool test_streaming)
 		fail_on_test(buf.querybuf(node, 0));
 		buf.s_flags(V4L2_BUF_FLAG_REQUEST_FD);
 		buf.s_request_fd(buf_req_fds[0]);
+		// Only the output queue can support requests,
+		// so if the capture queue also supports requests,
+		// then something is wrong.
 		fail_on_test(!buf.qbuf(node));
 		fail_on_test(node->streamoff(m2m_q.g_type()));
 		fail_on_test(m2m_q.reqbufs(node, 0));
@@ -2128,10 +2183,12 @@ int testRequests(struct node *node, bool test_streaming)
 		buffer buf(q);
 
 		fail_on_test(buf.querybuf(node, i));
+		// No request was set, so this should return 0
 		fail_on_test(buf.g_request_fd());
 		buf.s_flags(V4L2_BUF_FLAG_REQUEST_FD);
 		if (i == 0) {
 			buf.s_request_fd(-1);
+			// Can't queue to an invalid request fd
 			fail_on_test(!buf.qbuf(node));
 			buf.s_request_fd(0xdead);
 			fail_on_test(!buf.qbuf(node));
@@ -2140,25 +2197,34 @@ int testRequests(struct node *node, bool test_streaming)
 		if (v4l_type_is_video(buf.g_type()))
 			buf.s_field(V4L2_FIELD_ANY);
 		if (!(i & 1)) {
+			// VIDIOC_PREPARE_BUF is incompatible with requests
 			fail_on_test(buf.prepare_buf(node) != EINVAL);
 			buf.s_flags(0);
+			// Test vivid error injection
 			if (node->inject_error(VIVID_CID_BUF_PREPARE_ERROR))
 				fail_on_test(buf.prepare_buf(node) != EINVAL);
 			fail_on_test(buf.prepare_buf(node));
 			fail_on_test(buf.querybuf(node, i));
+			// Check that the buffer was prepared
 			fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_PREPARED));
 			buf.s_flags(buf.g_flags() | V4L2_BUF_FLAG_REQUEST_FD);
 			buf.s_request_fd(buf_req_fds[i]);
 		}
+		// Queue the buffer to the request
 		int err = buf.qbuf(node);
 		if (!err) {
+			// If requests are not supported, this should fail
 			fail_on_test(!supports_requests);
+			// You can't queue the same buffer again
 			fail_on_test(!buf.qbuf(node));
 		} else {
+			// Can only fail if requests are not supported
 			fail_on_test(supports_requests);
+			// and should fail with EBADR in that case
 			fail_on_test(err != EBADR);
 		}
 		if (err) {
+			// Requests are not supported, so clean up and return
 			fail_on_test(node->streamoff(q.g_type()));
 			fail_on_test(q.reqbufs(node, 0));
 			if (node->is_m2m) {
@@ -2169,11 +2235,14 @@ int testRequests(struct node *node, bool test_streaming)
 			node->reopen();
 			return ENOTTY;
 		}
+		// Check flags and request fd
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
 		fail_on_test(buf.g_request_fd() < 0);
+		// Query the buffer again
 		fail_on_test(buf.querybuf(node, i));
+		// Check returned flags and request fd
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_DONE);
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
@@ -2182,55 +2251,81 @@ int testRequests(struct node *node, bool test_streaming)
 			fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_PREPARED);
 		else
 			fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_PREPARED));
+		// Check that you can't queue it again
 		buf.s_request_fd(buf_req_fds[i]);
 		fail_on_test(!buf.qbuf(node));
 
+		// Set a control in the request, except for every third request.
 		ctrl.value = (i & 1) ? valid_qctrl.maximum : valid_qctrl.minimum;
 		ctrls.request_fd = buf_req_fds[i];
-		fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+		if (i % 3 < 2)
+			fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+		// Re-init the unqueued request
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, nullptr));
 
+		// Make sure that the buffer is no longer in a request
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST);
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD);
 
+		// Set the control again
 		ctrls.request_fd = buf_req_fds[i];
-		fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+		if (i % 3 < 2)
+			fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
 
+		// After the re-init the buffer is no longer marked for
+		// a request. If a request has been queued before (hence
+		// the 'if (i)' check), then queuing the buffer without
+		// a request must fail since you can't mix the two streamining
+		// models.
 		if (i)
 			fail_on_test(!buf.qbuf(node));
 		buf.s_flags(buf.g_flags() | V4L2_BUF_FLAG_REQUEST_FD);
 		buf.s_request_fd(buf_req_fds[i]);
 		buf.s_field(V4L2_FIELD_ANY);
+		// Queue the buffer for the request
 		fail_on_test(buf.qbuf(node));
+		// Verify that drivers will replace FIELD_ANY for video output queues
 		if (v4l_type_is_video(buf.g_type()) && v4l_type_is_output(buf.g_type()))
 			fail_on_test(buf.g_field() == V4L2_FIELD_ANY);
+		// Query buffer and check that it is marked as being part of a request
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
+		// Use vivid to check buffer prepare or request validation error injection
 		if ((i & 1) && node->inject_error(i > num_bufs / 2 ?
 						  VIVID_CID_BUF_PREPARE_ERROR :
 						  VIVID_CID_REQ_VALIDATE_ERROR))
 			fail_on_test(doioctl_fd(buf_req_fds[i],
 						MEDIA_REQUEST_IOC_QUEUE, nullptr) != EINVAL);
+		// Queue the request
 		ret = doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, nullptr);
 		if (node->codec_mask & STATELESS_DECODER) {
+			// Stateless decoders might require that certain
+			// controls are present in the request. In that
+			// case they return ENOENT and we just stop testing
+			// since we don't know what those controls are.
 			fail_on_test(ret != ENOENT);
 			test_streaming = false;
 			break;
 		}
 		fail_on_test(ret);
 		fail_on_test(buf.querybuf(node, i));
+		// Check that the buffer is now queued up
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST);
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_QUEUED));
+		// Re-initing or requeuing the request is no longer possible
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, nullptr) != EBUSY);
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, nullptr) != EBUSY);
 		if (i >= min_bufs) {
+			// Close some of the request fds to check that this
+			// is safe to do
 			close(buf_req_fds[i]);
 			buf_req_fds[i] = -1;
 		}
 		if (i == min_bufs - 1) {
+			// Check vivid STREAMON error injection
 			if (node->inject_error(VIVID_CID_START_STR_ERROR))
 				fail_on_test(!node->streamon(q.g_type()));
 			fail_on_test(node->streamon(q.g_type()));
@@ -2242,45 +2337,97 @@ int testRequests(struct node *node, bool test_streaming)
 	if (test_streaming) {
 		unsigned capture_count;
 
-		fail_on_test(captureBufs(node, node, q, m2m_q, num_bufs,
+		// Continue streaming
+		// For m2m devices captureBufs() behaves a bit odd: you pass
+		// in the total number of output buffers that you want to
+		// stream, but since there are already q.g_buffers() output
+		// buffers queued up (see previous loop), the captureBufs()
+		// function will subtract that from frame_count, so it will
+		// only queue frame_count - q.g_buffers() output buffers.
+		// In order to ensure we captured at least
+		// min_bufs buffers we need to add min_bufs to the frame_count.
+		fail_on_test(captureBufs(node, node, q, m2m_q,
+					 num_bufs + (node->is_m2m ? min_bufs : 0),
 					 POLL_MODE_SELECT, capture_count));
 	}
 	fail_on_test(node->streamoff(q.g_type()));
 
+	// Note that requests min_bufs...2*min_bufs-1 close their filehandles,
+	// so here we just go through the first half of the requests.
 	for (unsigned i = 0; test_streaming && i < min_bufs; i++) {
 		buffer buf(q);
 
+		// Get the control
 		ctrls.request_fd = buf_req_fds[i];
 		fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
-		fail_on_test(ctrl.value != ((i & 1) ? valid_qctrl.maximum :
+		bool is_max = i & 1;
+		// Since the control was not set for every third request,
+		// the value will actually be that of the previous request.
+		if (i % 3 == 2)
+			is_max = !is_max;
+		// Check that the value is as expected
+		fail_on_test(ctrl.value != (is_max ? valid_qctrl.maximum :
 			     valid_qctrl.minimum));
+		if (is_vivid) {
+			// vivid specific: check that the read-only control
+			// of the completed request has the expected value
+			// (sequence number & 0xff).
+			vivid_ro_ctrls.request_fd = buf_req_fds[i];
+			fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &vivid_ro_ctrls));
+			if (node->is_video && !node->can_output)
+				warn_once_on_test(vivid_ro_ctrl.value != (int)i);
+		}
 		fail_on_test(buf.querybuf(node, i));
+		// Check that all the buffers of the stopped stream are
+		// no longer marked as belonging to a request.
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD);
 		fail_on_test(buf.g_request_fd());
 		struct pollfd pfd = {
 			buf_req_fds[i],
 			POLLPRI, 0
 		};
+		// Check that polling the request fd will immediately return,
+		// indicating that the request has completed.
 		fail_on_test(poll(&pfd, 1, 100) != 1);
+		// Requeuing the request must fail
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, nullptr) != EBUSY);
+		// But reinit must succeed.
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, nullptr));
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD);
 		fail_on_test(buf.g_request_fd());
-		fhs.del(buf_req_fds[i]);
 		ctrls.request_fd = buf_req_fds[i];
+		// Check that getting controls from a reinited request fails
 		fail_on_test(!doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
+		// Close the request fd
+		fhs.del(buf_req_fds[i]);
+		buf_req_fds[i] = -1;
 	}
+	// Close any remaining open request fds
 	for (unsigned i = 0; i < num_requests; i++)
 		if (buf_req_fds[i] >= 0)
 			fhs.del(buf_req_fds[i]);
 
+	// Getting the current control value must work
 	ctrls.which = 0;
 	fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
-	if (test_streaming)
-		fail_on_test(ctrl.value != (((num_bufs - 1) & 1) ? valid_qctrl.maximum :
+	// Check the final control value
+	if (test_streaming) {
+		bool is_max = (num_bufs - 1) & 1;
+		if ((num_bufs - 1) % 3 == 2)
+			is_max = !is_max;
+		fail_on_test(ctrl.value != (is_max ? valid_qctrl.maximum :
 					    valid_qctrl.minimum));
+		if (is_vivid) {
+			// For vivid check the final read-only value
+			vivid_ro_ctrls.which = 0;
+			fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &vivid_ro_ctrls));
+			if (node->is_video && !node->can_output)
+				warn_on_test(vivid_ro_ctrl.value != (int)(num_bufs - 1));
+		}
+	}
 
+	// Cleanup
 	fail_on_test(q.reqbufs(node, 0));
 	if (node->is_m2m) {
 		fail_on_test(node->streamoff(m2m_q.g_type()));

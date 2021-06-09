@@ -80,6 +80,9 @@ enum poll_mode {
 #define VIVID_CID_QUEUE_ERROR		(VIVID_CID_VIVID_BASE + 70)
 #define VIVID_CID_REQ_VALIDATE_ERROR	(VIVID_CID_VIVID_BASE + 72)
 
+#define VIVID_CID_CUSTOM_BASE		(V4L2_CID_USER_BASE | 0xf000)
+#define VIVID_CID_RO_INTEGER		(VIVID_CID_CUSTOM_BASE + 12)
+
 struct test_query_ext_ctrl: v4l2_query_ext_ctrl {
 	__u64 menu_mask;
 };
@@ -220,20 +223,26 @@ private:
 			std::exit(EXIT_FAILURE);		\
 	} while (0)
 
-#define warn_once(fmt, args...)						\
-	do {								\
-		static bool show;					\
-									\
-		if (!show) {						\
-			show = true;					\
-			warn(fmt, ##args);				\
-		}							\
+#define warn_once(fmt, args...)				\
+	do {						\
+		static bool show;			\
+							\
+		if (!show) {				\
+			show = true;			\
+			warn(fmt, ##args);		\
+		}					\
 	} while (0)
 
 #define warn_on_test(test) 				\
 	do {						\
 		if (test)				\
 			warn("%s\n", #test);		\
+	} while (0)
+
+#define warn_once_on_test(test) 			\
+	do {						\
+		if (test)				\
+			warn_once("%s\n", #test);	\
 	} while (0)
 
 #define warn_or_info(is_info, fmt, args...) 		\
