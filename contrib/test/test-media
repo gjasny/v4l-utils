@@ -13,6 +13,7 @@ cec=0
 cecpwr=--skip-test-standby-resume
 kmemleak=0
 dmesg=0
+setup=0
 unload=0
 unbind_time=1
 reunbind_time=9
@@ -50,6 +51,7 @@ if [ -z "$1" ]; then
 	echo "-kmemleak: enable memory leak scan"
 	echo "-dmesg: run dmesg at the end"
 	echo "-32: use v4l2-ctl-32 and v4l2-compliance-32 to test the 32 bit compat layer"
+	echo "-setup: load and configure all the drivers, but do not run tests"
 	echo
 	echo Test Targets:
 	echo "vidtv: test the vidtv driver"
@@ -77,6 +79,9 @@ while [ ! -z "$1" ]; do
 		;;
 	-dmesg)
 		dmesg=1
+		;;
+	-setup)
+		setup=1
 		;;
 	-kmemleak)
 		if [ -f /sys/kernel/debug/kmemleak ]; then
@@ -168,7 +173,7 @@ $v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=21
 
 echo
 
-if [ $vivid -eq 1 ]; then
+if [ $vivid -eq 1 -a $setup -eq 0 ]; then
 	dmesg -n notice
 	echo
 	echo vivid compliance tests, contiguous planes | tee /dev/kmsg
@@ -192,9 +197,6 @@ fi
 
 if [ $cec -eq 1 ]; then
 	dmesg -n notice
-	echo
-	echo vivid cec compliance tests | tee /dev/kmsg
-	echo
 	if ! cec-ctl -D vivid -a vivid-000-vid-cap0 >/dev/null ; then
 		echo "FAIL: the vivid module had no cec support" | tee -a $tmp
 		echo "Grand Total for vivid cec: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
@@ -205,6 +207,12 @@ if [ $cec -eq 1 ]; then
 	sleep 1
 	cec-ctl -D vivid -a vivid-000-vid-out0 --playback
 	sleep 1
+fi
+
+if [ $cec -eq 1 -a $setup -eq 0 ]; then
+	echo
+	echo vivid cec compliance tests | tee /dev/kmsg
+	echo
 	trap 'kill $f0 $f1 2>/dev/null' INT
 	cec-follower -s -D vivid -a vivid-000-vid-cap0 2>&1 >/dev/null &
 	f0=$!
@@ -230,7 +238,7 @@ if [ $cec -eq 1 ]; then
 	vivid=1
 fi
 
-if [ $vivid -eq 1 ]; then
+if [ $vivid -eq 1 -a $setup -eq 0 ]; then
 	echo
 	echo unbind vivid | tee /dev/kmsg
 	echo
@@ -294,7 +302,6 @@ if [ $vim2m -eq 1 ]; then
 	modprobe vim2m
 	sleep 1
 	dmesg -n notice
-	echo
 
 	if ! $v4l2_ctl -z platform:vim2m ; then
 		echo "FAIL: the vim2m module failed to load" | tee -a $tmp
@@ -303,7 +310,10 @@ if [ $vim2m -eq 1 ]; then
 		rmmod vivid
 		exit 0
 	fi
+fi
 
+if [ $vim2m -eq 1 -a $setup -eq 0 ]; then
+	echo
 	echo vim2m compliance tests | tee /dev/kmsg
 	echo
 	date
@@ -384,6 +394,9 @@ if [ $vimc -eq 1 ]; then
 	$v4l2_ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
 	$v4l2_ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
 	$v4l2_ctl -z platform:vimc -d "Raw Capture 1" -v pixelformat=BA81
+fi
+
+if [ $vimc -eq 1 -a $setup -eq 0 ]; then
 	dmesg -n notice
 	echo
 	echo vimc compliance tests | tee /dev/kmsg
@@ -455,13 +468,18 @@ if [ $vimc -eq 1 ]; then
 fi
 
 if [ $vicodec -eq 1 ]; then
-	tmpdir=`mktemp -d`
+	if [ $setup -eq 0 ]; then
+		tmpdir=`mktemp -d`
+	else
+		tmpdir=/tmp/vicodec-test
+		rm -rf $tmpdir
+		mkdir $tmpdir
+	fi
 
 	rmmod vicodec 2&>/dev/null
 	modprobe vicodec
 	sleep 2
 	dmesg -n notice
-	echo
 
 	if ! $v4l2_ctl -z platform:vicodec ; then
 		echo "FAIL: the vicodec module failed to load" | tee -a $tmp
@@ -471,18 +489,8 @@ if [ $vicodec -eq 1 ]; then
 		exit 0
 	fi
 
-	echo vicodec media controller compliance tests | tee /dev/kmsg
 	echo
-	date
-	stdbuf -oL $v4l2_compliance -M platform:vicodec 2>&1 | tee -a $tmp
-
-	echo
-	echo vicodec encoder compliance tests | tee /dev/kmsg
-	echo
-	stdbuf -oL $v4l2_compliance -z platform:vicodec -d stateful-encoder-source -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
-
-	echo
-	echo vicodec create test files | tee /dev/kmsg
+	echo vicodec create test files in $tmpdir | tee /dev/kmsg
 	echo
 
 	encful_opts='-z platform:vicodec -d stateful-encoder-source --stream-mmap --stream-out-mmap --stream-out-hor-speed=1'
@@ -507,6 +515,19 @@ if [ $vicodec -eq 1 ]; then
 	cat $tmpdir/comp.yu12.1280.2 $tmpdir/comp.yu12.1920.2 >$tmpdir/comp.yu12.mix.4
 	cat $tmpdir/comp.hdr.yu12.mix.4 $tmpdir/comp.hdr.yu12.mix.4 $tmpdir/comp.hdr.yu12.mix.4 $tmpdir/comp.hdr.yu12.mix.4 $tmpdir/comp.hdr.yu12.mix.4 $tmpdir/comp.hdr.yu12.mix.4 >$tmpdir/comp.hdr.yu12.mix.4.6
 	cat $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 $tmpdir/comp.yu12.mix.4 >$tmpdir/comp.yu12.mix.4.6
+fi
+
+if [ $vicodec -eq 1 -a $setup -eq 0 ]; then
+	echo
+	echo vicodec media controller compliance tests | tee /dev/kmsg
+	echo
+	date
+	stdbuf -oL $v4l2_compliance -M platform:vicodec 2>&1 | tee -a $tmp
+
+	echo
+	echo vicodec encoder compliance tests | tee /dev/kmsg
+	echo
+	stdbuf -oL $v4l2_compliance -z platform:vicodec -d stateful-encoder-source -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
 
 	echo
 	echo vicodec decoder compliance tests | tee /dev/kmsg
@@ -603,24 +624,11 @@ if [ $vicodec -eq 1 ]; then
 	echo
 fi
 
-date
-echo
-echo unbind vivid | tee /dev/kmsg
-echo
-echo -n vivid.0 >/sys/bus/platform/drivers/vivid/unbind
-sleep $unbind_time
-echo
-echo rmmod vivid | tee /dev/kmsg
-echo
-rmmod vivid
-sleep $rmmod_time
-
 if [ $vidtv -eq 1 ]; then
 	rmmod dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod 2&>/dev/null
 	modprobe vidtv
 	sleep 2
 	dmesg -n notice
-	echo
 
 	if ! media-ctl -d platform:vidtv ; then
 		echo "FAIL: the vidtv module failed to load" | tee -a $tmp
@@ -629,7 +637,10 @@ if [ $vidtv -eq 1 ]; then
 		rmmod dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod 2&>/dev/null
 		exit 0
 	fi
+fi
 
+if [ $vidtv -eq 1 -a $setup -eq 0 ]; then
+	echo
 	echo vidtv media controller compliance tests | tee /dev/kmsg
 	echo
 	date
@@ -686,38 +697,54 @@ if [ $vidtv -eq 1 ]; then
 
 fi
 
-date
-echo
-echo Summary:
-echo
+if [ $setup -eq 0 ]; then
+	date
+	echo
+	echo unbind vivid | tee /dev/kmsg
+	echo
+	echo -n vivid.0 >/sys/bus/platform/drivers/vivid/unbind
+	sleep $unbind_time
+	echo
+	echo rmmod vivid | tee /dev/kmsg
+	echo
+	rmmod vivid
+	sleep $rmmod_time
+fi
 
-grep 'Total' $tmp | perl -e '
-while (<>) {
-	if (/Total/) {
-		print;
-		$added_nl = /^Grand/ || /\/dev\/cec/;
-		printf("\n") if $added_nl;
+if [ $setup -eq 0 ]; then
+	date
+	echo
+	echo Summary:
+	echo
+
+	grep 'Total' $tmp | perl -e '
+	while (<>) {
+		if (/Total/) {
+			print;
+			$added_nl = /^Grand/ || /\/dev\/cec/;
+			printf("\n") if $added_nl;
+		}
+		next unless /^Total/;
+		($succeeded, $failed, $warnings) = /Succeeded: (\d+), Failed: (\d+), Warnings: (\d+)/;
+		$tot_succeeded += $succeeded;
+		$tot_failed += $failed;
+		$tot_warnings += $warnings;
 	}
-	next unless /^Total/;
-	($succeeded, $failed, $warnings) = /Succeeded: (\d+), Failed: (\d+), Warnings: (\d+)/;
-	$tot_succeeded += $succeeded;
-	$tot_failed += $failed;
-	$tot_warnings += $warnings;
-}
 
-printf("\n") unless $added_nl;
-printf("Final Summary: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
-	$tot_succeeded + $tot_failed, $tot_succeeded, $tot_failed, $tot_warnings);
-'
+	printf("\n") unless $added_nl;
+	printf("Final Summary: %d, Succeeded: %d, Failed: %d, Warnings: %d\n",
+		$tot_succeeded + $tot_failed, $tot_succeeded, $tot_failed, $tot_warnings);
+	'
 
-date
-rm -f $tmp
+	date
+	rm -f $tmp
 
-if [ $dmesg -eq 1 ]; then
-	echo
-	echo -----------------------------------------------------------
-	echo
-	dmesg
+	if [ $dmesg -eq 1 ]; then
+		echo
+		echo -----------------------------------------------------------
+		echo
+		dmesg
+	fi
 fi
 
 dmesg -n $cur_lvl
