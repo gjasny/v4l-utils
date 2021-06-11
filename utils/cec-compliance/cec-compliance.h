@@ -359,6 +359,11 @@ static inline bool refused(const struct cec_msg *msg)
 	return cec_msg_status_is_abort(msg) && abort_reason(msg) == CEC_OP_ABORT_REFUSED;
 }
 
+static inline bool incorrect_mode(const struct cec_msg *msg)
+{
+	return cec_msg_status_is_abort(msg) && abort_reason(msg) == CEC_OP_ABORT_INCORRECT_MODE;
+}
+
 static inline bool timed_out(const struct cec_msg *msg)
 {
 	return msg->rx_status & CEC_RX_STATUS_TIMEOUT;

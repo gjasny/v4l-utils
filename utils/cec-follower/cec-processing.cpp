@@ -32,6 +32,9 @@
 /* The maximum interval in nanoseconds between audio rate messages as defined in the spec */
 #define MAX_AUD_RATE_MSG_INTERVAL_NS (2 * 1000000000ULL)
 
+/* The maximum interval in nanoseconds to allow a deck to skip forward/reverse */
+#define MAX_DECK_SKIP_NS (2 * 1000000000ULL)
+
 struct cec_enum_values {
 	const char *type_name;
 	__u8 value;
@@ -161,6 +164,7 @@ static bool enter_standby(struct node *node)
 		node->state.old_power_status = node->state.power_status;
 		node->state.power_status = CEC_OP_POWER_STATUS_STANDBY;
 		node->state.power_status_changed_time = time(nullptr);
+		node->state.deck_skip_start = 0;
 		dev_info("Changing state to standby\n");
 		return true;
 	}
@@ -248,6 +252,21 @@ static void aud_rate_msg_interval_check(struct node *node, __u64 ts_new)
 		if (interval > MAX_AUD_RATE_MSG_INTERVAL_NS) {
 			warn("The interval since the last Audio Rate Control message was > 2s.\n");
 			node->state.last_aud_rate_rx_ts = 0;
+		}
+	}
+}
+
+static void update_deck_state(struct node *node, unsigned me, __u8 deck_state_new)
+{
+	if (node->state.deck_state != deck_state_new) {
+		node->state.deck_state = deck_state_new;
+
+		if (node->state.deck_report_changes) {
+			struct cec_msg msg = {};
+
+			cec_msg_init(&msg, me, node->state.deck_report_changes_to);
+			cec_msg_deck_status(&msg, node->state.deck_state);
+			transmit(node, &msg);
 		}
 	}
 }
@@ -517,6 +536,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 		switch (status_req) {
 		case CEC_OP_STATUS_REQ_ON:
 			node->state.deck_report_changes = true;
+			node->state.deck_report_changes_to = cec_msg_initiator(&msg);
 			fallthrough;
 		case CEC_OP_STATUS_REQ_ONCE:
 			cec_msg_set_reply_to(&msg, &msg);
@@ -535,9 +555,48 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 			return;
 		break;
 	case CEC_MSG_DECK_CONTROL:
-		if (node->has_deck_ctl)
+		if (!node->has_deck_ctl)
+			break;
+
+		__u8 deck_state;
+		__u8 deck_control_mode;
+
+		cec_ops_deck_control(&msg, &deck_control_mode);
+
+		switch (deck_control_mode) {
+		case CEC_OP_DECK_CTL_MODE_STOP:
+			deck_state = CEC_OP_DECK_INFO_STOP;
+			node->state.deck_skip_start = 0;
+			break;
+		case CEC_OP_DECK_CTL_MODE_EJECT:
+			deck_state = CEC_OP_DECK_INFO_NO_MEDIA;
+			node->state.deck_skip_start = 0;
+			break;
+		case CEC_OP_DECK_CTL_MODE_SKIP_FWD:
+			/* Skip Forward will not retract the deck tray. */
+			if (node->state.deck_state == CEC_OP_DECK_INFO_NO_MEDIA) {
+				reply_feature_abort(node, &msg, CEC_OP_ABORT_INCORRECT_MODE);
+				return;
+			}
+			deck_state = CEC_OP_DECK_INFO_SKIP_FWD;
+			node->state.deck_skip_start = msg.rx_ts;
+			break;
+		case CEC_OP_DECK_CTL_MODE_SKIP_REV:
+			/* Skip Reverse will not retract the deck tray. */
+			if (node->state.deck_state == CEC_OP_DECK_INFO_NO_MEDIA) {
+				reply_feature_abort(node, &msg, CEC_OP_ABORT_INCORRECT_MODE);
+				return;
+			}
+			deck_state = CEC_OP_DECK_INFO_SKIP_REV;
+			node->state.deck_skip_start = msg.rx_ts;
+			break;
+		default:
+			cec_msg_reply_feature_abort(&msg, CEC_OP_ABORT_INVALID_OP);
+			transmit(node, &msg);
 			return;
-		break;
+		}
+		update_deck_state(node, me, deck_state);
+		return;
 	case CEC_MSG_DECK_STATUS:
 		return;
 
@@ -1034,6 +1093,11 @@ void testProcessing(struct node *node, bool wallclock)
 
 		if (node->has_aud_rate)
 			aud_rate_msg_interval_check(node, ts_now);
+
+		if (node->state.deck_skip_start && ts_now - node->state.deck_skip_start > MAX_DECK_SKIP_NS) {
+			node->state.deck_skip_start = 0;
+			update_deck_state(node, me, CEC_OP_DECK_INFO_PLAY);
+		}
 	}
 	mode = CEC_MODE_INITIATOR;
 	doioctl(node, CEC_S_MODE, &mode);

@@ -19,6 +19,20 @@ struct remote_test {
 	const vec_remote_subtests &subtests;
 };
 
+static int deck_status_get(struct node *node, unsigned me, unsigned la, __u8 &deck_status)
+{
+	struct cec_msg msg = {};
+	deck_status = 0;
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_give_deck_status(&msg, true, CEC_OP_STATUS_REQ_ONCE);
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(timed_out_or_abort(&msg));
+	cec_ops_deck_status(&msg, &deck_status);
+
+	return OK;
+}
+
 
 /* System Information */
 
@@ -688,24 +702,93 @@ static int deck_ctl_deck_status(struct node *node, unsigned me, unsigned la, boo
 static int deck_ctl_deck_ctl(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = {};
+	__u8 deck_status;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_deck_control(&msg, CEC_OP_DECK_CTL_MODE_STOP);
 	fail_on_test(!transmit_timeout(node, &msg));
-	if (is_playback_or_rec(la)) {
-		fail_on_test_v2(node->remote[la].cec_version,
-				node->remote[la].has_deck_ctl && unrecognized_op(&msg));
-		fail_on_test_v2(node->remote[la].cec_version,
-				!node->remote[la].has_deck_ctl && !unrecognized_op(&msg));
-	}
+	fail_on_test_v2(node->remote[la].cec_version,
+	                node->remote[la].has_deck_ctl && unrecognized_op(&msg));
+	fail_on_test_v2(node->remote[la].cec_version,
+	                !node->remote[la].has_deck_ctl && !unrecognized_op(&msg));
 	if (unrecognized_op(&msg))
 		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
 		return OK_REFUSED;
-	if (cec_msg_status_is_abort(&msg))
-		return OK_PRESUMED;
+	fail_on_test(deck_status_get(node, me, la, deck_status));
+	if (cec_msg_status_is_abort(&msg)) {
+		if (!incorrect_mode(&msg))
+			return FAIL;
+		if (deck_status == CEC_OP_DECK_INFO_NO_MEDIA)
+			info("Stop: no media.\n");
+		else
+			warn("Deck has media but returned Feature Abort with Incorrect Mode.");
+		return OK;
+	}
+	fail_on_test(deck_status != CEC_OP_DECK_INFO_STOP && deck_status != CEC_OP_DECK_INFO_NO_MEDIA);
 
-	return OK_PRESUMED;
+	cec_msg_init(&msg, me, la);
+	cec_msg_deck_control(&msg, CEC_OP_DECK_CTL_MODE_SKIP_FWD);
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(deck_status_get(node, me, la, deck_status));
+	/*
+	 * If there is no media, Skip Forward should Feature Abort with Incorrect Mode
+	 * even if Stop did not.  If Skip Forward does not Feature Abort, the deck
+	 * is assumed to have media.
+	 */
+	if (incorrect_mode(&msg)) {
+		fail_on_test(deck_status != CEC_OP_DECK_INFO_NO_MEDIA);
+		return OK;
+	}
+	fail_on_test(cec_msg_status_is_abort(&msg));
+	/* Wait for Deck to finish Skip Forward. */
+	for (unsigned i = 0; deck_status == CEC_OP_DECK_INFO_SKIP_FWD && i < long_timeout; i++) {
+		sleep(1);
+		fail_on_test(deck_status_get(node, me, la, deck_status));
+	}
+	fail_on_test(deck_status != CEC_OP_DECK_INFO_PLAY);
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_deck_control(&msg, CEC_OP_DECK_CTL_MODE_SKIP_REV);
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(cec_msg_status_is_abort(&msg)); /* Assumes deck has media. */
+	fail_on_test(deck_status_get(node, me, la, deck_status));
+	/* Wait for Deck to finish Skip Reverse. */
+	for (unsigned i = 0; deck_status == CEC_OP_DECK_INFO_SKIP_REV && i < long_timeout; i++) {
+		sleep(1);
+		fail_on_test(deck_status_get(node, me, la, deck_status));
+	}
+	fail_on_test(deck_status != CEC_OP_DECK_INFO_PLAY);
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_deck_control(&msg, CEC_OP_DECK_CTL_MODE_EJECT);
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(cec_msg_status_is_abort(&msg));
+	fail_on_test(deck_status_get(node, me, la, deck_status));
+	fail_on_test(deck_status != CEC_OP_DECK_INFO_NO_MEDIA);
+
+	return OK;
+}
+
+static int deck_ctl_deck_ctl_invalid(struct node *node, unsigned me, unsigned la, bool interactive)
+{
+	struct cec_msg msg = {};
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_deck_control(&msg, 0); /* Invalid Deck Control operand */
+	fail_on_test(!transmit_timeout(node, &msg));
+	if (unrecognized_op(&msg))
+		return OK_NOT_SUPPORTED;
+	fail_on_test(!cec_msg_status_is_abort(&msg));
+	fail_on_test(abort_reason(&msg) != CEC_OP_ABORT_INVALID_OP);
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_deck_control(&msg, 5); /* Invalid Deck Control operand */
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(!cec_msg_status_is_abort(&msg));
+	fail_on_test(abort_reason(&msg) != CEC_OP_ABORT_INVALID_OP);
+
+	return OK;
 }
 
 static int deck_ctl_play(struct node *node, unsigned me, unsigned la, bool interactive)
@@ -743,8 +826,17 @@ static const vec_remote_subtests deck_ctl_subtests{
 		deck_ctl_give_status_invalid,
 	},
 	{ "Deck Status", CEC_LOG_ADDR_MASK_ALL, deck_ctl_deck_status },
-	{ "Deck Control", CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD, deck_ctl_deck_ctl },
 	{ "Play", CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD, deck_ctl_play },
+	{
+		"Deck Control",
+		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD,
+		deck_ctl_deck_ctl,
+	},
+	{
+		"Deck Control Invalid Operand",
+		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD,
+		deck_ctl_deck_ctl_invalid,
+	},
 };
 
 /* Tuner Control */

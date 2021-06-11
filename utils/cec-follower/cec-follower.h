@@ -50,7 +50,9 @@ struct state {
 	bool service_by_dig_id;
 	bool tuner_report_changes;
 	bool deck_report_changes;
+	__u8 deck_report_changes_to;
 	__u8 deck_state;
+	__u64 deck_skip_start;
 	unsigned toggle_power_status;
 	__u64 last_aud_rate_rx_ts;
 };
