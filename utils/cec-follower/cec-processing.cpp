@@ -551,14 +551,63 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 			return;
 		}
 	case CEC_MSG_PLAY:
-		if (node->has_deck_ctl)
-			return;
-		break;
-	case CEC_MSG_DECK_CONTROL:
 		if (!node->has_deck_ctl)
 			break;
 
 		__u8 deck_state;
+		__u8 play_mode;
+
+		cec_ops_play(&msg, &play_mode);
+
+		switch (play_mode) {
+		case CEC_OP_PLAY_MODE_PLAY_FWD:
+			deck_state = CEC_OP_DECK_INFO_PLAY;
+			break;
+		case CEC_OP_PLAY_MODE_PLAY_REV:
+			deck_state = CEC_OP_DECK_INFO_PLAY_REV;
+			break;
+		case CEC_OP_PLAY_MODE_PLAY_STILL:
+			deck_state = CEC_OP_DECK_INFO_STILL;
+			break;
+		case CEC_OP_PLAY_MODE_PLAY_FAST_FWD_MIN:
+		case CEC_OP_PLAY_MODE_PLAY_FAST_FWD_MED:
+		case CEC_OP_PLAY_MODE_PLAY_FAST_FWD_MAX:
+			deck_state = CEC_OP_DECK_INFO_FAST_FWD;
+			break;
+		case CEC_OP_PLAY_MODE_PLAY_FAST_REV_MIN:
+		case CEC_OP_PLAY_MODE_PLAY_FAST_REV_MED:
+		case CEC_OP_PLAY_MODE_PLAY_FAST_REV_MAX:
+			deck_state = CEC_OP_DECK_INFO_FAST_REV;
+			break;
+		case CEC_OP_PLAY_MODE_PLAY_SLOW_FWD_MIN:
+		case CEC_OP_PLAY_MODE_PLAY_SLOW_FWD_MED:
+		case CEC_OP_PLAY_MODE_PLAY_SLOW_FWD_MAX:
+			deck_state = CEC_OP_DECK_INFO_SLOW;
+			break;
+		case CEC_OP_PLAY_MODE_PLAY_SLOW_REV_MIN:
+		case CEC_OP_PLAY_MODE_PLAY_SLOW_REV_MED:
+		case CEC_OP_PLAY_MODE_PLAY_SLOW_REV_MAX:
+			deck_state = CEC_OP_DECK_INFO_SLOW_REV;
+			break;
+		default:
+			cec_msg_reply_feature_abort(&msg, CEC_OP_ABORT_INVALID_OP);
+			transmit(node, &msg);
+			return;
+		}
+		/* Only Play Forward and Play Still will close tray if open. */
+		if (play_mode != CEC_OP_PLAY_MODE_PLAY_FWD &&
+		    play_mode != CEC_OP_PLAY_MODE_PLAY_STILL &&
+		    node->state.deck_state == CEC_OP_DECK_INFO_NO_MEDIA) {
+			reply_feature_abort(node, &msg, CEC_OP_ABORT_INCORRECT_MODE);
+			return;
+		}
+		node->state.deck_skip_start = 0;
+		update_deck_state(node, me, deck_state);
+		return;
+	case CEC_MSG_DECK_CONTROL:
+		if (!node->has_deck_ctl)
+			break;
+
 		__u8 deck_control_mode;
 
 		cec_ops_deck_control(&msg, &deck_control_mode);
