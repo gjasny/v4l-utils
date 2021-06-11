@@ -696,23 +696,6 @@ static int deck_ctl_give_status_invalid(struct node *node, unsigned me, unsigned
 	return OK;
 }
 
-static int deck_ctl_deck_status(struct node *node, unsigned me, unsigned la, bool interactive)
-{
-	struct cec_msg msg = {};
-
-	cec_msg_init(&msg, me, la);
-	cec_msg_deck_status(&msg, CEC_OP_DECK_INFO_STOP);
-	fail_on_test(!transmit_timeout(node, &msg));
-	if (unrecognized_op(&msg))
-		return OK_NOT_SUPPORTED;
-	if (refused(&msg))
-		return OK_REFUSED;
-	if (cec_msg_status_is_abort(&msg))
-		return OK_PRESUMED;
-
-	return 0;
-}
-
 static int deck_ctl_deck_ctl(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg = {};
@@ -893,7 +876,6 @@ static const vec_remote_subtests deck_ctl_subtests{
 		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD,
 		deck_ctl_give_status_invalid,
 	},
-	{ "Deck Status", CEC_LOG_ADDR_MASK_ALL, deck_ctl_deck_status },
 	{
 		"Deck Control",
 		CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD,
