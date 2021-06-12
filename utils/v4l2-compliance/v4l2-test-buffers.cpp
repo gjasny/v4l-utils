@@ -1953,13 +1953,17 @@ int testRequests(struct node *node, bool test_streaming)
 	v4l2_ext_control vivid_ro_ctrl = {
 		.id = VIVID_CID_RO_INTEGER,
 	};
-	v4l2_ext_controls vivid_ro_ctrls = {
-		.which = V4L2_CTRL_WHICH_REQUEST_VAL,
-		.count = 1,
-		.controls = &vivid_ro_ctrl,
-	};
+	v4l2_ext_controls vivid_ro_ctrls = {};
 	bool have_controls;
 	int ret;
+
+	// Note: trying to initialize vivid_ro_ctrls as was done for
+	// vivid_ro_ctrl fails with gcc 7 with this error:
+	// sorry, unimplemented: non-trivial designated initializers not supported
+	// So just set this struct the old-fashioned way.
+	vivid_ro_ctrls.which = V4L2_CTRL_WHICH_REQUEST_VAL;
+	vivid_ro_ctrls.count = 1;
+	vivid_ro_ctrls.controls = &vivid_ro_ctrl;
 
 	// If requests are supported, then there must be a media device
 	if (node->buf_caps & V4L2_BUF_CAP_SUPPORTS_REQUESTS)
