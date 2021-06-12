@@ -739,7 +739,7 @@ static int deck_ctl_deck_ctl(struct node *node, unsigned me, unsigned la, bool i
 	}
 	fail_on_test(cec_msg_status_is_abort(&msg));
 	/* Wait for Deck to finish Skip Forward. */
-	for (unsigned i = 0; deck_status == CEC_OP_DECK_INFO_SKIP_FWD && i < long_timeout; i++) {
+	for (int i = 0; deck_status == CEC_OP_DECK_INFO_SKIP_FWD && i < long_timeout; i++) {
 		sleep(1);
 		fail_on_test(deck_status_get(node, me, la, deck_status));
 	}
@@ -751,7 +751,7 @@ static int deck_ctl_deck_ctl(struct node *node, unsigned me, unsigned la, bool i
 	fail_on_test(cec_msg_status_is_abort(&msg)); /* Assumes deck has media. */
 	fail_on_test(deck_status_get(node, me, la, deck_status));
 	/* Wait for Deck to finish Skip Reverse. */
-	for (unsigned i = 0; deck_status == CEC_OP_DECK_INFO_SKIP_REV && i < long_timeout; i++) {
+	for (int i = 0; deck_status == CEC_OP_DECK_INFO_SKIP_REV && i < long_timeout; i++) {
 		sleep(1);
 		fail_on_test(deck_status_get(node, me, la, deck_status));
 	}

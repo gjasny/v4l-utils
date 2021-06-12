@@ -53,7 +53,7 @@ struct state {
 	__u8 deck_report_changes_to;
 	__u8 deck_state;
 	__u64 deck_skip_start;
-	unsigned toggle_power_status;
+	time_t toggle_power_status;
 	__u64 last_aud_rate_rx_ts;
 };
 
