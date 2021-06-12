@@ -118,7 +118,7 @@ static char *my_strlcpy(char *dst, const char *src, size_t siz)
 {
 	char *rc;
 
-	rc = strncpy(dst, src, siz);
+	rc = strncpy(dst, src, siz - 1);
 	dst[siz - 1] = '\0';
 
 	return rc;
@@ -251,7 +251,7 @@ static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
 
 	pthread_mutex_init(&msg->lock, NULL);
 	pthread_cond_init(&msg->cond, NULL);
-	my_strlcpy(msg->cmd, cmd, sizeof(*msg->cmd));
+	my_strlcpy(msg->cmd, cmd, sizeof(msg->cmd));
 
 	pthread_mutex_lock(&priv->lock_io);
 	msg->seq = ++priv->seq;
@@ -347,7 +347,7 @@ static struct queued_msg *send_buf(struct dvb_device_priv *dvb, int fd,
 
 	pthread_mutex_init(&msg->lock, NULL);
 	pthread_cond_init(&msg->cond, NULL);
-	my_strlcpy(msg->cmd, cmd, sizeof(*msg->cmd));
+	my_strlcpy(msg->cmd, cmd, sizeof(msg->cmd));
 
 	pthread_mutex_lock(&priv->lock_io);
 	msg->seq = ++priv->seq;
