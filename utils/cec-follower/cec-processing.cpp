@@ -561,6 +561,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 
 		switch (play_mode) {
 		case CEC_OP_PLAY_MODE_PLAY_FWD:
+			exit_standby(node);
 			deck_state = CEC_OP_DECK_INFO_PLAY;
 			break;
 		case CEC_OP_PLAY_MODE_PLAY_REV:
@@ -618,6 +619,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 			node->state.deck_skip_start = 0;
 			break;
 		case CEC_OP_DECK_CTL_MODE_EJECT:
+			exit_standby(node);
 			deck_state = CEC_OP_DECK_INFO_NO_MEDIA;
 			node->state.deck_skip_start = 0;
 			break;

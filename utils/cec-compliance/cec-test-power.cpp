@@ -633,6 +633,50 @@ static int power_state_transitions(struct node *node, unsigned me, unsigned la, 
 	return 0;
 }
 
+static int standby_resume_wakeup_deck(struct node *node, unsigned me, unsigned la, bool interactive, __u8 opcode)
+{
+	struct cec_msg msg;
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_give_deck_status(&msg, true, CEC_OP_STATUS_REQ_ONCE);
+	fail_on_test(!transmit_timeout(node, &msg));
+	if (timed_out_or_abort(&msg))
+		return OK_NOT_SUPPORTED;
+
+	unsigned unresponsive_time = 0;
+
+	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_time));
+
+	int ret = standby_resume_standby(node, me, la, interactive);
+
+	if (ret)
+		return ret;
+
+	cec_msg_init(&msg, me, la);
+	if (opcode == CEC_OP_PLAY_MODE_PLAY_FWD)
+		cec_msg_play(&msg, CEC_OP_PLAY_MODE_PLAY_FWD);
+	else
+		cec_msg_deck_control(&msg, CEC_OP_DECK_CTL_MODE_EJECT);
+	fail_on_test(!transmit_timeout(node, &msg));
+	fail_on_test(cec_msg_status_is_abort(&msg));
+
+	unresponsive_time = 0;
+	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_time));
+	fail_on_test(interactive && !question("Is the device in On state?"));
+
+	return OK;
+}
+
+static int standby_resume_wakeup_deck_eject(struct node *node, unsigned me, unsigned la, bool interactive)
+{
+	return standby_resume_wakeup_deck(node, me, la, interactive, CEC_OP_DECK_CTL_MODE_EJECT);
+}
+
+static int standby_resume_wakeup_deck_play(struct node *node, unsigned me, unsigned la, bool interactive)
+{
+	return standby_resume_wakeup_deck(node, me, la, interactive, CEC_OP_PLAY_MODE_PLAY_FWD);
+}
+
 const vec_remote_subtests standby_resume_subtests{
 	{ "Standby", CEC_LOG_ADDR_MASK_ALL, standby_resume_standby },
 	{ "Repeated Standby message does not wake up", CEC_LOG_ADDR_MASK_ALL, standby_resume_standby_toggle },
@@ -651,4 +695,6 @@ const vec_remote_subtests standby_resume_subtests{
 	{ "Wake up TV on Image View On", CEC_LOG_ADDR_MASK_TV, standby_resume_wakeup_image_view_on },
 	{ "Wake up TV on Text View On", CEC_LOG_ADDR_MASK_TV, standby_resume_wakeup_text_view_on },
 	{ "Power State Transitions", CEC_LOG_ADDR_MASK_TV, power_state_transitions, false, true },
+	{ "Deck Eject Standby Resume", CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD, standby_resume_wakeup_deck_eject },
+	{ "Deck Play Standby Resume", CEC_LOG_ADDR_MASK_PLAYBACK | CEC_LOG_ADDR_MASK_RECORD, standby_resume_wakeup_deck_play },
 };
