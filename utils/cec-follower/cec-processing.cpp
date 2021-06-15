@@ -262,7 +262,7 @@ static void update_deck_state(struct node *node, unsigned me, __u8 deck_state_ne
 		node->state.deck_state = deck_state_new;
 
 		if (node->state.deck_report_changes) {
-			struct cec_msg msg = {};
+			struct cec_msg msg;
 
 			cec_msg_init(&msg, me, node->state.deck_report_changes_to);
 			cec_msg_deck_status(&msg, node->state.deck_state);
@@ -1095,7 +1095,7 @@ void testProcessing(struct node *node, bool wallclock)
 		if (node->cec_version >= CEC_OP_CEC_VERSION_2_0 &&
 		    last_pwr_state != pwr_state &&
 		    (time_to_stable > 2 || pwr_state < CEC_OP_POWER_STATUS_TO_ON)) {
-			struct cec_msg msg = {};
+			struct cec_msg msg;
 
 			cec_msg_init(&msg, me, CEC_LOG_ADDR_BROADCAST);
 			cec_msg_report_power_status(&msg, pwr_state);
@@ -1118,7 +1118,7 @@ void testProcessing(struct node *node, bool wallclock)
 		if (poll_la != me &&
 		    poll_la != last_poll_la && poll_la < 15 && la_info[poll_la].ts &&
 		    ts_to_ms(ts_now - la_info[poll_la].ts) > POLL_PERIOD) {
-			struct cec_msg msg = {};
+			struct cec_msg msg;
 
 			cec_msg_init(&msg, me, poll_la);
 			transmit(node, &msg);

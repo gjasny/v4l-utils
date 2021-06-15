@@ -261,7 +261,7 @@ static int testAdapLogAddrs(struct node *node)
 
 static int testTransmit(struct node *node)
 {
-	struct cec_msg msg = { };
+	struct cec_msg msg;
 	unsigned i, la = node->log_addr[0];
 	unsigned valid_la = 15, invalid_la = 15;
 	bool tested_self = false;

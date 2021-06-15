@@ -16,7 +16,7 @@
 
 static bool get_power_status(struct node *node, unsigned me, unsigned la, __u8 &power_status)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_give_device_power_status(&msg, true);
@@ -62,7 +62,7 @@ bool util_interactive_ensure_power_state(struct node *node, unsigned me, unsigne
 
 static int power_status_give(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = { };
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_give_device_power_status(&msg, true);
@@ -83,7 +83,7 @@ static int power_status_give(struct node *node, unsigned me, unsigned la, bool i
 
 static int power_status_report(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_report_power_status(&msg, CEC_OP_POWER_STATUS_ON);
@@ -106,7 +106,7 @@ const vec_remote_subtests power_status_subtests{
 static int one_touch_play_view_on(struct node *node, unsigned me, unsigned la, bool interactive,
 				  __u8 opcode)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	if (opcode == CEC_MSG_IMAGE_VIEW_ON)
@@ -179,7 +179,7 @@ static int one_touch_play_text_view_on_wakeup(struct node *node, unsigned me, un
 static int one_touch_play_view_on_change(struct node *node, unsigned me, unsigned la, bool interactive,
 					 __u8 opcode)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	int ret;
 
 	fail_on_test(!util_interactive_ensure_power_state(node, me, la, interactive, CEC_OP_POWER_STATUS_ON));
@@ -215,7 +215,7 @@ static int one_touch_play_text_view_on_change(struct node *node, unsigned me, un
 
 static int one_touch_play_req_active_source(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_active_source(&msg, node->phys_addr);
@@ -318,7 +318,7 @@ static int standby_resume_standby(struct node *node, unsigned me, unsigned la, b
 	if (!node->remote[la].has_power_status)
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	unsigned unresponsive_time = 0;
 
 	fail_on_test(!util_interactive_ensure_power_state(node, me, la, interactive, CEC_OP_POWER_STATUS_ON));
@@ -355,7 +355,7 @@ static int standby_resume_standby_toggle(struct node *node, unsigned me, unsigne
 	if (!node->remote[la].in_standby)
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	unsigned unresponsive_time = 0;
 	__u8 new_status;
 
@@ -403,7 +403,7 @@ static int standby_resume_active_source_nowake(struct node *node, unsigned me, u
 	if (!node->remote[la].in_standby)
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	unsigned unresponsive_time = 0;
 	__u8 new_status;
 
@@ -435,7 +435,7 @@ static int standby_resume_active_source_nowake(struct node *node, unsigned me, u
 
 static int wakeup_rc(struct node *node, unsigned me, unsigned la)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	struct cec_op_ui_command rc_press = {};
 
 	/* Todo: A release should be sent after this */
@@ -450,7 +450,7 @@ static int wakeup_rc(struct node *node, unsigned me, unsigned la)
 
 static int wakeup_tv(struct node *node, unsigned me, unsigned la)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_image_view_on(&msg);
@@ -475,7 +475,7 @@ static int wakeup_tv(struct node *node, unsigned me, unsigned la)
 
 static int wakeup_source(struct node *node, unsigned me, unsigned la)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_set_stream_path(&msg, node->remote[la].phys_addr);
@@ -545,7 +545,7 @@ static int standby_resume_wakeup_view_on(struct node *node, unsigned me, unsigne
 	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_time));
 	fail_on_test(interactive && !question("Is the device in On state?"));
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_active_source(&msg, node->phys_addr);

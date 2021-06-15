@@ -213,7 +213,7 @@ static void sad_decode(struct short_audio_desc *sad, __u32 descriptor)
 
 static int dal_request_current_latency(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_request_current_latency(&msg, true, node->remote[la].phys_addr);
@@ -276,7 +276,7 @@ static int dal_request_current_latency(struct node *node, unsigned me, unsigned 
 
 static int dal_req_current_latency_invalid(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	/* Test that there is no reply when the physical address operand is not the
 	   physical address of the remote device. */
@@ -334,7 +334,7 @@ static int arc_initiate_tx(struct node *node, unsigned me, unsigned la, bool int
 	if (pa_is_upstream_from(node->phys_addr, node->remote[la].phys_addr))
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	/*
 	 * Note that this is a special case: INITIATE_ARC can reply with two possible
@@ -377,7 +377,7 @@ static int arc_terminate_tx(struct node *node, unsigned me, unsigned la, bool in
 	if (!node->remote[la].arc_initiated)
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_terminate_arc(&msg, true);
@@ -404,7 +404,7 @@ static int arc_initiate_rx(struct node *node, unsigned me, unsigned la, bool int
 	if (pa_is_upstream_from(node->remote[la].phys_addr, node->phys_addr))
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_request_arc_initiation(&msg, true);
@@ -452,7 +452,7 @@ static int arc_terminate_rx(struct node *node, unsigned me, unsigned la, bool in
 	if (!node->remote[la].arc_initiated)
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_request_arc_termination(&msg, true);
@@ -526,7 +526,7 @@ const vec_remote_subtests arc_subtests{
 
 static int sac_request_sad_probe(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	__u8 audio_format_id = 0;
 	__u8 audio_format_code = 1;
 
@@ -550,7 +550,7 @@ static int sac_request_sad_invalid(struct node *node, unsigned me, unsigned la, 
 	if (!node->remote[la].has_sad)
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	__u8 audio_format_id = CEC_OP_AUD_FMT_ID_CEA861;
 	__u8 audio_format_code = 63; // This is outside the range of CEA861-F
 
@@ -572,7 +572,7 @@ static int sac_sad_format_check(struct node *node, unsigned me, unsigned la, boo
 	if (!node->remote[la].has_sad)
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	__u8 audio_format_id;
 	__u8 audio_format_code;
 
@@ -627,7 +627,7 @@ static int sac_sad_req_multiple(struct node *node, unsigned me, unsigned la, boo
 	/* Check that if we got a response to a Request Short Audio Descriptor
 	   with a single format, we also get a response when the same audio format
 	   occurs in a request together with other formats. */
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	__u8 audio_format_id[4] = { };
 	__u8 audio_format_code[4];
 
@@ -648,7 +648,7 @@ static int sac_sad_req_multiple(struct node *node, unsigned me, unsigned la, boo
 
 static int sac_set_system_audio_mode_direct(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_set_system_audio_mode(&msg, CEC_OP_SYS_AUD_STATUS_ON);
@@ -666,7 +666,7 @@ static int sac_set_system_audio_mode_direct(struct node *node, unsigned me, unsi
 
 static int sac_set_system_audio_mode_broadcast_on(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, CEC_LOG_ADDR_BROADCAST);
 	cec_msg_set_system_audio_mode(&msg, CEC_OP_SYS_AUD_STATUS_ON);
@@ -677,7 +677,7 @@ static int sac_set_system_audio_mode_broadcast_on(struct node *node, unsigned me
 
 static int sac_system_audio_mode_status(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	/* The device shall not feature abort System Audio Status if it did not
 	   feature abort Set System Audio Mode.
@@ -701,7 +701,7 @@ static int sac_system_audio_mode_status(struct node *node, unsigned me, unsigned
 
 static int sac_set_system_audio_mode_broadcast_off(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, CEC_LOG_ADDR_BROADCAST);
 	cec_msg_set_system_audio_mode(&msg, CEC_OP_SYS_AUD_STATUS_OFF);
@@ -712,7 +712,7 @@ static int sac_set_system_audio_mode_broadcast_off(struct node *node, unsigned m
 
 static int sac_system_audio_mode_req_on(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	__u8 status;
 
 	/* Send a System Audio Mode Request to the audio system. This notifies the
@@ -741,7 +741,7 @@ static int sac_system_audio_mode_req_on(struct node *node, unsigned me, unsigned
 
 static int sac_give_system_audio_mode_status(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	__u8 system_audio_status;
 
 	/* The device shall not feature abort Give System Audio Mode Status if it did not
@@ -769,7 +769,7 @@ static int sac_give_system_audio_mode_status(struct node *node, unsigned me, uns
 
 static int sac_give_audio_status(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	/* Give Audio Status is mandatory for audio systems in CEC 2.0, except
 	   for systems that lack external controls for volume/mute status. */
@@ -795,7 +795,7 @@ static int sac_give_audio_status(struct node *node, unsigned me, unsigned la, bo
 
 static int sac_util_send_user_control_press(struct node *node, unsigned me, unsigned la, __u8 ui_cmd)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	struct cec_op_ui_command rc_press = {};
 
 	/* The device shall not feature abort
@@ -914,7 +914,7 @@ static int sac_user_control_press_restore_volume_function(struct node *node, uns
 
 static int sac_user_control_release(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	/* The device shall not feature abort User Control Released if it did not
 	   feature abort System Audio Mode Request
@@ -941,7 +941,7 @@ static int sac_system_audio_mode_req_off(struct node *node, unsigned me, unsigne
 	if (!node->remote[la].has_sys_audio_mode_req)
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	__u8 status;
 
 	cec_msg_init(&msg, me, la);
@@ -1059,7 +1059,7 @@ const vec_remote_subtests sac_subtests{
 
 static int audio_rate_ctl_set_audio_rate(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_set_audio_rate(&msg, CEC_OP_AUD_RATE_WIDE_STD);
@@ -1086,7 +1086,7 @@ static int audio_rate_ctl_active_sensing(struct node *node, unsigned me, unsigne
 	if (!node->remote[la].has_aud_rate)
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 
@@ -1106,7 +1106,7 @@ static int audio_rate_ctl_invalid(struct node *node, unsigned me, unsigned la, b
 	if (!node->remote[la].has_aud_rate)
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_set_audio_rate(&msg, 0xa); /* Invalid Audio Rate Control message operand */

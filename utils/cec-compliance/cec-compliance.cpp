@@ -741,7 +741,7 @@ static int poll_remote_devs(struct node *node)
 
 static void topology_probe_device(struct node *node, unsigned i, unsigned la)
 {
-	struct cec_msg msg = { };
+	struct cec_msg msg;
 	bool unknown;
 
 	printf("\tSystem Information for device %d (%s) from device %d (%s):\n",

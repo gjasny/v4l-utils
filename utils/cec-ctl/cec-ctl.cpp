@@ -673,7 +673,7 @@ static __u16 calc_mask(__u16 pa)
 
 static int showTopology(struct node *node)
 {
-	struct cec_msg msg = { };
+	struct cec_msg msg;
 	struct cec_log_addrs laddrs = { };
 
 	if (!(node->caps & CEC_CAP_TRANSMIT))

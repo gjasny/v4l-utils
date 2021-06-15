@@ -21,7 +21,7 @@ struct remote_test {
 
 static int deck_status_get(struct node *node, unsigned me, unsigned la, __u8 &deck_status)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	deck_status = 0;
 
 	cec_msg_init(&msg, me, la);
@@ -35,7 +35,7 @@ static int deck_status_get(struct node *node, unsigned me, unsigned la, __u8 &de
 
 static int test_play_mode(struct node *node, unsigned me, unsigned la, __u8 play_mode, __u8 expected)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	__u8 deck_status;
 
 	cec_msg_init(&msg, me, la);
@@ -52,7 +52,7 @@ static int test_play_mode(struct node *node, unsigned me, unsigned la, __u8 play
 
 int system_info_polling(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = { };
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
@@ -74,7 +74,7 @@ int system_info_polling(struct node *node, unsigned me, unsigned la, bool intera
 
 int system_info_phys_addr(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = { };
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_give_physical_addr(&msg, true);
@@ -89,7 +89,7 @@ int system_info_phys_addr(struct node *node, unsigned me, unsigned la, bool inte
 
 int system_info_version(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_get_cec_version(&msg, true);
@@ -110,7 +110,7 @@ int system_info_version(struct node *node, unsigned me, unsigned la, bool intera
 
 int system_info_get_menu_lang(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	char language[4];
 
 	cec_msg_init(&msg, me, la);
@@ -139,7 +139,7 @@ int system_info_get_menu_lang(struct node *node, unsigned me, unsigned la, bool 
 
 static int system_info_set_menu_lang(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_set_menu_language(&msg, "eng");
@@ -154,7 +154,7 @@ static int system_info_set_menu_lang(struct node *node, unsigned me, unsigned la
 
 int system_info_give_features(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = { };
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_give_features(&msg, true);
@@ -215,7 +215,7 @@ static const vec_remote_subtests system_info_subtests{
 
 int core_unknown(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = { };
+	struct cec_msg msg;
 	const __u8 unknown_opcode = 0xfe;
 
 	/* Unknown opcodes should be responded to with Feature Abort, with abort
@@ -248,7 +248,7 @@ int core_unknown(struct node *node, unsigned me, unsigned la, bool interactive)
 
 int core_abort(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	/* The Abort message should always be responded to with Feature Abort
 	   (with any abort reason) */
@@ -269,7 +269,7 @@ static const vec_remote_subtests core_subtests{
 
 int vendor_specific_commands_id(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_give_device_vendor_id(&msg, true);
@@ -295,7 +295,7 @@ static const vec_remote_subtests vendor_specific_subtests{
 
 static int device_osd_transfer_set(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = { };
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_set_osd_name(&msg, "Whatever");
@@ -314,7 +314,7 @@ static int device_osd_transfer_set(struct node *node, unsigned me, unsigned la, 
 
 int device_osd_transfer_give(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = { };
+	struct cec_msg msg;
 
 	/* Todo: CEC 2.0: devices with several logical addresses shall report
 	   the same for each logical address. */
@@ -347,7 +347,7 @@ static const vec_remote_subtests device_osd_transfer_subtests{
 
 static int osd_string_set_default(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = { };
+	struct cec_msg msg;
 	char osd[14];
 	bool unsuitable = false;
 
@@ -388,7 +388,7 @@ static int osd_string_set_until_clear(struct node *node, unsigned me, unsigned l
 	if (!node->remote[la].has_osd)
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = { };
+	struct cec_msg msg;
 	char osd[14];
 	bool unsuitable = false;
 
@@ -423,7 +423,7 @@ static int osd_string_invalid(struct node *node, unsigned me, unsigned la, bool 
 	if (!node->remote[la].has_osd)
 		return NOTAPPLICABLE;
 
-	struct cec_msg msg = { };
+	struct cec_msg msg;
 
 	/* Send Set OSD String with an Display Control operand. A Feature Abort is
 	   expected in reply. */
@@ -448,7 +448,7 @@ static const vec_remote_subtests osd_string_subtests{
 
 static int routing_control_inactive_source(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	int response;
 
 	interactive_info(true, "Please make sure that the TV is currently viewing this source.");
@@ -481,7 +481,7 @@ static int routing_control_inactive_source(struct node *node, unsigned me, unsig
 
 static int routing_control_active_source(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	interactive_info(true, "Please switch the TV to another source.");
 	cec_msg_init(&msg, me, la);
@@ -497,7 +497,7 @@ static int routing_control_active_source(struct node *node, unsigned me, unsigne
 
 static int routing_control_req_active_source(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	/* We have now said that we are active source, so receiving a reply to
 	   Request Active Source should fail the test. */
@@ -511,7 +511,7 @@ static int routing_control_req_active_source(struct node *node, unsigned me, uns
 
 static int routing_control_set_stream_path(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	__u16 phys_addr;
 
 	/* Send Set Stream Path with the remote physical address. We expect the
@@ -555,7 +555,7 @@ static const vec_remote_subtests routing_control_subtests{
 
 static int rc_passthrough_user_ctrl_pressed(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	struct cec_op_ui_command rc_press;
 
 	cec_msg_init(&msg, me, la);
@@ -575,7 +575,7 @@ static int rc_passthrough_user_ctrl_pressed(struct node *node, unsigned me, unsi
 
 static int rc_passthrough_user_ctrl_released(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_user_control_released(&msg);
@@ -604,7 +604,7 @@ static const vec_remote_subtests rc_passthrough_subtests{
 
 static int dev_menu_ctl_request(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_menu_request(&msg, true, CEC_OP_MENU_REQUEST_QUERY);
@@ -631,7 +631,7 @@ static const vec_remote_subtests dev_menu_ctl_subtests{
 
 static int deck_ctl_give_status(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_give_deck_status(&msg, true, CEC_OP_STATUS_REQ_ONCE);
@@ -677,7 +677,7 @@ static int deck_ctl_give_status(struct node *node, unsigned me, unsigned la, boo
 
 static int deck_ctl_give_status_invalid(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_give_deck_status(&msg, true, 0); /* Invalid Operand */
@@ -698,7 +698,7 @@ static int deck_ctl_give_status_invalid(struct node *node, unsigned me, unsigned
 
 static int deck_ctl_deck_ctl(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	__u8 deck_status;
 
 	cec_msg_init(&msg, me, la);
@@ -769,7 +769,7 @@ static int deck_ctl_deck_ctl(struct node *node, unsigned me, unsigned la, bool i
 
 static int deck_ctl_deck_ctl_invalid(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_deck_control(&msg, 0); /* Invalid Deck Control operand */
@@ -790,7 +790,7 @@ static int deck_ctl_deck_ctl_invalid(struct node *node, unsigned me, unsigned la
 
 static int deck_ctl_play(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	__u8 deck_status;
 
 	cec_msg_init(&msg, me, la);
@@ -840,7 +840,7 @@ static int deck_ctl_play(struct node *node, unsigned me, unsigned la, bool inter
 
 static int deck_ctl_play_invalid(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_play(&msg, 0); /* Invalid Operand */
@@ -1035,7 +1035,7 @@ static int log_tuner_service(const struct cec_op_tuner_device_info &info,
 
 static int tuner_ctl_test(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	struct cec_op_tuner_device_info info = {};
 	std::vector<struct cec_op_tuner_device_info> info_vec;
 	bool has_tuner = (1 << la) & (CEC_LOG_ADDR_MASK_TV | CEC_LOG_ADDR_MASK_TUNER);
@@ -1157,7 +1157,7 @@ static int one_touch_rec_tv_screen(struct node *node, unsigned me, unsigned la, 
 	  - The TV should ignore this message when received from other LA than Recording or
 	    Reserved.
 	 */
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_record_tv_screen(&msg, true);
@@ -1182,7 +1182,7 @@ static int one_touch_rec_on(struct node *node, unsigned me, unsigned la, bool in
 	  TODO: Page 36 in HDMI CEC 1.4b spec lists additional behaviors that should be
 	  checked for.
 	 */
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	struct cec_op_record_src rec_src = {};
 
 	rec_src.type = CEC_OP_RECORD_SRC_OWN;
@@ -1203,7 +1203,7 @@ static int one_touch_rec_on(struct node *node, unsigned me, unsigned la, bool in
 
 static int one_touch_rec_off(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_record_off(&msg, false);
@@ -1223,7 +1223,7 @@ static int one_touch_rec_off(struct node *node, unsigned me, unsigned la, bool i
 
 static int one_touch_rec_status(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_record_status(&msg, CEC_OP_RECORD_STATUS_DIG_SERVICE);
@@ -1255,7 +1255,7 @@ static int timer_prog_set_analog_timer(struct node *node, unsigned me, unsigned 
 {
 	/* TODO: Check the timer status for possible errors, etc. */
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_set_analogue_timer(&msg, true, 1, 1, 0, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY,
@@ -1281,7 +1281,7 @@ static int timer_prog_set_digital_timer(struct node *node, unsigned me, unsigned
 {
 	/* TODO: Check the timer status for possible errors, etc. */
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	struct cec_op_digital_service_id digital_service_id = {};
 
 	digital_service_id.service_id_method = CEC_OP_SERVICE_ID_METHOD_BY_CHANNEL;
@@ -1310,7 +1310,7 @@ static int timer_prog_set_ext_timer(struct node *node, unsigned me, unsigned la,
 {
 	/* TODO: Check the timer status. */
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_set_ext_timer(&msg, true, 1, 1, 0, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY,
@@ -1334,7 +1334,7 @@ static int timer_prog_clear_analog_timer(struct node *node, unsigned me, unsigne
 {
 	/* TODO: Check the timer cleared status. */
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_clear_analogue_timer(&msg, true, 1, 1, 0, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY,
@@ -1360,7 +1360,7 @@ static int timer_prog_clear_digital_timer(struct node *node, unsigned me, unsign
 {
 	/* TODO: Check the timer cleared status. */
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	struct cec_op_digital_service_id digital_service_id = {};
 
 	digital_service_id.service_id_method = CEC_OP_SERVICE_ID_METHOD_BY_CHANNEL;
@@ -1389,7 +1389,7 @@ static int timer_prog_clear_ext_timer(struct node *node, unsigned me, unsigned l
 {
 	/* TODO: Check the timer cleared status. */
 
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_clear_ext_timer(&msg, true, 1, 1, 0, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY,
@@ -1411,7 +1411,7 @@ static int timer_prog_clear_ext_timer(struct node *node, unsigned me, unsigned l
 
 static int timer_prog_set_prog_title(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_set_timer_program_title(&msg, "Super-Hans II");
@@ -1426,7 +1426,7 @@ static int timer_prog_set_prog_title(struct node *node, unsigned me, unsigned la
 
 static int timer_prog_timer_status(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_timer_status(&msg, CEC_OP_TIMER_OVERLAP_WARNING_NO_OVERLAP,
@@ -1444,7 +1444,7 @@ static int timer_prog_timer_status(struct node *node, unsigned me, unsigned la, 
 
 static int timer_prog_timer_clear_status(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_timer_cleared_status(&msg, CEC_OP_TIMER_CLR_STAT_CLEARED);
@@ -1533,7 +1533,7 @@ static int cdc_hec_discover(struct node *node, unsigned me, unsigned la, bool pr
 {
 	/* TODO: For future use cases, it might be necessary to store the results
 	   from the HEC discovery to know which HECs are possible to form, etc. */
-	struct cec_msg msg = {};
+	struct cec_msg msg;
 	__u32 mode = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
 	bool has_cdc = false;
 
