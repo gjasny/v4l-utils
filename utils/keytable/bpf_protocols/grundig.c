@@ -22,7 +22,7 @@ struct decoder_state {
 	unsigned int last_space;
 };
 
-struct bpf_map_def SEC("maps") decoder_state_map = {
+struct bpf_map_def SEC("lirc_mode2/maps") decoder_state_map = {
 	.type = BPF_MAP_TYPE_ARRAY,
 	.key_size = sizeof(unsigned int),
 	.value_size = sizeof(struct decoder_state),
@@ -44,9 +44,9 @@ int header_pulse = 900;
 int header_space = 2900;
 int leader_pulse = 1300;
 
-#define BPF_PARAM(x) (int)(&(x))
+#define BPF_PARAM(x) (int)(long)(&(x))
 
-SEC("grundig")
+SEC("lirc_mode2/grundig")
 int bpf_decoder(unsigned int *sample)
 {
 	unsigned int key = 0;

@@ -58,16 +58,24 @@ struct bpf_file {
 	int strtabidx;
 	Elf_Data *symbols;
 	struct protocol_param *param;
+	char name[128];
 };
 
 static int load_and_attach(int lirc_fd, struct bpf_file *bpf_file, struct bpf_insn *prog, int size)
 {
-        size_t insns_cnt = size / sizeof(struct bpf_insn);
+	struct bpf_load_program_attr load_attr;
 	int fd, err;
 
-	fd = bpf_load_program(BPF_PROG_TYPE_LIRC_MODE2, prog, insns_cnt,
-			      bpf_file->license, 0,
-			      bpf_log_buf, LOG_BUF_SIZE);
+	memset(&load_attr, 0, sizeof(struct bpf_load_program_attr));
+
+	load_attr.prog_type = BPF_PROG_TYPE_LIRC_MODE2;
+	load_attr.expected_attach_type = BPF_LIRC_MODE2;
+	load_attr.name = bpf_file->name;
+	load_attr.insns = prog;
+	load_attr.insns_cnt = size / sizeof(struct bpf_insn);
+	load_attr.license = bpf_file->license;
+
+	fd = bpf_load_program_xattr(&load_attr, bpf_log_buf, LOG_BUF_SIZE);
 	if (fd < 0) {
 		printf("bpf_load_program() err=%m\n%s", bpf_log_buf);
 		return -1;
@@ -78,6 +86,7 @@ static int load_and_attach(int lirc_fd, struct bpf_file *bpf_file, struct bpf_in
 		printf("bpf_prog_attach: err=%m\n");
 		return -1;
 	}
+
 	return 0;
 }
 
@@ -260,7 +269,7 @@ static int parse_relo_and_apply(struct bpf_file *bpf_file, GElf_Shdr *shdr,
 			}
 
 			if (match) {
-		                insn[insn_idx].src_reg = BPF_PSEUDO_MAP_FD;
+				insn[insn_idx].src_reg = BPF_PSEUDO_MAP_FD;
 				insn[insn_idx].imm = bpf_file->map_data[map_idx].fd;
 				continue;
 			}
@@ -427,7 +436,7 @@ static int load_elf_maps_section(struct bpf_file *bpf_file)
 }
 
 int load_bpf_file(const char *path, int lirc_fd, struct protocol_param *param,
-	          struct raw_entry *raw)
+		  struct raw_entry *raw)
 {
 	struct bpf_file bpf_file = { .param = param };
 	int fd, i, ret;
@@ -469,7 +478,8 @@ int load_bpf_file(const char *path, int lirc_fd, struct protocol_param *param,
 		if (strcmp(shname, "license") == 0) {
 			bpf_file.processed_sec[i] = true;
 			memcpy(bpf_file.license, data->d_buf, data->d_size);
-		} else if (strcmp(shname, "maps") == 0) {
+		} else if (strcmp(shname, "lirc_mode2/maps") == 0 ||
+			   strcmp(shname, "maps") == 0) {
 			int j;
 
 			bpf_file.maps_shidx = i;
@@ -529,6 +539,11 @@ int load_bpf_file(const char *path, int lirc_fd, struct protocol_param *param,
 			if (shdr_prog.sh_type != SHT_PROGBITS ||
 			    !(shdr_prog.sh_flags & SHF_EXECINSTR))
 				continue;
+
+			if (strncmp(shname_prog, "lirc_mode2/", 11))
+				strncpy(bpf_file.name, shname_prog, sizeof(bpf_file.name) - 1);
+			else
+				strncpy(bpf_file.name, shname_prog + 11, sizeof(bpf_file.name) - 1);
 
 			insns = (struct bpf_insn *) data_prog->d_buf;
 			bpf_file.processed_sec[i] = true; /* relo section */

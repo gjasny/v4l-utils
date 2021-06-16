@@ -22,7 +22,7 @@ struct decoder_state {
 	unsigned int count;
 };
 
-struct bpf_map_def SEC("maps") decoder_state_map = {
+struct bpf_map_def SEC("lirc_mode2/maps") decoder_state_map = {
 	.type = BPF_MAP_TYPE_ARRAY,
 	.key_size = sizeof(unsigned int),
 	.value_size = sizeof(struct decoder_state),
@@ -49,14 +49,14 @@ int reverse = 0;
 int header_optional = 0;
 int rc_protocol = 64;
 
-#define BPF_PARAM(x) (int)(&(x))
+#define BPF_PARAM(x) (int)(long)(&(x))
 
 static inline int eq_margin(unsigned d1, unsigned d2)
 {
 	return ((d1 > (d2 - BPF_PARAM(margin))) && (d1 < (d2 + BPF_PARAM(margin))));
 }
 
-SEC("pulse_distance")
+SEC("lirc_mode2/pulse_distance")
 int bpf_decoder(unsigned int *sample)
 {
 	unsigned int key = 0;

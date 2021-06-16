@@ -13,7 +13,7 @@ struct decoder_state {
 	unsigned long bits;
 };
 
-struct bpf_map_def SEC("maps") decoder_state_map = {
+struct bpf_map_def SEC("lirc_mode2/maps") decoder_state_map = {
 	.type = BPF_MAP_TYPE_ARRAY,
 	.key_size = sizeof(unsigned int),
 	.value_size = sizeof(struct decoder_state),
@@ -41,7 +41,7 @@ int bits = 14;
 int scancode_mask = 0;
 int rc_protocol = 66;
 
-#define BPF_PARAM(x) (int)(&(x))
+#define BPF_PARAM(x) (int)(long)(&(x))
 
 static inline int eq_margin(unsigned d1, unsigned d2)
 {
@@ -79,7 +79,7 @@ static int emitBit(unsigned int *sample, struct decoder_state *s, int bit, int s
 	return state;
 }
 
-SEC("manchester")
+SEC("lirc_mode2/manchester")
 int bpf_decoder(unsigned int *sample)
 {
 	unsigned int key = 0;
