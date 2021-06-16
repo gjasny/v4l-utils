@@ -244,9 +244,9 @@ const char *cec_la2s(unsigned la)
 	case 11:
 		return "Playback Device 3";
 	case 12:
-		return "Reserved 1";
+		return "Backup 1";
 	case 13:
-		return "Reserved 2";
+		return "Backup 2";
 	case 14:
 		return "Specific";
 	case 15:
