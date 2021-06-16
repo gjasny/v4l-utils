@@ -1221,28 +1221,10 @@ static int one_touch_rec_off(struct node *node, unsigned me, unsigned la, bool i
 	return 0;
 }
 
-static int one_touch_rec_status(struct node *node, unsigned me, unsigned la, bool interactive)
-{
-	struct cec_msg msg;
-
-	cec_msg_init(&msg, me, la);
-	cec_msg_record_status(&msg, CEC_OP_RECORD_STATUS_DIG_SERVICE);
-	fail_on_test(!transmit_timeout(node, &msg));
-	if (unrecognized_op(&msg))
-		return OK_NOT_SUPPORTED;
-	if (refused(&msg))
-		return OK_REFUSED;
-	if (cec_msg_status_is_abort(&msg))
-		return OK_PRESUMED;
-
-	return 0;
-}
-
 static const vec_remote_subtests one_touch_rec_subtests{
 	{ "Record TV Screen", CEC_LOG_ADDR_MASK_TV, one_touch_rec_tv_screen },
 	{ "Record On", CEC_LOG_ADDR_MASK_RECORD, one_touch_rec_on },
 	{ "Record Off", CEC_LOG_ADDR_MASK_RECORD, one_touch_rec_off },
-	{ "Record Status", CEC_LOG_ADDR_MASK_ALL, one_touch_rec_status },
 };
 
 /* Timer Programming */
