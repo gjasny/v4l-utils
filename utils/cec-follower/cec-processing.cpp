@@ -377,8 +377,8 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me, __u8
 
 		if (cec_has_tv(1 << la) && la_info[la].phys_addr == 0)
 			warn("TV (0) at 0.0.0.0 sent Routing Information.");
+		return;
 	}
-	fallthrough;
 
 		/* System Information */
 
