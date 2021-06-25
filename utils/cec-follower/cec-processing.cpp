@@ -271,7 +271,7 @@ static void update_deck_state(struct node *node, unsigned me, __u8 deck_state_ne
 	}
 }
 
-static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
+static void processMsg(struct node *node, struct cec_msg &msg, unsigned me, __u8 type)
 {
 	__u8 to = cec_msg_destination(&msg);
 	__u8 from = cec_msg_initiator(&msg);
@@ -672,7 +672,7 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me)
 	case CEC_MSG_SET_TIMER_PROGRAM_TITLE:
 	case CEC_MSG_TIMER_CLEARED_STATUS:
 	case CEC_MSG_TIMER_STATUS:
-		process_tuner_record_timer_msgs(node, msg, me);
+		process_tuner_record_timer_msgs(node, msg, me, type);
 		return;
 
 		/* Dynamic Auto Lipsync */
@@ -1009,6 +1009,7 @@ void testProcessing(struct node *node, bool wallclock)
 	doioctl(node, CEC_S_MODE, &mode);
 	doioctl(node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 	me = laddrs.log_addr[0];
+	__u8 type = laddrs.log_addr_type[0];
 
 	poll_remote_devs(node, me);
 
@@ -1088,7 +1089,7 @@ void testProcessing(struct node *node, bool wallclock)
 					       msg.sequence, ts2s(msg.rx_ts, wallclock).c_str());
 			}
 			if (node->adap_la_mask)
-				processMsg(node, msg, me);
+				processMsg(node, msg, me, type);
 		}
 
 		__u8 pwr_state = current_power_state(node);

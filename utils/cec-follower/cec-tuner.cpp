@@ -482,7 +482,7 @@ static bool analog_set_tuner_dev_info(struct node *node, struct cec_msg *msg)
 	return false;
 }
 
-void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, unsigned me)
+void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, unsigned me, __u8 type)
 {
 	bool is_bcast = cec_msg_is_broadcast(&msg);
 
