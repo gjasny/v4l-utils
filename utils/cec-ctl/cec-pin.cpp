@@ -320,6 +320,12 @@ static void cec_pin_debug(__u64 ev_ts, __u64 usecs, bool was_high, bool is_high,
 	}
 }
 
+#define verb_printf(fmt, args...)		\
+	do {					\
+		if (verbose)			\
+			printf(fmt, ##args);	\
+	} while (0)
+
 void log_event_pin(bool is_high, __u64 ev_ts, bool show)
 {
 	static __u64 last_ts;
@@ -336,46 +342,50 @@ void log_event_pin(bool is_high, __u64 ev_ts, bool show)
 		if (is_high)
 			return;
 	}
-	if (verbose && show) {
+	if (show) {
 		double delta = (ev_ts - last_change_ts) / 1000000.0;
 
 		if (!was_high && last_change_ts && state == CEC_ST_RECEIVE_START_BIT &&
 		    delta * 1000 >= CEC_TIM_START_BIT_LOW_MIN - CEC_TIM_MARGIN)
-			printf("\n");
-		printf("%s: ", ts2s(ts).c_str());
+			verb_printf("\n");
+		verb_printf("%s: ", ts2s(ts).c_str());
 		if (last_change_ts && is_high && was_high &&
-		    (ev_ts - last_1_to_0_ts) / 1000000 <= 10)
-			printf("1 -> 1 (was 1 for %.2f ms, period of previous %spulse %.2f ms)\n",
-			       delta, state == CEC_ST_RECEIVE_START_BIT ? "start " : "",
-			       (ev_ts - last_1_to_0_ts) / 1000000.0);
-		else if (last_change_ts && is_high && was_high)
-			printf("1 -> 1 (%.2f ms)\n", delta);
-		else if (was_high && state == CEC_ST_IDLE) {
+		    (ev_ts - last_1_to_0_ts) / 1000000 <= 10) {
+			verb_printf("1 -> 1 (was 1 for %.2f ms, period of previous %spulse %.2f ms)\n",
+				    delta, state == CEC_ST_RECEIVE_START_BIT ? "start " : "",
+				    (ev_ts - last_1_to_0_ts) / 1000000.0);
+		} else if (last_change_ts && is_high && was_high) {
+			verb_printf("1 -> 1 (%.2f ms)\n", delta);
+		} else if (was_high && state == CEC_ST_IDLE) {
 			if (bit_periods > 1 && bit_periods < 10)
-				printf("1 -> 0 (was 1 for %.2f ms, free signal time = %.1f bit periods)\n",
-				       delta, bit_periods);
+				verb_printf("1 -> 0 (was 1 for %.2f ms, free signal time = %.1f bit periods)\n",
+					    delta, bit_periods);
 			else
-				printf("1 -> 0 (was 1 for %.2f ms)\n", delta);
-		} else if (was_high && (ev_ts - last_1_to_0_ts) / 1000000 <= 10)
-			printf("1 -> 0 (was 1 for %.2f ms, period of previous %spulse %.2f ms)\n",
-			       delta, state == CEC_ST_RECEIVE_START_BIT ? "start " : "",
-			       (ev_ts - last_1_to_0_ts) / 1000000.0);
-		else if (was_high)
-			printf("1 -> 0 (was 1 for %.2f ms)\n", delta);
-		else if (last_change_ts && state == CEC_ST_RECEIVE_START_BIT &&
-			 delta * 1000 < CEC_TIM_START_BIT_LOW_MIN - CEC_TIM_MARGIN)
-			printf("0 -> 1 (was 0 for %.2f ms, might indicate %d bit)\n", delta,
-			       delta * 1000 < CEC_TIM_DATA_BIT_1_LOW_MAX + CEC_TIM_MARGIN);
-		else if (last_change_ts && state == CEC_ST_RECEIVE_START_BIT)
-			printf("0 -> 1 (was 0 for %.2f ms)\n", delta);
-		else if (last_change_ts &&
-			 delta * 1000 >= CEC_TIM_LOW_DRIVE_ERROR_MIN - CEC_TIM_MARGIN)
-			printf("0 -> 1 (was 0 for %.2f ms, warn: indicates low drive)\n", delta);
-		else if (last_change_ts)
-			printf("0 -> 1 (was 0 for %.2f ms, indicates %d bit)\n", delta,
-			       delta * 1000 < CEC_TIM_DATA_BIT_1_LOW_MAX + CEC_TIM_MARGIN);
-		else
-			printf("0 -> 1\n");
+				verb_printf("1 -> 0 (was 1 for %.2f ms)\n", delta);
+		} else if (was_high && (ev_ts - last_1_to_0_ts) / 1000000 <= 10) {
+			verb_printf("1 -> 0 (was 1 for %.2f ms, period of previous %spulse %.2f ms)\n",
+				    delta, state == CEC_ST_RECEIVE_START_BIT ? "start " : "",
+				    (ev_ts - last_1_to_0_ts) / 1000000.0);
+		} else if (was_high) {
+			verb_printf("1 -> 0 (was 1 for %.2f ms)\n", delta);
+		} else if (last_change_ts && state == CEC_ST_RECEIVE_START_BIT &&
+			   delta * 1000 < CEC_TIM_START_BIT_LOW_MIN - CEC_TIM_MARGIN) {
+			verb_printf("0 -> 1 (was 0 for %.2f ms, might indicate %d bit)\n", delta,
+				    delta * 1000 < CEC_TIM_DATA_BIT_1_LOW_MAX + CEC_TIM_MARGIN);
+		} else if (last_change_ts && state == CEC_ST_RECEIVE_START_BIT) {
+			verb_printf("0 -> 1 (was 0 for %.2f ms)\n", delta);
+		} else if (last_change_ts &&
+			   delta * 1000 >= CEC_TIM_LOW_DRIVE_ERROR_MIN - CEC_TIM_MARGIN) {
+			if (verbose)
+				printf("0 -> 1 (was 0 for %.2f ms, warn: indicates low drive)\n", delta);
+			else
+				printf("\n%s: warn: low drive for %.2f ms\n", ts2s(ts).c_str(), delta);
+		} else if (last_change_ts) {
+			verb_printf("0 -> 1 (was 0 for %.2f ms, indicates %d bit)\n", delta,
+				    delta * 1000 < CEC_TIM_DATA_BIT_1_LOW_MAX + CEC_TIM_MARGIN);
+		} else {
+			verb_printf("0 -> 1\n");
+		}
 	} else if (!is_high && bit_periods > 1 && bit_periods < 10 && show) {
 		printf("%s: free signal time = %.1f bit periods\n",
 		       ts2s(ts).c_str(), bit_periods);
