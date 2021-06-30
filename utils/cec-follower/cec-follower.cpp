@@ -318,6 +318,7 @@ void state_init(struct node &node)
 	node.state.deck_state = CEC_OP_DECK_INFO_STOP;
 	node.state.deck_skip_start = 0;
 	node.state.one_touch_record_on = false;
+	node.state.record_received_standby = false;
 	tuner_dev_info_init(&node.state);
 	node.state.last_aud_rate_rx_ts = 0;
 }

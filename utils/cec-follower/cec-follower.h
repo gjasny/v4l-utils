@@ -54,6 +54,7 @@ struct state {
 	__u8 deck_state;
 	__u64 deck_skip_start;
 	bool one_touch_record_on;
+	bool record_received_standby;
 	time_t toggle_power_status;
 	__u64 last_aud_rate_rx_ts;
 };
@@ -230,5 +231,6 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 void reply_feature_abort(struct node *node, struct cec_msg *msg,
 			 __u8 reason = CEC_OP_ABORT_UNRECOGNIZED_OP);
 void testProcessing(struct node *node, bool wallclock);
+bool enter_standby(struct node *node);
 
 #endif

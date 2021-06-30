@@ -146,6 +146,9 @@ void reply_feature_abort(struct node *node, struct cec_msg *msg, __u8 reason)
 
 static bool exit_standby(struct node *node)
 {
+	/* Cancel any standby request that was pending. */
+	node->state.record_received_standby = false;
+
 	if (node->state.power_status == CEC_OP_POWER_STATUS_STANDBY ||
 	    node->state.power_status == CEC_OP_POWER_STATUS_TO_STANDBY) {
 		node->state.old_power_status = node->state.power_status;
@@ -157,14 +160,23 @@ static bool exit_standby(struct node *node)
 	return false;
 }
 
-static bool enter_standby(struct node *node)
+bool enter_standby(struct node *node)
 {
 	if (node->state.power_status == CEC_OP_POWER_STATUS_ON ||
 	    node->state.power_status == CEC_OP_POWER_STATUS_TO_ON) {
+		/*
+		 * Standby should not interrupt a recording in progress, but
+		 * remember to go to standby once the recording is finished.
+		 */
+		if (node->state.one_touch_record_on) {
+			node->state.record_received_standby = true;
+			return false;
+		}
 		node->state.old_power_status = node->state.power_status;
 		node->state.power_status = CEC_OP_POWER_STATUS_STANDBY;
 		node->state.power_status_changed_time = time(nullptr);
 		node->state.deck_skip_start = 0;
+		node->state.record_received_standby = false;
 		dev_info("Changing state to standby\n");
 		return true;
 	}

@@ -724,6 +724,15 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 		cec_msg_record_status(&msg, CEC_OP_RECORD_STATUS_TERMINATED_OK);
 		transmit(node, &msg);
 		node->state.one_touch_record_on = false;
+		/*
+		 * If standby was received during recording, enter standby when the
+		 * recording is finished unless recording device is the active source.
+		 */
+		if (node->state.record_received_standby) {
+			if (node->phys_addr != node->state.active_source_pa)
+				enter_standby(node);
+			node->state.record_received_standby = false;
+		}
 		return;
 	case CEC_MSG_RECORD_STATUS:
 		return;
