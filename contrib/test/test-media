@@ -54,14 +54,14 @@ if [ -z "$1" ]; then
 	echo "-setup: load and configure all the drivers, but do not run tests"
 	echo
 	echo Test Targets:
-	echo "vidtv: test the vidtv driver"
 	echo "vivid: test the vivid driver"
 	echo "vim2m: test the vim2m driver"
 	echo "vimc: test the vimc driver"
 	echo "vicodec: test the vicodec driver"
+	echo "vidtv: test the vidtv driver"
 	echo "cec: adds the vivid CEC compliance tests, 'cec-pwr' adds the CEC standby/wakeup tests."
-	echo "all: equals 'vivid vim2m vimc vicodec cec cec-pwr'"
-	echo "mc: equals 'vivid vim2m vimc vicodec'"
+	echo "all: equals 'vivid vim2m vimc vicodec vidtv cec cec-pwr'"
+	echo "mc: equals 'vivid vim2m vimc vicodec vidtv'"
 	exit 0
 fi
 
@@ -112,6 +112,7 @@ while [ ! -z "$1" ]; do
 		cecpwr=
 		;;
 	mc)
+		vidtv=1
 		vivid=1
 		vim2m=1
 		vimc=1
