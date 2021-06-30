@@ -61,7 +61,7 @@ if [ -z "$1" ]; then
 	echo "vidtv: test the vidtv driver"
 	echo "cec: adds the vivid CEC compliance tests, 'cec-pwr' adds the CEC standby/wakeup tests."
 	echo "all: equals 'vivid vim2m vimc vicodec vidtv cec cec-pwr'"
-	echo "mc: equals 'vivid vim2m vimc vicodec vidtv'"
+	echo "mc: equals 'vivid vim2m vimc vicodec'"
 	exit 0
 fi
 
@@ -112,7 +112,6 @@ while [ ! -z "$1" ]; do
 		cecpwr=
 		;;
 	mc)
-		vidtv=1
 		vivid=1
 		vim2m=1
 		vimc=1
@@ -142,6 +141,20 @@ while [ ! -z "$1" ]; do
 	esac
 	shift
 done
+
+if [ $vidtv -eq 1 ]; then
+	if [ ! -f /proc/config.gz ]; then
+		if cat /proc/config.gz | gunzip | grep -q CONFIG_MEDIA_CONTROLLER_DVB=y ; then
+			echo vidtv cannot be tested since CONFIG_MEDIA_CONTROLLER_DVB is not enabled
+			exit 0
+		fi
+	elif [ -f .config ]; then
+		if ! grep -q CONFIG_MEDIA_CONTROLLER_DVB=y .config ; then
+			echo vidtv cannot be tested since CONFIG_MEDIA_CONTROLLER_DVB is not enabled
+			exit 0
+		fi
+	fi
+fi
 
 if [ $unload -eq 1 ]; then
 	test-media-unload.pl
