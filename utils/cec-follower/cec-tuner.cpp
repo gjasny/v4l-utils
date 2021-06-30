@@ -482,8 +482,68 @@ static bool analog_set_tuner_dev_info(struct node *node, struct cec_msg *msg)
 	return false;
 }
 
+static bool digital_operand_invalid(const struct cec_op_record_src &rec_src)
+{
+	switch (rec_src.digital.dig_bcast_system) {
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_GEN:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_GEN:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_GEN:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_BS:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_CS:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ARIB_T:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_CABLE:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_SAT:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_ATSC_T:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_C:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_S2:
+	case CEC_OP_DIG_SERVICE_BCAST_SYSTEM_DVB_T:
+		break;
+	default:
+		return true;
+	}
+
+	if (rec_src.digital.service_id_method == CEC_OP_SERVICE_ID_METHOD_BY_CHANNEL) {
+		if (rec_src.digital.channel.channel_number_fmt < CEC_OP_CHANNEL_NUMBER_FMT_1_PART ||
+		    rec_src.digital.channel.channel_number_fmt > CEC_OP_CHANNEL_NUMBER_FMT_2_PART)
+		    return true;
+	}
+
+	return false;
+}
+
+static bool analog_operand_invalid(const cec_op_record_src &rec_src)
+{
+	if (rec_src.analog.ana_bcast_type > CEC_OP_ANA_BCAST_TYPE_TERRESTRIAL)
+		return true;
+
+	if (rec_src.analog.bcast_system > CEC_OP_BCAST_SYSTEM_PAL_DK &&
+	    rec_src.analog.bcast_system != CEC_OP_BCAST_SYSTEM_OTHER)
+		return true;
+
+	if (rec_src.analog.ana_freq == 0 || rec_src.analog.ana_freq == 0xffff)
+		return true;
+
+	return false;
+}
+
+static bool analog_channel_is_available(const cec_op_record_src &rec_src)
+{
+	__u8 bcast_type = rec_src.analog.ana_bcast_type;
+	unsigned freq = (rec_src.analog.ana_freq * 625) / 10;
+	__u8 bcast_system = rec_src.analog.bcast_system;
+
+	for (unsigned i = 0; i < NUM_ANALOG_FREQS; i++) {
+		if (freq == analog_freqs_khz[bcast_type][bcast_system][i])
+			return true;
+	}
+
+	return false;
+}
+
 void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, unsigned me, __u8 type)
 {
+	__u8 from = cec_msg_initiator(&msg);
 	bool is_bcast = cec_msg_is_broadcast(&msg);
 
 	switch (msg.msg[1]) {
@@ -577,22 +637,15 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 		return;
 	}
 
-		/*
-		  One Touch Record
-
-		  This is only a basic implementation.
-
-		  TODO:
-		  - If we are a TV, we should only send Record On if the
-		    remote end is a Recording device or Reserved. Otherwise ignore.
-
-		  - Device state should reflect whether we are recording, etc. In
-		    recording mode we should ignore Standby messages.
-		*/
+		/* One Touch Record */
 
 	case CEC_MSG_RECORD_TV_SCREEN: {
 		if (!node->has_rec_tv)
 			break;
+
+		/* Ignore if initiator is not a recording device */
+		if (!cec_has_record(1 << from) && node->remote_prim_devtype[from] != CEC_OP_PRIM_DEVTYPE_RECORD)
+			return;
 
 		struct cec_op_record_src rec_src = {};
 
@@ -602,19 +655,75 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 		transmit(node, &msg);
 		return;
 	}
-	case CEC_MSG_RECORD_ON:
-		if (!cec_has_record(1 << me))
+	case CEC_MSG_RECORD_ON: {
+		if (type != CEC_LOG_ADDR_TYPE_RECORD)
 			break;
+
+		__u8 rec_status;
+		bool feature_abort = false;
+		struct cec_op_record_src rec_src = {};
+
+		cec_ops_record_on(&msg, &rec_src);
+		switch (rec_src.type) {
+		case CEC_OP_RECORD_SRC_OWN:
+			rec_status = CEC_OP_RECORD_STATUS_CUR_SRC;
+			break;
+		case CEC_OP_RECORD_SRC_DIGITAL:
+			if (digital_operand_invalid(rec_src)) {
+				feature_abort = true;
+				break;
+			}
+			if (digital_get_service_idx(&rec_src.digital) >= 0)
+				rec_status = CEC_OP_RECORD_STATUS_DIG_SERVICE;
+			else
+				rec_status = CEC_OP_RECORD_STATUS_NO_DIG_SERVICE;
+			break;
+		case CEC_OP_RECORD_SRC_ANALOG:
+			if (analog_operand_invalid(rec_src)) {
+				feature_abort = true;
+				break;
+			}
+			if (analog_channel_is_available(rec_src))
+				rec_status = CEC_OP_RECORD_STATUS_ANA_SERVICE;
+			else
+				rec_status = CEC_OP_RECORD_STATUS_NO_ANA_SERVICE;
+			break;
+		case CEC_OP_RECORD_SRC_EXT_PLUG:
+			if (rec_src.ext_plug.plug == 0)
+				feature_abort = true;
+			/* Plug number range is 1-255 in spec, but a realistic range of connectors is 6. */
+			else if (rec_src.ext_plug.plug > 6)
+				rec_status = CEC_OP_RECORD_STATUS_INVALID_EXT_PLUG;
+			else
+				rec_status = CEC_OP_RECORD_STATUS_EXT_INPUT;
+			break;
+		case CEC_OP_RECORD_SRC_EXT_PHYS_ADDR:
+			rec_status = CEC_OP_RECORD_STATUS_INVALID_EXT_PHYS_ADDR;
+			break;
+		default:
+			feature_abort = true;
+			break;
+		}
+		if (feature_abort) {
+			reply_feature_abort(node, &msg, CEC_OP_ABORT_INVALID_OP);
+			return;
+		}
+		if (node->state.one_touch_record_on)
+			rec_status = CEC_OP_RECORD_STATUS_ALREADY_RECORDING;
 		cec_msg_set_reply_to(&msg, &msg);
-		cec_msg_record_status(&msg, CEC_OP_RECORD_STATUS_CUR_SRC);
+		cec_msg_record_status(&msg, rec_status);
 		transmit(node, &msg);
+		node->state.one_touch_record_on = true;
 		return;
+	}
 	case CEC_MSG_RECORD_OFF:
-		if (!cec_has_record(1 << me))
+		if (type != CEC_LOG_ADDR_TYPE_RECORD)
 			break;
+
 		cec_msg_set_reply_to(&msg, &msg);
 		cec_msg_record_status(&msg, CEC_OP_RECORD_STATUS_TERMINATED_OK);
 		transmit(node, &msg);
+		node->state.one_touch_record_on = false;
 		return;
 	case CEC_MSG_RECORD_STATUS:
 		return;

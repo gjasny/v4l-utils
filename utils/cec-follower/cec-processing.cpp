@@ -396,8 +396,10 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me, __u8
 		__u8 prim_dev_type;
 
 		cec_ops_report_physical_addr(&msg, &phys_addr, &prim_dev_type);
-		if (from < 15)
+		if (from < 15) {
 			node->remote_phys_addr[from] = phys_addr;
+			node->remote_prim_devtype[from] = prim_dev_type;
+		}
 		return;
 	}
 

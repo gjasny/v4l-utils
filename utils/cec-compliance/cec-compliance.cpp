@@ -1264,9 +1264,10 @@ int main(int argc, char **argv)
 		remote_la_mask = 1 << remote_la;
 
 	if (test_remote) {
-		for (unsigned from = 0; from <= 15; from++) {
-			if (!(node.adap_la_mask & (1 << from)))
-				continue;
+		for (unsigned i = 0; i < node.num_log_addrs; i++) {
+			unsigned from = node.log_addr[i];
+			node.prim_devtype = laddrs.primary_device_type[i];
+
 			for (unsigned to = 0; to <= 15; to++)
 				if (!(node.adap_la_mask & (1 << to)) &&
 				    (remote_la_mask & (1 << to)))

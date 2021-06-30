@@ -53,6 +53,7 @@ struct state {
 	__u8 deck_report_changes_to;
 	__u8 deck_state;
 	__u64 deck_skip_start;
+	bool one_touch_record_on;
 	time_t toggle_power_status;
 	__u64 last_aud_rate_rx_ts;
 };
@@ -62,6 +63,7 @@ struct node {
 	const char *device;
 	unsigned caps;
 	unsigned available_log_addrs;
+	__u8 remote_prim_devtype[15];
 	unsigned adap_la_mask;
 	unsigned remote_la_mask;
 	__u16 remote_phys_addr[15];
