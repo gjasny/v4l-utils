@@ -358,7 +358,7 @@ void log_event_pin(bool is_high, __u64 ev_ts, bool show)
 			verb_printf("1 -> 1 (%.2f ms)\n", delta);
 		} else if (was_high && state == CEC_ST_IDLE) {
 			if (bit_periods > 1 && bit_periods < 10)
-				verb_printf("1 -> 0 (was 1 for %.2f ms, free signal time = %.1f bit periods)\n",
+				verb_printf("1 -> 0 (was 1 for %.2f ms, signal free time = %.1f bit periods)\n",
 					    delta, bit_periods);
 			else
 				verb_printf("1 -> 0 (was 1 for %.2f ms)\n", delta);
@@ -387,7 +387,7 @@ void log_event_pin(bool is_high, __u64 ev_ts, bool show)
 			verb_printf("0 -> 1\n");
 		}
 	} else if (!is_high && bit_periods > 1 && bit_periods < 10 && show) {
-		printf("%s: free signal time = %.1f bit periods\n",
+		printf("%s: signal free time = %.1f bit periods\n",
 		       ts2s(ts).c_str(), bit_periods);
 	}
 	cec_pin_debug(ev_ts, (ev_ts - last_ts) / 1000, was_high, is_high, show);
