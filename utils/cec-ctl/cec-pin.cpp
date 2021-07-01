@@ -386,9 +386,10 @@ void log_event_pin(bool is_high, __u64 ev_ts, bool show)
 		} else {
 			verb_printf("0 -> 1\n");
 		}
-	} else if (!is_high && bit_periods > 1 && bit_periods < 10 && show) {
-		printf("%s: signal free time = %.1f bit periods\n",
-		       ts2s(ts).c_str(), bit_periods);
+
+		if (!verbose && !is_high && bit_periods > 1 && bit_periods < 10)
+			printf("%s: signal free time = %.1f bit periods\n",
+			       ts2s(ts).c_str(), bit_periods);
 	}
 	cec_pin_debug(ev_ts, (ev_ts - last_ts) / 1000, was_high, is_high, show);
 	last_change_ts = ev_ts;
