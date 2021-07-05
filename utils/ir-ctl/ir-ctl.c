@@ -933,7 +933,7 @@ static int lirc_options(struct arguments *args, int fd, unsigned features)
 		if (features & LIRC_CAN_SET_TRANSMITTER_MASK) {
 			rc = ioctl(fd, LIRC_SET_TRANSMITTER_MASK, &args->emitters);
 			if (rc > 0)
-				fprintf(stderr, _("warning: %s: failed to set send transmitters: only %d available\n"), dev, ffs(~rc) - 1);
+				fprintf(stderr, _("warning: %s: failed to set send transmitters: only %d available\n"), dev, rc);
 			else if (rc < 0)
 				fprintf(stderr, _("warning: %s: failed to set send transmitters: %m\n"), dev);
 		} else
@@ -1026,11 +1026,8 @@ static void lirc_features(struct arguments *args, int fd, unsigned features)
 				fprintf(stderr, _("warning: %s: device supports setting transmitter mask but returns 0 as number of transmitters\n"), dev);
 			else if (rc < 0)
 				fprintf(stderr, _("warning: %s: device supports setting transmitter mask but returns: %m\n"), dev);
-			else {
-				unsigned count = ffs(~rc) - 1;
-
-				printf(_(" - Set transmitter (%d available)\n"), count);
-			}
+			else
+				printf(_(" - Set transmitter (%d available)\n"), rc);
 		}
 	} else if (features & LIRC_CAN_SEND_LIRCCODE) {
 		printf(_(" - Device can send using device dependent LIRCCODE mode (not supported)\n"));
