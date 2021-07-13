@@ -457,6 +457,11 @@ int setExpectedResult(char *optarg, bool no_warnings);
 void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 			     bool interactive);
 
+// cec-test-tuner-record-timer.cpp
+extern const vec_remote_subtests tuner_ctl_subtests;
+extern const vec_remote_subtests one_touch_rec_subtests;
+extern const vec_remote_subtests timer_prog_subtests;
+
 // cec-test-audio.cpp
 extern const vec_remote_subtests sac_subtests;
 extern const vec_remote_subtests dal_subtests;
