@@ -1164,6 +1164,71 @@ void testProcessing(struct node *node, bool wallclock)
 			node->state.deck_skip_start = 0;
 			update_deck_state(node, me, CEC_OP_DECK_INFO_PLAY);
 		}
+
+		if (!programmed_timers.empty()) {
+			std::set<struct Timer>::iterator it = programmed_timers.begin();
+			/* Use the current minute because timers do not have second precision. */
+			time_t current_minute = time(nullptr) / 60;
+			time_t timer_start_minute = it->start_time / 60;
+			time_t timer_end_minute = (it->start_time + it->duration) / 60;
+
+			/* Start the timed recording only if the deck is not already recording. */
+			if (timer_start_minute == current_minute && !node->state.one_touch_record_on) {
+				node->state.one_touch_record_on = true;
+				node->state.recording_controlled_by_timer = true;
+				print_timers(node);
+			}
+
+			/* Delete an overlapped timer. Recording will be at best incomplete. */
+			if (timer_start_minute < current_minute &&
+			    (!node->state.recording_controlled_by_timer || !node->state.one_touch_record_on)) {
+				programmed_timers.erase(*it);
+				if (show_info)
+					printf("Deleted overlapped timer.\n");
+				print_timers(node);
+			}
+
+			/* Delete finished timers. */
+			if (timer_end_minute == current_minute && node->state.recording_controlled_by_timer) {
+				node->state.one_touch_record_on = false;
+				node->state.recording_controlled_by_timer = false;
+				node->state.media_space_available -= it->duration; /* 1 MB per second */
+				/*
+				 * TODO: We are only ever decreasing the amount of space available,
+				 * there is no heuristic that reclaims the space.
+				 */
+
+				if (it->recording_seq) {
+					struct tm *last_start_time = localtime(&(it->start_time));
+					int next_wday = (last_start_time->tm_wday + 1) % 7;
+					int days_to_move_ahead = 1;
+
+					while ((it->recording_seq & (1 << next_wday)) == 0) {
+						days_to_move_ahead++;
+						next_wday = (next_wday + 1) % 7;
+					}
+					struct Timer next_timer = {};
+					next_timer = *it;
+					last_start_time->tm_mday += days_to_move_ahead;
+					last_start_time->tm_isdst = -1;
+					next_timer.start_time = mktime(last_start_time);
+					programmed_timers.insert(next_timer);
+				}
+				programmed_timers.erase(*it);
+				if (show_info)
+					printf("Deleted finished timer.\n");
+				print_timers(node);
+				/*
+				 * If the finished timer was recording, and standby was received during recording,
+				 * enter standby when the recording stops unless recording device is the active source.
+				 */
+				if (node->state.record_received_standby) {
+					if (node->phys_addr != node->state.active_source_pa)
+						enter_standby(node);
+					node->state.record_received_standby = false;
+				}
+			}
+		}
 	}
 	mode = CEC_MODE_INITIATOR;
 	doioctl(node, CEC_S_MODE, &mode);

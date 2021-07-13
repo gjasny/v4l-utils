@@ -858,6 +858,15 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 		cec_msg_record_status(&msg, CEC_OP_RECORD_STATUS_TERMINATED_OK);
 		transmit(node, &msg);
 		node->state.one_touch_record_on = false;
+
+		/* Delete any currently active recording timer or it may restart itself in first minute. */
+		if (node->state.recording_controlled_by_timer) {
+			node->state.recording_controlled_by_timer = false;
+			programmed_timers.erase(programmed_timers.begin());
+			if (show_info)
+				printf("Deleted manually stopped timer.\n");
+			print_timers(node);
+		}
 		/*
 		 * If standby was received during recording, enter standby when the
 		 * recording is finished unless recording device is the active source.
@@ -957,9 +966,10 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 		auto it_previous_year = programmed_timers.find(timer_in_previous_year);
 
 		if (it_previous_year != programmed_timers.end()) {
-			if (node->state.one_touch_record_on && it_previous_year == programmed_timers.begin()) {
+			if (node->state.recording_controlled_by_timer && it_previous_year == programmed_timers.begin()) {
 				timer_cleared_status = CEC_OP_TIMER_CLR_STAT_RECORDING;
 				node->state.one_touch_record_on = false;
+				node->state.recording_controlled_by_timer = false;
 			} else {
 				timer_cleared_status = CEC_OP_TIMER_CLR_STAT_CLEARED;
 			}
@@ -972,9 +982,10 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 		auto it_current_year = programmed_timers.find(timer_in_current_year);
 
 		if (it_current_year != programmed_timers.end()) {
-			if (node->state.one_touch_record_on && it_current_year == programmed_timers.begin()) {
+			if (node->state.recording_controlled_by_timer && it_current_year == programmed_timers.begin()) {
 				timer_cleared_status = CEC_OP_TIMER_CLR_STAT_RECORDING;
 				node->state.one_touch_record_on = false;
+				node->state.recording_controlled_by_timer = false;
 			} else {
 				/* Do not overwrite status if already set. */
 				if (timer_cleared_status == CEC_OP_TIMER_CLR_STAT_NO_MATCHING)

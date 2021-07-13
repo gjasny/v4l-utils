@@ -60,6 +60,7 @@ struct state {
 	bool one_touch_record_on;
 	bool record_received_standby;
 	int media_space_available;
+	bool recording_controlled_by_timer;
 	time_t toggle_power_status;
 	__u64 last_aud_rate_rx_ts;
 };

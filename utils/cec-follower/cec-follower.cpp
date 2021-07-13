@@ -301,6 +301,10 @@ void print_timers(struct node *node)
 {
 	if (show_info) {
 		printf("Timers Set:\n");
+		if (node->state.recording_controlled_by_timer)
+			printf("Deck is currently recording from the first timer.\n");
+		if (node->state.one_touch_record_on && !node->state.recording_controlled_by_timer)
+			printf("Deck is currently recording independent of timers.\n");
 		for (auto &t : programmed_timers) {
 			std::string start = ctime(&t.start_time);
 			time_t end_time = t.start_time + t.duration;
@@ -373,6 +377,7 @@ void state_init(struct node &node)
 	node.state.one_touch_record_on = false;
 	node.state.record_received_standby = false;
 	node.state.media_space_available = 36000; /* In MB; space for 10 hours @ 1MB/sec */
+	node.state.recording_controlled_by_timer = false;
 	tuner_dev_info_init(&node.state);
 	node.state.last_aud_rate_rx_ts = 0;
 }
