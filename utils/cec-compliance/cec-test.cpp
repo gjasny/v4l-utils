@@ -1794,18 +1794,7 @@ static int timer_errors(struct node *node, unsigned me, unsigned la, bool intera
 	struct cec_msg msg;
 
 	/* Day error: November 31, at 6:00 am, for 1 hr. */
-	cec_msg_init(&msg, me, la);
-	cec_msg_set_analogue_timer(&msg, true, 31, Nov, 6, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY,
-	                           CEC_OP_ANA_BCAST_TYPE_CABLE, 7668, // 479.25 MHz
-	                           node->remote[la].bcast_sys);
-	fail_on_test(!transmit_timeout(node, &msg, 10000));
-	fail_on_test(timed_out(&msg));
-	if (unrecognized_op(&msg))
-		return OK_NOT_SUPPORTED;
-	if (cec_msg_status_is_abort(&msg))
-		fail_on_test(abort_reason(&msg) != CEC_OP_ABORT_INVALID_OP);
-	else
-		fail_on_test(!timer_has_error(msg));
+	fail_on_test(send_timer_error(node, me, la, 31, Nov, 6, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY));
 
 	/* Day error: December 32, at 6:00 am, for 1 hr. */
 	fail_on_test(send_timer_error(node, me, la, 32, Dec, 6, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY));
