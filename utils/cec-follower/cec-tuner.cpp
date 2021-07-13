@@ -4,7 +4,6 @@
  */
 
 #include <array>
-#include <ctime>
 #include <string>
 
 #include <sys/ioctl.h>
@@ -16,6 +15,141 @@
 #define NUM_DIGITAL_CHANS 3
 #define TOT_ANALOG_FREQS analog_freqs_khz[0][0].size()
 #define TOT_DIGITAL_CHANS digital_arib_data[0].size() + digital_atsc_data[0].size() + digital_dvb_data[0].size()
+
+enum Months { Jan = 1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec };
+
+static struct Timer get_timer_from_message(const struct cec_msg &msg)
+{
+	struct Timer timer = {};
+
+	__u8 day = 0;
+	__u8 month = 0;
+	__u8 start_hr = 0;
+	__u8 start_min = 0;
+	__u8 duration_hr = 0;
+	__u8 duration_min = 0;
+	__u8 ext_src_spec = 0;
+	__u8 plug = 0;
+	__u16 phys_addr = 0;
+
+	switch (msg.msg[1]) {
+	case CEC_MSG_CLEAR_ANALOGUE_TIMER:
+	case CEC_MSG_SET_ANALOGUE_TIMER:
+		timer.src.type = CEC_OP_RECORD_SRC_ANALOG;
+		cec_ops_set_analogue_timer(&msg, &day, &month, &start_hr, &start_min,
+		                           &duration_hr, &duration_min, &timer.recording_seq,
+		                           &timer.src.analog.ana_bcast_type, &timer.src.analog.ana_freq,
+		                           &timer.src.analog.bcast_system);
+		break;
+	case CEC_MSG_CLEAR_DIGITAL_TIMER:
+	case CEC_MSG_SET_DIGITAL_TIMER: {
+		struct cec_op_digital_service_id digital = {};
+		timer.src.type = CEC_OP_RECORD_SRC_DIGITAL;
+		timer.src.digital = digital;
+		cec_ops_set_digital_timer(&msg, &day, &month, &start_hr, &start_min,
+		                          &duration_hr, &duration_min, &timer.recording_seq,
+		                          &timer.src.digital);
+		break;
+	}
+	case CEC_MSG_CLEAR_EXT_TIMER:
+	case CEC_MSG_SET_EXT_TIMER: {
+		cec_ops_set_ext_timer(&msg, &day, &month, &start_hr, &start_min,
+		                      &duration_hr, &duration_min, &timer.recording_seq, &ext_src_spec,
+		                      &plug, &phys_addr);
+		if (ext_src_spec == CEC_OP_EXT_SRC_PLUG) {
+			timer.src.type = CEC_OP_RECORD_SRC_EXT_PLUG;
+			timer.src.ext_plug.plug = plug;
+		}
+		if (ext_src_spec == CEC_OP_EXT_SRC_PHYS_ADDR) {
+			timer.src.type = CEC_OP_RECORD_SRC_EXT_PHYS_ADDR;
+			timer.src.ext_phys_addr.phys_addr = phys_addr;
+		}
+		break;
+	}
+	default:
+		break;
+	}
+
+	timer.duration = ((duration_hr * 60) + duration_min) * 60; /* In seconds. */
+
+	/* Use current time in the timer when it is not available from message e.g. year. */
+	time_t current_time = time(nullptr);
+	struct tm *temp = localtime(&current_time);
+	temp->tm_mday = day;
+	temp->tm_mon = month - 1; /* CEC months are 1-12 but struct tm range is 0-11. */
+	temp->tm_hour = start_hr;
+	temp->tm_min = start_min;
+	/*
+	 * Timer precision is only to the minute. Set sec to 0 so that differences in seconds
+	 * do not affect timer comparisons.
+	 */
+	temp->tm_sec = 0;
+	temp->tm_isdst = -1;
+	timer.start_time = mktime(temp);
+
+	return timer;
+}
+
+static bool timer_date_out_of_range(const struct cec_msg &msg, const struct Timer &timer)
+{
+	__u8 day = msg.msg[2];
+	__u8 month = msg.msg[3];
+	/* Hours and minutes are in BCD format */
+	__u8 start_hr = (msg.msg[4] >> 4) * 10 + (msg.msg[4] & 0xf);
+	__u8 start_min = (msg.msg[5] >> 4) * 10 + (msg.msg[5] & 0xf);
+	__u8 duration_hr = (msg.msg[6] >> 4) * 10 + (msg.msg[6] & 0xf);
+	__u8 duration_min = (msg.msg[7] >> 4) * 10 + (msg.msg[7] & 0xf);
+
+	if (start_min > 59 || start_hr > 23 || month > 12 || month == 0 || day > 31 || day == 0 ||
+	    duration_min > 59 || (duration_hr == 0 && duration_min == 0))
+		return true;
+
+	switch (month) {
+	case Apr: case Jun: case Sep: case Nov:
+		if (day > 30)
+			return true;
+		break;
+	case Feb: {
+		struct tm *tp = localtime(&timer.start_time);
+
+		if (!(tp->tm_year % 4) && ((tp->tm_year % 100) || !(tp->tm_year % 400))) {
+			if (day > 29)
+				return true;
+		} else {
+			if (day > 28)
+				return true;
+		}
+		break;
+	}
+	default:
+		break;
+	}
+
+	return false;
+}
+
+static bool timer_overlap(const struct Timer &new_timer)
+{
+	if (programmed_timers.size() == 1)
+		return false;
+
+	time_t new_timer_end = new_timer.start_time + new_timer.duration;
+	for (auto &t : programmed_timers) {
+
+		if (new_timer == t)
+			continue; /* Timer doesn't overlap itself. */
+
+		time_t existing_timer_end = t.start_time + t.duration;
+
+		if ((t.start_time < new_timer.start_time && new_timer.start_time < existing_timer_end) ||
+		    (t.start_time < new_timer_end && new_timer_end < existing_timer_end) ||
+		    (t.start_time == new_timer.start_time || existing_timer_end == new_timer_end) ||
+		    (new_timer.start_time < t.start_time && existing_timer_end < new_timer_end))
+		    return true;
+	}
+
+	return false;
+}
 
 struct service_info {
 	unsigned tsid;
@@ -738,39 +872,149 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 		return;
 
 
-		/*
-		  Timer Programming
-
-		  This is only a basic implementation.
-
-		  TODO/Ideas:
-		  - Act like an actual recording device; keep track of recording
-		    schedule and act correctly when colliding timers are set.
-		  - Emulate a finite storage space for recordings
-		 */
+		/* Timer Programming */
 
 	case CEC_MSG_SET_ANALOGUE_TIMER:
 	case CEC_MSG_SET_DIGITAL_TIMER:
-	case CEC_MSG_SET_EXT_TIMER:
-		if (!cec_has_record(1 << me))
+	case CEC_MSG_SET_EXT_TIMER: {
+		if (type != CEC_LOG_ADDR_TYPE_RECORD)
 			break;
+
+		__u8 prog_error = 0;
+		__u8 prog_info = 0;
+		__u8 timer_overlap_warning = CEC_OP_TIMER_OVERLAP_WARNING_NO_OVERLAP;
+		__u8 available_space_hr = 0;
+		__u8 available_space_min = 0;
+		struct Timer timer = get_timer_from_message(msg);
+
+		/* If timer starts in the past, increment the year so that timers can be set across year-end. */
+		if (time(nullptr) > timer.start_time) {
+			struct tm *temp = localtime(&timer.start_time);
+			temp->tm_year++;
+			temp->tm_isdst = -1;
+			timer.start_time = mktime(temp);
+		}
+
+		if (timer_date_out_of_range(msg, timer))
+			prog_error = CEC_OP_PROG_ERROR_DATE_OUT_OF_RANGE;
+
+		if (timer.recording_seq > 0x7f)
+			prog_error = CEC_OP_PROG_ERROR_REC_SEQ_ERROR;
+
+		if (programmed_timers.find(timer) != programmed_timers.end())
+			prog_error = CEC_OP_PROG_ERROR_DUPLICATE;
+
+		if (!prog_error) {
+			programmed_timers.insert(timer);
+
+			if (timer_overlap(timer))
+				timer_overlap_warning = CEC_OP_TIMER_OVERLAP_WARNING_OVERLAP;
+
+			if (node->state.media_space_available <= 0 ||
+			    timer.duration > node->state.media_space_available) {
+				prog_info = CEC_OP_PROG_INFO_NOT_ENOUGH_SPACE;
+			} else {
+				int space_that_may_be_needed = 0;
+				for (auto &t : programmed_timers) {
+					space_that_may_be_needed += t.duration;
+					if (t == timer) /* Only count the space up to and including the new timer. */
+						break;
+				}
+				if ((node->state.media_space_available - space_that_may_be_needed) >= 0)
+					prog_info = CEC_OP_PROG_INFO_ENOUGH_SPACE;
+				else
+					prog_info = CEC_OP_PROG_INFO_MIGHT_NOT_BE_ENOUGH_SPACE;
+			}
+			print_timers(node);
+		}
+
+		if (prog_info == CEC_OP_PROG_INFO_NOT_ENOUGH_SPACE ||
+		    prog_info == CEC_OP_PROG_INFO_MIGHT_NOT_BE_ENOUGH_SPACE ||
+		    prog_error == CEC_OP_PROG_ERROR_DUPLICATE) {
+			available_space_hr = node->state.media_space_available / 3600; /* 3600 MB/hour */
+			available_space_min = (node->state.media_space_available % 3600) / 60; /* 60 MB/min */
+		}
 		cec_msg_set_reply_to(&msg, &msg);
-		cec_msg_timer_status(&msg, CEC_OP_TIMER_OVERLAP_WARNING_NO_OVERLAP,
-				     CEC_OP_MEDIA_INFO_NO_MEDIA,
-				     CEC_OP_PROG_INFO_ENOUGH_SPACE, 0, 0, 0);
+		cec_msg_timer_status(&msg, timer_overlap_warning, CEC_OP_MEDIA_INFO_UNPROT_MEDIA,
+		                     prog_info, prog_error, available_space_hr, available_space_min);
 		transmit(node, &msg);
 		return;
+	}
 	case CEC_MSG_CLEAR_ANALOGUE_TIMER:
 	case CEC_MSG_CLEAR_DIGITAL_TIMER:
-	case CEC_MSG_CLEAR_EXT_TIMER:
-		if (!cec_has_record(1 << me))
+	case CEC_MSG_CLEAR_EXT_TIMER: {
+		if (type != CEC_LOG_ADDR_TYPE_RECORD)
 			break;
+
+		__u8 timer_cleared_status = CEC_OP_TIMER_CLR_STAT_NO_MATCHING;
+
+		/* Look for timer in the previous year which have persisted across year-end. */
+		struct Timer timer_in_previous_year = get_timer_from_message(msg);
+		struct tm *temp = localtime(&timer_in_previous_year.start_time);
+		temp->tm_year--;
+		temp->tm_isdst = -1;
+		timer_in_previous_year.start_time = mktime(temp);
+		auto it_previous_year = programmed_timers.find(timer_in_previous_year);
+
+		if (it_previous_year != programmed_timers.end()) {
+			if (node->state.one_touch_record_on && it_previous_year == programmed_timers.begin()) {
+				timer_cleared_status = CEC_OP_TIMER_CLR_STAT_RECORDING;
+				node->state.one_touch_record_on = false;
+			} else {
+				timer_cleared_status = CEC_OP_TIMER_CLR_STAT_CLEARED;
+			}
+			programmed_timers.erase(timer_in_previous_year);
+			print_timers(node);
+		}
+
+		/* Look for timer in the current year. */
+		struct Timer timer_in_current_year = get_timer_from_message(msg);
+		auto it_current_year = programmed_timers.find(timer_in_current_year);
+
+		if (it_current_year != programmed_timers.end()) {
+			if (node->state.one_touch_record_on && it_current_year == programmed_timers.begin()) {
+				timer_cleared_status = CEC_OP_TIMER_CLR_STAT_RECORDING;
+				node->state.one_touch_record_on = false;
+			} else {
+				/* Do not overwrite status if already set. */
+				if (timer_cleared_status == CEC_OP_TIMER_CLR_STAT_NO_MATCHING)
+					timer_cleared_status = CEC_OP_TIMER_CLR_STAT_CLEARED;
+			}
+			programmed_timers.erase(timer_in_current_year);
+			print_timers(node);
+		}
+
+		/* Look for timer in the next year. */
+		struct Timer timer_in_next_year = get_timer_from_message(msg);
+		temp = localtime(&timer_in_next_year.start_time);
+		temp->tm_year++;
+		temp->tm_isdst = -1;
+		timer_in_next_year.start_time = mktime(temp);
+		if (programmed_timers.find(timer_in_next_year) != programmed_timers.end()) {
+			/* Do not overwrite status if already set. */
+			if (timer_cleared_status == CEC_OP_TIMER_CLR_STAT_NO_MATCHING)
+				timer_cleared_status = CEC_OP_TIMER_CLR_STAT_CLEARED;
+			programmed_timers.erase(timer_in_next_year);
+			print_timers(node);
+		}
 		cec_msg_set_reply_to(&msg, &msg);
-		cec_msg_timer_cleared_status(&msg, CEC_OP_TIMER_CLR_STAT_CLEARED);
+		cec_msg_timer_cleared_status(&msg, timer_cleared_status);
 		transmit(node, &msg);
+		/*
+		 * If the cleared timer was recording, and standby was received during recording,
+		 * enter standby when the recording stops unless recording device is the active source.
+		 */
+		if (timer_cleared_status == CEC_OP_TIMER_CLR_STAT_RECORDING) {
+			if (node->state.record_received_standby) {
+				if (node->phys_addr != node->state.active_source_pa)
+					enter_standby(node);
+				node->state.record_received_standby = false;
+			}
+		}
 		return;
+	}
 	case CEC_MSG_SET_TIMER_PROGRAM_TITLE:
-		if (!cec_has_record(1 << me))
+		if (type != CEC_LOG_ADDR_TYPE_RECORD)
 			break;
 		return;
 	case CEC_MSG_TIMER_CLEARED_STATUS:

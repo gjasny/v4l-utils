@@ -47,6 +47,7 @@ bool show_msgs;
 bool show_state;
 bool show_warnings = true;
 unsigned warnings;
+std::set<struct Timer> programmed_timers;
 
 static struct option long_options[] = {
 	{ "device", required_argument, nullptr, OptSetDevice },
@@ -296,6 +297,58 @@ int cec_named_ioctl(int fd, const char *name,
 	return retval == -1 ? e : (retval ? -1 : 0);
 }
 
+void print_timers(struct node *node)
+{
+	if (show_info) {
+		printf("Timers Set:\n");
+		for (auto &t : programmed_timers) {
+			std::string start = ctime(&t.start_time);
+			time_t end_time = t.start_time + t.duration;
+			std::string end = ctime(&end_time);
+			/* Remove the seconds because timer is precise only to the minute. */
+			start.erase(16, 3);
+			end.erase(16, 3);
+			/* Remove the new line characters. */
+			start.erase(start.end() - 1);
+			end.erase(end.end() - 1);
+			/* Remove the start year if it is the same as the end year. */
+			if ((start.compare(start.size() - 4, 5, end, end.size() - 4, 5) == 0))
+				start.erase(start.size() - 5, 5);
+			printf("\t%s - %s, ", start.c_str(), end.c_str());
+			/* Find and print the source. */
+			std::string source;
+			switch (t.src.type) {
+			case CEC_OP_RECORD_SRC_OWN:
+				source = "own";
+				break;
+			case CEC_OP_RECORD_SRC_DIGITAL:
+				source = "digital";
+				break;
+			case CEC_OP_RECORD_SRC_ANALOG:
+				source = "analog";
+				break;
+			case CEC_OP_RECORD_SRC_EXT_PLUG:
+				source = "ext plug";
+				break;
+			case CEC_OP_RECORD_SRC_EXT_PHYS_ADDR:
+				source = "ext phy addr";
+				break;
+			default:
+				break;
+			}
+			printf("source: %s, ", source.c_str());
+			if (t.recording_seq)
+				printf("rec-seq: 0x%x, ", t.recording_seq);
+			printf("needs: %ld %s\n", t.duration, "MB."); /* 1MB per second. */
+		}
+		printf("Total media space available for recording: ");
+		if (node->state.media_space_available >= 0)
+			printf("%d MB.\n\n", node->state.media_space_available);
+		else
+			printf("0 MB.\n\n");
+	}
+}
+
 void state_init(struct node &node)
 {
 	if (options[OptStandby])
@@ -319,6 +372,7 @@ void state_init(struct node &node)
 	node.state.deck_skip_start = 0;
 	node.state.one_touch_record_on = false;
 	node.state.record_received_standby = false;
+	node.state.media_space_available = 36000; /* In MB; space for 10 hours @ 1MB/sec */
 	tuner_dev_info_init(&node.state);
 	node.state.last_aud_rate_rx_ts = 0;
 }

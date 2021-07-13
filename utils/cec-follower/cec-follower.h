@@ -19,12 +19,16 @@
 
 #include <cec-info.h>
 #include <cec-log.h>
+#include <set>
+#include <ctime>
 
 extern bool show_info;
 extern bool show_msgs;
 extern bool show_state;
 extern bool show_warnings;
 extern unsigned warnings;
+extern std::set<struct Timer> programmed_timers;
+extern void print_timers(struct node *node);
 
 struct state {
 	__u16 active_source_pa;
@@ -55,6 +59,7 @@ struct state {
 	__u64 deck_skip_start;
 	bool one_touch_record_on;
 	bool record_received_standby;
+	int media_space_available;
 	time_t toggle_power_status;
 	__u64 last_aud_rate_rx_ts;
 };
@@ -80,6 +85,44 @@ struct node {
 
 	bool ignore_la[16];
 	unsigned short ignore_opcode[256];
+};
+
+struct Timer {
+	time_t start_time;
+	time_t duration; /* In seconds. */
+	__u8 recording_seq;
+	struct cec_op_record_src src;
+
+	Timer()
+	{
+		start_time = 0;
+		duration = 0;
+		recording_seq = 0;
+		src = {};
+	}
+
+	Timer(const Timer& timer)
+	{
+		start_time = timer.start_time;
+		duration = timer.duration;
+		recording_seq = timer.recording_seq;
+		src = timer.src;
+	}
+
+	bool operator<(const Timer &r) const
+	{
+		return start_time < r.start_time ||
+		       (start_time == r.start_time && duration < r.duration) ||
+		       (start_time == r.start_time && duration == r.duration && src.type < r.src.type) ||
+		       (start_time == r.start_time && duration == r.duration && src.type == r.src.type &&
+		       recording_seq < r.recording_seq);
+	}
+
+	bool operator==(const Timer &right) const
+	{
+		return start_time == right.start_time && duration == right.duration &&
+		       src.type == right.src.type && recording_seq == right.recording_seq;
+	}
 };
 
 struct la_info {

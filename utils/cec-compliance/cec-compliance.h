@@ -167,6 +167,7 @@ struct node {
 	__u16 phys_addr;
 	bool in_standby;
 	__u8 prim_devtype;
+	time_t current_time;
 };
 
 struct remote_subtest {

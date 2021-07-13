@@ -1236,6 +1236,7 @@ int main(int argc, char **argv)
 	node.num_log_addrs = laddrs.num_log_addrs;
 	memcpy(node.log_addr, laddrs.log_addr, laddrs.num_log_addrs);
 	node.adap_la_mask = laddrs.log_addr_mask;
+	node.current_time = time(nullptr);
 
 	printf("Find remote devices:\n");
 	printf("\tPolling: %s\n", ok(poll_remote_devs(&node)));

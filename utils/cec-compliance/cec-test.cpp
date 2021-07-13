@@ -13,6 +13,8 @@
 
 #include "cec-compliance.h"
 
+enum Months { Jan = 1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec };
+
 struct remote_test {
 	const char *name;
 	const unsigned tags;
@@ -110,6 +112,129 @@ static bool rec_status_is_a_valid_error_status(__u8 rec_status)
 	default:
 		return false;
 	}
+}
+
+static int timer_status_is_valid(const struct cec_msg &msg)
+{
+	__u8 timer_overlap_warning;
+	__u8 media_info;
+	__u8 prog_info;
+	__u8 prog_error;
+	__u8 duration_hr;
+	__u8 duration_min;
+
+	cec_ops_timer_status(&msg, &timer_overlap_warning, &media_info, &prog_info,
+	                     &prog_error, &duration_hr, &duration_min);
+	fail_on_test(media_info > CEC_OP_MEDIA_INFO_NO_MEDIA);
+	if (prog_info)
+		fail_on_test(prog_info < CEC_OP_PROG_INFO_ENOUGH_SPACE ||
+		             prog_info > CEC_OP_PROG_INFO_MIGHT_NOT_BE_ENOUGH_SPACE);
+	else
+		fail_on_test(prog_error < CEC_OP_PROG_ERROR_NO_FREE_TIMER ||
+		             (prog_error > CEC_OP_PROG_ERROR_CLOCK_FAILURE &&
+		              prog_error != CEC_OP_PROG_ERROR_DUPLICATE));
+
+	return OK;
+}
+
+static int timer_cleared_status_is_valid(const struct cec_msg &msg)
+{
+	__u8 timer_cleared_status;
+
+	cec_ops_timer_cleared_status(&msg, &timer_cleared_status);
+	fail_on_test(timer_cleared_status != CEC_OP_TIMER_CLR_STAT_RECORDING &&
+	             timer_cleared_status != CEC_OP_TIMER_CLR_STAT_NO_MATCHING &&
+	             timer_cleared_status != CEC_OP_TIMER_CLR_STAT_NO_INFO &&
+	             timer_cleared_status != CEC_OP_TIMER_CLR_STAT_CLEARED);
+
+	return OK;
+}
+
+static bool timer_has_error(const struct cec_msg &msg)
+{
+	__u8 timer_overlap_warning;
+	__u8 media_info;
+	__u8 prog_info;
+	__u8 prog_error;
+	__u8 duration_hr;
+	__u8 duration_min;
+
+	cec_ops_timer_status(&msg, &timer_overlap_warning, &media_info, &prog_info,
+	                     &prog_error, &duration_hr, &duration_min);
+	if (prog_error)
+		return true;
+
+	return false;
+}
+
+static int send_timer_error(struct node *node, unsigned me, unsigned la, __u8 day, __u8 month,
+                            __u8 start_hr, __u8 start_min, __u8 dur_hr, __u8 dur_min, __u8 rec_seq)
+{
+	struct cec_msg msg;
+	cec_msg_init(&msg, me, la);
+	cec_msg_set_analogue_timer(&msg, true, day, month, start_hr, start_min, dur_hr, dur_min,
+	                           rec_seq, CEC_OP_ANA_BCAST_TYPE_CABLE, 7668, // 479.25 MHz
+	                           node->remote[la].bcast_sys);
+	fail_on_test(!transmit_timeout(node, &msg, 10000));
+	fail_on_test(timed_out(&msg));
+	if (cec_msg_status_is_abort(&msg))
+		fail_on_test(abort_reason(&msg) != CEC_OP_ABORT_INVALID_OP);
+	else
+		fail_on_test(!timer_has_error(msg));
+
+	return OK;
+}
+
+static bool timer_overlap_warning_is_set(const struct cec_msg &msg)
+{
+	__u8 timer_overlap_warning;
+	__u8 media_info;
+	__u8 prog_info;
+	__u8 prog_error;
+	__u8 duration_hr;
+	__u8 duration_min;
+
+	cec_ops_timer_status(&msg, &timer_overlap_warning, &media_info, &prog_info,
+	                     &prog_error, &duration_hr, &duration_min);
+
+	if (timer_overlap_warning)
+		return true;
+
+	return false;
+}
+
+static int send_timer_overlap(struct node *node, unsigned me, unsigned la, __u8 day, __u8 month,
+                              __u8 start_hr, __u8 start_min, __u8 dur_hr, __u8 dur_min, __u8 rec_seq)
+{
+	struct cec_msg msg;
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_set_analogue_timer(&msg, true, day, month, start_hr, start_min, dur_hr, dur_min,
+	                           rec_seq, CEC_OP_ANA_BCAST_TYPE_CABLE, 7668, // 479.25 MHz
+	                           node->remote[la].bcast_sys);
+	fail_on_test(!transmit_timeout(node, &msg, 10000));
+	fail_on_test(timed_out_or_abort(&msg));
+	fail_on_test(timer_has_error(msg));
+	fail_on_test(!timer_overlap_warning_is_set(msg));
+
+	return OK;
+}
+
+static int clear_timer(struct node *node, unsigned me, unsigned la, __u8 day, __u8 month,
+                       __u8 start_hr, __u8 start_min, __u8 dur_hr, __u8 dur_min, __u8 rec_seq)
+{
+	struct cec_msg msg;
+
+	cec_msg_init(&msg, me, la);
+	cec_msg_clear_analogue_timer(&msg, true, day, month, start_hr, start_min, dur_hr, dur_min,
+	                             rec_seq, CEC_OP_ANA_BCAST_TYPE_CABLE, 7668, // 479.25 MHz
+	                             node->remote[la].bcast_sys);
+	fail_on_test(!transmit_timeout(node, &msg, 10000));
+	fail_on_test(timed_out_or_abort(&msg));
+	fail_on_test(timer_has_error(msg));
+	fail_on_test(timer_cleared_status_is_valid(msg));
+
+	return OK;
 }
 
 /* System Information */
@@ -1499,40 +1624,32 @@ static const vec_remote_subtests one_touch_rec_subtests{
 
 /* Timer Programming */
 
-/*
-  TODO: These are very rudimentary tests which should be expanded.
- */
-
 static int timer_prog_set_analog_timer(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	/* TODO: Check the timer status for possible errors, etc. */
-
 	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
-	cec_msg_set_analogue_timer(&msg, true, 1, 1, 0, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY,
-				     CEC_OP_ANA_BCAST_TYPE_CABLE,
-				     7668, // 479.25 MHz
-				     node->remote[la].bcast_sys);
+	/* Set timer to start tomorrow, at current time, for 2 hr, 30 min. */
+	time_t tomorrow = node->current_time + (24 * 60 * 60);
+	struct tm *t = localtime(&tomorrow);
+	cec_msg_set_analogue_timer(&msg, true, t->tm_mday, t->tm_mon + 1, t->tm_hour, t->tm_min, 2, 30,
+	                           0x7f, CEC_OP_ANA_BCAST_TYPE_CABLE, 7668, // 479.25 MHz
+	                           node->remote[la].bcast_sys);
 	fail_on_test(!transmit_timeout(node, &msg, 10000));
-	if (timed_out(&msg)) {
-		warn("Timed out waiting for Timer Status. Assuming timer was set.\n");
-		return OK_PRESUMED;
-	}
+	fail_on_test(timed_out(&msg));
 	if (unrecognized_op(&msg))
 		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
 		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
 		return OK_PRESUMED;
+	fail_on_test(timer_status_is_valid(msg));
 
-	return 0;
+	return OK;
 }
 
 static int timer_prog_set_digital_timer(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	/* TODO: Check the timer status for possible errors, etc. */
-
 	struct cec_msg msg;
 	struct cec_op_digital_service_id digital_service_id = {};
 
@@ -1541,77 +1658,73 @@ static int timer_prog_set_digital_timer(struct node *node, unsigned me, unsigned
 	digital_service_id.channel.minor = 1;
 	digital_service_id.dig_bcast_system = node->remote[la].dig_bcast_sys;
 	cec_msg_init(&msg, me, la);
-	cec_msg_set_digital_timer(&msg, true, 1, 1, 0, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY,
-				    &digital_service_id);
+	/* Set timer to start 2 days from now, at current time, for 4 hr, 30 min. */
+	time_t two_days_ahead = node->current_time + (2 * 24 * 60 * 60);
+	struct tm *t = localtime(&two_days_ahead);
+	cec_msg_set_digital_timer(&msg, true, t->tm_mday, t->tm_mon + 1, t->tm_hour,
+	                          t->tm_min, 4, 30, CEC_OP_REC_SEQ_ONCE_ONLY, &digital_service_id);
 	fail_on_test(!transmit_timeout(node, &msg, 10000));
-	if (timed_out(&msg)) {
-		warn("Timed out waiting for Timer Status. Assuming timer was set.\n");
-		return OK_PRESUMED;
-	}
+	fail_on_test(timed_out(&msg));
 	if (unrecognized_op(&msg))
 		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
 		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
 		return OK_PRESUMED;
+	fail_on_test(timer_status_is_valid(msg));
 
 	return 0;
 }
 
 static int timer_prog_set_ext_timer(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	/* TODO: Check the timer status. */
-
 	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
-	cec_msg_set_ext_timer(&msg, true, 1, 1, 0, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY,
-			      CEC_OP_EXT_SRC_PHYS_ADDR, 0, node->phys_addr);
+	/* Set timer to start 3 days from now, at current time, for 6 hr, 30 min. */
+	time_t three_days_ahead = node->current_time + (3 * 24 * 60 * 60);
+	struct tm *t = localtime(&three_days_ahead);
+	cec_msg_set_ext_timer(&msg, true, t->tm_mday, t->tm_mon + 1, t->tm_hour, t->tm_min, 6, 30,
+	                      CEC_OP_REC_SEQ_ONCE_ONLY, CEC_OP_EXT_SRC_PHYS_ADDR, 0, node->phys_addr);
 	fail_on_test(!transmit_timeout(node, &msg, 10000));
-	if (timed_out(&msg)) {
-		warn("Timed out waiting for Timer Status. Assuming timer was set.\n");
-		return OK_PRESUMED;
-	}
+	fail_on_test(timed_out(&msg));
 	if (unrecognized_op(&msg))
 		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
 		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
 		return OK_PRESUMED;
+	fail_on_test(timer_status_is_valid(msg));
 
 	return 0;
 }
 
 static int timer_prog_clear_analog_timer(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	/* TODO: Check the timer cleared status. */
-
 	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
-	cec_msg_clear_analogue_timer(&msg, true, 1, 1, 0, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY,
-				     CEC_OP_ANA_BCAST_TYPE_CABLE,
-				     7668, // 479.25 MHz
-				     node->remote[la].bcast_sys);
+	/* Clear timer set to start tomorrow, at current time, for 2 hr, 30 min. */
+	time_t tomorrow = node->current_time + (24 * 60 * 60);
+	struct tm *t = localtime(&tomorrow);
+	cec_msg_clear_analogue_timer(&msg, true, t->tm_mday, t->tm_mon + 1, t->tm_hour, t->tm_min, 2, 30,
+	                             0x7f, CEC_OP_ANA_BCAST_TYPE_CABLE,7668, // 479.25 MHz
+	                             node->remote[la].bcast_sys);
 	fail_on_test(!transmit_timeout(node, &msg, 10000));
-	if (timed_out(&msg)) {
-		warn("Timed out waiting for Timer Cleared Status. Assuming timer was cleared.\n");
-		return OK_PRESUMED;
-	}
+	fail_on_test(timed_out(&msg));
 	if (unrecognized_op(&msg))
 		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
 		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
 		return OK_PRESUMED;
+	fail_on_test(timer_cleared_status_is_valid(msg));
 
 	return 0;
 }
 
 static int timer_prog_clear_digital_timer(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	/* TODO: Check the timer cleared status. */
-
 	struct cec_msg msg;
 	struct cec_op_digital_service_id digital_service_id = {};
 
@@ -1620,43 +1733,43 @@ static int timer_prog_clear_digital_timer(struct node *node, unsigned me, unsign
 	digital_service_id.channel.minor = 1;
 	digital_service_id.dig_bcast_system = node->remote[la].dig_bcast_sys;
 	cec_msg_init(&msg, me, la);
-	cec_msg_clear_digital_timer(&msg, true, 1, 1, 0, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY,
-				    &digital_service_id);
+	/* Clear timer set to start 2 days from now, at current time, for 4 hr, 30 min. */
+	time_t two_days_ahead = node->current_time + (2 * 24 * 60 * 60);
+	struct tm *t = localtime(&two_days_ahead);
+	cec_msg_clear_digital_timer(&msg, true, t->tm_mday, t->tm_mon + 1, t->tm_hour,
+	                            t->tm_min, 4, 30, CEC_OP_REC_SEQ_ONCE_ONLY, &digital_service_id);
 	fail_on_test(!transmit_timeout(node, &msg, 10000));
-	if (timed_out(&msg)) {
-		warn("Timed out waiting for Timer Cleared Status. Assuming timer was cleared.\n");
-		return OK_PRESUMED;
-	}
+	fail_on_test(timed_out(&msg));
 	if (unrecognized_op(&msg))
 		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
 		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
 		return OK_PRESUMED;
+	fail_on_test(timer_cleared_status_is_valid(msg));
 
 	return 0;
 }
 
 static int timer_prog_clear_ext_timer(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	/* TODO: Check the timer cleared status. */
-
 	struct cec_msg msg;
 
 	cec_msg_init(&msg, me, la);
-	cec_msg_clear_ext_timer(&msg, true, 1, 1, 0, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY,
-				CEC_OP_EXT_SRC_PHYS_ADDR, 0, node->phys_addr);
+	/* Clear timer set to start 3 days from now, at current time, for 6 hr, 30 min. */
+	time_t three_days_ahead = node->current_time + (3 * 24 * 60 * 60);
+	struct tm *t = localtime(&three_days_ahead);
+	cec_msg_clear_ext_timer(&msg, true, t->tm_mday, t->tm_mon + 1, t->tm_hour, t->tm_min, 6, 30,
+	                        CEC_OP_REC_SEQ_ONCE_ONLY, CEC_OP_EXT_SRC_PHYS_ADDR, 0, node->phys_addr);
 	fail_on_test(!transmit_timeout(node, &msg, 10000));
-	if (timed_out(&msg)) {
-		warn("Timed out waiting for Timer Cleared Status. Assuming timer was cleared.\n");
-		return OK_PRESUMED;
-	}
+	fail_on_test(timed_out(&msg));
 	if (unrecognized_op(&msg))
 		return OK_NOT_SUPPORTED;
 	if (refused(&msg))
 		return OK_REFUSED;
 	if (cec_msg_status_is_abort(&msg))
 		return OK_PRESUMED;
+	fail_on_test(timer_cleared_status_is_valid(msg));
 
 	return 0;
 }
@@ -1676,49 +1789,198 @@ static int timer_prog_set_prog_title(struct node *node, unsigned me, unsigned la
 	return OK_PRESUMED;
 }
 
-static int timer_prog_timer_status(struct node *node, unsigned me, unsigned la, bool interactive)
+static int timer_errors(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg;
 
+	/* Day error: November 31, at 6:00 am, for 1 hr. */
 	cec_msg_init(&msg, me, la);
-	cec_msg_timer_status(&msg, CEC_OP_TIMER_OVERLAP_WARNING_NO_OVERLAP,
-			     CEC_OP_MEDIA_INFO_NO_MEDIA,
-			     CEC_OP_PROG_INFO_ENOUGH_SPACE,
-			     0, 0, 0);
-	fail_on_test(!transmit_timeout(node, &msg));
+	cec_msg_set_analogue_timer(&msg, true, 31, Nov, 6, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY,
+	                           CEC_OP_ANA_BCAST_TYPE_CABLE, 7668, // 479.25 MHz
+	                           node->remote[la].bcast_sys);
+	fail_on_test(!transmit_timeout(node, &msg, 10000));
+	fail_on_test(timed_out(&msg));
 	if (unrecognized_op(&msg))
 		return OK_NOT_SUPPORTED;
-	if (refused(&msg))
-		return OK_REFUSED;
+	if (cec_msg_status_is_abort(&msg))
+		fail_on_test(abort_reason(&msg) != CEC_OP_ABORT_INVALID_OP);
+	else
+		fail_on_test(!timer_has_error(msg));
 
-	return OK_PRESUMED;
+	/* Day error: December 32, at 6:00 am, for 1 hr. */
+	fail_on_test(send_timer_error(node, me, la, 32, Dec, 6, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY));
+
+	/* Day error: 0, in January, at 6:00 am, for 1 hr. Day range begins at 1. */
+	fail_on_test(send_timer_error(node, me, la, 0, Jan, 6, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY));
+
+	/* Month error: 0, on day 5, at 6:00 am, for 1 hr. CEC month range is 1-12. */
+	fail_on_test(send_timer_error(node, me, la, 5, 0, 6, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY));
+
+	/* Month error: 13, on day 5, at 6:00 am, for 1 hr. */
+	fail_on_test(send_timer_error(node, me, la, 5, 13, 6, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY));
+
+	/* Start hour error: 24 hr, on August 5, for 1 hr. Start hour range is 0-23. */
+	fail_on_test(send_timer_error(node, me, la, 5, Aug, 24, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY));
+
+	/* Start min error: 60 min, on August 5, for 1 hr. Start min range is 0-59. */
+	fail_on_test(send_timer_error(node, me, la, 5, Aug, 0, 60, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY));
+
+	/* Recording duration error: 0 hr, 0 min on August 5, at 6:00am. */
+	fail_on_test(send_timer_error(node, me, la, 5, Aug, 6, 0, 0, 0, CEC_OP_REC_SEQ_ONCE_ONLY));
+
+	/* Duplicate timer error: start 2 hrs from now, for 1 hr. */
+	time_t two_hours_ahead = node->current_time + (2 * 60 * 60);
+	struct tm *t = localtime(&two_hours_ahead);
+	cec_msg_init(&msg, me, la);
+	cec_msg_set_analogue_timer(&msg, true, t->tm_mday, t->tm_mon + 1, t->tm_hour, t->tm_min, 1, 0,
+	                           CEC_OP_REC_SEQ_ONCE_ONLY,CEC_OP_ANA_BCAST_TYPE_CABLE,
+	                           7668, // 479.25 MHz
+	                           node->remote[la].bcast_sys);
+	fail_on_test(!transmit_timeout(node, &msg, 10000));
+	fail_on_test(timed_out_or_abort(&msg));
+	fail_on_test(timer_has_error(msg)); /* The first timer should be set. */
+	fail_on_test(send_timer_error(node, me, la, t->tm_mday, t->tm_mon + 1, t->tm_hour,
+	                              t->tm_min, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY));
+
+	/* Clear the timer that was set to test duplicate timers. */
+	fail_on_test(clear_timer(node, me, la, t->tm_mday, t->tm_mon + 1, t->tm_hour, t->tm_min, 1, 0,
+	                         CEC_OP_REC_SEQ_ONCE_ONLY));
+
+	/* Recording sequence error: 0xff, on August 5, at 6:00 am, for 1 hr. */
+	fail_on_test(send_timer_error(node, me, la, 5, Aug, 6, 0, 1, 0, 0xff));
+
+	/* Error in last day of February, at 6:00 am, for 1 hr. */
+	time_t current_time = node->current_time;
+	t = localtime(&current_time);
+	if ((t->tm_mon + 1) > Feb)
+		t->tm_year++; /* The timer will be for next year. */
+	if (!(t->tm_year % 4) && ((t->tm_year % 100) || !(t->tm_year % 400)))
+		fail_on_test(send_timer_error(node, me, la, 30, Feb, 6, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY));
+	else
+		fail_on_test(send_timer_error(node, me, la, 29, Feb, 6, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY));
+
+	return OK;
 }
 
-static int timer_prog_timer_clear_status(struct node *node, unsigned me, unsigned la, bool interactive)
+static int timer_overlap_warning(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	struct cec_msg msg;
 
+	time_t tomorrow = node->current_time + (24 * 60 * 60);
+	struct tm *t = localtime(&tomorrow);
+
+	/* No overlap: set timer for tomorrow at 8:00 am for 2 hr. */
 	cec_msg_init(&msg, me, la);
-	cec_msg_timer_cleared_status(&msg, CEC_OP_TIMER_CLR_STAT_CLEARED);
-	fail_on_test(!transmit_timeout(node, &msg));
+	cec_msg_set_analogue_timer(&msg, true, t->tm_mday, t->tm_mon + 1, 8, 0, 2, 0,
+	                           CEC_OP_REC_SEQ_ONCE_ONLY, CEC_OP_ANA_BCAST_TYPE_CABLE,
+	                           7668, // 479.25 MHz
+	                           node->remote[la].bcast_sys);
+	fail_on_test(!transmit_timeout(node, &msg, 10000));
 	if (unrecognized_op(&msg))
 		return OK_NOT_SUPPORTED;
-	if (refused(&msg))
-		return OK_REFUSED;
+	fail_on_test(timed_out_or_abort(&msg));
+	fail_on_test(timer_has_error(msg));
+	fail_on_test(timer_overlap_warning_is_set(msg));
 
-	return OK_PRESUMED;
+	/* No overlap, just adjacent: set timer for tomorrow at 10:00 am for 15 min. */
+	cec_msg_init(&msg, me, la);
+	cec_msg_set_analogue_timer(&msg, true, t->tm_mday, t->tm_mon + 1, 10, 0, 0, 15,
+	                           CEC_OP_REC_SEQ_ONCE_ONLY, CEC_OP_ANA_BCAST_TYPE_CABLE,
+	                           7668, // 479.25 MHz
+	                           node->remote[la].bcast_sys);
+	fail_on_test(!transmit_timeout(node, &msg, 10000));
+	fail_on_test(timed_out_or_abort(&msg));
+	fail_on_test(timer_has_error(msg));
+	fail_on_test(timer_overlap_warning_is_set(msg));
+
+	/* No overlap, just adjacent: set timer for tomorrow at 7:45 am for 15 min. */
+	cec_msg_init(&msg, me, la);
+	cec_msg_set_analogue_timer(&msg, true, t->tm_mday, t->tm_mon + 1, 7, 45, 0, 15,
+	                           CEC_OP_REC_SEQ_ONCE_ONLY, CEC_OP_ANA_BCAST_TYPE_CABLE,
+	                           7668, // 479.25 MHz
+	                           node->remote[la].bcast_sys);
+	fail_on_test(!transmit_timeout(node, &msg, 10000));
+	fail_on_test(timed_out_or_abort(&msg));
+	fail_on_test(timer_has_error(msg));
+	fail_on_test(timer_overlap_warning_is_set(msg));
+
+	/* Overlap tail end: set timer for tomorrow at 9:00 am for 2 hr, repeats on Sun. */
+	fail_on_test(send_timer_overlap(node, me, la, t->tm_mday, t->tm_mon + 1, 9, 0, 2, 0, 0x1));
+
+	/* Overlap front end: set timer for tomorrow at 7:00 am for 1 hr, 30 min. */
+	fail_on_test(send_timer_overlap(node, me, la, t->tm_mday, t->tm_mon + 1, 7, 0, 1, 30, 0x1));
+
+	/* Overlap same start time: set timer for tomorrow at 8:00 am for 30 min. */
+	fail_on_test(send_timer_overlap(node, me, la, t->tm_mday, t->tm_mon + 1, 8, 0, 0, 30, 0x1));
+
+	/* Overlap same end time: set timer for tomorrow at 9:30 am for 30 min. */
+	fail_on_test(send_timer_overlap(node, me, la, t->tm_mday, t->tm_mon + 1, 9, 30, 0, 30, 0x1));
+
+	/* Overlap all timers: set timer for tomorrow at 6:00 am for 6 hr. */
+	fail_on_test(send_timer_overlap(node, me, la, t->tm_mday, t->tm_mon + 1, 6, 0, 6, 0, 0x1));
+
+	/* Clear all the timers. */
+	fail_on_test(clear_timer(node, me, la, t->tm_mday, t->tm_mon + 1, 8, 0, 2, 0,
+	                         CEC_OP_REC_SEQ_ONCE_ONLY));
+	fail_on_test(clear_timer(node, me, la, t->tm_mday, t->tm_mon + 1, 10, 0, 0, 15,
+	                         CEC_OP_REC_SEQ_ONCE_ONLY));
+	fail_on_test(clear_timer(node, me, la, t->tm_mday, t->tm_mon + 1, 7, 45, 0, 15,
+	                         CEC_OP_REC_SEQ_ONCE_ONLY));
+	fail_on_test(clear_timer(node, me, la, t->tm_mday, t->tm_mon + 1, 9, 0, 2, 0, 0x1));
+	fail_on_test(clear_timer(node, me, la, t->tm_mday, t->tm_mon + 1, 7, 0, 1, 30, 0x1));
+	fail_on_test(clear_timer(node, me, la, t->tm_mday, t->tm_mon + 1, 8, 0, 0, 30, 0x1));
+	fail_on_test(clear_timer(node, me, la, t->tm_mday, t->tm_mon + 1, 9, 30, 0, 30, 0x1));
+	fail_on_test(clear_timer(node, me, la, t->tm_mday, t->tm_mon + 1, 6, 0, 6, 0, 0x1));
+
+	return OK;
 }
 
 static const vec_remote_subtests timer_prog_subtests{
-	{ "Set Analogue Timer", CEC_LOG_ADDR_MASK_RECORD, timer_prog_set_analog_timer },
-	{ "Set Digital Timer", CEC_LOG_ADDR_MASK_RECORD, timer_prog_set_digital_timer },
-	{ "Set Timer Program Title", CEC_LOG_ADDR_MASK_RECORD, timer_prog_set_prog_title },
-	{ "Set External Timer", CEC_LOG_ADDR_MASK_RECORD, timer_prog_set_ext_timer },
-	{ "Clear Analogue Timer", CEC_LOG_ADDR_MASK_RECORD, timer_prog_clear_analog_timer },
-	{ "Clear Digital Timer", CEC_LOG_ADDR_MASK_RECORD, timer_prog_clear_digital_timer },
-	{ "Clear External Timer", CEC_LOG_ADDR_MASK_RECORD, timer_prog_clear_ext_timer },
-	{ "Timer Status", CEC_LOG_ADDR_MASK_RECORD, timer_prog_timer_status },
-	{ "Timer Cleared Status", CEC_LOG_ADDR_MASK_RECORD, timer_prog_timer_clear_status },
+	{
+		"Set Analogue Timer",
+		CEC_LOG_ADDR_MASK_RECORD | CEC_LOG_ADDR_MASK_BACKUP,
+		timer_prog_set_analog_timer,
+	},
+	{
+		"Set Digital Timer",
+		CEC_LOG_ADDR_MASK_RECORD | CEC_LOG_ADDR_MASK_BACKUP,
+		timer_prog_set_digital_timer,
+	},
+	{
+		"Set Timer Program Title",
+		CEC_LOG_ADDR_MASK_RECORD | CEC_LOG_ADDR_MASK_BACKUP,
+		timer_prog_set_prog_title,
+	},
+	{
+		"Set External Timer",
+		CEC_LOG_ADDR_MASK_RECORD | CEC_LOG_ADDR_MASK_BACKUP,
+		timer_prog_set_ext_timer,
+	},
+	{
+		"Clear Analogue Timer",
+		CEC_LOG_ADDR_MASK_RECORD | CEC_LOG_ADDR_MASK_BACKUP,
+		timer_prog_clear_analog_timer,
+	},
+	{
+		"Clear Digital Timer",
+		CEC_LOG_ADDR_MASK_RECORD | CEC_LOG_ADDR_MASK_BACKUP,
+		timer_prog_clear_digital_timer,
+	},
+	{
+		"Clear External Timer",
+		CEC_LOG_ADDR_MASK_RECORD | CEC_LOG_ADDR_MASK_BACKUP,
+		timer_prog_clear_ext_timer,
+	},
+	{
+		"Set Timers with Errors",
+		CEC_LOG_ADDR_MASK_RECORD | CEC_LOG_ADDR_MASK_BACKUP,
+		timer_errors,
+	},
+	{
+		"Set Overlapping Timers",
+		CEC_LOG_ADDR_MASK_RECORD | CEC_LOG_ADDR_MASK_BACKUP,
+		timer_overlap_warning,
+	},
 };
 
 static const char *hec_func_state2s(__u8 hfs)
