@@ -269,7 +269,9 @@ void sad_encode(const struct short_audio_desc *sad, __u32 *descriptor);
 
 // cec-tuner.cpp
 void tuner_dev_info_init(struct state *state);
-void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, unsigned me, __u8 type);
+void process_tuner_msgs(struct node *node, struct cec_msg &msg, unsigned me, __u8 type);
+void process_record_msgs(struct node *node, struct cec_msg &msg, unsigned me, __u8 type);
+void process_timer_msgs(struct node *node, struct cec_msg &msg, unsigned me, __u8 type);
 
 // CEC processing
 void reply_feature_abort(struct node *node, struct cec_msg *msg,

@@ -18,139 +18,6 @@
 
 enum Months { Jan = 1, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec };
 
-static struct Timer get_timer_from_message(const struct cec_msg &msg)
-{
-	struct Timer timer = {};
-
-	__u8 day = 0;
-	__u8 month = 0;
-	__u8 start_hr = 0;
-	__u8 start_min = 0;
-	__u8 duration_hr = 0;
-	__u8 duration_min = 0;
-	__u8 ext_src_spec = 0;
-	__u8 plug = 0;
-	__u16 phys_addr = 0;
-
-	switch (msg.msg[1]) {
-	case CEC_MSG_CLEAR_ANALOGUE_TIMER:
-	case CEC_MSG_SET_ANALOGUE_TIMER:
-		timer.src.type = CEC_OP_RECORD_SRC_ANALOG;
-		cec_ops_set_analogue_timer(&msg, &day, &month, &start_hr, &start_min,
-		                           &duration_hr, &duration_min, &timer.recording_seq,
-		                           &timer.src.analog.ana_bcast_type, &timer.src.analog.ana_freq,
-		                           &timer.src.analog.bcast_system);
-		break;
-	case CEC_MSG_CLEAR_DIGITAL_TIMER:
-	case CEC_MSG_SET_DIGITAL_TIMER: {
-		struct cec_op_digital_service_id digital = {};
-		timer.src.type = CEC_OP_RECORD_SRC_DIGITAL;
-		timer.src.digital = digital;
-		cec_ops_set_digital_timer(&msg, &day, &month, &start_hr, &start_min,
-		                          &duration_hr, &duration_min, &timer.recording_seq,
-		                          &timer.src.digital);
-		break;
-	}
-	case CEC_MSG_CLEAR_EXT_TIMER:
-	case CEC_MSG_SET_EXT_TIMER: {
-		cec_ops_set_ext_timer(&msg, &day, &month, &start_hr, &start_min,
-		                      &duration_hr, &duration_min, &timer.recording_seq, &ext_src_spec,
-		                      &plug, &phys_addr);
-		if (ext_src_spec == CEC_OP_EXT_SRC_PLUG) {
-			timer.src.type = CEC_OP_RECORD_SRC_EXT_PLUG;
-			timer.src.ext_plug.plug = plug;
-		}
-		if (ext_src_spec == CEC_OP_EXT_SRC_PHYS_ADDR) {
-			timer.src.type = CEC_OP_RECORD_SRC_EXT_PHYS_ADDR;
-			timer.src.ext_phys_addr.phys_addr = phys_addr;
-		}
-		break;
-	}
-	default:
-		break;
-	}
-
-	timer.duration = ((duration_hr * 60) + duration_min) * 60; /* In seconds. */
-
-	/* Use current time in the timer when it is not available from message e.g. year. */
-	time_t current_time = time(nullptr);
-	struct tm *temp = localtime(&current_time);
-	temp->tm_mday = day;
-	temp->tm_mon = month - 1; /* CEC months are 1-12 but struct tm range is 0-11. */
-	temp->tm_hour = start_hr;
-	temp->tm_min = start_min;
-	/*
-	 * Timer precision is only to the minute. Set sec to 0 so that differences in seconds
-	 * do not affect timer comparisons.
-	 */
-	temp->tm_sec = 0;
-	temp->tm_isdst = -1;
-	timer.start_time = mktime(temp);
-
-	return timer;
-}
-
-static bool timer_date_out_of_range(const struct cec_msg &msg, const struct Timer &timer)
-{
-	__u8 day = msg.msg[2];
-	__u8 month = msg.msg[3];
-	/* Hours and minutes are in BCD format */
-	__u8 start_hr = (msg.msg[4] >> 4) * 10 + (msg.msg[4] & 0xf);
-	__u8 start_min = (msg.msg[5] >> 4) * 10 + (msg.msg[5] & 0xf);
-	__u8 duration_hr = (msg.msg[6] >> 4) * 10 + (msg.msg[6] & 0xf);
-	__u8 duration_min = (msg.msg[7] >> 4) * 10 + (msg.msg[7] & 0xf);
-
-	if (start_min > 59 || start_hr > 23 || month > 12 || month == 0 || day > 31 || day == 0 ||
-	    duration_min > 59 || (duration_hr == 0 && duration_min == 0))
-		return true;
-
-	switch (month) {
-	case Apr: case Jun: case Sep: case Nov:
-		if (day > 30)
-			return true;
-		break;
-	case Feb: {
-		struct tm *tp = localtime(&timer.start_time);
-
-		if (!(tp->tm_year % 4) && ((tp->tm_year % 100) || !(tp->tm_year % 400))) {
-			if (day > 29)
-				return true;
-		} else {
-			if (day > 28)
-				return true;
-		}
-		break;
-	}
-	default:
-		break;
-	}
-
-	return false;
-}
-
-static bool timer_overlap(const struct Timer &new_timer)
-{
-	if (programmed_timers.size() == 1)
-		return false;
-
-	time_t new_timer_end = new_timer.start_time + new_timer.duration;
-	for (auto &t : programmed_timers) {
-
-		if (new_timer == t)
-			continue; /* Timer doesn't overlap itself. */
-
-		time_t existing_timer_end = t.start_time + t.duration;
-
-		if ((t.start_time < new_timer.start_time && new_timer.start_time < existing_timer_end) ||
-		    (t.start_time < new_timer_end && new_timer_end < existing_timer_end) ||
-		    (t.start_time == new_timer.start_time || existing_timer_end == new_timer_end) ||
-		    (new_timer.start_time < t.start_time && existing_timer_end < new_timer_end))
-		    return true;
-	}
-
-	return false;
-}
-
 struct service_info {
 	unsigned tsid;
 	unsigned onid;
@@ -675,15 +542,12 @@ static bool analog_channel_is_available(const cec_op_record_src &rec_src)
 	return false;
 }
 
-void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, unsigned me, __u8 type)
+void process_tuner_msgs(struct node *node, struct cec_msg &msg, unsigned me, __u8 type)
 {
-	__u8 from = cec_msg_initiator(&msg);
 	bool is_bcast = cec_msg_is_broadcast(&msg);
 
-	switch (msg.msg[1]) {
-
-
 	/* Tuner Control */
+	switch (msg.msg[1]) {
 	case CEC_MSG_GIVE_TUNER_DEVICE_STATUS: {
 		__u8 status_req;
 
@@ -770,9 +634,23 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 			analog_update_tuner_dev_info(node, node->state.service_idx, &msg);
 		return;
 	}
+	default:
+		break;
+	}
 
-		/* One Touch Record */
+	if (is_bcast)
+		return;
 
+	reply_feature_abort(node, &msg);
+}
+
+void process_record_msgs(struct node *node, struct cec_msg &msg, unsigned me, __u8 type)
+{
+	__u8 from = cec_msg_initiator(&msg);
+	bool is_bcast = cec_msg_is_broadcast(&msg);
+
+	/* One Touch Record */
+	switch (msg.msg[1]) {
 	case CEC_MSG_RECORD_TV_SCREEN: {
 		if (!node->has_rec_tv)
 			break;
@@ -879,10 +757,155 @@ void process_tuner_record_timer_msgs(struct node *node, struct cec_msg &msg, uns
 		return;
 	case CEC_MSG_RECORD_STATUS:
 		return;
+	default:
+		break;
+	}
 
+	if (is_bcast)
+		return;
 
-		/* Timer Programming */
+	reply_feature_abort(node, &msg);
+}
 
+static struct Timer get_timer_from_message(const struct cec_msg &msg)
+{
+	struct Timer timer = {};
+
+	__u8 day = 0;
+	__u8 month = 0;
+	__u8 start_hr = 0;
+	__u8 start_min = 0;
+	__u8 duration_hr = 0;
+	__u8 duration_min = 0;
+	__u8 ext_src_spec = 0;
+	__u8 plug = 0;
+	__u16 phys_addr = 0;
+
+	switch (msg.msg[1]) {
+	case CEC_MSG_CLEAR_ANALOGUE_TIMER:
+	case CEC_MSG_SET_ANALOGUE_TIMER:
+		timer.src.type = CEC_OP_RECORD_SRC_ANALOG;
+		cec_ops_set_analogue_timer(&msg, &day, &month, &start_hr, &start_min,
+		                           &duration_hr, &duration_min, &timer.recording_seq,
+		                           &timer.src.analog.ana_bcast_type, &timer.src.analog.ana_freq,
+		                           &timer.src.analog.bcast_system);
+		break;
+	case CEC_MSG_CLEAR_DIGITAL_TIMER:
+	case CEC_MSG_SET_DIGITAL_TIMER: {
+		struct cec_op_digital_service_id digital = {};
+		timer.src.type = CEC_OP_RECORD_SRC_DIGITAL;
+		timer.src.digital = digital;
+		cec_ops_set_digital_timer(&msg, &day, &month, &start_hr, &start_min,
+		                          &duration_hr, &duration_min, &timer.recording_seq,
+		                          &timer.src.digital);
+		break;
+	}
+	case CEC_MSG_CLEAR_EXT_TIMER:
+	case CEC_MSG_SET_EXT_TIMER: {
+		cec_ops_set_ext_timer(&msg, &day, &month, &start_hr, &start_min,
+		                      &duration_hr, &duration_min, &timer.recording_seq, &ext_src_spec,
+		                      &plug, &phys_addr);
+		if (ext_src_spec == CEC_OP_EXT_SRC_PLUG) {
+			timer.src.type = CEC_OP_RECORD_SRC_EXT_PLUG;
+			timer.src.ext_plug.plug = plug;
+		}
+		if (ext_src_spec == CEC_OP_EXT_SRC_PHYS_ADDR) {
+			timer.src.type = CEC_OP_RECORD_SRC_EXT_PHYS_ADDR;
+			timer.src.ext_phys_addr.phys_addr = phys_addr;
+		}
+		break;
+	}
+	default:
+		break;
+	}
+
+	timer.duration = ((duration_hr * 60) + duration_min) * 60; /* In seconds. */
+
+	/* Use current time in the timer when it is not available from message e.g. year. */
+	time_t current_time = time(nullptr);
+	struct tm *temp = localtime(&current_time);
+	temp->tm_mday = day;
+	temp->tm_mon = month - 1; /* CEC months are 1-12 but struct tm range is 0-11. */
+	temp->tm_hour = start_hr;
+	temp->tm_min = start_min;
+	/*
+	 * Timer precision is only to the minute. Set sec to 0 so that differences in seconds
+	 * do not affect timer comparisons.
+	 */
+	temp->tm_sec = 0;
+	temp->tm_isdst = -1;
+	timer.start_time = mktime(temp);
+
+	return timer;
+}
+
+static bool timer_date_out_of_range(const struct cec_msg &msg, const struct Timer &timer)
+{
+	__u8 day = msg.msg[2];
+	__u8 month = msg.msg[3];
+	/* Hours and minutes are in BCD format */
+	__u8 start_hr = (msg.msg[4] >> 4) * 10 + (msg.msg[4] & 0xf);
+	__u8 start_min = (msg.msg[5] >> 4) * 10 + (msg.msg[5] & 0xf);
+	__u8 duration_hr = (msg.msg[6] >> 4) * 10 + (msg.msg[6] & 0xf);
+	__u8 duration_min = (msg.msg[7] >> 4) * 10 + (msg.msg[7] & 0xf);
+
+	if (start_min > 59 || start_hr > 23 || month > 12 || month == 0 || day > 31 || day == 0 ||
+	    duration_min > 59 || (duration_hr == 0 && duration_min == 0))
+		return true;
+
+	switch (month) {
+	case Apr: case Jun: case Sep: case Nov:
+		if (day > 30)
+			return true;
+		break;
+	case Feb: {
+		struct tm *tp = localtime(&timer.start_time);
+
+		if (!(tp->tm_year % 4) && ((tp->tm_year % 100) || !(tp->tm_year % 400))) {
+			if (day > 29)
+				return true;
+		} else {
+			if (day > 28)
+				return true;
+		}
+		break;
+	}
+	default:
+		break;
+	}
+
+	return false;
+}
+
+static bool timer_overlap(const struct Timer &new_timer)
+{
+	if (programmed_timers.size() == 1)
+		return false;
+
+	time_t new_timer_end = new_timer.start_time + new_timer.duration;
+	for (auto &t : programmed_timers) {
+
+		if (new_timer == t)
+			continue; /* Timer doesn't overlap itself. */
+
+		time_t existing_timer_end = t.start_time + t.duration;
+
+		if ((t.start_time < new_timer.start_time && new_timer.start_time < existing_timer_end) ||
+		    (t.start_time < new_timer_end && new_timer_end < existing_timer_end) ||
+		    (t.start_time == new_timer.start_time || existing_timer_end == new_timer_end) ||
+		    (new_timer.start_time < t.start_time && existing_timer_end < new_timer_end))
+		    return true;
+	}
+
+	return false;
+}
+
+void process_timer_msgs(struct node *node, struct cec_msg &msg, unsigned me, __u8 type)
+{
+	bool is_bcast = cec_msg_is_broadcast(&msg);
+
+	/* Timer Programming */
+	switch (msg.msg[1]) {
 	case CEC_MSG_SET_ANALOGUE_TIMER:
 	case CEC_MSG_SET_DIGITAL_TIMER:
 	case CEC_MSG_SET_EXT_TIMER: {
