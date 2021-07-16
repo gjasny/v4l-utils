@@ -1499,6 +1499,11 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 	if (cap) {
 		buf.s_index(cap->g_index());
 
+		if (fd.querybuf(buf)) {
+			fprintf(stderr, "%s fd.querybuf failed\n", __func__);
+			return QUEUE_ERROR;
+		}
+
 		for (unsigned j = 0; j < buf.g_num_planes(); j++) {
 			unsigned data_offset = cap->g_data_offset(j);
 
@@ -1507,8 +1512,17 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 				buf.s_bytesused(cap->g_bytesused(j) - data_offset, j);
 				buf.s_data_offset(0, j);
 			} else if (q.g_memory() == V4L2_MEMORY_DMABUF) {
-				buf.s_bytesused(cap->g_bytesused(j), j);
+				__u32 bytesused = cap->g_bytesused(j);
+				/*
+				 * bytesused comes from the exported cap buffer
+				 * but the length of the out buffer might be smaller
+				 * so take the smaller of the two
+				 */
+				if (bytesused > buf.g_length(j))
+					bytesused = buf.g_length(j);
+				buf.s_bytesused(bytesused, j);
 				buf.s_data_offset(data_offset, j);
+				buf.s_fd(q.g_fd(buf.g_index(), j));
 			}
 		}
 	} else {
