@@ -1153,8 +1153,10 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 			q.g_type() == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 	bool is_meta = q.g_type() == V4L2_BUF_TYPE_META_OUTPUT;
 
-	if (q.obtain_bufs(&fd))
+	if (q.obtain_bufs(&fd)) {
+		fprintf(stderr, "%s q.obtain_bufs failed\n", __func__);
 		return QUEUE_ERROR;
+	}
 
 	fd.g_fmt(fmt, q.g_type());
 	{
@@ -1226,8 +1228,10 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 	for (unsigned i = 0; i < q.g_buffers(); i++) {
 		cv4l_buffer buf(q);
 
-		if (fd.querybuf(buf, i))
+		if (fd.querybuf(buf, i)) {
+			fprintf(stderr, "%s fd.querybuf failed\n", __func__);
 			return QUEUE_ERROR;
+		}
 
 		buf.update(q, i);
 		for (unsigned j = 0; j < q.g_num_planes(); j++)
@@ -2720,11 +2724,21 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 		fprintf(stderr, "mismatch between number of planes\n");
 		goto done;
 	}
-
-	if (in.obtain_bufs(&fd) ||
-	    in.queue_all(&fd) ||
-	    do_setup_out_buffers(out_fd, out, file[OUT], false, false) == QUEUE_ERROR)
+	if (in.obtain_bufs(&fd)) {
+		fprintf(stderr, "%s: in.obtain_bufs failed\n", __func__);
 		goto done;
+	}
+
+	if (in.queue_all(&fd)) {
+		fprintf(stderr, "%s: in.queue_all failed\n", __func__);
+		goto done;
+	}
+
+
+	if (do_setup_out_buffers(out_fd, out, file[OUT], false, false) == QUEUE_ERROR) {
+		fprintf(stderr, "%s: do_setup_out_buffers failed\n", __func__);
+		goto done;
+	}
 
 	fps_ts[CAP].determine_field(fd.g_fd(), in.g_type());
 	fps_ts[OUT].determine_field(fd.g_fd(), out.g_type());
