@@ -44,9 +44,6 @@ CaptureWin::CaptureWin(ApplicationWindow *aw) :
 	m_appWin(aw)
 {
 	setWindowTitle("V4L2 Capture");
-	m_hotkeyClose = new QShortcut(Qt::CTRL+Qt::Key_W, this);
-	connect(m_hotkeyClose, SIGNAL(activated()), this, SLOT(close()));
-	connect(new QShortcut(Qt::Key_Q, this), SIGNAL(activated()), this, SLOT(close()));
 	m_hotkeyScaleReset = new QShortcut(Qt::CTRL+Qt::Key_F, this);
 	connect(m_hotkeyScaleReset, SIGNAL(activated()), this, SLOT(resetSize()));
 	connect(aw->m_resetScalingAct, SIGNAL(triggered()), this, SLOT(resetSize()));
@@ -55,9 +52,25 @@ CaptureWin::CaptureWin(ApplicationWindow *aw) :
 	m_hotkeyToggleFullscreen = new QShortcut(Qt::Key_F, this);
 	connect(m_hotkeyToggleFullscreen, SIGNAL(activated()), aw->m_makeFullScreenAct, SLOT(toggle()));
 	m_exitFullScreen = new QAction(QIcon(":/fullscreenexit.png"), "Exit Fullscreen", this);
+	m_exitFullScreen->setShortcut(m_hotkeyToggleFullscreen->key());
 	connect(m_exitFullScreen, SIGNAL(triggered()), this, SLOT(escape()));
 	m_enterFullScreen = new QAction(QIcon(":/fullscreen.png"), "Show Fullscreen", this);
+	m_enterFullScreen ->setShortcut(m_hotkeyToggleFullscreen->key());
 	connect(m_enterFullScreen, SIGNAL(triggered()), this, SLOT(fullScreen()));
+	// Add the action to allow the hotkey to start/stop the stream
+	addAction(m_appWin->m_capStartAct);
+
+	m_closeWindowAct = new QAction(QIcon(":/fileclose.png"), "&Close Window", this);
+	m_closeWindowAct->setStatusTip("Close");
+	QList<QKeySequence> shortcuts;
+	// More standard close window shortcut
+	shortcuts << Qt::CTRL+Qt::Key_W;
+	// Historic qv4l2 shortcut
+	shortcuts << Qt::Key_Q;
+	m_closeWindowAct->setShortcuts(shortcuts);
+	addAction(m_closeWindowAct);
+	connect(m_closeWindowAct, SIGNAL(triggered()), this, SLOT(close()));
+
 	m_frame.format = 0;
 	m_frame.size.setWidth(0);
 	m_frame.size.setHeight(0);
@@ -84,7 +97,6 @@ CaptureWin::~CaptureWin()
 
 	layout()->removeWidget(this);
 	delete layout();
-	delete m_hotkeyClose;
 	delete m_hotkeyScaleReset;
 }
 
@@ -365,6 +377,8 @@ void CaptureWin::customMenuRequested(QPoint pos)
 		menu->addAction(m_enterFullScreen);
 	}
 	
+	menu->addAction(m_appWin->m_capStartAct);
+	menu->addAction(m_appWin->m_capStepAct);
 	menu->addAction(m_appWin->m_resetScalingAct);
 	if (m_appWin->m_useBlendingAct)
 		menu->addAction(m_appWin->m_useBlendingAct);
@@ -376,6 +390,7 @@ void CaptureWin::customMenuRequested(QPoint pos)
 	menu->addMenu(m_appWin->m_overrideXferFuncMenu);
 	menu->addMenu(m_appWin->m_overrideYCbCrEncMenu);
 	menu->addMenu(m_appWin->m_overrideQuantizationMenu);
+	menu->addAction(m_closeWindowAct);
 	
 	menu->popup(mapToGlobal(pos));
 }
