@@ -609,7 +609,6 @@ static bool wait_for_hpd(struct node *node, bool send_image_view_on)
 bool transmit_timeout(struct node *node, struct cec_msg *msg, unsigned timeout)
 {
 	struct cec_msg original_msg = *msg;
-	__u8 opcode = cec_msg_opcode(msg);
 	bool retried = false;
 	int res;
 
@@ -640,7 +639,10 @@ retry:
 
 	if (((msg->rx_status & CEC_RX_STATUS_OK) || (msg->rx_status & CEC_RX_STATUS_FEATURE_ABORT))
 	    && response_time_ms(msg) > reply_threshold)
-		warn("Waited %4ums for reply to msg 0x%02x.\n", response_time_ms(msg), opcode);
+		warn("Waited %4ums for %s to msg %s.\n",
+		     response_time_ms(msg),
+		     (msg->rx_status & CEC_RX_STATUS_OK) ? "reply" : "Feature Abort",
+		     opcode2s(&original_msg).c_str());
 
 	if (!cec_msg_status_is_abort(msg))
 		return true;
