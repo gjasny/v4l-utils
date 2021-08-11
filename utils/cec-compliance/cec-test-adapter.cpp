@@ -1012,6 +1012,24 @@ static void print_sfts(unsigned sft[12], const char *descr)
 		printf("\t\t%s: %s\n", descr, s.c_str());
 }
 
+// testLostMsgs() checks if the CEC_EVENT_LOST_MSGS event works. But it
+// actually tests a lot more: it also checks Signal Free Time behavior
+// and if the speed of the CEC bus is as expected.
+
+// Some defines dealing with SFTs (from include/media/cec.h):
+// Correct Signal Free times are:
+#define CEC_SIGNAL_FREE_TIME_RETRY		3
+#define CEC_SIGNAL_FREE_TIME_NEW_INITIATOR	5
+#define CEC_SIGNAL_FREE_TIME_NEXT_XFER		7
+// but for measuring we support up to 11:
+#define CEC_SIGNAL_FREE_TIME_MAX		11
+
+// Two defines (copied from include/media/cec.h) that give the maximum
+// number of CEC messages that can be queued up in the transmit and
+// receive queues (this is per filehandle):
+#define CEC_MAX_MSG_TX_QUEUE_SZ		(18 * 1)
+#define CEC_MAX_MSG_RX_QUEUE_SZ		(18 * 3)
+
 static int testLostMsgs(struct node *node)
 {
 	struct cec_msg msg;
@@ -1019,11 +1037,15 @@ static int testLostMsgs(struct node *node)
 	__u8 me = node->log_addr[0];
 	__u8 remote = CEC_LOG_ADDR_INVALID;
 	__u32 mode = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
-#define MAX_SFT 11
-	unsigned sft[2][2][MAX_SFT + 1];
+	// Store counts of detected SFTs: the first dimension
+	// is whether it is a repeating initiator (1) or not (0).
+	// The second dimension is whether it is a transmit (1)
+	// or not (0).
+	// The third dimension is a count of the corresponding SFT
+	// (0-CEC_SIGNAL_FREE_TIME_MAX).
+	unsigned sft[2][2][CEC_SIGNAL_FREE_TIME_MAX + 1] = {};
 
-	memset(sft, 0, sizeof(sft));
-
+	// Find the first available remote LA to use for this test
 	for (unsigned i = 0; i < 15; i++) {
 		if (node->remote_la_mask & (1 << i)) {
 			remote = i;
@@ -1032,6 +1054,9 @@ static int testLostMsgs(struct node *node)
 	}
 
 	fail_on_test(flush_pending_msgs(node));
+	// We now switch to non-blocking mode.
+	// This will cause CEC_TRANSMIT to return at once, and when the
+	// transmit is done it will appear in the receive queue.
 	fcntl(node->fd, F_SETFL, fcntl(node->fd, F_GETFL) | O_NONBLOCK);
 
 	// Become follower for this test, otherwise all the replies to
@@ -1048,7 +1073,13 @@ static int testLostMsgs(struct node *node)
 	bool got_busy = false;
 	unsigned xfer_cnt = 0;
 	unsigned tx_queue_depth = 0;
+	unsigned tx_first_seq = 0;
+	unsigned rx_first_seq = 0;
 
+	// Transmit <Get CEC Version> until an event was queued up.
+	// We never dequeue received messages, so once the receive
+	// queue is full the LOST_MSGS event is queued by the CEC
+	// core framework, at which point we stop.
 	do {
 		int res;
 
@@ -1056,20 +1087,33 @@ static int testLostMsgs(struct node *node)
 			res = doioctl(node, CEC_TRANSMIT, &msg);
 
 			fail_on_test(res && res != EBUSY);
-			if (!res)
+			if (!res) {
+				if (!xfer_cnt)
+					tx_first_seq = msg.sequence;
 				xfer_cnt++;
+			}
 
 			if (res == EBUSY) {
+				// If the CEC device was busy (i.e. the transmit
+				// queue was full), then wait 10 ms and try again.
 				struct timeval tv = { 0, 10000 }; // 10 ms
 
 				select(0, nullptr, nullptr, nullptr, &tv);
+				// Mark that we got a busy error
 				got_busy = true;
 			} else if (!got_busy) {
+				// If we didn't get a EBUSY yet, then increment this
+				// variable to detect the TX queue depth.
 				tx_queue_depth++;
 			}
+			// Keep retrying as long as the transmit failed with EBUSY.
 		} while (res == EBUSY);
+		// Keep transmitting until an event was queued
 	} while (doioctl(node, CEC_DQEVENT, &ev));
+	// We expect the LOST_MSGS event due to a full RX queue.
 	fail_on_test(ev.event != CEC_EVENT_LOST_MSGS);
+	// Since the transmit queue is one-third of the receive queue,
+	// it would be very weird if we never got an EBUSY error.
 	fail_on_test(!got_busy);
 
 	/*
@@ -1077,7 +1121,7 @@ static int testLostMsgs(struct node *node)
 	 * might finish transmitting before the queue fills up, so
 	 * check for 19 instead.
 	 */
-	fail_on_test(tx_queue_depth == 0 || tx_queue_depth > 19);
+	fail_on_test(tx_queue_depth == 0 || tx_queue_depth > CEC_MAX_MSG_TX_QUEUE_SZ + 1);
 
 	if (show_info)
 		printf("\n\t\tFinished transmitting\n\n");
@@ -1091,11 +1135,7 @@ static int testLostMsgs(struct node *node)
 	unsigned pending_tx_low_drive_msgs = 0;
 	unsigned pending_tx_error_msgs = 0;
 	unsigned pending_tx_aborted_msgs = 0;
-	unsigned pending_tx_rx_no_reply_msgs = 0;
-	unsigned pending_tx_rx_ok_msgs = 0;
-	unsigned pending_tx_rx_timed_out_msgs = 0;
-	unsigned pending_tx_rx_feat_abort_msgs = 0;
-	unsigned pending_tx_rx_aborted_msgs = 0;
+	unsigned pending_tx_rx_msgs = 0;
 	unsigned pending_rx_msgs = 0;
 	unsigned pending_rx_cec_version_msgs = 0;
 	time_t start = time(nullptr);
@@ -1103,37 +1143,76 @@ static int testLostMsgs(struct node *node)
 	__u64 last_ts = 0;
 	unsigned tx_repeats = 0;
 
+	// Now we start reading from the receive queue and analyze the
+	// timestamps. Remember that the receive queue contains both
+	// the finished transmit messages from the local LA ('me') and
+	// the received replies from the remote LA.
+	//
+	// We do the while-loop twice, the first time (i == 0) the file handle
+	// is still in non-blocking mode and so we effectively just drain the
+	// receive queue quickly. Then we switch to blocking mode (i == 1) and
+	// keep receiving messages (waiting up to 3 seconds) until no more
+	// messages are received.
 	for (unsigned i = 0; i < 2; i++) {
+		// note: timeout is ignored in non-blocking mode (i == 0)
 		msg.timeout = 3000;
 
 		while (!doioctl(node, CEC_RECEIVE, &msg)) {
 			__u64 ts = msg.tx_ts ? : msg.rx_ts;
 			__u8 initiator = cec_msg_initiator(&msg);
-			__u64 delta = last_ts ? ts - last_ts : 0;
+			bool ok_or_nack = (msg.tx_status & (CEC_TX_STATUS_OK | CEC_TX_STATUS_NACK)) ||
+					  (msg.rx_status & CEC_RX_STATUS_OK);
 
-			delta -= msg.len * 24000000ULL + 4500000ULL;
-			unsigned sft_real = (delta + 1200000ULL) / 2400000ULL;
+			if (last_ts && ok_or_nack) {
+				__u64 delta = last_ts ? ts - last_ts : 0;
 
-			if (last_ts && sft_real <= MAX_SFT)
-				sft[last_init == me][initiator == me][sft_real]++;
+				// The timestamp ts is when the transmit was done
+				// or the message was received.
+				// To get the time when the message started transmitting
+				// we subtract the time spent transmitting the message.
+				delta -= msg.len * 24000000ULL + 4500000ULL;
+				//unsigned sft_real = (delta + 1200000ULL) / 2400000ULL;
+				unsigned sft_real = delta / 2400000ULL;
 
-			if (!i && last_ts) {
-				if (last_init == initiator && initiator == me) {
-					tx_repeats++;
-				} else {
-					if (tx_repeats > 2)
-						warn("Too many transmits (%d) without receives\n",
-						     tx_repeats);
-					tx_repeats = 0;
+				// Count the detected SFT in the sft array.
+				if (last_ts && sft_real <= CEC_SIGNAL_FREE_TIME_MAX)
+					sft[last_init == initiator][initiator == me][sft_real]++;
+
+				if (!i && last_ts) {
+					if (last_init == initiator && initiator == me) {
+						tx_repeats++;
+					} else {
+						// Too many repeated transmits means that
+						// the transmitter is hogging the bus, preventing
+						// the remote LA to transmit the reply.
+						if (tx_repeats > 2)
+							warn("Too many transmits (%d) without receives\n",
+							     tx_repeats);
+						tx_repeats = 0;
+					}
 				}
 			}
-			last_ts = ts;
-			last_init = initiator;
+			if (ok_or_nack) {
+				last_ts = ts;
+				last_init = initiator;
+			}
 
+			// Count total number of received messages (both non-blocking
+			// transmit results and actual received replies).
 			pending_msgs++;
-			if (i == 0)
+			// Count number of received msgs when quickly draining the
+			// receive queue in the non-blocking phase.
+			if (i == 0) {
+				// The result of the first transmit will also be the
+				// message that was lost since it was the oldest: check
+				// that that's actually the case.
+				if (!rx_first_seq && msg.sequence)
+					rx_first_seq = msg.sequence;
 				pending_quick_msgs++;
+			}
 			if (!msg.sequence) {
+				// Count remote messages and the number of
+				// received <CEC Version> messages.
 				pending_rx_msgs++;
 				if (msg.len == 3 && msg.msg[1] == CEC_MSG_CEC_VERSION)
 					pending_rx_cec_version_msgs++;
@@ -1144,25 +1223,19 @@ static int testLostMsgs(struct node *node)
 				pending_tx_aborted_msgs++;
 			else if (msg.tx_status & CEC_TX_STATUS_OK) {
 				pending_tx_ok_msgs++;
-				if (msg.rx_status & CEC_RX_STATUS_OK)
-					pending_tx_rx_ok_msgs++;
-				else if (msg.rx_status & CEC_RX_STATUS_FEATURE_ABORT)
-					pending_tx_rx_feat_abort_msgs++;
-				else if (msg.rx_status & CEC_RX_STATUS_TIMEOUT)
-					pending_tx_rx_timed_out_msgs++;
-				else if (msg.rx_status & CEC_RX_STATUS_ABORTED)
-					pending_tx_rx_aborted_msgs++;
-				else
-					pending_tx_rx_no_reply_msgs++;
-			} else if (msg.tx_status & CEC_TX_STATUS_NACK)
-				pending_tx_nack_msgs++;
-			else if (msg.tx_status & CEC_TX_STATUS_ARB_LOST)
-				pending_tx_arb_lost_msgs++;
-			else if (msg.tx_status & CEC_TX_STATUS_LOW_DRIVE)
-				pending_tx_low_drive_msgs++;
-			else
-				pending_tx_error_msgs++;
+				if (msg.rx_status)
+					pending_tx_rx_msgs++;
+			}
+			if (msg.tx_status & CEC_TX_STATUS_NACK)
+				pending_tx_nack_msgs += msg.tx_nack_cnt;
+			if (msg.tx_status & CEC_TX_STATUS_ARB_LOST)
+				pending_tx_arb_lost_msgs += msg.tx_arb_lost_cnt;
+			if (msg.tx_status & CEC_TX_STATUS_LOW_DRIVE)
+				pending_tx_low_drive_msgs += msg.tx_low_drive_cnt;
+			if (msg.tx_status & CEC_TX_STATUS_ERROR)
+				pending_tx_error_msgs += msg.tx_error_cnt;
 		}
+		// Go back to blocking mode after draining the receive queue.
 		fcntl(node->fd, F_SETFL, fcntl(node->fd, F_GETFL) & ~O_NONBLOCK);
 		if (!i && show_info)
 			printf("\n\t\tDrained receive queue\n\n");
@@ -1175,7 +1248,7 @@ static int testLostMsgs(struct node *node)
 	 */
 
 	bool fail_msg = pending_tx_error_msgs || pending_tx_timed_out_msgs || pending_tx_aborted_msgs ||
-			pending_tx_rx_aborted_msgs || pending_quick_msgs < 18 * 3 ||
+			pending_tx_rx_msgs || pending_quick_msgs < CEC_MAX_MSG_RX_QUEUE_SZ ||
 			pending_rx_cec_version_msgs > xfer_cnt;
 	bool warn_msg = pending_rx_cec_version_msgs < xfer_cnt - 2;
 
@@ -1184,10 +1257,8 @@ static int testLostMsgs(struct node *node)
 			printf("\n");
 		if (pending_tx_ok_msgs) {
 			printf("\t\tSuccessful transmits: %d\n", pending_tx_ok_msgs);
-			printf("\t\t\tReply OK: %d No replies: %d Feature Aborted: %d Timed out: %d Aborted: %d\n",
-			       pending_tx_rx_ok_msgs,
-			       pending_tx_rx_no_reply_msgs, pending_tx_rx_feat_abort_msgs,
-			       pending_tx_rx_timed_out_msgs, pending_tx_rx_aborted_msgs);
+			if (pending_tx_rx_msgs)
+				printf("\t\t\tUnexpected replies: %d\n", pending_tx_rx_msgs);
 		}
 		if (pending_tx_nack_msgs)
 			printf("\t\tNACKed transmits: %d\n", pending_tx_nack_msgs);
@@ -1204,21 +1275,27 @@ static int testLostMsgs(struct node *node)
 		if (pending_rx_msgs)
 			printf("\t\tReceived messages: %d of which %d were CEC_MSG_CEC_VERSION\n",
 			       pending_rx_msgs, pending_rx_cec_version_msgs);
-		print_sfts(sft[1][1], "SFTs for repeating messages (>= 7)");
-		print_sfts(sft[0][1], "SFTs for newly transmitted messages (>= 5)");
-		print_sfts(sft[0][0], "SFTs for repeating remote messages (>= 7)");
-		print_sfts(sft[1][0], "SFTs for newly transmitted remote messages (>= 5)");
 		if (pending_quick_msgs < pending_msgs)
 			printf("\t\tReceived %d messages immediately, and %d over %ld seconds\n",
 			       pending_quick_msgs, pending_msgs - pending_quick_msgs,
 			       time(nullptr) - start);
 	}
+	print_sfts(sft[1][1], "SFTs for repeating messages (>= 7)");
+	print_sfts(sft[1][0], "SFTs for repeating remote messages (>= 7)");
+	print_sfts(sft[0][1], "SFTs for newly transmitted messages (>= 5)");
+	print_sfts(sft[0][0], "SFTs for newly transmitted remote messages (>= 5)");
 	if (fail_msg)
 		return fail("There were %d messages in the receive queue for %d transmits\n",
 			    pending_msgs, xfer_cnt);
 	if (warn_msg)
 		warn("There were %d CEC_GET_VERSION transmits but only %d CEC_VERSION receives\n",
 		     xfer_cnt, pending_rx_cec_version_msgs);
+
+	// Final check if everything else is OK: check that only the oldest
+	// message (the result of the first transmit) was dropped in the
+	// receive queue.
+	if (!fail_msg && !warn_msg)
+		warn_on_test(rx_first_seq != tx_first_seq + 1);
 	return 0;
 }
 
