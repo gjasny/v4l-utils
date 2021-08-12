@@ -465,7 +465,7 @@ static int routing_control_inactive_source(struct node *node, unsigned me, unsig
 		return OK_REFUSED;
 	// It may take a bit of time for the Inactive Source message to take
 	// effect, so sleep a bit.
-	response = util_receive(node, CEC_LOG_ADDR_TV, 3000, &msg,
+	response = util_receive(node, CEC_LOG_ADDR_TV, 10000, &msg,
 				CEC_MSG_INACTIVE_SOURCE,
 				CEC_MSG_ACTIVE_SOURCE, CEC_MSG_SET_STREAM_PATH);
 	if (me == CEC_LOG_ADDR_TV) {
