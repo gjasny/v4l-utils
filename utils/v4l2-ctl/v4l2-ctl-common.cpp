@@ -996,8 +996,8 @@ void common_cmd(const std::string &media_bus_info, int ch, char *optarg)
 				std::exit(EXIT_FAILURE);
 			}
 			if (const char *equal = std::strchr(value, '=')) {
-				set_ctrls.push_back(std::make_pair(std::string(value, (equal - value)),
-								   std::string(equal + 1)));
+				set_ctrls.emplace_back(std::string(value, (equal - value)),
+						       std::string(equal + 1));
 			}
 			else {
 				fprintf(stderr, "control '%s' without '='\n", value);

@@ -3056,7 +3056,7 @@ static void streamFmt(struct node *node, __u32 pixelformat, __u32 w, __u32 h,
 
 	selTest test = createSelTest(node);
 	if (!haveSelTest(test)) 
-		selTests.push_back(createSelTest(node));
+		selTests.push_back(test);
 
 	for (unsigned i = 0; i < 8; i++) {
 		v4l2_selection *sel1 = selections[node->can_output][i & 1];
