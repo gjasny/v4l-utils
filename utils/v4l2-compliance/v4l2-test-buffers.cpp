@@ -2453,8 +2453,6 @@ int testRequests(struct node *node, bool test_streaming)
 class BlockingThread
 {
 public:
-	BlockingThread() : done(false), running(false) {}
-
 	virtual ~BlockingThread()
 	{
 		stop();
@@ -2497,7 +2495,7 @@ public:
 		running = false;
 	}
 
-	std::atomic<bool> done;
+	std::atomic<bool> done{};
 
 private:
 	static void *startRoutine(void *arg)
@@ -2516,7 +2514,7 @@ private:
 	virtual void run() = 0;
 
 	pthread_t thread;
-	std::atomic<bool> running;
+	std::atomic<bool> running{};
 };
 
 class DqbufThread : public BlockingThread
