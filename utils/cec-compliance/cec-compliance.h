@@ -147,6 +147,7 @@ struct remote {
 	__u8 mute;
 	bool has_aud_rate;
 	bool has_deck_ctl;
+	bool has_analogue_timer;
 	__u8 bcast_sys;
 	__u8 dig_bcast_sys;
 	bool has_rec_tv;

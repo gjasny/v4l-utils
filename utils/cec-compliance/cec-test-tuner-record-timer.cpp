@@ -680,7 +680,7 @@ static int send_timer_error(struct node *node, unsigned me, unsigned la, __u8 da
 	fail_on_test(!transmit_timeout(node, &msg, 10000));
 	fail_on_test(timed_out(&msg));
 	if (cec_msg_status_is_abort(&msg))
-		fail_on_test(abort_reason(&msg) != CEC_OP_ABORT_INVALID_OP);
+		fail_on_test(abort_reason(&msg) != CEC_OP_ABORT_UNRECOGNIZED_OP);
 	else
 		fail_on_test(!timer_has_error(msg));
 
@@ -759,6 +759,7 @@ static int timer_prog_set_analog_timer(struct node *node, unsigned me, unsigned 
 	if (cec_msg_status_is_abort(&msg))
 		return OK_PRESUMED;
 	fail_on_test(timer_status_is_valid(msg));
+	node->remote[la].has_analogue_timer = true;
 
 	return OK;
 }
@@ -908,6 +909,9 @@ static int timer_errors(struct node *node, unsigned me, unsigned la, bool intera
 {
 	struct cec_msg msg;
 
+	if (!node->remote[la].has_analogue_timer)
+		return OK_NOT_SUPPORTED;
+
 	/* Day error: November 31, at 6:00 am, for 1 hr. */
 	fail_on_test(send_timer_error(node, me, la, 31, Nov, 6, 0, 1, 0, CEC_OP_REC_SEQ_ONCE_ONLY));
 
@@ -972,6 +976,9 @@ static int timer_overlap_warning(struct node *node, unsigned me, unsigned la, bo
 
 	time_t tomorrow = node->current_time + (24 * 60 * 60);
 	struct tm *t = localtime(&tomorrow);
+
+	if (!node->remote[la].has_analogue_timer)
+		return OK_NOT_SUPPORTED;
 
 	/* No overlap: set timer for tomorrow at 8:00 am for 2 hr. */
 	cec_msg_init(&msg, me, la);
