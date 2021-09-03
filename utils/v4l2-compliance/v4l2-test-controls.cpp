@@ -886,6 +886,7 @@ int testEvents(struct node *node)
 				return fail("couldn't get event for control '%s'\n", qctrl.name);
 			if (ev.type != V4L2_EVENT_CTRL || ev.id != qctrl.id)
 				return fail("dequeued wrong event\n");
+			fail_on_test(check_0(ev.reserved, sizeof(ev.reserved)));
 		}
 		ret = doioctl(node, VIDIOC_UNSUBSCRIBE_EVENT, &sub);
 		if (ret)
