@@ -1346,6 +1346,8 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		if (node.can_capture)
 			node.set_interval(min_period);
 		printf("\ttest Requests: %s\n", ok(testRequests(&node, options[OptStreaming])));
+		if (sizeof(void *) == 4)
+			printf("\ttest TIME32/64: %s\n", ok(testTime32_64(&node)));
 		// Reopen after each streaming test to reset the streaming state
 		// in case of any errors in the preceeding test.
 		node.reopen();
