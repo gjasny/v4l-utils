@@ -656,6 +656,10 @@ int testReqBufs(struct node *node)
 		fail_on_test(q.reqbufs(node, 0));
 
 		for (m = V4L2_MEMORY_MMAP; m <= V4L2_MEMORY_DMABUF; m++) {
+			bool cache_hints_cap = false;
+			bool coherent;
+
+			cache_hints_cap = q.g_capabilities() & V4L2_BUF_CAP_SUPPORTS_MMAP_CACHE_HINTS;
 			if (!(node->valid_memorytype & (1 << m)))
 				continue;
 			cv4l_queue q2(i, m);
@@ -671,8 +675,17 @@ int testReqBufs(struct node *node)
 			reqbufs.count = 1;
 			reqbufs.type = i;
 			reqbufs.memory = m;
+			reqbufs.flags = V4L2_MEMORY_FLAG_NON_COHERENT;
 			fail_on_test(doioctl(node, VIDIOC_REQBUFS, &reqbufs));
-			fail_on_test(check_0(reqbufs.reserved, sizeof(reqbufs.reserved)));
+			coherent = reqbufs.flags & V4L2_MEMORY_FLAG_NON_COHERENT;
+			if (!cache_hints_cap) {
+				fail_on_test(coherent);
+			} else {
+				if (m == V4L2_MEMORY_MMAP)
+					fail_on_test(!coherent);
+				else
+					fail_on_test(coherent);
+			}
 			q.reqbufs(node);
 
 			ret = q.create_bufs(node, 0);
@@ -685,9 +698,32 @@ int testReqBufs(struct node *node)
 			node->g_fmt(crbufs.format, i);
 			crbufs.count = 1;
 			crbufs.memory = m;
+			crbufs.flags = V4L2_MEMORY_FLAG_NON_COHERENT;
 			fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &crbufs));
 			fail_on_test(check_0(crbufs.reserved, sizeof(crbufs.reserved)));
 			fail_on_test(crbufs.index != q.g_buffers());
+
+			coherent = crbufs.flags & V4L2_MEMORY_FLAG_NON_COHERENT;
+			if (!cache_hints_cap) {
+				fail_on_test(coherent);
+			} else {
+				if (m == V4L2_MEMORY_MMAP)
+					fail_on_test(!coherent);
+				else
+					fail_on_test(coherent);
+			}
+
+			if (cache_hints_cap) {
+				/*
+				 * Different memory consistency model. Should fail for MMAP
+				 * queues which support cache hints.
+				 */
+				crbufs.flags = 0;
+				if (m == V4L2_MEMORY_MMAP)
+					fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &crbufs) != EINVAL);
+				else
+					fail_on_test(doioctl(node, VIDIOC_CREATE_BUFS, &crbufs));
+			}
 			q.reqbufs(node);
 
 			fail_on_test(q.create_bufs(node, 1));
@@ -1200,10 +1236,16 @@ static int setupMmap(struct node *node, cv4l_queue &q)
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.check(q, Unqueued, i));
 
-		flags = buf.g_flags();
-		flags |= V4L2_BUF_FLAG_NO_CACHE_INVALIDATE;
-		flags |= V4L2_BUF_FLAG_NO_CACHE_CLEAN;
-		buf.s_flags(flags);
+		/*
+		 * Do not set cache hints for all the buffers, but only on
+		 * some of them, so that we can test more cases.
+		 */
+		if (i == 0) {
+			flags = buf.g_flags();
+			flags |= V4L2_BUF_FLAG_NO_CACHE_INVALIDATE;
+			flags |= V4L2_BUF_FLAG_NO_CACHE_CLEAN;
+			buf.s_flags(flags);
+		}
 
 		for (unsigned p = 0; p < buf.g_num_planes(); p++) {
 			// Try a random offset
@@ -1243,8 +1285,15 @@ static int setupMmap(struct node *node, cv4l_queue &q)
 		}
 		flags = buf.g_flags();
 		if (cache_hints) {
-			fail_on_test(!(flags & V4L2_BUF_FLAG_NO_CACHE_INVALIDATE));
-			fail_on_test(!(flags & V4L2_BUF_FLAG_NO_CACHE_CLEAN));
+			if (i == 0) {
+				/* We do expect cache hints on this buffer */
+				fail_on_test(!(flags & V4L2_BUF_FLAG_NO_CACHE_INVALIDATE));
+				fail_on_test(!(flags & V4L2_BUF_FLAG_NO_CACHE_CLEAN));
+			} else {
+				/* We expect no cache hints on this buffer */
+				fail_on_test(flags & V4L2_BUF_FLAG_NO_CACHE_INVALIDATE);
+				fail_on_test(flags & V4L2_BUF_FLAG_NO_CACHE_CLEAN);
+			}
 		} else if (node->might_support_cache_hints) {
 			fail_on_test(flags & V4L2_BUF_FLAG_NO_CACHE_INVALIDATE);
 			fail_on_test(flags & V4L2_BUF_FLAG_NO_CACHE_CLEAN);
@@ -1334,7 +1383,7 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 			have_createbufs = false;
 		if (have_createbufs) {
 			q.reqbufs(node);
-			q.create_bufs(node, 2, &cur_fmt);
+			q.create_bufs(node, 2, &cur_fmt, V4L2_MEMORY_FLAG_NON_COHERENT);
 			fail_on_test(setupMmap(node, q));
 			q.munmap_bufs(node);
 			q.reqbufs(node, 2);
@@ -1816,9 +1865,10 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 				fail_on_test(!buf.g_bytesused(p));
 		}
 		flags = buf.g_flags();
-		/* We always skip cache sync/flush for DMABUF memory type */
-		fail_on_test(!(flags & V4L2_BUF_FLAG_NO_CACHE_INVALIDATE));
-		fail_on_test(!(flags & V4L2_BUF_FLAG_NO_CACHE_CLEAN));
+
+		/* Make sure that flags are cleared */
+		fail_on_test(flags & V4L2_BUF_FLAG_NO_CACHE_INVALIDATE);
+		fail_on_test(flags & V4L2_BUF_FLAG_NO_CACHE_CLEAN);
 		fail_on_test(flags & V4L2_BUF_FLAG_DONE);
 		fail_on_test(buf.querybuf(node, i));
 		fail_on_test(buf.check(q, Queued, i));
