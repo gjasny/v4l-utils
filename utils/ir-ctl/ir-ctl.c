@@ -60,6 +60,8 @@
 #define LIRCBUF_SIZE 1024
 #define IR_DEFAULT_TIMEOUT 125000
 #define UNSET UINT32_MAX
+/* Maximum number of columns per line */
+#define LINE_SIZE 8192
 
 const char *argp_program_version = "IR ctl version " V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Sean Young <sean@mess.org>";
@@ -211,7 +213,7 @@ static struct send *read_file_pulse_space(struct arguments *args, const char *fn
 {
 	bool expect_pulse = true;
 	int lineno = 0, lastspace = 0;
-	char line[1024];
+	char line[LINE_SIZE];
 	int len = 0;
 	static const char whitespace[] = " \n\r\t";
 	struct send *f;
@@ -380,7 +382,7 @@ static struct send *read_file_pulse_space(struct arguments *args, const char *fn
 static struct send *read_file_raw(struct arguments *args, const char *fname, FILE *input)
 {
 	int lineno = 0, lastspace = 0;
-	char line[1024];
+	char line[LINE_SIZE];
 	int len = 0;
 	static const char whitespace[] = " \n\r\t,";
 	struct send *f;
@@ -474,7 +476,7 @@ static struct send *read_file_raw(struct arguments *args, const char *fname, FIL
 static struct send *read_file(struct arguments *args, const char *fname)
 {
 	FILE *input = fopen(fname, "r");
-	char line[1024];
+	char line[LINE_SIZE];
 
 	if (!input) {
 		fprintf(stderr, _("%s: could not open: %m\n"), fname);
