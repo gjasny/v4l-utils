@@ -456,9 +456,9 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 	else
 		m_convertData = v4lconvert_create(g_fd());
 	bool canStream = has_rw() || has_streaming();
-	bool isCapture = v4l_type_is_capture(g_type());
-	m_capStartAct->setEnabled(canStream);
-	m_capStepAct->setEnabled(canStream && isCapture);
+	bool isCapture = v4l_type_is_capture(g_type()) && !has_radio_tx();
+	m_capStartAct->setEnabled(canStream || isCapture);
+	m_capStepAct->setEnabled(canStream && isCapture && !has_radio_rx());
 	m_saveRawAct->setEnabled(canStream && has_vid_cap());
 	m_snapshotAct->setEnabled(canStream && has_vid_cap());
 	m_capMenu->setEnabled(canStream && isCapture && !has_radio_rx());
