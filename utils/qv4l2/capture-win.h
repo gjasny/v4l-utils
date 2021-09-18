@@ -78,6 +78,7 @@ public:
 	void makeFullScreen(bool);
 	QAction *m_exitFullScreen;
 	QAction *m_enterFullScreen;
+	QAction *m_closeWindowAct;
 
 	/**
 	 * @brief Set a frame into the capture window.
@@ -214,7 +215,6 @@ private:
 	ApplicationWindow *m_appWin;
 	static double m_pixelAspectRatio;
 	static CropMethod m_cropMethod;
-	QShortcut *m_hotkeyClose;
 	QShortcut *m_hotkeyScaleReset;
 	QShortcut *m_hotkeyExitFullscreen;
 	QShortcut *m_hotkeyToggleFullscreen;
