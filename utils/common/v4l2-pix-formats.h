@@ -74,7 +74,6 @@
 	case V4L2_PIX_FMT_YUV410: return "Planar YUV 4:1:0";
 	case V4L2_PIX_FMT_YUV420: return "Planar YUV 4:2:0";
 	case V4L2_PIX_FMT_HI240: return "8-bit Dithered RGB (BTTV)";
-	case V4L2_PIX_FMT_HM12: return "YUV 4:2:0 (16x16 Macroblocks)";
 	case V4L2_PIX_FMT_M420: return "YUV 4:2:0 (M420)";
 	case V4L2_PIX_FMT_NV12: return "Y/CbCr 4:2:0";
 	case V4L2_PIX_FMT_NV21: return "Y/CrCb 4:2:0";
@@ -82,6 +81,9 @@
 	case V4L2_PIX_FMT_NV61: return "Y/CrCb 4:2:2";
 	case V4L2_PIX_FMT_NV24: return "Y/CbCr 4:4:4";
 	case V4L2_PIX_FMT_NV42: return "Y/CrCb 4:4:4";
+	case V4L2_PIX_FMT_NV12_4L4: return "Y/CbCr 4:2:0 (4x4 Linear)";
+	case V4L2_PIX_FMT_NV12_16L16: return "Y/CbCr 4:2:0 (16x16 Linear)";
+	case V4L2_PIX_FMT_NV12_32L32: return "Y/CbCr 4:2:0 (32x32 Linear)";
 	case V4L2_PIX_FMT_NV12M: return "Y/CbCr 4:2:0 (N-C)";
 	case V4L2_PIX_FMT_NV21M: return "Y/CrCb 4:2:0 (N-C)";
 	case V4L2_PIX_FMT_NV16M: return "Y/CbCr 4:2:2 (N-C)";
@@ -146,6 +148,7 @@
 	case V4L2_PIX_FMT_TM6000: return "A/V + VBI Mux Packet";
 	case V4L2_PIX_FMT_CIT_YYVYUY: return "GSPCA CIT YYVYUY";
 	case V4L2_PIX_FMT_KONICA420: return "GSPCA KONICA420";
+	case V4L2_PIX_FMT_MM21: return "Mediatek 8-bit Block Format";
 	case V4L2_PIX_FMT_HSV24: return "24-bit HSV 8-8-8";
 	case V4L2_PIX_FMT_HSV32: return "32-bit XHSV 8-8-8-8";
 	case V4L2_SDR_FMT_CU8: return "Complex U8";
@@ -207,4 +210,3 @@
 	case V4L2_PIX_FMT_SE401: return "GSPCA SE401";
 	case V4L2_PIX_FMT_S5C_UYVY_JPG: return "S5C73MX interleaved UYVY/JPEG";
 	case V4L2_PIX_FMT_MT21C: return "Mediatek Compressed Format";
-	case V4L2_PIX_FMT_SUNXI_TILED_NV12: return "Sunxi Tiled NV12 Format";
