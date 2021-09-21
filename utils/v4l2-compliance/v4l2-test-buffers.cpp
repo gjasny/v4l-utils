@@ -483,7 +483,7 @@ static int testQueryBuf(struct node *node, unsigned type, unsigned count)
 		fail_on_test(buf.check(Unqueued, i));
 	}
 	ret = buf.querybuf(node, count);
-	fail_on_test(ret != EINVAL);
+	fail_on_test_val(ret != EINVAL, ret);
 	return 0;
 }
 
@@ -550,7 +550,7 @@ int testReqBufs(struct node *node)
 		fail_on_test(can_stream);
 		return ret;
 	}
-	fail_on_test(ret != EINVAL);
+	fail_on_test_val(ret != EINVAL, ret);
 	fail_on_test(node->node2 == nullptr);
 	for (i = 1; i <= V4L2_BUF_TYPE_LAST; i++) {
 		bool is_overlay = v4l_type_is_overlay(i);
@@ -570,7 +570,7 @@ int testReqBufs(struct node *node)
 		fail_on_test(q.reqbufs(node, i) != EINVAL);
 		q.init(i, V4L2_MEMORY_MMAP);
 		ret = q.reqbufs(node, 0);
-		fail_on_test(ret && ret != EINVAL);
+		fail_on_test_val(ret && ret != EINVAL, ret);
 		mmap_valid = !ret;
 		if (mmap_valid)
 			node->buf_caps = caps = q.g_capabilities();
@@ -582,7 +582,7 @@ int testReqBufs(struct node *node)
 
 		q.init(i, V4L2_MEMORY_USERPTR);
 		ret = q.reqbufs(node, 0);
-		fail_on_test(ret && ret != EINVAL);
+		fail_on_test_val(ret && ret != EINVAL, ret);
 		userptr_valid = !ret;
 		fail_on_test(!mmap_valid && userptr_valid);
 		if (caps)
@@ -590,7 +590,7 @@ int testReqBufs(struct node *node)
 
 		q.init(i, V4L2_MEMORY_DMABUF);
 		ret = q.reqbufs(node, 0);
-		fail_on_test(ret && ret != EINVAL);
+		fail_on_test_val(ret && ret != EINVAL, ret);
 		dmabuf_valid = !ret;
 		fail_on_test(!mmap_valid && dmabuf_valid);
 		fail_on_test(dmabuf_valid && (caps != q.g_capabilities()));
@@ -1000,7 +1000,7 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 			 */
 			ret = epoll_wait(epollfd, &ev, 1, 2000);
 			fail_on_test(ret == 0);
-			fail_on_test(ret < 0);
+			fail_on_test_val(ret < 0, ret);
 			can_read = ev.events & EPOLLIN;
 			have_event = ev.events & EPOLLPRI;
 		}
@@ -1027,7 +1027,7 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 		if (!node->is_m2m || !stopped)
 			ret = buf.dqbuf(node);
 		if (ret != EAGAIN) {
-			fail_on_test(ret);
+			fail_on_test_val(ret, ret);
 			if (show_info)
 				printf("\t\t%s Buffer: %d Sequence: %d Field: %s Size: %d Flags: %s Timestamp: %lld.%06llds\n",
 				       v4l_type_is_output(buf.g_type()) ? "Out" : "Cap",
@@ -1122,7 +1122,7 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 			       field2s(buf.g_field()).c_str(), buf.g_bytesused(),
 			       bufferflags2s(buf.g_flags()).c_str(),
 			       static_cast<__u64>(buf.g_timestamp().tv_sec), static_cast<__u64>(buf.g_timestamp().tv_usec));
-		fail_on_test(ret);
+		fail_on_test_val(ret, ret);
 		if (v4l_type_is_capture(buf.g_type()) && buf.g_bytesused())
 			fail_on_test(buf.check(m2m_q, last_m2m_seq, true));
 		if (v4l_type_is_capture(buf.g_type()) && buf.ts_is_copy() && buf.g_bytesused()) {
@@ -1191,7 +1191,7 @@ static int bufferOutputErrorTest(struct node *node, const buffer &orig_buf)
 		buf.s_data_offset(0, p);
 	}
 	ret = buf.prepare_buf(node, false);
-	fail_on_test(ret != EINVAL && ret != ENOTTY);
+	fail_on_test_val(ret != EINVAL && ret != ENOTTY, ret);
 	have_prepare = ret != ENOTTY;
 	fail_on_test(buf.qbuf(node, false) != EINVAL);
 
@@ -1264,7 +1264,7 @@ static int setupMmap(struct node *node, cv4l_queue &q)
 			fail_on_test(buf.check(q, Queued, i));
 		} else {
 			ret = buf.prepare_buf(node, q);
-			fail_on_test(ret && ret != ENOTTY);
+			fail_on_test_val(ret && ret != ENOTTY, ret);
 			if (ret == 0) {
 				fail_on_test(buf.querybuf(node, i));
 				fail_on_test(buf.check(q, Prepared, i));
@@ -1378,7 +1378,7 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 		fail_on_test(node->g_fmt(cur_fmt, q.g_type()));
 
 		ret = q.create_bufs(node, 0);
-		fail_on_test(ret != ENOTTY && ret != 0);
+		fail_on_test_val(ret != ENOTTY && ret != 0, ret);
 		if (ret == ENOTTY)
 			have_createbufs = false;
 		if (have_createbufs) {
@@ -1442,7 +1442,7 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 				FD_ZERO(&efds);
 				FD_SET(node->g_fd(), &efds);
 				ret = select(node->g_fd() + 1, nullptr, nullptr, &efds, &tv);
-				fail_on_test(ret < 0);
+				fail_on_test_val(ret < 0, ret);
 				fail_on_test(ret == 0);
 				fail_on_test(node->dqevent(ev));
 				fcntl(node->g_fd(), F_SETFL, fd_flags);
@@ -1598,7 +1598,7 @@ static int setupUserPtr(struct node *node, cv4l_queue &q)
 			for (unsigned p = 0; p < buf.g_num_planes(); p++)
 				buf.s_userptr(q.g_userptr(i, p), p);
 			ret = buf.prepare_buf(node, q);
-			fail_on_test(ret && ret != ENOTTY);
+			fail_on_test_val(ret && ret != ENOTTY, ret);
 
 			if (ret == 0) {
 				fail_on_test(buf.querybuf(node, i));
@@ -1675,8 +1675,8 @@ int testUserPtr(struct node *node, struct node *node_m2m_cap, unsigned frame_cou
 		stream_close();
 		ret = q.reqbufs(node, 0);
 		if (ret) {
-			fail_on_test(!can_stream && ret != ENOTTY);
-			fail_on_test(can_stream && ret != EINVAL);
+			fail_on_test_val(!can_stream && ret != ENOTTY, ret);
+			fail_on_test_val(can_stream && ret != EINVAL, ret);
 			return ENOTTY;
 		}
 		fail_on_test(!can_stream);
@@ -1847,7 +1847,7 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 		buf.s_flags(flags);
 		ret = buf.prepare_buf(node, q);
 		if (ret != ENOTTY) {
-			fail_on_test(ret);
+			fail_on_test_val(ret, ret);
 			fail_on_test(buf.querybuf(node, i));
 			fail_on_test(buf.check(q, Prepared, i));
 			for (unsigned p = 0; p < buf.g_num_planes(); p++) {
@@ -1916,8 +1916,8 @@ int testDmaBuf(struct node *expbuf_node, struct node *node, struct node *node_m2
 		stream_close();
 		ret = q.reqbufs(node, 0);
 		if (ret) {
-			fail_on_test(!can_stream && ret != ENOTTY);
-			fail_on_test(can_stream && ret != EINVAL);
+			fail_on_test_val(!can_stream && ret != ENOTTY, ret);
+			fail_on_test_val(can_stream && ret != EINVAL, ret);
 			return ENOTTY;
 		}
 		fail_on_test(!can_stream);
@@ -2049,7 +2049,7 @@ int testRequests(struct node *node, bool test_streaming)
 	// Test if V4L2_CTRL_WHICH_REQUEST_VAL is supported
 	ctrls.which = V4L2_CTRL_WHICH_REQUEST_VAL;
 	ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
-	fail_on_test(ret != EINVAL && ret != EBADR && ret != ENOTTY);
+	fail_on_test_val(ret != EINVAL && ret != EBADR && ret != ENOTTY, ret);
 	have_controls = ret != ENOTTY;
 
 	if (media_fd < 0 || ret == EBADR) {
@@ -2070,7 +2070,7 @@ int testRequests(struct node *node, bool test_streaming)
 		return ENOTTY;
 	}
 	// Check that a request was allocated with a valid fd
-	fail_on_test(ret);
+	fail_on_test_val(ret, ret);
 	fail_on_test(req_fd < 0);
 	fhs.add(req_fd);
 	if (have_controls) {
@@ -2192,7 +2192,7 @@ int testRequests(struct node *node, bool test_streaming)
 	ret = buf.qbuf(node);
 	// If this fails, then that can only happen if the queue
 	// requires requests. In that case EBADR is returned.
-	fail_on_test(ret && ret != EBADR);
+	fail_on_test_val(ret && ret != EBADR, ret);
 	fail_on_test(buf.querybuf(node, 1));
 	// Now try to queue the buffer to the request
 	buf.s_flags(V4L2_BUF_FLAG_REQUEST_FD);
@@ -2359,11 +2359,11 @@ int testRequests(struct node *node, bool test_streaming)
 			// controls are present in the request. In that
 			// case they return ENOENT and we just stop testing
 			// since we don't know what those controls are.
-			fail_on_test(ret != ENOENT);
+			fail_on_test_val(ret != ENOENT, ret);
 			test_streaming = false;
 			break;
 		}
-		fail_on_test(ret);
+		fail_on_test_val(ret, ret);
 		fail_on_test(buf.querybuf(node, i));
 		// Check that the buffer is now queued up
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST);

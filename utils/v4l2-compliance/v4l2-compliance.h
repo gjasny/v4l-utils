@@ -272,6 +272,12 @@ private:
 			return fail("%s\n", #test);	\
 	} while (0)
 
+#define fail_on_test_val(test, v)				\
+	do {							\
+	 	if (test)					\
+			return fail("%s (got %d)\n", #test, v);	\
+	} while (0)
+
 static inline int check_fract(const struct v4l2_fract *f)
 {
 	if (f->numerator && f->denominator)
