@@ -21,6 +21,7 @@ rmmod_time=1
 kobj_rel=0
 v4l2_ctl=v4l2-ctl
 v4l2_compliance=v4l2-compliance
+compliance_args=
 
 if [ -f /proc/config.gz ]; then
 	if cat /proc/config.gz | gunzip |grep -q CONFIG_DEBUG_KOBJECT_RELEASE=y ; then
@@ -50,6 +51,8 @@ if [ -z "$1" ]; then
 	echo "-unload: unload any media modules before testing"
 	echo "-kmemleak: enable memory leak scan"
 	echo "-dmesg: run dmesg at the end"
+	echo "-E: exit on fail"
+	echo "-W: exit on warn"
 	echo "-32: use v4l2-ctl-32 and v4l2-compliance-32 to test the 32 bit compat layer"
 	echo "-setup: load and configure all the drivers, but do not run tests"
 	echo
@@ -79,6 +82,12 @@ while [ ! -z "$1" ]; do
 		;;
 	-dmesg)
 		dmesg=1
+		;;
+	-E)
+		compliance_args="$compliance_args -E"
+		;;
+	-W)
+		compliance_args="$compliance_args -W"
 		;;
 	-setup)
 		setup=1
@@ -187,6 +196,8 @@ $v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=21
 
 echo
 
+v4l2_compliance="$v4l2_compliance $compliance_args"
+
 if [ $vivid -eq 1 -a $setup -eq 0 ]; then
 	dmesg -n notice
 	echo
@@ -235,10 +246,10 @@ if [ $cec -eq 1 -a $setup -eq 0 ]; then
 	date
 	# Once vivid is properly handling Arbitration Lost situation, then
 	# we can add back the -A option for the cec-compliance commands.
-	stdbuf -oL cec-compliance -D vivid -a vivid-000-vid-cap0 -r4 -t10 $cecpwr 2>&1 | tee -a $tmp
+	stdbuf -oL cec-compliance $compliance_args -D vivid -a vivid-000-vid-cap0 -r4 -t10 $cecpwr 2>&1 | tee -a $tmp
 	sleep 5
 	date
-	stdbuf -oL cec-compliance -D vivid -a vivid-000-vid-out0 -r0 -t10 $cecpwr 2>&1 | tee -a $tmp
+	stdbuf -oL cec-compliance $compliance_args -D vivid -a vivid-000-vid-out0 -r0 -t10 $cecpwr 2>&1 | tee -a $tmp
 	kill $f0
 	kill $f1
 	echo
