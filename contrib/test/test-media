@@ -33,13 +33,6 @@ elif [ -f .config ]; then
 	fi
 fi
 
-if [ $kobj_rel -eq 1 ]; then
-	echo Detected CONFIG_DEBUG_KOBJECT_RELEASE=y
-	unbind_time=10
-	reunbind_time=14
-	rmmod_time=5
-fi
-
 cur_lvl=`cut -c 1-2 /proc/sys/kernel/printk`
 
 if [ -z "$1" ]; then
@@ -163,6 +156,19 @@ if [ $vidtv -eq 1 ]; then
 			exit 0
 		fi
 	fi
+fi
+
+date
+uname -a
+$v4l2_compliance --version
+echo
+echo
+
+if [ $kobj_rel -eq 1 ]; then
+	echo Detected CONFIG_DEBUG_KOBJECT_RELEASE=y
+	unbind_time=10
+	reunbind_time=14
+	rmmod_time=5
 fi
 
 if [ $unload -eq 1 ]; then
@@ -775,3 +781,4 @@ if [ $setup -eq 0 ]; then
 fi
 
 dmesg -n $cur_lvl
+date
