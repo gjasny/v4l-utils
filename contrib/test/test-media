@@ -57,7 +57,7 @@ if [ -z "$1" ]; then
 	echo "vidtv: test the vidtv driver"
 	echo "cec: adds the vivid CEC compliance tests, 'cec-pwr' adds the CEC standby/wakeup tests."
 	echo "all: equals 'vivid vim2m vimc vicodec vidtv cec cec-pwr'"
-	echo "mc: equals 'vivid vim2m vimc vicodec'"
+	echo "mc: equals 'vivid vim2m vimc vicodec vidtv'"
 	exit 0
 fi
 
@@ -118,6 +118,7 @@ while [ ! -z "$1" ]; do
 		vim2m=1
 		vimc=1
 		vicodec=1
+		vidtv=1
 		;;
 	vidtv)
 		vidtv=1
