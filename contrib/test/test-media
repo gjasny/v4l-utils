@@ -68,6 +68,14 @@ fi
 
 dmesg -n notice
 
+date
+uname -a
+v4l2-compliance --version
+echo test-media $*
+echo
+echo
+
+
 while [ ! -z "$1" ]; do
 	case "$1" in
 	-unload)
@@ -103,6 +111,8 @@ while [ ! -z "$1" ]; do
 			echo v4l2-compliance-32 is not installed.
 			exit 0
 		fi
+		$v4l2_compliance --version
+		echo
 		;;
 	all)
 		vidtv=1
@@ -158,12 +168,6 @@ if [ $vidtv -eq 1 ]; then
 		fi
 	fi
 fi
-
-date
-uname -a
-$v4l2_compliance --version
-echo
-echo
 
 if [ $kobj_rel -eq 1 ]; then
 	echo Detected CONFIG_DEBUG_KOBJECT_RELEASE=y
