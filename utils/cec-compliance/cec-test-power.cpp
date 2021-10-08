@@ -247,7 +247,7 @@ const vec_remote_subtests one_touch_play_subtests{
 #define SLEEP_POLL_POWER_STATUS 2
 
 static bool wait_changing_power_status(struct node *node, unsigned me, unsigned la, __u8 &new_status,
-				       unsigned &unresponsive_time)
+				       unsigned &unresponsive_cnt)
 {
 	__u8 old_status;
 	time_t t = time(nullptr);
@@ -262,7 +262,7 @@ static bool wait_changing_power_status(struct node *node, unsigned me, unsigned 
 			/* Some TVs become completely unresponsive when transitioning
 			   between power modes. Register that this happens, but continue
 			   the test. */
-			unresponsive_time = time(nullptr) - t;
+			unresponsive_cnt++;
 		} else if (old_status != power_status) {
 			new_status = power_status;
 			return true;
@@ -274,7 +274,7 @@ static bool wait_changing_power_status(struct node *node, unsigned me, unsigned 
 }
 
 static bool poll_stable_power_status(struct node *node, unsigned me, unsigned la,
-				     __u8 expected_status, unsigned &unresponsive_time)
+				     __u8 expected_status, unsigned &unresponsive_cnt)
 {
 	bool transient = false;
 	unsigned time_to_transient = 0;
@@ -290,7 +290,7 @@ static bool poll_stable_power_status(struct node *node, unsigned me, unsigned la
 			/* Some TVs become completely unresponsive when transitioning
 			   between power modes. Register that this happens, but continue
 			   the test. */
-			unresponsive_time = time(nullptr) - t;
+			unresponsive_cnt++;
 			sleep(SLEEP_POLL_POWER_STATUS);
 			continue;
 		}
@@ -319,7 +319,7 @@ static int standby_resume_standby(struct node *node, unsigned me, unsigned la, b
 		return NOTAPPLICABLE;
 
 	struct cec_msg msg;
-	unsigned unresponsive_time = 0;
+	unsigned unresponsive_cnt = 0;
 
 	fail_on_test(!util_interactive_ensure_power_state(node, me, la, interactive, CEC_OP_POWER_STATUS_ON));
 
@@ -339,13 +339,13 @@ static int standby_resume_standby(struct node *node, unsigned me, unsigned la, b
 	cec_msg_standby(&msg);
 	fail_on_test(!transmit_timeout(node, &msg));
 	fail_on_test(cec_msg_status_is_abort(&msg));
-	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_STANDBY, unresponsive_time));
+	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_STANDBY, unresponsive_cnt));
 	fail_on_test(interactive && !question("Is the device in standby?"));
 	node->remote[la].in_standby = true;
 
-	if (unresponsive_time > 0)
-		warn("The device went correctly into standby, but became unresponsive for %d s during the transition.\n",
-		     unresponsive_time);
+	if (unresponsive_cnt > 0)
+		warn("The device went correctly into standby, but was unresponsive %d times during the transition.\n",
+		     unresponsive_cnt);
 
 	return 0;
 }
@@ -356,7 +356,7 @@ static int standby_resume_standby_toggle(struct node *node, unsigned me, unsigne
 		return NOTAPPLICABLE;
 
 	struct cec_msg msg;
-	unsigned unresponsive_time = 0;
+	unsigned unresponsive_cnt = 0;
 	__u8 new_status;
 
 	node->remote[la].in_standby = false;
@@ -368,7 +368,7 @@ static int standby_resume_standby_toggle(struct node *node, unsigned me, unsigne
 	int res = doioctl(node, CEC_TRANSMIT, &msg);
 	fail_on_test(res && res != ENONET);
 	fail_on_test(cec_msg_status_is_abort(&msg));
-	fail_on_test(wait_changing_power_status(node, me, la, new_status, unresponsive_time));
+	fail_on_test(wait_changing_power_status(node, me, la, new_status, unresponsive_cnt));
 	fail_on_test(new_status != CEC_OP_POWER_STATUS_STANDBY);
 
 	if (res == ENONET) {
@@ -391,9 +391,9 @@ static int standby_resume_standby_toggle(struct node *node, unsigned me, unsigne
 
 	fail_on_test(interactive && !question("Is the device still in standby?"));
 	node->remote[la].in_standby = true;
-	if (unresponsive_time > 0)
-		warn("The device went correctly into standby, but became unresponsive for %d s during the transition.\n",
-		     unresponsive_time);
+	if (unresponsive_cnt > 0)
+		warn("The device went correctly into standby, but was unresponsive %d times during the transition.\n",
+		     unresponsive_cnt);
 
 	return 0;
 }
@@ -404,7 +404,7 @@ static int standby_resume_active_source_nowake(struct node *node, unsigned me, u
 		return NOTAPPLICABLE;
 
 	struct cec_msg msg;
-	unsigned unresponsive_time = 0;
+	unsigned unresponsive_cnt = 0;
 	__u8 new_status;
 
 	node->remote[la].in_standby = false;
@@ -420,16 +420,16 @@ static int standby_resume_active_source_nowake(struct node *node, unsigned me, u
 	int res = doioctl(node, CEC_TRANSMIT, &msg);
 	fail_on_test(res && res != ENONET);
 	fail_on_test_v2_warn(node->remote[la].cec_version,
-			     wait_changing_power_status(node, me, la, new_status, unresponsive_time));
+			     wait_changing_power_status(node, me, la, new_status, unresponsive_cnt));
 	fail_on_test_v2_warn(node->remote[la].cec_version,
 			     new_status != CEC_OP_POWER_STATUS_STANDBY);
 	if (new_status != CEC_OP_POWER_STATUS_STANDBY)
 		return standby_resume_standby(node, me, la, interactive);
 
 	node->remote[la].in_standby = true;
-	if (unresponsive_time > 0)
-		warn("The device stayed correctly in standby, but became unresponsive for %d s.\n",
-		     unresponsive_time);
+	if (unresponsive_cnt > 0)
+		warn("The device stayed correctly in standby, but was unresponsive %d times.\n",
+		     unresponsive_cnt);
 	return 0;
 }
 
@@ -500,15 +500,15 @@ static int standby_resume_wakeup(struct node *node, unsigned me, unsigned la, bo
 	if (ret)
 		return ret;
 
-	unsigned unresponsive_time = 0;
+	unsigned unresponsive_cnt = 0;
 
 	announce("Device is woken up");
-	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_time));
+	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_cnt));
 	fail_on_test(interactive && !question("Is the device in On state?"));
 
-	if (unresponsive_time > 0)
-		warn("The device went correctly out of standby, but became unresponsive for %d s during the transition.\n",
-		     unresponsive_time);
+	if (unresponsive_cnt > 0)
+		warn("The device went correctly out of standby, but was unresponsive %d times during the transition.\n",
+		     unresponsive_cnt);
 
 	return 0;
 }
@@ -518,9 +518,10 @@ static int standby_resume_wakeup_view_on(struct node *node, unsigned me, unsigne
 	if (!is_tv(la, node->remote[la].prim_type))
 		return NOTAPPLICABLE;
 
-	unsigned unresponsive_time = 0;
+	unsigned unresponsive_cnt = 0;
 
-	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_time));
+	sleep(5);
+	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_cnt));
 
 	int ret = standby_resume_standby(node, me, la, interactive);
 
@@ -541,8 +542,8 @@ static int standby_resume_wakeup_view_on(struct node *node, unsigned me, unsigne
 		return ret;
 
 	announce("Device is woken up");
-	unresponsive_time = 0;
-	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_time));
+	unresponsive_cnt = 0;
+	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_cnt));
 	fail_on_test(interactive && !question("Is the device in On state?"));
 
 	struct cec_msg msg;
@@ -551,9 +552,9 @@ static int standby_resume_wakeup_view_on(struct node *node, unsigned me, unsigne
 	cec_msg_active_source(&msg, node->phys_addr);
 	fail_on_test(!transmit_timeout(node, &msg));
 
-	if (unresponsive_time > 0)
-		warn("The device went correctly out of standby, but became unresponsive for %d s during the transition.\n",
-		     unresponsive_time);
+	if (unresponsive_cnt > 0)
+		warn("The device went correctly out of standby, but was unresponsive %d times during the transition.\n",
+		     unresponsive_cnt);
 
 	return 0;
 }
@@ -643,9 +644,9 @@ static int standby_resume_wakeup_deck(struct node *node, unsigned me, unsigned l
 	if (timed_out_or_abort(&msg))
 		return OK_NOT_SUPPORTED;
 
-	unsigned unresponsive_time = 0;
+	unsigned unresponsive_cnt = 0;
 
-	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_time));
+	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_cnt));
 
 	int ret = standby_resume_standby(node, me, la, interactive);
 
@@ -660,8 +661,8 @@ static int standby_resume_wakeup_deck(struct node *node, unsigned me, unsigned l
 	fail_on_test(!transmit_timeout(node, &msg));
 	fail_on_test(cec_msg_status_is_abort(&msg));
 
-	unresponsive_time = 0;
-	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_time));
+	unresponsive_cnt = 0;
+	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_cnt));
 	fail_on_test(interactive && !question("Is the device in On state?"));
 
 	return OK;
@@ -681,7 +682,7 @@ static int standby_record(struct node *node, unsigned me, unsigned la, bool inte
 {
 	struct cec_msg msg;
 	__u8 rec_status;
-	unsigned unresponsive_time = 0;
+	unsigned unresponsive_cnt = 0;
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_record_on_own(&msg);
@@ -704,7 +705,7 @@ static int standby_record(struct node *node, unsigned me, unsigned la, bool inte
 	cec_msg_standby(&msg);
 	fail_on_test(!transmit_timeout(node, &msg));
 	/* Standby should not interrupt the recording. */
-	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_time));
+	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_cnt));
 
 	cec_msg_init(&msg, me, la);
 	cec_msg_record_off(&msg, false);
@@ -712,9 +713,9 @@ static int standby_record(struct node *node, unsigned me, unsigned la, bool inte
 
 	/* When the recording stops, recorder should standby unless it is the active source. */
 	if (active_source) {
-		fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_time));
+		fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_cnt));
 	} else {
-		fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_STANDBY, unresponsive_time));
+		fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_STANDBY, unresponsive_cnt));
 		fail_on_test(interactive && !question("Is the device in standby?"));
 		node->remote[la].in_standby = true;
 
