@@ -304,8 +304,12 @@ static bool poll_stable_power_status(struct node *node, unsigned me, unsigned la
 					  power_status == CEC_OP_POWER_STATUS_TO_ON);
 		}
 		if (power_status == expected_status) {
-			announce("Transient state after %d s, stable state %s after %d s",
-			     time_to_transient, power_status2s(power_status), (int)(time(NULL) - t));
+			if (transient)
+				announce("Transient state after %d s, stable state %s after %d s",
+					 time_to_transient, power_status2s(power_status), (int)(time(NULL) - t));
+			else
+				announce("No transient state reported, stable state %s after %d s",
+					 power_status2s(power_status), (int)(time(NULL) - t));
 			return true;
 		}
 		sleep(SLEEP_POLL_POWER_STATUS);
