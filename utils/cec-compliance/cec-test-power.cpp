@@ -502,7 +502,7 @@ static int standby_resume_wakeup(struct node *node, unsigned me, unsigned la, bo
 
 	unsigned unresponsive_cnt = 0;
 
-	announce("Device is woken up");
+	announce("Wait for device to wake up");
 	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_cnt));
 	fail_on_test(interactive && !question("Is the device in On state?"));
 
@@ -541,7 +541,7 @@ static int standby_resume_wakeup_view_on(struct node *node, unsigned me, unsigne
 	if (ret)
 		return ret;
 
-	announce("Device is woken up");
+	announce("Wait for device to wake up");
 	unresponsive_cnt = 0;
 	fail_on_test(!poll_stable_power_status(node, me, la, CEC_OP_POWER_STATUS_ON, unresponsive_cnt));
 	fail_on_test(interactive && !question("Is the device in On state?"));
