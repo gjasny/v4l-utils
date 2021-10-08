@@ -428,7 +428,8 @@ std::string mi_linkflags2s(__u32 flags)
 }
 
 static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
-			   __u32 media_version, bool *is_invalid)
+			   __u32 media_version, bool *is_invalid,
+			   __u32 *function)
 {
 	media_v2_topology topology;
 	unsigned i, j;
@@ -457,6 +458,8 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
 			major, minor);
 		if (is_invalid)
 			*is_invalid = true;
+		if (function)
+			*function = MEDIA_ENT_F_UNKNOWN;
 		return MEDIA_ENT_F_UNKNOWN;
 	}
 	const media_v2_interface &iface = v2_ifaces[i];
@@ -563,15 +566,18 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
 					remote_ent_id);
 				return ent.id;
 			}
-			printf("\t  Link 0x%08x: %s remote pad 0x%x of entity '%s': %s\n",
+			printf("\t  Link 0x%08x: %s remote pad 0x%x of entity '%s' (%s): %s\n",
 			       link.id, is_sink ? "from" : "to", remote_pad,
-			       remote_ent->name, mi_linkflags2s(link.flags).c_str());
+			       remote_ent->name, mi_entfunction2s(remote_ent->function).c_str(),
+			       mi_linkflags2s(link.flags).c_str());
+			if (function && !*function)
+				*function = remote_ent->function;
 		}
 	}
 	return ent.id;
 }
 
-__u32 mi_media_info_for_fd(int media_fd, int fd, bool *is_invalid)
+__u32 mi_media_info_for_fd(int media_fd, int fd, bool *is_invalid, __u32 *function)
 {
 	struct media_device_info mdinfo;
 	struct stat sb;
@@ -579,6 +585,9 @@ __u32 mi_media_info_for_fd(int media_fd, int fd, bool *is_invalid)
 
 	if (is_invalid)
 		*is_invalid = false;
+
+	if (function)
+		*function = MEDIA_ENT_F_UNKNOWN;
 
 	if (ioctl(media_fd, MEDIA_IOC_DEVICE_INFO, &mdinfo))
 		return 0;
@@ -611,7 +620,7 @@ __u32 mi_media_info_for_fd(int media_fd, int fd, bool *is_invalid)
 	}
 
 	ent_id = read_topology(media_fd, major(sb.st_rdev), minor(sb.st_rdev),
-			       mdinfo.media_version, is_invalid);
+			       mdinfo.media_version, is_invalid, function);
 	if (ent_id)
 		return ent_id;
 

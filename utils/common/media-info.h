@@ -76,15 +76,18 @@ std::string mi_linkflags2s(__u32 flags);
 
 /*
  * Show media controller information media_fd and (if >= 0) the
- * corresponsing entity/interface information for the fd.
+ * corresponding entity/interface information for the fd.
  *
  * If is_invalid != NULL, then set it to true if errors are detected
  * in the media information.
+ *
+ * If function != NULL, then set it to the function of the entity to
+ * which the interface is connected.
  *
  * Return 0 if the driver doesn't support MEDIA_IOC_G_TOPOLOGY.
  * Return MEDIA_ENT_F_UNKNOWN if it does support this but there were
  * errors reading the topology. Otherwise return the entity ID of fd.
  */
-__u32 mi_media_info_for_fd(int media_fd, int fd, bool *is_invalid = NULL);
+__u32 mi_media_info_for_fd(int media_fd, int fd, bool *is_invalid = NULL, __u32 *function = NULL);
 
 #endif

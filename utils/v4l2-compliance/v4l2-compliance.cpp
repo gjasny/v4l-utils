@@ -1056,7 +1056,7 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 	if (node.is_media())
 		mi_media_info_for_fd(node.g_fd(), -1, &is_invalid);
 	else if (media_fd >= 0)
-		ent_id = mi_media_info_for_fd(media_fd, node.g_fd(), &is_invalid);
+		ent_id = mi_media_info_for_fd(media_fd, node.g_fd(), &is_invalid, &node.function);
 
 	if (ent_id != MEDIA_ENT_F_UNKNOWN) {
 		memset(&node.entity, 0, sizeof(node.entity));

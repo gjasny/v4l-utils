@@ -133,6 +133,7 @@ struct base_node {
 	__u32 media_version;
 	std::string media_bus_info;
 	media_entity_desc entity;
+	__u32 function;
 	media_pad_desc *pads;
 	media_link_desc *links;
 	media_v2_topology *topology;
