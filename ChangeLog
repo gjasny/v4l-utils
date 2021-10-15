@@ -1,3 +1,345 @@
+v4l-utils-1.22.0
+----------------
+
+Alexandre Courbot (1):
+      v4l2-compliance: test for vb2/m2m poll kernel bug
+
+Bastien Nocera (1):
+      keytable: Add source information in generated keymaps
+
+Dafna Hirschfeld (7):
+      utils: v4l2-ctl: support V4L2_CAP_IO_MC in v4l2-ctl '--list-formats-*' commands
+      v4l2-ctl: vidcap: Add support for the CSC API
+      v4l2: common: add the flags V4L2_FMT_FLAG_CSC* to the list that maps flags to str
+      v4l2-ctl: subdev: Add support for the CSC API in the subdevices
+      v4l2-ctl: subdev: Add the flags to the list of supported mbus formats
+      v4l2-ctl: print specific error upon failure
+      v4l2-ctl: fix bugs found in streaming_set_cap2out
+
+Daniel W. S. Almeida (1):
+      test-media: add support for vidtv
+
+Deborah Brouwer (18):
+      cec-compliance: add Audio System mask to Set Audio Rate
+      cec: add active sensing test for Audio Rate Control messages
+      cec: add invalid operand test for Audio Rate Control messages
+      cec-follower: increase precision of Audio Rate Control active sensing
+      cec-follower: detect the cessation of Audio Rate Control messages
+      cec-follower: emulate features for CEC versions < CEC 2.0
+      cec: add tests for Give Deck Status message
+      cec: add tests for Deck Control message
+      cec: add tests for Deck Play message
+      cec-compliance: remove Deck Status test
+      cec: add Deck Control wake-up handling tests
+      cec: remove redundant struct cec_msg initializations
+      cec-compliance: remove One Touch Record Status test
+      cec-follower: use log_addr_type to get local device type
+      cec: expand One Touch Record tests
+      cec: add One Touch Record Standby tests
+      cec: expand Timer Programming tests
+      cec-follower: emulate programmed timer recordings
+
+Gregor Jasny (4):
+      buildsystem: Start v4l-utils 1.21.0 development cycle
+      qv4l2: Also fall back to old method for querying resolution
+      libdvbv5: hide my_strlcpy symbol
+      libdvbv5: hide stack_dump symbols and provide soname compatibility
+
+Hans Petter Selasky (3):
+      Fix print formatting warning for clang.
+      v4l-utils: FreeBSD already defines packed
+      Use standard integer types
+
+Hans Verkuil (154):
+      v4l-utils: sync with latest media kernel
+      cec-ctl: improve --list-devices
+      test-media: also keep vivid cec devices open
+      test-media: add 'tee /dev/kmsg'
+      v4l-utils: sync with latest media kernel
+      v4l-utils: sync with latest media kernel
+      v4l2-info.cpp: add new flag V4L2_FMT_FLAG_ENC_CAP_FRAME_INTERVAL
+      v4l2-compliance: fix cache hint regressions
+      test-media: enable cache_hints for the first vivid instance
+      cec-compliance: add 'reason' sanity check.
+      qvidcap: set GL_UNPACK_ROW_LENGTH for Bayer formats
+      qvidcap: fix GL_UNPACK_ROW_LENGTH for Bayer > 8 bits
+      v4l2-compliance: relax testBasicSelection check.
+      v4l2-compliance: fix stateful encoder tests
+      qv4l2: fix use of deprecated byteCount method
+      qv4l2: add -Wno-psabi to avoid ABI warning on ARM
+      qv4l2: fix more 'deprecated Qt functions' warnings
+      v4l2-compliance: drop kernel_version
+      v4l2-compliance: disable cache flag test for kernels < 5.9
+      cec-compliance: clarify a power transition test
+      v4l2-compliance: remove spurious \n in message
+      qv4l2: QGuiApplication::screenAt() appeared in Qt 5.10
+      v4l2/cec-compliance: use new GIT_SHA variable
+      cec-compliance: don't skip tests if phys addr is invalid
+      v4l2-ctl: set  total number of native DTDs to 1
+      cec-compliance: the SHA needs to be shown in different ways
+      v4l2-compliance: fix colorspace checks for JPEG codecs
+      v4l2-compliance: improve frequency range checks
+      cec-follower: fix logging the SHA
+      v4l-utils: update v4l2-tpg.patch
+      v4l-utils: sync with latest media kernel
+      v4l-utils: use V4L2_TYPE_IS_CAPTURE
+      v4l2-ctl: fix INTEGER64 support, add common_print_control()
+      v4l2-ctl: rename vivid_uvc_meta_buf to uvc_meta_buf
+      cv4l-helpers.h: fix the cv4l_buffer assignment operator
+      v4l2-ctl: fix broken fd.qbuf error check
+      v4l2-compliance: some fails were ignored
+      cec-follower: CEC_MSG_STANDBY can just call enter_standby()
+      v4l2-tpg.patch: add clamp_t define
+      sync with latest media kernel
+      cec-follower: add --standby and --toggle-power-status
+      cec-ctl: improve the --phys-addr-from-edid-poll option
+      v4l-utils: sync with media_tree master
+      cec-ctl: don't spam log with PA changes unless paused
+      v4l-utils: sync with media_tree master
+      libcecutil: make license consistent
+      media-ctl: fix compiler warnings
+      cec-compliance: options -n and -N were swapped in --help
+      cec-ctl/cec-compliance: add pulse8-cec kernel version check
+      cec utils and v4l2-compliance: improve version info
+      cec-follower: drop physical address check
+      cec-ctl: really wait for 2 seconds when the HPD is low
+      cec-ctl.1.in: fix awkward language
+      cec-ctl: detect if Standby etc. messages are Nacked
+      v4l2-compliance-32: use v4l2_compliance_CPPFLAGS
+      v4l2-ctl-32: use v4l2_ctl_CPPFLAGS, fix wrong check
+      common/media-info.cpp: 'Flags' was not aligned
+      v4l2-compliance: improve comment for CROPCAP/G_SELECTION fail
+      v4l2-ctl: clean up control value printing
+      v4l2-ctl: break on VIDIOC_DQEVENT error
+      v4l-utils: sync with media_tree master
+      qv4l2: fix CaptureWin::setWindowSize() if there are multiple screens
+      v4l2-compliance: fix two S_EDID tests
+      v4l2-compliance: test polling and disconnecting
+      v4l2-compliance: skip sequence tests for vivid
+      v4l-utils: sync with latest media_tree master repo
+      v4l2-subdev.h: replace BIT(0) by 0x00000001
+      v4l2-info: add v4l2_info_subdev_capability
+      v4l2-ctl: add support for VIDIOC_SUBDEV_QUERYCAP
+      v4l2-compliance: add support for VIDIOC_SUBDEV_QUERYCAP
+      v4l2-compliance: improve VIDIOC_TRY_DE/ENCODER_CMD tests
+      v4l2-compliance: improve VIDIOC_(TRY_)EN/DECODER_CMD tests
+      v4l2-compliance: check correct buffer length after CREATE_BUFS
+      v4l2-ctl: fix incorrect check for last_ts
+      media-info: MEDIA_ENT_F_IO_DTV doesn't need an interface
+      test-media: improve vidtv tests
+      cec-ctl: showTopology(): fix level wraparound bug
+      v4l2-compliance: add missing V4L2_PIX_FMT_H264_SLICE
+      cec-compliance: improve current latency checks
+      configure.ac: revert AM_GNU_GETTEXT_VERSION change
+      configure.ac: improve gettext compatibility support
+      v4l-utils: sync with latest media kernel
+      v4l2-compliance: improve fmtdesc.description check
+      v4l2-compliance: improve compound control checks
+      v4l2-tpg.patch: rename min/max defines to tpg_min/max
+      v4l2-compliance: don't warn about seq counter for metadata
+      v4l2-ctl: add --show-edid, add new test EDIDs
+      v4l2-ctl: don't squash setting multiple identical controls.
+      v4l2-ctl: fix hdmi and hdmi-4k-170mhz EDIDs
+      v4l2-ctl: improve --help-edid
+      v4l2-ctl: update EDIDs
+      qv4l2: fallback if window()->windowHandle() == NULL
+      v4l2-ctl: recognize compound h264 and fwht control types
+      cec: improve vendor ID logging
+      v4l2-compliance: rename stvec to vec_remote_subtests
+      v4l2-ctl: add missing const, use {} instead of memset
+      v4l2-ctl: remove unused struct flag_def
+      v4l2-dbg: fix control flow problem
+      v4l2-compliance: move all vivid controls to v4l2-compliance.h
+      utils/libcecutil/cec-log.cpp: report 6 digits of Vendor ID
+      utils/cec: fix inconsistent Vendor ID reporting
+      v4l2-ctl: add '--set-edid type=list' support
+      cec-compliance: clarify a warning
+      cec-compliance: use the actual audio_out_delay value
+      cec-compliance: improve error message
+      cec-compliance: hardcode audio_out_delay to 1 if not set
+      v4l2-compliance: V4L2_PIX_FMT_VP8_FRAME is for stateless decoder
+      v4l-utils: sync with upstream media_tree master
+      v4l2-ctl: add new control types
+      cec-compliance: skip warning if audio_out_delay is 1
+      v4l-utils: sync with media_tree/master
+      cec-compliance: move audio helper functions to cec-test-audio.cpp
+      cec-compliance: move CDC helper functions to cec-test.cpp
+      cec-ctl: improve 'Sleep' message in stress test
+      cec-ctl: min/max-sleep arguments should be double, not unsigned
+      v4l-utils: patch v4l2-controls.h
+      v4l-utils: sync with media_tree master
+      v4l2-compliance: improve request tests
+      contrib/test/test-media: add -setup option
+      v4l2-compliance: fix bad indentation
+      v4l2-compliance: fix g++-7 compile error
+      cec-compliance/follower: fix type comparison warnings
+      libcecutil/cec-info.cpp: rename Reserved to Backup
+      cec-follower: fix incorrect fallthrough
+      cec-ctl: report low drive without --verbose
+      test-media: add vidtv to the mc target
+      test-media: drop vidtv from mc, but warn if MC is disabled for DVB
+      cec-ctl: free signal time -> signal free time
+      cec-ctl: log signal free time when (show && !verbose)
+      cec-follower: refactoring: split up overly long functions
+      cec-compliance: use send_timer_error for one more test
+      cec-compliance: add cec-test-tuner-record-timer.cpp
+      cec-compliance: improve warning about late reply
+      cec-compliance: improve testLostMsgs test
+      configure.ac: drop printf for GIT_COMMIT_DATE
+      cec-compliance: wait up to 10s for Inactive Source reply
+      cec-compliance: fix broken timer tests
+      v4l-utils: libdvbv5: fix broken my_strlcpy calls
+      v4l2-ctl: update test EDIDs
+      v4l2-compliance: add 0 check for v4l2_event reserved field
+      v4l2-compliance: add new test for 32/64 bit time handling
+      v4l-utils: sync with latest media staging tree
+      v4l2-compliance: use fail_on_test_val for better fail reports
+      test-media: add -E and -W options
+      test-media: configure vimc scaler correctly
+      test-media: missed one scaler config line
+      test-media: add 'date' at beginning and end, show versions
+      test-media: mc should include vidtv
+      test-media: drop vidtv from the 'mc' target
+      test-media: show version info earlier and show cmd args
+      cec-compliance: fix 'unresponsive' detection
+      cec-compliance: improve confusing message
+      cec-compliance: fix confusing 'Transient state' message
+      v4l2-compliance: check entity function for codecs
+
+Ismael Luceno (1):
+      keytable: Fix missing inclusion of argp.h
+
+James Le Cuirot (1):
+      configure.ac: Add --without-libudev option to avoid automagic dep
+
+Luca Boccassi (1):
+      Build with libbpf, remove local sources
+
+Marian Cichy (2):
+      media-ctl: fix ycbcr property in help description
+      media-ctl: add v4l2-ycbcr-enc field in help description
+
+Marvin Schmidt (1):
+      mc_nextgen_test: Link against argp library
+
+Mauro Carvalho Chehab (41):
+      v4l2grab: fix block mode handling
+      v4l2grab: add querycap basic support
+      libv4l2: add newer caps to v4l2_driver.c
+      v4l2grab: prepare it for adding support for other methods
+      v4l2grab: add command line args for other capture methods
+      v4l2grab: some code reorg
+      v4l2grab: add read and userptr capture methods
+      v4l2grab: remove an unused var
+      libdvbv5: add support for the registration descriptor
+      libdvbv5: detect SMTPE 302m audio format
+      libdvbv5: use an array for the fourcc type
+      dvb-file: reimplement get_pmt_descriptors()
+      dvbv5-zap: add a warning when not recording PMT data
+      dvbv5-zap: allow recording also the SDT table
+      dvbv5-zap: don't use start time initialized
+      libdvbv5: initialize v3 params
+      libdvbv5: fix the quality detection logic
+      libdvbv5: fix init of the ATSC service location
+      libdvbv5: avoid a potential access out of an array
+      dvb-fe-tool: better check the event type
+      libdvbv5: don't leak memory at dvb-dev-remote
+      dvbv5-daemon: do some cleanups at the daemon
+      libdvbv5: dvb-dev-remote: don't leak resources at send_buf()
+      libdvbv5: dvb-dev-local: fix error handling for device addition
+      libdvbv5: dvb-dev-local: better handle realloc()
+      libdvb: fix ATSC service location parser
+      libdvbv5: add a warning if a descriptor's init doesn't went fine
+      libdvbv5: desc_network_name: simplify the init code
+      libdvbv5: validate cable descriptor's size
+      libdvbv5: desc_ca: cleanup the routine
+      libdvbv5: desc_language: check if the size is correct
+      libdvbv5: fix a typo
+      dvb-file: fix one-line output with default values
+      dvb-zap: copy_to_file doesn't return any value
+      dvbv5-zap: add a check for dvb_fe_retrieve_status() errors
+      dvbv5-zap: remove an unused logic
+      dvbv5-zap: fix a cut-and paste error
+      libdvbv5: dvb-dev-remote: better handle cmd size
+      dvb-dev-remote: check if setsockopt() fails
+      dvbv5-daemon: don't dereference a null pointer
+      Makefile.am: turn the build less verbose by default
+
+Max Schulze (1):
+      v4l2-ctl: print delta to current clock in verbose mode
+
+Niklas Söderlund (2):
+      configure.ac: Resolve GIT_* even if repository is a submodule
+      configure.ac: Fix building without libudev
+
+Paul Elder (10):
+      v4l2-ctl: Fix test_ioctl cmd type
+      v4l2-compliance: Convert testBlockingDQBuf to pthreads
+      v4l2-compliance: Add libcamera to businfo prefixes
+      configure.ac: Export git commit count
+      media-ctl: Add version command
+      v4l2-compliance: Add version command
+      v4l2-ctl: Add version command
+      cec-compliance: Add version command
+      cec-ctl: Add version command
+      cec-follower: Add version command
+
+Rosen Penev (27):
+      convert to range based loops
+      use auto
+      use using instead of typedef
+      use emplace_back
+      convert files to reference
+      use explicit for single argument constructors
+      fix mismatching declaration
+      add missing include for uClibc-ng
+      clean up includes and convert C includes to C++
+      v4l-helpers: don't mix enum type with int
+      cppcheck: turn several references to const
+      cppcheck: use const references
+      clang-tidy: use nullptr
+      clang-tidy: add a bunch of const
+      v4l-utils: switch remote_subtest arrays to vector
+      v4l-utils: convert board_list to vector
+      clang-tidy: use using instead of typedef
+      clang-tidy: use auto
+      clang-tidy: use nullptr
+      remove unused ARRAY_SIZE
+      cec-tuner: std::array conversions
+      v4l2-utils: turn fb_formats to constexpr array
+      mass constexpr conversions
+      v4l-utils: add missing static
+      v4l-utils: add missing fallthrough
+      remove pointless constructor
+      utils: replace push_back with emplace_back
+
+Sean Young (8):
+      lircd2toml: add option to keep lirc codes as they are
+      Move sync-with-kernel into dedicated shell script ./sync-with-kernel.sh
+      v4l-utils: sync with latest media kernel
+      ir-ctl: include timeout in raw IR and parse timeout in pulse-space file
+      keytable: ensure BPF IR decoders use correct section name
+      ir-ctl: print correct transmitter count
+      ir-ctl: Revert "ir-ctl: print correct transmitter count"
+      ir-ctl: increase the size of the buffer used to read raw files
+
+Sebastian Fricke (1):
+      README: Update build requirements for debian
+
+Sergey Senozhatsky (3):
+      v4l2-utils: test cache_hints for MMAP queues
+      v4l-compliance: remove NON_CONSISTENT hint test
+      v4l-compliance: re-introduce NON_COHERENT and cache hints tests
+
+Trenton Schulz (1):
+      Rudimentary support for mi_media_detect_type on FreeBSD.
+
+Ulrich Ölmann (3):
+      keytable: fix typo
+      configure.ac: autodetect availability of systemd
+      keytable: restrict installation of 50-rc_keymap.conf
+
+
 v4l-utils-1.20.0
 ----------------
 
