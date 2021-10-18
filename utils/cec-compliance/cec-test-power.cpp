@@ -490,7 +490,7 @@ static int wakeup_source(struct node *node, unsigned me, unsigned la)
 	return wakeup_rc(node, me, la);
 }
 
-static int standby_resume_wakeup(struct node *node, unsigned me, unsigned la, bool interactive)
+int standby_resume_wakeup(struct node *node, unsigned me, unsigned la, bool interactive)
 {
 	if (!node->remote[la].in_standby)
 		return NOTAPPLICABLE;

@@ -264,6 +264,7 @@ int core_abort(struct node *node, unsigned me, unsigned la, bool interactive)
 }
 
 static const vec_remote_subtests core_subtests{
+	{ "Wake up", CEC_LOG_ADDR_MASK_ALL, standby_resume_wakeup, true },
 	{ "Feature aborts unknown messages", CEC_LOG_ADDR_MASK_ALL, core_unknown },
 	{ "Feature aborts Abort message", CEC_LOG_ADDR_MASK_ALL, core_abort },
 };
@@ -1160,10 +1161,6 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 
 	if (!util_interactive_ensure_power_state(node, me, la, interactive, CEC_OP_POWER_STATUS_ON))
 		return;
-	if (node->remote[la].in_standby && !interactive) {
-		announce("The remote device is in standby. It should be powered on when testing. Aborting.");
-		return;
-	}
 	if (!node->remote[la].has_power_status) {
 		announce("The device didn't support Give Device Power Status.");
 		announce("Assuming that the device is powered on.");

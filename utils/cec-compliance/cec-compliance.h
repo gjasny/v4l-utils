@@ -472,6 +472,7 @@ extern const vec_remote_subtests audio_rate_ctl_subtests;
 // cec-test-power.cpp
 bool util_interactive_ensure_power_state(struct node *node, unsigned me, unsigned la, bool interactive,
 					 __u8 target_pwr);
+int standby_resume_wakeup(struct node *node, unsigned me, unsigned la, bool interactive);
 extern const vec_remote_subtests standby_subtests;
 extern const vec_remote_subtests one_touch_play_subtests;
 extern const vec_remote_subtests power_status_subtests;
