@@ -1,6 +1,15 @@
 v4l-utils-1.22.0
 ----------------
 
+Gregor Jasny (3):
+      configure.ac: Add copy of gnulib visibility.m4
+      bootstrap.sh: Replace which with POSIX compliant command -v
+      m4: Update ax_pthread to latest
+
+
+v4l-utils-1.22.0
+----------------
+
 Alexandre Courbot (1):
       v4l2-compliance: test for vb2/m2m poll kernel bug
 
