@@ -4,7 +4,7 @@ mkdir build-aux/ 2>/dev/null
 touch build-aux/config.rpath libdvbv5-po/Makefile.in.in v4l-utils-po/Makefile.in.in
 autoreconf -vfi
 
-GETTEXTIZE=$(which gettextize)
+GETTEXTIZE=$(command -v gettextize)
 if [ "GETTEXTIZE" != "" ]; then
 	VER=$(gettextize --version|perl -ne 'print $1 if (m/(\d\.\d.*)/)')
 
