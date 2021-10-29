@@ -185,12 +185,135 @@ static void querycap(char *fname, int fd, enum io_method method)
 	}
 }
 
+#define CLAMP(a)	((a) < 0 ? 0 : (a) > 255 ? 255 : (a))
+
+static void copy_two_pixels(uint32_t fourcc,
+			    unsigned char *src[2], unsigned char **dst,
+			    int ypos)
+{
+	unsigned char _r[2], _g[2], _b[2], *r, *g, *b;
+	int i;
+
+	/* Step 1: read two consecutive pixels from src pointer */
+
+	r = _r;
+	g = _g;
+	b = _b;
+
+	switch (fourcc) {
+	case V4L2_PIX_FMT_RGB565: /* rrrrrggg gggbbbbb */
+		for (i = 0; i < 2; i++) {
+			uint16_t pix = (src[i][0] << 8) + src[i][1];
+
+			*r++ = (unsigned char)(((pix & 0xf800) >> 11) << 3) | 0x07;
+			*g++ = (unsigned char)((((pix & 0x07e0) >> 5)) << 2) | 0x03;
+			*b++ = (unsigned char)((pix & 0x1f) << 3) | 0x07;
+		}
+		break;
+	case V4L2_PIX_FMT_RGB565X: /* gggbbbbb rrrrrggg */
+		for (i = 0; i < 2; i++) {
+			uint16_t pix = (src[i][1] << 8) + src[i][0];
+
+			*r++ = (unsigned char)(((pix & 0xf800) >> 11) << 3) | 0x07;
+			*g++ = (unsigned char)((((pix & 0x07e0) >> 5)) << 2) | 0x03;
+			*b++ = (unsigned char)((pix & 0x1f) << 3) | 0x07;
+		}
+		break;
+
+        case V4L2_PIX_FMT_YUYV:
+        case V4L2_PIX_FMT_UYVY:
+        case V4L2_PIX_FMT_YVYU:
+        case V4L2_PIX_FMT_VYUY:
+		int y_off, u_off, u, v;
+
+		y_off = (fourcc == V4L2_PIX_FMT_YUYV || fourcc == V4L2_PIX_FMT_YVYU) ? 0 : 1;
+		u_off = (fourcc == V4L2_PIX_FMT_YUYV || fourcc == V4L2_PIX_FMT_UYVY) ? 0 : 1;
+
+		u = src[1 - y_off][u_off];
+		v = src[1 - y_off][1 - u_off];
+
+		for (i = 0; i < 2; i++) {
+			int y = src[i][y_off];
+
+			int luma = y - 16;
+			int cr = u - 128;
+			int cb = v - 128;
+
+			*r++ = CLAMP((298 * luma + 409 * cb + 128) >> 8);
+			*g++ = CLAMP((298 * luma - 100 * cr - 208 * cb + 128) >> 8);
+			*b++ = CLAMP((298 * luma + 516 * cr + 128) >> 8);
+		}
+		break;
+	default:
+	case V4L2_PIX_FMT_BGR24:
+		for (i = 0; i < 2; i++) {
+			*b++ = src[i][0];
+			*g++ = src[i][1];
+			*r++ = src[i][2];
+		}
+		break;
+	}
+
+	/* Step 2: store two consecutive points in RGB24 format */
+
+	r = _r;
+	g = _g;
+	b = _b;
+
+	for (i = 0; i < 2; i++) {
+		*(*dst)++ = *r++;
+		*(*dst)++ = *g++;
+		*(*dst)++ = *b++;
+	}
+}
+
+static unsigned int convert_to_rgb24(uint32_t fourcc, unsigned char *p_in,
+				     unsigned char *p_out, uint32_t width,
+				     uint32_t height)
+{
+	unsigned char *p_start, *p_in_x[2];
+	unsigned int bytes_per_pixel;
+	unsigned int x, y, depth;
+
+	switch (fourcc) {
+	case V4L2_PIX_FMT_BGR24:
+		depth = 24;
+		break;
+	case V4L2_PIX_FMT_RGB565:
+	case V4L2_PIX_FMT_RGB565X:
+	case V4L2_PIX_FMT_YUYV:
+	case V4L2_PIX_FMT_UYVY:
+	case V4L2_PIX_FMT_YVYU:
+	case V4L2_PIX_FMT_VYUY:
+	default:
+		depth = 16;
+		break;
+	}
+
+	p_start = p_out;
+	bytes_per_pixel = depth >> 3;
+
+	for (y = 0; y < height; y++) {
+		for (x = 0; x < width; x++) {
+			p_in_x[0] = p_in;
+			x++;
+			p_in += bytes_per_pixel;
+			p_in_x[1] = p_in;
+			p_in += bytes_per_pixel;
+
+			copy_two_pixels(fourcc, p_in_x, &p_out, y);
+		}
+	}
+
+	return p_out - p_start;
+}
+
 /*
  * Read I/O
  */
 static int read_capture_loop(int fd, struct buffer *buffers,
 			     struct v4l2_format *fmt, int n_frames,
-			     char *out_dir)
+			     unsigned char *out_buf, char *out_dir)
 {
 	unsigned int			i;
 	struct timeval			tv;
@@ -239,20 +362,30 @@ static int read_capture_loop(int fd, struct buffer *buffers,
 			fprintf(fout, "P6\n%d %d 255\n",
 				fmt->fmt.pix.width, fmt->fmt.pix.height);
 
-		fwrite(buffers[0].start, size, 1, fout);
+		if (!out_buf) {
+			out_buf = buffers[0].start;
+		} else {
+			size = convert_to_rgb24(fmt->fmt.pix.pixelformat,
+						buffers[0].start,
+						out_buf,
+						fmt->fmt.pix.width,
+						fmt->fmt.pix.height);
+		}
+
+		fwrite(out_buf, size, 1, fout);
 		fclose(fout);
 	}
 	return 0;
 }
 
-static int read_capture(int fd, int n_frames, char *out_dir,
+static int read_capture(int fd, int n_frames, unsigned char *out_buf, char *out_dir,
 			struct v4l2_format *fmt)
 {
 	struct buffer                   *buffers;
 
 	buffers = calloc(1, sizeof(*buffers));
 
-	return read_capture_loop(fd, buffers, fmt, n_frames, out_dir);
+	return read_capture_loop(fd, buffers, fmt, n_frames, out_buf, out_dir);
 }
 
 /*
@@ -260,7 +393,7 @@ static int read_capture(int fd, int n_frames, char *out_dir,
  */
 static int userptr_capture_loop(int fd, struct buffer *buffers,
 				int n_buffers, struct v4l2_format *fmt,
-				int n_frames, char *out_dir)
+				int n_frames, unsigned char *out_buf, char *out_dir)
 {
 	struct v4l2_buffer		buf;
 	unsigned int			i;
@@ -268,6 +401,7 @@ static int userptr_capture_loop(int fd, struct buffer *buffers,
 	int				r;
 	fd_set				fds;
 	FILE				*fout;
+	unsigned int			size;
 	char				out_name[25 + strlen(out_dir)];
 
 	for (i = 0; i < n_frames; i++) {
@@ -307,7 +441,18 @@ static int userptr_capture_loop(int fd, struct buffer *buffers,
 			fprintf(fout, "P6\n%d %d 255\n",
 				fmt->fmt.pix.width, fmt->fmt.pix.height);
 
-		fwrite(buffers[buf.index].start, buf.bytesused, 1, fout);
+		if (!out_buf) {
+			out_buf = buffers[buf.index].start;
+			size = buf.bytesused;
+		} else {
+			size = convert_to_rgb24(fmt->fmt.pix.pixelformat,
+						buffers[buf.index].start,
+						out_buf,
+						fmt->fmt.pix.width,
+						fmt->fmt.pix.height);
+		}
+
+		fwrite(out_buf, size, 1, fout);
 		fclose(fout);
 
 		if (i + 1 < n_frames)
@@ -316,7 +461,7 @@ static int userptr_capture_loop(int fd, struct buffer *buffers,
 	return 0;
 }
 
-static int userptr_capture(int fd, int n_frames, char *out_dir,
+static int userptr_capture(int fd, int n_frames, unsigned char *out_buf, char *out_dir,
 			   struct v4l2_format *fmt)
 {
 	struct v4l2_buffer              buf;
@@ -359,7 +504,7 @@ static int userptr_capture(int fd, int n_frames, char *out_dir,
 	xioctl(fd, VIDIOC_STREAMON, &req.type);
 
 	ret = userptr_capture_loop(fd, buffers, req.count, fmt,
-				   n_frames, out_dir);
+				   n_frames, out_buf, out_dir);
 
 	xioctl(fd, VIDIOC_STREAMOFF, &req.type);
 
@@ -438,10 +583,11 @@ static void *produce_buffer (void * p)
  * this array and 'render' them */
 static int mmap_capture_threads(int fd, struct buffer *buffers,
 				int bufpool_size, struct v4l2_format *fmt,
-				int n_frames, char *out_dir, int sleep_ms)
+				int n_frames, unsigned char *out_buf, char *out_dir,
+				int sleep_ms)
 {
 	struct v4l2_buffer		buf;
-	unsigned int			i;
+	unsigned int			i, size;
 	struct buffer_queue		buf_queue;
 	pthread_t			producer;
 	char				out_name[25 + strlen(out_dir)];
@@ -495,7 +641,19 @@ static int mmap_capture_threads(int fd, struct buffer *buffers,
 
 		buf = buf_queue.buffers[buf_queue.read_pos %
 					buf_queue.buffers_size];
-		fwrite(buffers[buf.index].start, buf.bytesused, 1, fout);
+
+		if (!out_buf) {
+			out_buf = buffers[buf.index].start;
+			size = buf.bytesused;
+		} else {
+			size = convert_to_rgb24(fmt->fmt.pix.pixelformat,
+						buffers[buf.index].start,
+						out_buf,
+						fmt->fmt.pix.width,
+						fmt->fmt.pix.height);
+		}
+
+		fwrite(out_buf, size, 1, fout);
 		fclose(fout);
 
 		xioctl(fd, VIDIOC_QBUF, &buf);
@@ -515,12 +673,13 @@ static int mmap_capture_threads(int fd, struct buffer *buffers,
 
 static int mmap_capture_loop(int fd, struct buffer *buffers,
 			     struct v4l2_format *fmt, int n_frames,
-			     char *out_dir)
+			     unsigned char *out_buf, char *out_dir)
 {
 	struct v4l2_buffer		buf;
 	unsigned int			i;
 	struct timeval			tv;
 	int				r;
+	unsigned int			size;
 	fd_set				fds;
 	FILE				*fout;
 	char				out_name[25 + strlen(out_dir)];
@@ -560,7 +719,17 @@ static int mmap_capture_loop(int fd, struct buffer *buffers,
 			fprintf(fout, "P6\n%d %d 255\n",
 				fmt->fmt.pix.width, fmt->fmt.pix.height);
 
-		fwrite(buffers[buf.index].start, buf.bytesused, 1, fout);
+		if (!out_buf) {
+			out_buf = buffers[buf.index].start;
+			size = buf.bytesused;
+		} else {
+			size = convert_to_rgb24(fmt->fmt.pix.pixelformat,
+						buffers[buf.index].start,
+						out_buf,
+						fmt->fmt.pix.width,
+						fmt->fmt.pix.height);
+		}
+		fwrite(out_buf, size, 1, fout);
 		fclose(fout);
 
 		if (i + 1 < n_frames)
@@ -569,8 +738,8 @@ static int mmap_capture_loop(int fd, struct buffer *buffers,
 	return 0;
 }
 
-static int mmap_capture(int fd, int n_frames, char *out_dir,
-			int threads, int sleep_ms,
+static int mmap_capture(int fd, int n_frames, unsigned char *out_buf,
+			char *out_dir, int threads, int sleep_ms,
 			struct v4l2_format *fmt)
 {
 	struct v4l2_buffer              buf;
@@ -627,10 +796,10 @@ static int mmap_capture(int fd, int n_frames, char *out_dir,
 
 	xioctl(fd, VIDIOC_STREAMON, &type);
 	if (threads)
-		mmap_capture_threads(fd, buffers, 2, fmt, n_frames, out_dir,
-				sleep_ms);
+		mmap_capture_threads(fd, buffers, 2, fmt, n_frames, out_buf,
+				     out_dir, sleep_ms);
 	else
-		mmap_capture_loop(fd, buffers, fmt, n_frames, out_dir);
+		mmap_capture_loop(fd, buffers, fmt, n_frames, out_buf, out_dir);
 
 	type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	xioctl(fd, VIDIOC_STREAMOFF, &type);
@@ -755,6 +924,7 @@ int main(int argc, char **argv)
 {
 	struct v4l2_format fmt;
 	int ret = EXIT_FAILURE, fd = -1;
+	unsigned char *out_buf = NULL;
 
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
@@ -786,10 +956,27 @@ int main(int argc, char **argv)
 	fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
 	xioctl(fd, VIDIOC_S_FMT, &fmt);
 
-	if (fmt.fmt.pix.pixelformat != V4L2_PIX_FMT_RGB24) {
+	switch (fmt.fmt.pix.pixelformat) {
+	case V4L2_PIX_FMT_RGB565:
+	case V4L2_PIX_FMT_RGB565X:
+	case V4L2_PIX_FMT_RGB24:
+	case V4L2_PIX_FMT_YUYV:
+	case V4L2_PIX_FMT_UYVY:
+	case V4L2_PIX_FMT_YVYU:
+	case V4L2_PIX_FMT_VYUY:
+		out_buf = malloc(3 * x_res * y_res);
+		if (!out_buf) {
+			perror("Cannot allocate memory");
+			exit(EXIT_FAILURE);
+		}
+
+		break;
+	default:
+		/* Unknown formats */
 		if (libv4l) {
 			char *p = (void *)&fmt.fmt.pix.pixelformat;
-			printf("Libv4l didn't accept RGB24 format. Can't proceed with %c%c%c%c.\n", p[0], p[1], p[2], p[3]);
+			printf("Doesn't know how to convert %c%c%c%c to PPM.\n",
+			       p[0], p[1], p[2], p[3]);
 			exit(EXIT_FAILURE);
 		} else {
 			printf("File output won't be in PPM format.\n");
@@ -803,14 +990,14 @@ int main(int argc, char **argv)
 	/* Calls the desired capture method */
 	switch (method) {
 	case IO_METHOD_READ:
-		ret = read_capture(fd, n_frames, out_dir, &fmt);
+		ret = read_capture(fd, n_frames, out_buf, out_dir, &fmt);
 		break;
 	case IO_METHOD_MMAP:
-		ret = mmap_capture(fd, n_frames, out_dir,
+		ret = mmap_capture(fd, n_frames, out_buf, out_dir,
 				   threads, sleep_ms, &fmt);
 		break;
 	case IO_METHOD_USERPTR:
-		ret = userptr_capture(fd, n_frames, out_dir, &fmt);
+		ret = userptr_capture(fd, n_frames, out_buf, out_dir, &fmt);
 		break;
 	}
 
