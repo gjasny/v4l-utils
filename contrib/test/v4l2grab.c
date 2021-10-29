@@ -788,7 +788,8 @@ int main(int argc, char **argv)
 
 	if (fmt.fmt.pix.pixelformat != V4L2_PIX_FMT_RGB24) {
 		if (libv4l) {
-			printf("Libv4l didn't accept RGB24 format. Can't proceed.\n");
+			char *p = (void *)&fmt.fmt.pix.pixelformat;
+			printf("Libv4l didn't accept RGB24 format. Can't proceed with %c%c%c%c.\n", p[0], p[1], p[2], p[3]);
 			exit(EXIT_FAILURE);
 		} else {
 			printf("File output won't be in PPM format.\n");
