@@ -217,7 +217,7 @@ static void copy_two_pixels(uint32_t fourcc,
         case V4L2_PIX_FMT_UYVY:
         case V4L2_PIX_FMT_YVYU:
         case V4L2_PIX_FMT_VYUY:
-		int y_off, u_off, u, v;
+		int32_t y_off, u_off, u, v;
 
 		y_off = (fourcc == V4L2_PIX_FMT_YUYV || fourcc == V4L2_PIX_FMT_YVYU) ? 0 : 1;
 		u_off = (fourcc == V4L2_PIX_FMT_YUYV || fourcc == V4L2_PIX_FMT_UYVY) ? 0 : 1;
@@ -226,11 +226,30 @@ static void copy_two_pixels(uint32_t fourcc,
 		v = src[1 - y_off][1 - u_off] - 128;
 
 		for (i = 0; i < 2; i++) {
-			int y = src[i][y_off] - 16;
+			int32_t y = src[i][y_off] - 16;
+#if 0
+			/* TODO: add colorspace check logic */
 
-			*(*dst)++ = CLAMP((298 * y + 409 * v + 128) >> 8);
-			*(*dst)++ = CLAMP((298 * y - 100 * u - 208 * v + 128) >> 8);
-			*(*dst)++ = CLAMP((298 * y + 516 * u + 128) >> 8);
+			/*
+			 * ITU-R BT.601 matrix:
+			 *    R = 1.164 * y +    0.0 * u +  1.596 * v
+			 *    G = 1.164 * y + -0.392 * u + -0.813 * v
+			 *    B = 1.164 * y +  2.017 * u +    0.0 * v
+			 */
+			*(*dst)++ = CLAMP((76284 * y              + 104595 * v + 32768) >> 16);
+			*(*dst)++ = CLAMP((76284 * y -  25690 * u -  53281 * v + 32768) >> 16);
+			*(*dst)++ = CLAMP((76284 * y + 132186 * u              + 32768) >> 16);
+#else
+			/*
+			 * ITU-R BT.709 matrix:
+			 *    R = 1.164 * y +    0.0 * u +  1.793 * v
+			 *    G = 1.164 * y + -0.213 * u + -0.533 * v
+			 *    B = 1.164 * y +  2.112 * u +    0.0 * v
+			 */
+			*(*dst)++ = CLAMP((76284 * y              + 117506 * v + 32768) >> 16);
+			*(*dst)++ = CLAMP((76284 * y -  13959 * u -  34931 * v + 32768) >> 16);
+			*(*dst)++ = CLAMP((76284 * y + 138412 * u              + 32768) >> 16);
+#endif
 		}
 		break;
 	default:
