@@ -263,13 +263,15 @@ static void copy_two_pixels(uint32_t fourcc,
 	}
 }
 
-static unsigned int convert_to_rgb24(uint32_t fourcc, unsigned char *p_in,
-				     unsigned char *p_out, uint32_t width,
-				     uint32_t height)
+static unsigned int convert_to_rgb24(struct v4l2_format *fmt, unsigned char *p_in,
+				     unsigned char *p_out)
 {
 	unsigned char *p_start, *p_in_x[2];
 	unsigned int bytes_per_pixel;
 	unsigned int x, y, depth;
+	uint32_t fourcc = fmt->fmt.pix.pixelformat;
+	uint32_t width = fmt->fmt.pix.width;
+	uint32_t height = fmt->fmt.pix.height;
 
 	switch (fourcc) {
 	case V4L2_PIX_FMT_BGR24:
@@ -361,11 +363,7 @@ static int read_capture_loop(int fd, struct buffer *buffers,
 		if (!out_buf) {
 			out_buf = buffers[0].start;
 		} else {
-			size = convert_to_rgb24(fmt->fmt.pix.pixelformat,
-						buffers[0].start,
-						out_buf,
-						fmt->fmt.pix.width,
-						fmt->fmt.pix.height);
+			size = convert_to_rgb24(fmt, buffers[0].start, out_buf);
 		}
 
 		fwrite(out_buf, size, 1, fout);
@@ -441,11 +439,8 @@ static int userptr_capture_loop(int fd, struct buffer *buffers,
 			out_buf = buffers[buf.index].start;
 			size = buf.bytesused;
 		} else {
-			size = convert_to_rgb24(fmt->fmt.pix.pixelformat,
-						buffers[buf.index].start,
-						out_buf,
-						fmt->fmt.pix.width,
-						fmt->fmt.pix.height);
+			size = convert_to_rgb24(fmt, buffers[buf.index].start,
+						out_buf);
 		}
 
 		fwrite(out_buf, size, 1, fout);
@@ -642,11 +637,8 @@ static int mmap_capture_threads(int fd, struct buffer *buffers,
 			out_buf = buffers[buf.index].start;
 			size = buf.bytesused;
 		} else {
-			size = convert_to_rgb24(fmt->fmt.pix.pixelformat,
-						buffers[buf.index].start,
-						out_buf,
-						fmt->fmt.pix.width,
-						fmt->fmt.pix.height);
+			size = convert_to_rgb24(fmt, buffers[buf.index].start,
+						out_buf);
 		}
 
 		fwrite(out_buf, size, 1, fout);
@@ -719,11 +711,8 @@ static int mmap_capture_loop(int fd, struct buffer *buffers,
 			out_buf = buffers[buf.index].start;
 			size = buf.bytesused;
 		} else {
-			size = convert_to_rgb24(fmt->fmt.pix.pixelformat,
-						buffers[buf.index].start,
-						out_buf,
-						fmt->fmt.pix.width,
-						fmt->fmt.pix.height);
+			size = convert_to_rgb24(fmt, buffers[buf.index].start,
+						out_buf);
 		}
 		fwrite(out_buf, size, 1, fout);
 		fclose(fout);
