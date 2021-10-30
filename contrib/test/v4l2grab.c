@@ -187,10 +187,11 @@ static void querycap(char *fname, int fd, enum io_method method)
 
 #define CLAMP(a)	((a) < 0 ? 0 : (a) > 255 ? 255 : (a))
 
-static void copy_two_pixels(uint32_t fourcc,
+static void copy_two_pixels(uint32_t fourcc, enum v4l2_ycbcr_encoding enc,
 			    unsigned char *src[2], unsigned char **dst,
 			    int ypos)
 {
+	int32_t y_off, u_off, u, v;
 	int i;
 
 	switch (fourcc) {
@@ -212,13 +213,10 @@ static void copy_two_pixels(uint32_t fourcc,
 			*(*dst)++ = (unsigned char)((pix & 0x1f) << 3) | 0x07;
 		}
 		break;
-
         case V4L2_PIX_FMT_YUYV:
         case V4L2_PIX_FMT_UYVY:
         case V4L2_PIX_FMT_YVYU:
         case V4L2_PIX_FMT_VYUY:
-		int32_t y_off, u_off, u, v;
-
 		y_off = (fourcc == V4L2_PIX_FMT_YUYV || fourcc == V4L2_PIX_FMT_YVYU) ? 0 : 1;
 		u_off = (fourcc == V4L2_PIX_FMT_YUYV || fourcc == V4L2_PIX_FMT_UYVY) ? 0 : 1;
 
@@ -227,29 +225,37 @@ static void copy_two_pixels(uint32_t fourcc,
 
 		for (i = 0; i < 2; i++) {
 			int32_t y = src[i][y_off] - 16;
-#if 0
-			/* TODO: add colorspace check logic */
 
 			/*
-			 * ITU-R BT.601 matrix:
-			 *    R = 1.164 * y +    0.0 * u +  1.596 * v
-			 *    G = 1.164 * y + -0.392 * u + -0.813 * v
-			 *    B = 1.164 * y +  2.017 * u +    0.0 * v
+			 * TODO: add BT2020 and SMPTE240M and better handle
+			 * other differences
 			 */
-			*(*dst)++ = CLAMP((76284 * y              + 104595 * v + 32768) >> 16);
-			*(*dst)++ = CLAMP((76284 * y -  25690 * u -  53281 * v + 32768) >> 16);
-			*(*dst)++ = CLAMP((76284 * y + 132186 * u              + 32768) >> 16);
-#else
-			/*
-			 * ITU-R BT.709 matrix:
-			 *    R = 1.164 * y +    0.0 * u +  1.793 * v
-			 *    G = 1.164 * y + -0.213 * u + -0.533 * v
-			 *    B = 1.164 * y +  2.112 * u +    0.0 * v
-			 */
-			*(*dst)++ = CLAMP((76284 * y              + 117506 * v + 32768) >> 16);
-			*(*dst)++ = CLAMP((76284 * y -  13959 * u -  34931 * v + 32768) >> 16);
-			*(*dst)++ = CLAMP((76284 * y + 138412 * u              + 32768) >> 16);
-#endif
+			switch (enc) {
+			case V4L2_YCBCR_ENC_601:
+			case V4L2_YCBCR_ENC_XV601:
+			case V4L2_YCBCR_ENC_SYCC:
+				/*
+				* ITU-R BT.601 matrix:
+				*    R = 1.164 * y +    0.0 * u +  1.596 * v
+				*    G = 1.164 * y + -0.392 * u + -0.813 * v
+				*    B = 1.164 * y +  2.017 * u +    0.0 * v
+				*/
+				*(*dst)++ = CLAMP((76284 * y              + 104595 * v + 32768) >> 16);
+				*(*dst)++ = CLAMP((76284 * y -  25690 * u -  53281 * v + 32768) >> 16);
+				*(*dst)++ = CLAMP((76284 * y + 132186 * u              + 32768) >> 16);
+				break;
+			default:
+				/*
+				* ITU-R BT.709 matrix:
+				*    R = 1.164 * y +    0.0 * u +  1.793 * v
+				*    G = 1.164 * y + -0.213 * u + -0.533 * v
+				*    B = 1.164 * y +  2.112 * u +    0.0 * v
+				*/
+				*(*dst)++ = CLAMP((76284 * y              + 117506 * v + 32768) >> 16);
+				*(*dst)++ = CLAMP((76284 * y -  13959 * u -  34931 * v + 32768) >> 16);
+				*(*dst)++ = CLAMP((76284 * y + 138412 * u              + 32768) >> 16);
+				break;
+			}
 		}
 		break;
 	default:
@@ -272,6 +278,12 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt, unsigned char *p_i
 	uint32_t fourcc = fmt->fmt.pix.pixelformat;
 	uint32_t width = fmt->fmt.pix.width;
 	uint32_t height = fmt->fmt.pix.height;
+	enum v4l2_ycbcr_encoding enc;
+
+	if (fmt->fmt.pix.ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT)
+		enc = V4L2_MAP_YCBCR_ENC_DEFAULT(fmt->fmt.pix.colorspace);
+	else
+		enc = fmt->fmt.pix.ycbcr_enc;
 
 	switch (fourcc) {
 	case V4L2_PIX_FMT_BGR24:
@@ -299,7 +311,7 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt, unsigned char *p_i
 			p_in_x[1] = p_in;
 			p_in += bytes_per_pixel;
 
-			copy_two_pixels(fourcc, p_in_x, &p_out, y);
+			copy_two_pixels(fourcc, enc, p_in_x, &p_out, y);
 		}
 	}
 
