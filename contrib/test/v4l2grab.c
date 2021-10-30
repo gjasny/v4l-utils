@@ -191,32 +191,25 @@ static void copy_two_pixels(uint32_t fourcc,
 			    unsigned char *src[2], unsigned char **dst,
 			    int ypos)
 {
-	unsigned char _r[2], _g[2], _b[2], *r, *g, *b;
 	int i;
-
-	/* Step 1: read two consecutive pixels from src pointer */
-
-	r = _r;
-	g = _g;
-	b = _b;
 
 	switch (fourcc) {
 	case V4L2_PIX_FMT_RGB565: /* rrrrrggg gggbbbbb */
 		for (i = 0; i < 2; i++) {
 			uint16_t pix = (src[i][0] << 8) + src[i][1];
 
-			*r++ = (unsigned char)(((pix & 0xf800) >> 11) << 3) | 0x07;
-			*g++ = (unsigned char)((((pix & 0x07e0) >> 5)) << 2) | 0x03;
-			*b++ = (unsigned char)((pix & 0x1f) << 3) | 0x07;
+			*(*dst)++ = (unsigned char)(((pix & 0xf800) >> 11) << 3) | 0x07;
+			*(*dst)++ = (unsigned char)((((pix & 0x07e0) >> 5)) << 2) | 0x03;
+			*(*dst)++ = (unsigned char)((pix & 0x1f) << 3) | 0x07;
 		}
 		break;
 	case V4L2_PIX_FMT_RGB565X: /* gggbbbbb rrrrrggg */
 		for (i = 0; i < 2; i++) {
 			uint16_t pix = (src[i][1] << 8) + src[i][0];
 
-			*r++ = (unsigned char)(((pix & 0xf800) >> 11) << 3) | 0x07;
-			*g++ = (unsigned char)((((pix & 0x07e0) >> 5)) << 2) | 0x03;
-			*b++ = (unsigned char)((pix & 0x1f) << 3) | 0x07;
+			*(*dst)++ = (unsigned char)(((pix & 0xf800) >> 11) << 3) | 0x07;
+			*(*dst)++ = (unsigned char)((((pix & 0x07e0) >> 5)) << 2) | 0x03;
+			*(*dst)++ = (unsigned char)((pix & 0x1f) << 3) | 0x07;
 		}
 		break;
 
@@ -229,41 +222,25 @@ static void copy_two_pixels(uint32_t fourcc,
 		y_off = (fourcc == V4L2_PIX_FMT_YUYV || fourcc == V4L2_PIX_FMT_YVYU) ? 0 : 1;
 		u_off = (fourcc == V4L2_PIX_FMT_YUYV || fourcc == V4L2_PIX_FMT_UYVY) ? 0 : 1;
 
-		u = src[1 - y_off][u_off];
-		v = src[1 - y_off][1 - u_off];
+		u = src[1 - y_off][u_off] - 128;
+		v = src[1 - y_off][1 - u_off] - 128;
 
 		for (i = 0; i < 2; i++) {
-			int y = src[i][y_off];
+			int y = src[i][y_off] - 16;
 
-			int luma = y - 16;
-			int cr = u - 128;
-			int cb = v - 128;
-
-			*r++ = CLAMP((298 * luma + 409 * cb + 128) >> 8);
-			*g++ = CLAMP((298 * luma - 100 * cr - 208 * cb + 128) >> 8);
-			*b++ = CLAMP((298 * luma + 516 * cr + 128) >> 8);
+			*(*dst)++ = CLAMP((298 * y + 409 * v + 128) >> 8);
+			*(*dst)++ = CLAMP((298 * y - 100 * u - 208 * v + 128) >> 8);
+			*(*dst)++ = CLAMP((298 * y + 516 * u + 128) >> 8);
 		}
 		break;
 	default:
 	case V4L2_PIX_FMT_BGR24:
 		for (i = 0; i < 2; i++) {
-			*b++ = src[i][0];
-			*g++ = src[i][1];
-			*r++ = src[i][2];
+			*(*dst)++ = src[i][2];
+			*(*dst)++ = src[i][1];
+			*(*dst)++ = src[i][0];
 		}
 		break;
-	}
-
-	/* Step 2: store two consecutive points in RGB24 format */
-
-	r = _r;
-	g = _g;
-	b = _b;
-
-	for (i = 0; i < 2; i++) {
-		*(*dst)++ = *r++;
-		*(*dst)++ = *g++;
-		*(*dst)++ = *b++;
 	}
 }
 
