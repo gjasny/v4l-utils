@@ -282,6 +282,34 @@ static void copy_two_pixels(struct v4l2_format *fmt,
 			convert_yuv(enc, plane0[y_off + (i << 1)], u, v, dst);
 
 		break;
+	case V4L2_PIX_FMT_NV12:
+	case V4L2_PIX_FMT_NV21:
+		if (fourcc == V4L2_PIX_FMT_NV12) {
+			u = plane1[0];
+			v = plane1[1];
+		} else {
+			u = plane1[1];
+			v = plane1[0];
+		}
+
+		for (i = 0; i < 2; i++)
+			convert_yuv(enc, plane0[i], u, v, dst);
+
+		break;
+	case V4L2_PIX_FMT_YUV420:
+	case V4L2_PIX_FMT_YVU420:
+		if (fourcc == V4L2_PIX_FMT_YUV420) {
+			u = plane1[0];
+			v = plane2[0];
+		} else {
+			u = plane2[0];
+			v = plane1[0];
+		}
+
+		for (i = 0; i < 2; i++)
+			convert_yuv(enc, plane0[i], u, v, dst);
+
+		break;
 	default:
 	case V4L2_PIX_FMT_BGR24:
 		for (i = 0; i < 2; i++) {
@@ -324,6 +352,19 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt,
 	switch (fmt->fmt.pix.pixelformat) {
 	case V4L2_PIX_FMT_BGR24:
 		depth = 24;
+		break;
+	case V4L2_PIX_FMT_NV12:
+	case V4L2_PIX_FMT_NV21:
+		num_planes = 2;
+		depth = 8;				/* Depth of plane 0 */
+		h_dec = 1;
+		break;
+	case V4L2_PIX_FMT_YUV420:
+	case V4L2_PIX_FMT_YVU420:
+		num_planes = 3;
+		depth = 8;				/* Depth of plane 0 */
+		h_dec = 1;
+		w_dec = 1;
 		break;
 	case V4L2_PIX_FMT_RGB565:
 	case V4L2_PIX_FMT_RGB565X:
@@ -1010,6 +1051,10 @@ int main(int argc, char **argv)
 	case V4L2_PIX_FMT_UYVY:
 	case V4L2_PIX_FMT_YVYU:
 	case V4L2_PIX_FMT_VYUY:
+	case V4L2_PIX_FMT_NV12:
+	case V4L2_PIX_FMT_NV21:
+	case V4L2_PIX_FMT_YUV420:
+	case V4L2_PIX_FMT_YVU420:
 		out_buf = malloc(3 * x_res * y_res);
 		if (!out_buf) {
 			perror("Cannot allocate memory");
