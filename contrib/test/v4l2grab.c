@@ -235,7 +235,9 @@ static void convert_yuv(enum v4l2_ycbcr_encoding enc,
 
 static void copy_two_pixels(struct v4l2_format *fmt,
 			    enum v4l2_ycbcr_encoding enc,
-			    unsigned char *src,
+			    unsigned char *plane0,
+			    unsigned char *plane1,
+			    unsigned char *plane2,
 			    unsigned char **dst)
 {
 	uint32_t fourcc = fmt->fmt.pix.pixelformat;
@@ -246,24 +248,24 @@ static void copy_two_pixels(struct v4l2_format *fmt,
 	switch (fmt->fmt.pix.pixelformat) {
 	case V4L2_PIX_FMT_RGB565: /* rrrrrggg gggbbbbb */
 		for (i = 0; i < 2; i++) {
-			pix = (src[0] << 8) + src[1];
+			pix = (plane0[0] << 8) + plane0[1];
 
 			*(*dst)++ = (unsigned char)(((pix & 0xf800) >> 11) << 3) | 0x07;
 			*(*dst)++ = (unsigned char)((((pix & 0x07e0) >> 5)) << 2) | 0x03;
 			*(*dst)++ = (unsigned char)((pix & 0x1f) << 3) | 0x07;
 
-			src += 2;
+			plane0 += 2;
 		}
 		break;
 	case V4L2_PIX_FMT_RGB565X: /* gggbbbbb rrrrrggg */
 		for (i = 0; i < 2; i++) {
-			pix = (src[1] << 8) + src[0];
+			pix = (plane0[1] << 8) + plane0[0];
 
 			*(*dst)++ = (unsigned char)(((pix & 0xf800) >> 11) << 3) | 0x07;
 			*(*dst)++ = (unsigned char)((((pix & 0x07e0) >> 5)) << 2) | 0x03;
 			*(*dst)++ = (unsigned char)((pix & 0x1f) << 3) | 0x07;
 
-			src += 2;
+			plane0 += 2;
 		}
 		break;
 	case V4L2_PIX_FMT_YUYV:
@@ -273,34 +275,45 @@ static void copy_two_pixels(struct v4l2_format *fmt,
 		y_off = (fourcc == V4L2_PIX_FMT_YUYV || fourcc == V4L2_PIX_FMT_YVYU) ? 0 : 1;
 		u_off = (fourcc == V4L2_PIX_FMT_YUYV || fourcc == V4L2_PIX_FMT_UYVY) ? 0 : 2;
 
-		u = src[(1 - y_off) + u_off];
-		v = src[(1 - y_off) + (2 - u_off)];
+		u = plane0[(1 - y_off) + u_off];
+		v = plane0[(1 - y_off) + (2 - u_off)];
 
 		for (i = 0; i < 2; i++)
-			convert_yuv(enc, src[y_off + (i << 1)], u, v, dst);
+			convert_yuv(enc, plane0[y_off + (i << 1)], u, v, dst);
 
 		break;
 	default:
 	case V4L2_PIX_FMT_BGR24:
 		for (i = 0; i < 2; i++) {
-			*(*dst)++ = src[2];
-			*(*dst)++ = src[1];
-			*(*dst)++ = src[0];
+			*(*dst)++ = plane0[2];
+			*(*dst)++ = plane0[1];
+			*(*dst)++ = plane0[0];
 
-			src += 3;
+			plane0 += 3;
 		}
 		break;
 	}
 }
 
-static unsigned int convert_to_rgb24(struct v4l2_format *fmt, unsigned char *p_in,
+static unsigned int convert_to_rgb24(struct v4l2_format *fmt,
+				     unsigned char *plane0,
 				     unsigned char *p_out)
 {
-	unsigned char *p_start;
-	unsigned int x, y, depth;
 	uint32_t width = fmt->fmt.pix.width;
 	uint32_t height = fmt->fmt.pix.height;
+	uint32_t bytesperline = fmt->fmt.pix.bytesperline;
+	unsigned char *plane0_start = plane0;
+	unsigned char *plane1_start = NULL;
+	unsigned char *plane2_start = NULL;
+	unsigned char *plane1 = NULL;
+	unsigned char *plane2 = NULL;
 	enum v4l2_ycbcr_encoding enc;
+	unsigned int x, y, depth;
+	uint32_t num_planes = 1;
+	unsigned char *p_start;
+	uint32_t plane0_size;
+	uint32_t w_dec = 0;
+	uint32_t h_dec = 0;
 
 	if (fmt->fmt.pix.ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT)
 		enc = V4L2_MAP_YCBCR_ENC_DEFAULT(fmt->fmt.pix.colorspace);
@@ -325,11 +338,29 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt, unsigned char *p_i
 
 	p_start = p_out;
 
-	for (y = 0; y < height; y++) {
-		for (x = 0; x < width >> 1; x++) {
-			copy_two_pixels(fmt, enc, p_in, &p_out);
+	if (num_planes > 1) {
+		plane0_size = (width * height * depth) >> 3;
+		plane1_start = plane0_start + plane0_size;
+	}
 
-			p_in += depth >> 2;
+	if (num_planes > 2)
+		    plane2_start = plane1_start + (plane0_size >> (w_dec + h_dec));
+
+	for (y = 0; y < height; y++) {
+		plane0 = plane0_start + bytesperline * y;
+		if (num_planes > 1)
+			plane1 = plane1_start + (bytesperline >> w_dec) * (y >> h_dec);
+		if (num_planes > 2)
+			plane2 = plane2_start + (bytesperline >> w_dec) * (y >> h_dec);
+
+		for (x = 0; x < width >> 1; x++) {
+			copy_two_pixels(fmt, enc, plane0, plane1, plane2, &p_out);
+
+			plane0 += depth >> 2;
+			if (num_planes > 1)
+				plane1 += depth >> (2 + w_dec);
+			if (num_planes > 2)
+				plane2 += depth >> (2 + w_dec);
 		}
 	}
 
