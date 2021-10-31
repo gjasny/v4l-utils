@@ -310,6 +310,28 @@ static void copy_two_pixels(struct v4l2_format *fmt,
 			convert_yuv(enc, plane0[i], u, v, dst);
 
 		break;
+	case V4L2_PIX_FMT_RGB32:
+	case V4L2_PIX_FMT_ARGB32:
+	case V4L2_PIX_FMT_XRGB32:
+		for (i = 0; i < 2; i++) {
+			*(*dst)++ = plane0[1];
+			*(*dst)++ = plane0[2];
+			*(*dst)++ = plane0[3];
+
+			plane0 += 4;
+		}
+		break;
+	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_ABGR32:
+	case V4L2_PIX_FMT_XBGR32:
+		for (i = 0; i < 2; i++) {
+			*(*dst)++ = plane0[2];
+			*(*dst)++ = plane0[1];
+			*(*dst)++ = plane0[0];
+
+			plane0 += 4;
+		}
+		break;
 	default:
 	case V4L2_PIX_FMT_BGR24:
 		for (i = 0; i < 2; i++) {
@@ -348,10 +370,17 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt,
 	else
 		enc = fmt->fmt.pix.ycbcr_enc;
 
-	/* Depth should be multiple of 4 */
 	switch (fmt->fmt.pix.pixelformat) {
 	case V4L2_PIX_FMT_BGR24:
 		depth = 24;
+		break;
+	case V4L2_PIX_FMT_RGB32:
+	case V4L2_PIX_FMT_ARGB32:
+	case V4L2_PIX_FMT_XRGB32:
+	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_ABGR32:
+	case V4L2_PIX_FMT_XBGR32:
+		depth = 32;
 		break;
 	case V4L2_PIX_FMT_NV12:
 	case V4L2_PIX_FMT_NV21:
@@ -1047,6 +1076,12 @@ int main(int argc, char **argv)
 	case V4L2_PIX_FMT_RGB565:
 	case V4L2_PIX_FMT_RGB565X:
 	case V4L2_PIX_FMT_RGB24:
+	case V4L2_PIX_FMT_RGB32:
+	case V4L2_PIX_FMT_ARGB32:
+	case V4L2_PIX_FMT_XRGB32:
+	case V4L2_PIX_FMT_BGR32:
+	case V4L2_PIX_FMT_ABGR32:
+	case V4L2_PIX_FMT_XBGR32:
 	case V4L2_PIX_FMT_YUYV:
 	case V4L2_PIX_FMT_UYVY:
 	case V4L2_PIX_FMT_YVYU:
