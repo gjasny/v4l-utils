@@ -187,83 +187,107 @@ static void querycap(char *fname, int fd, enum io_method method)
 
 #define CLAMP(a)	((a) < 0 ? 0 : (a) > 255 ? 255 : (a))
 
-static void copy_two_pixels(uint32_t fourcc, enum v4l2_ycbcr_encoding enc,
-			    unsigned char *src[2], unsigned char **dst,
-			    int ypos)
+static void convert_yuv(enum v4l2_ycbcr_encoding enc,
+			int32_t y, int32_t u, int32_t v,
+			unsigned char **dst)
 {
+	int full_scale = 1; // FIXME: add support for non-full_scale
+
+	if (full_scale)
+		y *= 65536;
+	else
+		y = (y - 16) * 76284;
+
+	u -= 128;
+	v -= 128;
+
+	/*
+	 * TODO: add BT2020 and SMPTE240M and better handle
+	 * other differences
+	 */
+	switch (enc) {
+	case V4L2_YCBCR_ENC_601:
+	case V4L2_YCBCR_ENC_XV601:
+	case V4L2_YCBCR_ENC_SYCC:
+		/*
+		* ITU-R BT.601 matrix:
+		*    R = 1.164 * y +    0.0 * u +  1.596 * v
+		*    G = 1.164 * y + -0.392 * u + -0.813 * v
+		*    B = 1.164 * y +  2.017 * u +    0.0 * v
+		*/
+		*(*dst)++ = CLAMP((y              + 104595 * v) >> 16);
+		*(*dst)++ = CLAMP((y -  25690 * u -  53281 * v) >> 16);
+		*(*dst)++ = CLAMP((y + 132186 * u             ) >> 16);
+		break;
+	default:
+		/*
+		* ITU-R BT.709 matrix:
+		*    R = 1.164 * y +    0.0 * u +  1.793 * v
+		*    G = 1.164 * y + -0.213 * u + -0.533 * v
+		*    B = 1.164 * y +  2.112 * u +    0.0 * v
+		*/
+		*(*dst)++ = CLAMP((y              + 117506 * v) >> 16);
+		*(*dst)++ = CLAMP((y -  13959 * u -  34931 * v) >> 16);
+		*(*dst)++ = CLAMP((y + 138412 * u             ) >> 16);
+		break;
+	}
+}
+
+static void copy_two_pixels(struct v4l2_format *fmt,
+			    enum v4l2_ycbcr_encoding enc,
+			    unsigned char *src,
+			    unsigned char **dst)
+{
+	uint32_t fourcc = fmt->fmt.pix.pixelformat;
 	int32_t y_off, u_off, u, v;
+	uint16_t pix;
 	int i;
 
-	switch (fourcc) {
+	switch (fmt->fmt.pix.pixelformat) {
 	case V4L2_PIX_FMT_RGB565: /* rrrrrggg gggbbbbb */
 		for (i = 0; i < 2; i++) {
-			uint16_t pix = (src[i][0] << 8) + src[i][1];
+			pix = (src[0] << 8) + src[1];
 
 			*(*dst)++ = (unsigned char)(((pix & 0xf800) >> 11) << 3) | 0x07;
 			*(*dst)++ = (unsigned char)((((pix & 0x07e0) >> 5)) << 2) | 0x03;
 			*(*dst)++ = (unsigned char)((pix & 0x1f) << 3) | 0x07;
+
+			src += 2;
 		}
 		break;
 	case V4L2_PIX_FMT_RGB565X: /* gggbbbbb rrrrrggg */
 		for (i = 0; i < 2; i++) {
-			uint16_t pix = (src[i][1] << 8) + src[i][0];
+			pix = (src[1] << 8) + src[0];
 
 			*(*dst)++ = (unsigned char)(((pix & 0xf800) >> 11) << 3) | 0x07;
 			*(*dst)++ = (unsigned char)((((pix & 0x07e0) >> 5)) << 2) | 0x03;
 			*(*dst)++ = (unsigned char)((pix & 0x1f) << 3) | 0x07;
+
+			src += 2;
 		}
 		break;
-        case V4L2_PIX_FMT_YUYV:
-        case V4L2_PIX_FMT_UYVY:
-        case V4L2_PIX_FMT_YVYU:
-        case V4L2_PIX_FMT_VYUY:
+	case V4L2_PIX_FMT_YUYV:
+	case V4L2_PIX_FMT_UYVY:
+	case V4L2_PIX_FMT_YVYU:
+	case V4L2_PIX_FMT_VYUY:
 		y_off = (fourcc == V4L2_PIX_FMT_YUYV || fourcc == V4L2_PIX_FMT_YVYU) ? 0 : 1;
-		u_off = (fourcc == V4L2_PIX_FMT_YUYV || fourcc == V4L2_PIX_FMT_UYVY) ? 0 : 1;
+		u_off = (fourcc == V4L2_PIX_FMT_YUYV || fourcc == V4L2_PIX_FMT_UYVY) ? 0 : 2;
 
-		u = src[1 - y_off][u_off] - 128;
-		v = src[1 - y_off][1 - u_off] - 128;
+		u = src[(1 - y_off) + u_off];
+		v = src[(1 - y_off) + (2 - u_off)];
 
-		for (i = 0; i < 2; i++) {
-			int32_t y = src[i][y_off] - 16;
+		for (i = 0; i < 2; i++)
+			convert_yuv(enc, src[y_off + (i << 1)], u, v, dst);
 
-			/*
-			 * TODO: add BT2020 and SMPTE240M and better handle
-			 * other differences
-			 */
-			switch (enc) {
-			case V4L2_YCBCR_ENC_601:
-			case V4L2_YCBCR_ENC_XV601:
-			case V4L2_YCBCR_ENC_SYCC:
-				/*
-				* ITU-R BT.601 matrix:
-				*    R = 1.164 * y +    0.0 * u +  1.596 * v
-				*    G = 1.164 * y + -0.392 * u + -0.813 * v
-				*    B = 1.164 * y +  2.017 * u +    0.0 * v
-				*/
-				*(*dst)++ = CLAMP((76284 * y              + 104595 * v + 32768) >> 16);
-				*(*dst)++ = CLAMP((76284 * y -  25690 * u -  53281 * v + 32768) >> 16);
-				*(*dst)++ = CLAMP((76284 * y + 132186 * u              + 32768) >> 16);
-				break;
-			default:
-				/*
-				* ITU-R BT.709 matrix:
-				*    R = 1.164 * y +    0.0 * u +  1.793 * v
-				*    G = 1.164 * y + -0.213 * u + -0.533 * v
-				*    B = 1.164 * y +  2.112 * u +    0.0 * v
-				*/
-				*(*dst)++ = CLAMP((76284 * y              + 117506 * v + 32768) >> 16);
-				*(*dst)++ = CLAMP((76284 * y -  13959 * u -  34931 * v + 32768) >> 16);
-				*(*dst)++ = CLAMP((76284 * y + 138412 * u              + 32768) >> 16);
-				break;
-			}
-		}
 		break;
 	default:
 	case V4L2_PIX_FMT_BGR24:
 		for (i = 0; i < 2; i++) {
-			*(*dst)++ = src[i][2];
-			*(*dst)++ = src[i][1];
-			*(*dst)++ = src[i][0];
+			*(*dst)++ = src[2];
+			*(*dst)++ = src[1];
+			*(*dst)++ = src[0];
+
+			src += 3;
 		}
 		break;
 	}
@@ -272,10 +296,8 @@ static void copy_two_pixels(uint32_t fourcc, enum v4l2_ycbcr_encoding enc,
 static unsigned int convert_to_rgb24(struct v4l2_format *fmt, unsigned char *p_in,
 				     unsigned char *p_out)
 {
-	unsigned char *p_start, *p_in_x[2];
-	unsigned int bytes_per_pixel;
+	unsigned char *p_start;
 	unsigned int x, y, depth;
-	uint32_t fourcc = fmt->fmt.pix.pixelformat;
 	uint32_t width = fmt->fmt.pix.width;
 	uint32_t height = fmt->fmt.pix.height;
 	enum v4l2_ycbcr_encoding enc;
@@ -285,7 +307,8 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt, unsigned char *p_i
 	else
 		enc = fmt->fmt.pix.ycbcr_enc;
 
-	switch (fourcc) {
+	/* Depth should be multiple of 4 */
+	switch (fmt->fmt.pix.pixelformat) {
 	case V4L2_PIX_FMT_BGR24:
 		depth = 24;
 		break;
@@ -301,17 +324,12 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt, unsigned char *p_i
 	}
 
 	p_start = p_out;
-	bytes_per_pixel = depth >> 3;
 
 	for (y = 0; y < height; y++) {
-		for (x = 0; x < width; x++) {
-			p_in_x[0] = p_in;
-			x++;
-			p_in += bytes_per_pixel;
-			p_in_x[1] = p_in;
-			p_in += bytes_per_pixel;
+		for (x = 0; x < width >> 1; x++) {
+			copy_two_pixels(fmt, enc, p_in, &p_out);
 
-			copy_two_pixels(fourcc, enc, p_in_x, &p_out, y);
+			p_in += depth >> 2;
 		}
 	}
 
