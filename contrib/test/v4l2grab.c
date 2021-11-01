@@ -491,7 +491,7 @@ static int read_capture_loop(int fd, struct buffer *buffers,
 			fprintf(fout, "P6\n%d %d 255\n",
 				fmt->fmt.pix.width, fmt->fmt.pix.height);
 
-		if (!out_buf) {
+		if (!ppm_output || !out_buf) {
 			out_buf = buffers[0].start;
 		} else {
 			size = convert_to_rgb24(fmt, buffers[0].start, out_buf);
@@ -566,7 +566,7 @@ static int userptr_capture_loop(int fd, struct buffer *buffers,
 			fprintf(fout, "P6\n%d %d 255\n",
 				fmt->fmt.pix.width, fmt->fmt.pix.height);
 
-		if (!out_buf) {
+		if (!ppm_output || !out_buf) {
 			out_buf = buffers[buf.index].start;
 			size = buf.bytesused;
 		} else {
@@ -764,7 +764,7 @@ static int mmap_capture_threads(int fd, struct buffer *buffers,
 		buf = buf_queue.buffers[buf_queue.read_pos %
 					buf_queue.buffers_size];
 
-		if (!out_buf) {
+		if (!ppm_output || !out_buf) {
 			out_buf = buffers[buf.index].start;
 			size = buf.bytesused;
 		} else {
