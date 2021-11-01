@@ -947,6 +947,7 @@ static const struct argp_option options[] = {
 	{"yres",	'y',	"YRES",		0,	"vertical resolution", 0},
 	{"fourcc",	'f',	"FOURCC",	0,	"Linux fourcc code", 0},
 	{"userptr",	'u',	NULL,		0,	"Use user-defined memory capture method", 0},
+	{"raw",		'R',	NULL,		0,	"Save image in raw mode", 0},
 	{"read",	'r',	NULL,		0,	"Use read capture method", 0},
 	{"n-frames",	'n',	"NFRAMES",	0,	"number of frames to capture", 0},
 	{"thread-enable", 't',	"THREADS",	0,	"if different threads should capture and save", 0},
@@ -964,6 +965,7 @@ static int	n_frames = 20;
 static int	threads = 0;
 static int	block = 0;
 static int	sleep_ms = 0;
+static int	raw_mode = 0;
 static uint32_t fourcc = V4L2_PIX_FMT_RGB24;
 enum io_method  method = IO_METHOD_MMAP;
 
@@ -1017,6 +1019,9 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		break;
 	case 'r':
 		method = IO_METHOD_READ;
+		break;
+	case 'R':
+		raw_mode = 1;
 		break;
 	case 's':
 		val = atoi(arg);
@@ -1072,41 +1077,48 @@ int main(int argc, char **argv)
 	fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
 	xioctl(fd, VIDIOC_S_FMT, &fmt);
 
-	switch (fmt.fmt.pix.pixelformat) {
-	case V4L2_PIX_FMT_RGB565:
-	case V4L2_PIX_FMT_RGB565X:
-	case V4L2_PIX_FMT_RGB24:
-	case V4L2_PIX_FMT_RGB32:
-	case V4L2_PIX_FMT_ARGB32:
-	case V4L2_PIX_FMT_XRGB32:
-	case V4L2_PIX_FMT_BGR32:
-	case V4L2_PIX_FMT_ABGR32:
-	case V4L2_PIX_FMT_XBGR32:
-	case V4L2_PIX_FMT_YUYV:
-	case V4L2_PIX_FMT_UYVY:
-	case V4L2_PIX_FMT_YVYU:
-	case V4L2_PIX_FMT_VYUY:
-	case V4L2_PIX_FMT_NV12:
-	case V4L2_PIX_FMT_NV21:
-	case V4L2_PIX_FMT_YUV420:
-	case V4L2_PIX_FMT_YVU420:
-		out_buf = malloc(3 * x_res * y_res);
-		if (!out_buf) {
-			perror("Cannot allocate memory");
-			exit(EXIT_FAILURE);
-		}
+	if (raw_mode) {
+		printf("Raw mode: libv4l won't be used.\n");
 
-		break;
-	default:
-		/* Unknown formats */
-		if (libv4l) {
-			char *p = (void *)&fmt.fmt.pix.pixelformat;
-			printf("Doesn't know how to convert %c%c%c%c to PPM.\n",
-			       p[0], p[1], p[2], p[3]);
-			exit(EXIT_FAILURE);
-		} else {
-			printf("File output won't be in PPM format.\n");
-			ppm_output = 0;
+		libv4l = 0;
+		ppm_output = 0;
+	} else {
+		switch (fmt.fmt.pix.pixelformat) {
+		case V4L2_PIX_FMT_RGB565:
+		case V4L2_PIX_FMT_RGB565X:
+		case V4L2_PIX_FMT_RGB24:
+		case V4L2_PIX_FMT_RGB32:
+		case V4L2_PIX_FMT_ARGB32:
+		case V4L2_PIX_FMT_XRGB32:
+		case V4L2_PIX_FMT_BGR32:
+		case V4L2_PIX_FMT_ABGR32:
+		case V4L2_PIX_FMT_XBGR32:
+		case V4L2_PIX_FMT_YUYV:
+		case V4L2_PIX_FMT_UYVY:
+		case V4L2_PIX_FMT_YVYU:
+		case V4L2_PIX_FMT_VYUY:
+		case V4L2_PIX_FMT_NV12:
+		case V4L2_PIX_FMT_NV21:
+		case V4L2_PIX_FMT_YUV420:
+		case V4L2_PIX_FMT_YVU420:
+			out_buf = malloc(3 * x_res * y_res);
+			if (!out_buf) {
+				perror("Cannot allocate memory");
+				exit(EXIT_FAILURE);
+			}
+
+			break;
+		default:
+			/* Unknown formats */
+			if (libv4l) {
+				char *p = (void *)&fmt.fmt.pix.pixelformat;
+				printf("Doesn't know how to convert %c%c%c%c to PPM.\n",
+				    p[0], p[1], p[2], p[3]);
+				exit(EXIT_FAILURE);
+			} else {
+				printf("File output won't be in PPM format.\n");
+				ppm_output = 0;
+			}
 		}
 	}
 	if ((fmt.fmt.pix.width != x_res) || (fmt.fmt.pix.height != y_res))
