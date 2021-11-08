@@ -74,6 +74,13 @@ struct video_formats {
 	unsigned int is_rgb:1;
 };
 
+struct colorspace_parms {
+	enum v4l2_colorspace		colorspace;
+	enum v4l2_xfer_func		xfer_func;
+	enum v4l2_ycbcr_encoding	ycbcr_enc;
+	enum v4l2_quantization		quantization;
+};
+
 static const struct video_formats supported_formats[] = {
 	{ V4L2_PIX_FMT_BGR32,   32, 0, 0, 1},
 	{ V4L2_PIX_FMT_ABGR32,  32, 0, 0, 1},
@@ -111,7 +118,46 @@ static int is_format_supported(unsigned int pixformat)
 	if (video_fmt_props(pixformat))
 		return 1;
 	return 0;
+}
 
+static void get_colorspace_data(struct colorspace_parms *c,
+			        struct v4l2_format *fmt)
+{
+	const struct video_formats *video_fmt;
+
+	memset(c, 0, sizeof(*c));
+
+	video_fmt = video_fmt_props(fmt->fmt.pix.pixelformat);
+	if (!video_fmt)
+		return;
+
+	/*
+	 * A more complete colorspace default detection would need to
+	 * implement timings API, in order to check for SDTV/HDTV.
+	 */
+	if (fmt->fmt.pix.colorspace == V4L2_COLORSPACE_DEFAULT)
+		c->colorspace = video_fmt->is_rgb ?
+				V4L2_COLORSPACE_SRGB :
+				V4L2_COLORSPACE_REC709;
+	else
+		c->colorspace = fmt->fmt.pix.colorspace;
+
+	if (fmt->fmt.pix.xfer_func == V4L2_XFER_FUNC_DEFAULT)
+		c->xfer_func = V4L2_MAP_XFER_FUNC_DEFAULT(c->colorspace);
+	else
+		c->xfer_func = fmt->fmt.pix.xfer_func;
+
+	if (!video_fmt->is_rgb) {
+		if (fmt->fmt.pix.ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT)
+			c->ycbcr_enc = V4L2_MAP_YCBCR_ENC_DEFAULT(c->colorspace);
+		else
+			c->ycbcr_enc = fmt->fmt.pix.ycbcr_enc;
+	}
+
+	if (fmt->fmt.pix.quantization == V4L2_QUANTIZATION_DEFAULT)
+		c->quantization = V4L2_MAP_QUANTIZATION_DEFAULT(video_fmt->is_rgb,
+								c->colorspace,
+								c->ycbcr_enc);
 }
 
 /*
@@ -238,13 +284,11 @@ static void querycap(char *fname, int fd, enum io_method method)
 
 #define CLAMP(a)	((a) < 0 ? 0 : (a) > 255 ? 255 : (a))
 
-static void convert_yuv(enum v4l2_ycbcr_encoding enc,
+static void convert_yuv(struct colorspace_parms *c,
 			int32_t y, int32_t u, int32_t v,
 			unsigned char **dst)
 {
-	int full_scale = 1; // FIXME: add support for non-full_scale
-
-	if (full_scale)
+	if (c->quantization == V4L2_QUANTIZATION_FULL_RANGE)
 		y *= 65536;
 	else
 		y = (y - 16) * 76284;
@@ -256,7 +300,7 @@ static void convert_yuv(enum v4l2_ycbcr_encoding enc,
 	 * TODO: add BT2020 and SMPTE240M and better handle
 	 * other differences
 	 */
-	switch (enc) {
+	switch (c->ycbcr_enc) {
 	case V4L2_YCBCR_ENC_601:
 	case V4L2_YCBCR_ENC_XV601:
 	case V4L2_YCBCR_ENC_SYCC:
@@ -285,7 +329,7 @@ static void convert_yuv(enum v4l2_ycbcr_encoding enc,
 }
 
 static void copy_two_pixels(struct v4l2_format *fmt,
-			    enum v4l2_ycbcr_encoding enc,
+			    struct colorspace_parms *c,
 			    unsigned char *plane0,
 			    unsigned char *plane1,
 			    unsigned char *plane2,
@@ -330,7 +374,7 @@ static void copy_two_pixels(struct v4l2_format *fmt,
 		v = plane0[(1 - y_off) + (2 - u_off)];
 
 		for (i = 0; i < 2; i++)
-			convert_yuv(enc, plane0[y_off + (i << 1)], u, v, dst);
+			convert_yuv(c, plane0[y_off + (i << 1)], u, v, dst);
 
 		break;
 	case V4L2_PIX_FMT_NV12:
@@ -344,7 +388,7 @@ static void copy_two_pixels(struct v4l2_format *fmt,
 		}
 
 		for (i = 0; i < 2; i++)
-			convert_yuv(enc, plane0[i], u, v, dst);
+			convert_yuv(c, plane0[i], u, v, dst);
 
 		break;
 	case V4L2_PIX_FMT_YUV420:
@@ -358,7 +402,7 @@ static void copy_two_pixels(struct v4l2_format *fmt,
 		}
 
 		for (i = 0; i < 2; i++)
-			convert_yuv(enc, plane0[i], u, v, dst);
+			convert_yuv(c, plane0[i], u, v, dst);
 
 		break;
 	case V4L2_PIX_FMT_RGB32:
@@ -409,7 +453,7 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt,
 	unsigned char *plane2_start = NULL;
 	unsigned char *plane1 = NULL;
 	unsigned char *plane2 = NULL;
-	enum v4l2_ycbcr_encoding enc;
+	struct colorspace_parms c;
 	unsigned int x, y, depth;
 	uint32_t num_planes = 1;
 	unsigned char *p_start;
@@ -417,11 +461,7 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt,
 	uint32_t w_dec = 0;
 	uint32_t h_dec = 0;
 
-	if (fmt->fmt.pix.ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT)
-		enc = V4L2_MAP_YCBCR_ENC_DEFAULT(fmt->fmt.pix.colorspace);
-	else
-		enc = fmt->fmt.pix.ycbcr_enc;
-
+	get_colorspace_data(&c, fmt);
 
 	video_fmt = video_fmt_props(fmt->fmt.pix.pixelformat);
 	if (!video_fmt)
@@ -455,7 +495,7 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt,
 			plane2 = plane2_start + (bytesperline >> w_dec) * (y >> h_dec);
 
 		for (x = 0; x < width >> 1; x++) {
-			copy_two_pixels(fmt, enc, plane0, plane1, plane2, &p_out);
+			copy_two_pixels(fmt, &c, plane0, plane1, plane2, &p_out);
 
 			plane0 += depth >> 2;
 			if (num_planes > 1)
