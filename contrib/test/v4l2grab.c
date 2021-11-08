@@ -674,6 +674,10 @@ static int userptr_capture(int fd, int n_frames, unsigned char *out_buf, char *o
 		exit(EXIT_FAILURE);
 	}
 
+	/* Some compressed formats could return zero */
+	if (!fmt->fmt.pix.sizeimage)
+		fmt->fmt.pix.sizeimage = fmt->fmt.pix.width * fmt->fmt.pix.height * 3;
+
 	for (n_buffers = 0; n_buffers < req.count; ++n_buffers) {
 		buffers[n_buffers].length = fmt->fmt.pix.sizeimage;
 		buffers[n_buffers].start = calloc(1, fmt->fmt.pix.sizeimage);
