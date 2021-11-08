@@ -228,11 +228,11 @@ static ssize_t prepare_data(struct dvb_v5_fe_parms_priv *parms,
 }
 
 static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
-				   const char cmd[CMD_SIZE], const char *fmt, ...)
+				   const char *cmd, const char *fmt, ...)
 	__attribute__ (( format( printf, 4, 5 )));
 
 static struct queued_msg *send_fmt(struct dvb_device_priv *dvb, int fd,
-				   const char cmd[CMD_SIZE], const char *fmt, ...)
+				   const char *cmd, const char *fmt, ...)
 {
 	struct dvb_v5_fe_parms_priv *parms = (void *)dvb->d.fe_parms;
 	struct dvb_dev_remote_priv *priv = dvb->priv;
