@@ -187,7 +187,7 @@ fi
 
 rmmod vivid 2&>/dev/null
 modprobe vivid n_devs=3 multiplanar=1,2,2 cache_hints=1,0,0 #allocators=0,1,1
-sleep 1
+sleep 3
 
 tmp=`mktemp`
 
@@ -314,8 +314,8 @@ if [ $vivid -eq 1 -a $setup -eq 0 ]; then
 		echo
 	fi
 
-	modprobe vivid n_devs=3 multiplanar=1,2,2 #allocators=0,1,1
-	sleep 1
+	modprobe vivid n_devs=3 multiplanar=1,2,2 cache_hints=1,0,0 #allocators=0,1,1
+	sleep 3
 
 	$v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
 	$v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
