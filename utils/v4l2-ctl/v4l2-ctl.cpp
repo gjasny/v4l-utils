@@ -1351,7 +1351,7 @@ int main(int argc, char **argv)
 			capabilities = vcap.device_caps;
 	}
 
-	media_fd = mi_get_media_fd(fd);
+	media_fd = mi_get_media_fd(fd, is_subdev ? 0 : (const char *)vcap.bus_info);
 
 	priv_magic = (capabilities & V4L2_CAP_EXT_PIX_FORMAT) ?
 			V4L2_PIX_FMT_PRIV_MAGIC : 0;

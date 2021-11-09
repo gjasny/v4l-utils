@@ -1258,7 +1258,9 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 			return QUEUE_STOPPED;
 
 		if (fmt.g_pixelformat() == V4L2_PIX_FMT_FWHT_STATELESS) {
-			int media_fd = mi_get_media_fd(fd.g_fd());
+			struct v4l2_capability vcap = {};
+			fd.querycap(vcap);
+			int media_fd = mi_get_media_fd(fd.g_fd(), (const char *)vcap.bus_info);
 
 			if (media_fd < 0) {
 				fprintf(stderr, "%s: mi_get_media_fd failed\n", __func__);
