@@ -1821,8 +1821,8 @@ static int setupDmaBuf(struct node *expbuf_node, struct node *node,
 		fail_on_test(exp_q.g_num_planes() < buf.g_num_planes());
 		for (unsigned p = 0; p < buf.g_num_planes(); p++) {
 			if (exp_q.g_length(p) < buf.g_length(p))
-				fail("exp_q.g_length(%u) < buf.g_length(%u): %u < %u\n",
-				     p, p, exp_q.g_length(p), buf.g_length(p));
+				return fail("exp_q.g_length(%u) < buf.g_length(%u): %u < %u\n",
+					    p, p, exp_q.g_length(p), buf.g_length(p));
 			// This should not work!
 			fail_on_test(node->mmap(buf.g_length(p), 0) != MAP_FAILED);
 			q.s_fd(i, p, exp_q.g_fd(i, p));
