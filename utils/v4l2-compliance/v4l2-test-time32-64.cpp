@@ -161,7 +161,7 @@ int testTime32_64(struct node *node)
 			fail_on_test(check_0(ev32.reserved, sizeof(ev32.reserved)));
 			__u64 ev32_ts = ev32.timestamp.tv_sec * 1000000000ULL + ev32.timestamp.tv_nsec;
 			__s64 delta_ms = (ev32_ts - ev_ts) / 1000000;
-			fail_on_test(delta_ms > 10);
+			fail_on_test_val(delta_ms > 10, (int)delta_ms);
 			info("VIDIOC_DQEVENT 32-bit timespec: %lld ms\n", delta_ms);
 		}
 
@@ -172,7 +172,7 @@ int testTime32_64(struct node *node)
 			fail_on_test(check_0(ev64.reserved, sizeof(ev64.reserved)));
 			__u64 ev64_ts = ev64.timestamp.tv_sec * 1000000000ULL + ev64.timestamp.tv_nsec;
 			__s64 delta_ms = (ev64_ts - ev_ts) / 1000000;
-			fail_on_test(delta_ms > 10);
+			fail_on_test_val(delta_ms > 10, (int)delta_ms);
 			info("VIDIOC_DQEVENT 64-bit timespec: %lld ms\n", delta_ms);
 		}
 
