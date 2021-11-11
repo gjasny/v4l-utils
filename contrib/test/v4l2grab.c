@@ -575,11 +575,14 @@ static int read_capture_loop(int fd, struct buffer *buffers,
 }
 
 static int read_capture(int fd, int n_frames, unsigned char *out_buf, char *out_dir,
-			struct v4l2_format *fmt)
+			struct v4l2_format *fmt, struct timeval *start)
 {
 	struct buffer                   *buffers;
+	struct timezone			tz = { 0 };
 
 	buffers = calloc(1, sizeof(*buffers));
+
+	gettimeofday(start, &tz);
 
 	return read_capture_loop(fd, buffers, fmt, n_frames, out_buf, out_dir);
 }
@@ -655,12 +658,13 @@ static int userptr_capture_loop(int fd, struct buffer *buffers,
 }
 
 static int userptr_capture(int fd, int n_frames, unsigned char *out_buf, char *out_dir,
-			   struct v4l2_format *fmt)
+			   struct v4l2_format *fmt, struct timeval *start)
 {
 	struct v4l2_buffer              buf;
 	struct v4l2_requestbuffers      req;
 	unsigned int                    ret, i, n_buffers;
 	struct buffer                   *buffers;
+	struct timezone			tz = { 0 };
 
 	CLEAR(req);
 	req.count  = 2;
@@ -699,6 +703,8 @@ static int userptr_capture(int fd, int n_frames, unsigned char *out_buf, char *o
 	}
 
 	xioctl(fd, VIDIOC_STREAMON, &req.type);
+
+	gettimeofday(start, &tz);
 
 	ret = userptr_capture_loop(fd, buffers, req.count, fmt,
 				   n_frames, out_buf, out_dir);
@@ -931,13 +937,14 @@ static int mmap_capture_loop(int fd, struct buffer *buffers,
 
 static int mmap_capture(int fd, int n_frames, unsigned char *out_buf,
 			char *out_dir, int threads, int sleep_ms,
-			struct v4l2_format *fmt)
+			struct v4l2_format *fmt, struct timeval *start)
 {
 	struct v4l2_buffer              buf;
 	struct v4l2_requestbuffers      req;
 	enum v4l2_buf_type              type;
 	unsigned int                    i, n_buffers;
 	struct buffer                   *buffers;
+	struct timezone			tz = { 0 };
 
 	CLEAR(req);
 	req.count = 2;
@@ -986,6 +993,9 @@ static int mmap_capture(int fd, int n_frames, unsigned char *out_buf,
 	type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
 	xioctl(fd, VIDIOC_STREAMON, &type);
+
+	gettimeofday(start, &tz);
+
 	if (threads)
 		mmap_capture_threads(fd, buffers, 2, fmt, n_frames, out_buf,
 				     out_dir, sleep_ms);
@@ -1115,12 +1125,29 @@ static struct argp argp = {
 	.doc = doc,
 };
 
+static int elapsed_time(struct timeval *x, struct timeval *y)
+{
+	long int res;
+	int nsec;
+
+	nsec = (y->tv_usec - x->tv_usec) / 1000000 + 1;
+	y->tv_usec -= 1000000 * nsec;
+	y->tv_sec += nsec;
+
+	res = (x->tv_sec - y->tv_sec) * 1000000;
+	res += x->tv_usec - y->tv_usec;
+
+	return res;
+}
 
 int main(int argc, char **argv)
 {
 	struct v4l2_format fmt;
 	int ret = EXIT_FAILURE, fd = -1;
 	unsigned char *out_buf = NULL;
+	struct timezone tz = { 0 };
+	struct timeval start, end;
+	long int elapsed;
 
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
@@ -1184,15 +1211,26 @@ int main(int argc, char **argv)
 	/* Calls the desired capture method */
 	switch (method) {
 	case IO_METHOD_READ:
-		ret = read_capture(fd, n_frames, out_buf, out_dir, &fmt);
+		ret = read_capture(fd, n_frames, out_buf, out_dir,
+				   &fmt, &start);
 		break;
 	case IO_METHOD_MMAP:
 		ret = mmap_capture(fd, n_frames, out_buf, out_dir,
-				   threads, sleep_ms, &fmt);
+				   threads, sleep_ms, &fmt, &start);
 		break;
 	case IO_METHOD_USERPTR:
-		ret = userptr_capture(fd, n_frames, out_buf, out_dir, &fmt);
+		ret = userptr_capture(fd, n_frames, out_buf, out_dir, &fmt,
+				      &start);
 		break;
+	}
+
+	if (!ret) {
+		gettimeofday(&end, &tz);
+
+		elapsed = elapsed_time(&end, &start);
+
+		printf("Received %d frames in %.2f seconds: %.2f fps\n",
+		    n_frames, elapsed / 1000000., 1000000. * n_frames/ elapsed);
 	}
 
 	/* Closes the file descriptor */
