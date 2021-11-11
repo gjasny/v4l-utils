@@ -433,6 +433,7 @@ static void copy_two_pixels(struct v4l2_format *fmt,
 }
 
 static unsigned int convert_to_rgb24(struct v4l2_format *fmt,
+				     unsigned int imagesize,
 				     unsigned char *plane0,
 				     unsigned char *p_out)
 {
@@ -446,6 +447,7 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt,
 	unsigned char *plane1 = NULL;
 	unsigned char *plane2 = NULL;
 	struct colorspace_parms c;
+	unsigned int needed_size;
 	unsigned int x, y, depth;
 	uint32_t num_planes = 1;
 	unsigned char *p_start;
@@ -463,18 +465,39 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt,
 	h_dec = video_fmt->y_decimation;
 	w_dec = video_fmt->x_decimation;
 
-	if (h_dec)
-		num_planes++;
+	plane0_size = width * height * depth;
+	needed_size = plane0_size;
 
-	if (w_dec)
+	if (h_dec) {
 		num_planes++;
+		needed_size += plane0_size / h_dec;
+	}
+
+	if (w_dec) {
+		num_planes++;
+		needed_size += plane0_size / w_dec;
+	}
+
+	plane0_size = plane0_size >> 3;
+	needed_size = needed_size >> 3;
+
+	if (imagesize < needed_size) {
+		fprintf(stderr, "Warning: Image too small! ");
+		fprintf(stderr, "Image size: %u bytes, need %u, being:\n", imagesize, needed_size);
+		fprintf(stderr, "\tPlane0 size: %u bytes\n", plane0_size);
+		if (h_dec)
+			fprintf(stderr, "\tH Plane size: %u bytes\n", plane0_size / h_dec);
+		if (w_dec)
+			fprintf(stderr, "\tW Plane size: %u bytes\n", plane0_size / w_dec);
+
+		// FIXME: should we bail-out here?
+		// exit(EXIT_FAILURE);
+	}
 
 	p_start = p_out;
 
-	if (num_planes > 1) {
-		plane0_size = (width * height * depth) >> 3;
+	if (num_planes > 1)
 		plane1_start = plane0_start + plane0_size;
-	}
 
 	if (num_planes > 2)
 		    plane2_start = plane1_start + (plane0_size >> (w_dec + h_dec));
@@ -557,7 +580,8 @@ static int read_capture_loop(int fd, struct buffer *buffers,
 		if (!ppm_output || !out_buf) {
 			out_buf = buffers[0].start;
 		} else {
-			size = convert_to_rgb24(fmt, buffers[0].start, out_buf);
+			size = convert_to_rgb24(fmt, size,
+						buffers[0].start, out_buf);
 		}
 
 		fwrite(out_buf, size, 1, fout);
@@ -636,7 +660,8 @@ static int userptr_capture_loop(int fd, struct buffer *buffers,
 			out_buf = buffers[buf.index].start;
 			size = buf.bytesused;
 		} else {
-			size = convert_to_rgb24(fmt, buffers[buf.index].start,
+			size = convert_to_rgb24(fmt, buf.bytesused,
+						buffers[buf.index].start,
 						out_buf);
 		}
 
@@ -841,7 +866,8 @@ static int mmap_capture_threads(int fd, struct buffer *buffers,
 			out_buf = buffers[buf.index].start;
 			size = buf.bytesused;
 		} else {
-			size = convert_to_rgb24(fmt, buffers[buf.index].start,
+			size = convert_to_rgb24(fmt, buf.bytesused,
+						buffers[buf.index].start,
 						out_buf);
 		}
 
@@ -915,7 +941,8 @@ static int mmap_capture_loop(int fd, struct buffer *buffers,
 			out_buf = buffers[buf.index].start;
 			size = buf.bytesused;
 		} else {
-			size = convert_to_rgb24(fmt, buffers[buf.index].start,
+			size = convert_to_rgb24(fmt, buf.bytesused,
+						buffers[buf.index].start,
 						out_buf);
 		}
 		fwrite(out_buf, size, 1, fout);
