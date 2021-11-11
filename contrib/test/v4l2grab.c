@@ -1178,7 +1178,7 @@ int main(int argc, char **argv)
 		ppm_output = 0;
 	} else {
 		if (is_format_supported(fmt.fmt.pix.pixelformat)) {
-			out_buf = malloc(3 * x_res * y_res);
+			out_buf = malloc(3 * fmt.fmt.pix.width * fmt.fmt.pix.height);
 			if (!out_buf) {
 				perror("Cannot allocate memory");
 				exit(EXIT_FAILURE);
