@@ -84,6 +84,7 @@ bool show_colors;
 bool exit_on_fail;
 bool exit_on_warn;
 bool is_vivid;
+bool is_uvcvideo;
 int media_fd = -1;
 unsigned warnings;
 
@@ -959,6 +960,7 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 	if (node.is_v4l2()) {
 		doioctl(&node, VIDIOC_QUERYCAP, &vcap);
 		driver = reinterpret_cast<const char *>(vcap.driver);
+		is_uvcvideo = driver == "uvcvideo";
 		is_vivid = driver == "vivid";
 		if (is_vivid)
 			node.bus_info = reinterpret_cast<const char *>(vcap.bus_info);

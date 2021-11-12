@@ -485,6 +485,8 @@ int testSimpleControls(struct node *node)
 		} else if (ret == EILSEQ) {
 			warn("s_ctrl returned EILSEQ\n");
 			ret = 0;
+		} else if (ret == EACCES && is_uvcvideo) {
+			ret = 0;
 		} else if (ret) {
 			return fail("s_ctrl returned an error (%d)\n", ret);
 		}
@@ -498,7 +500,8 @@ int testSimpleControls(struct node *node)
 			ctrl.id = qctrl.id;
 			ctrl.value = qctrl.minimum - 1;
 			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
-			if (ret && ret != EIO && ret != EILSEQ && ret != ERANGE)
+			if (ret && ret != EIO && ret != EILSEQ && ret != ERANGE &&
+			    !(ret == EACCES && is_uvcvideo))
 				return fail("invalid minimum range check\n");
 			if (!ret && checkSimpleCtrl(ctrl, qctrl))
 				return fail("invalid control %08x\n", qctrl.id);
@@ -508,7 +511,8 @@ int testSimpleControls(struct node *node)
 			ctrl.id = qctrl.id;
 			ctrl.value = qctrl.maximum + 1;
 			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
-			if (ret && ret != EIO && ret != EILSEQ && ret != ERANGE)
+			if (ret && ret != EIO && ret != EILSEQ && ret != ERANGE &&
+			    !(ret == EACCES && is_uvcvideo))
 				return fail("invalid maximum range check\n");
 			if (!ret && checkSimpleCtrl(ctrl, qctrl))
 				return fail("invalid control %08x\n", qctrl.id);
@@ -521,7 +525,8 @@ int testSimpleControls(struct node *node)
 			if (ret == ERANGE)
 				warn("%s: returns ERANGE for in-range, but non-step-multiple value\n",
 						qctrl.name);
-			else if (ret && ret != EIO && ret != EILSEQ)
+			else if (ret && ret != EIO && ret != EILSEQ &&
+				 !(ret == EACCES && is_uvcvideo))
 				return fail("returns error for in-range, but non-step-multiple value\n");
 		}
 
@@ -539,6 +544,8 @@ int testSimpleControls(struct node *node)
 				ctrl.id = qctrl.id;
 				ctrl.value = i;
 				ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
+				if (valid && ret == EACCES && is_uvcvideo)
+					continue;
 				if (valid && ret)
 					return fail("could not set valid menu item %d\n", i);
 				if (!valid && !ret)
@@ -551,15 +558,18 @@ int testSimpleControls(struct node *node)
 			ctrl.id = qctrl.id;
 			ctrl.value = qctrl.minimum;
 			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
-			if (ret && ret != EIO && ret != EILSEQ)
+			if (ret && ret != EIO && ret != EILSEQ &&
+			    !(ret == EACCES && is_uvcvideo))
 				return fail("could not set minimum value\n");
 			ctrl.value = qctrl.maximum;
 			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
-			if (ret && ret != EIO && ret != EILSEQ)
+			if (ret && ret != EIO && ret != EILSEQ &&
+			    !(ret == EACCES && is_uvcvideo))
 				return fail("could not set maximum value\n");
 			ctrl.value = qctrl.default_value;
 			ret = doioctl(node, VIDIOC_S_CTRL, &ctrl);
-			if (ret && ret != EIO && ret != EILSEQ)
+			if (ret && ret != EIO && ret != EILSEQ &&
+			    !(ret == EACCES && is_uvcvideo))
 				return fail("could not set default value\n");
 		}
 	}
@@ -731,6 +741,8 @@ int testExtendedControls(struct node *node)
 			} else if (ret == EILSEQ) {
 				warn("s_ext_ctrls returned EILSEQ\n");
 				ret = 0;
+			} else if (ret == EACCES && is_uvcvideo) {
+				ret = 0;
 			}
 			if (ret)
 				return fail("s_ext_ctrls returned an error (%d)\n", ret);
@@ -807,6 +819,8 @@ int testExtendedControls(struct node *node)
 	} else if (ret == EILSEQ) {
 		warn("s_ext_ctrls returned EILSEQ\n");
 		ret = 0;
+	} else if (ret == EACCES && is_uvcvideo) {
+		ret = 0;
 	}
 	if (ret)
 		return fail("could not set all controls\n");
@@ -837,7 +851,7 @@ int testExtendedControls(struct node *node)
 		warn("s_ext_ctrls returned EILSEQ\n");
 		ret = 0;
 	}
-	if (ret && !multiple_classes)
+	if (ret && !(ret == EACCES && is_uvcvideo) && !multiple_classes)
 		return fail("could not set all controls of a specific class\n");
 	if (ret != EINVAL && multiple_classes)
 		return fail("should get EINVAL when setting mixed-class controls\n");
