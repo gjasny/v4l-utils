@@ -187,7 +187,9 @@
 	case V4L2_PIX_FMT_VC1_ANNEX_G: return "VC-1 (SMPTE 412M Annex G)";
 	case V4L2_PIX_FMT_VC1_ANNEX_L: return "VC-1 (SMPTE 412M Annex L)";
 	case V4L2_PIX_FMT_VP8: return "VP8";
+	case V4L2_PIX_FMT_VP8_FRAME: return "VP8 Frame";
 	case V4L2_PIX_FMT_VP9: return "VP9";
+	case V4L2_PIX_FMT_VP9_FRAME: return "VP9 Frame";
 	case V4L2_PIX_FMT_HEVC: return "HEVC";
 	case V4L2_PIX_FMT_FWHT: return "FWHT";
 	case V4L2_PIX_FMT_FWHT_STATELESS: return "FWHT Stateless";
