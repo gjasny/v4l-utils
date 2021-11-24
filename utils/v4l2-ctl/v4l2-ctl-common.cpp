@@ -626,6 +626,9 @@ static void print_qctrl(int fd, const v4l2_query_ext_ctrl &qc,
 	case V4L2_CTRL_TYPE_VP8_FRAME:
 		printf("%31s %#8.8x (vp8-frame):", s.c_str(), qc.id);
 		break;
+	case V4L2_CTRL_TYPE_VP9_FRAME:
+		printf("%31s %#8.8x (vp9-frame):", s.c_str(), qc.id);
+		break;
 	case V4L2_CTRL_TYPE_MPEG2_QUANTISATION:
 		printf("%31s %#8.8x (mpeg2-quantisation):", s.c_str(), qc.id);
 		break;
