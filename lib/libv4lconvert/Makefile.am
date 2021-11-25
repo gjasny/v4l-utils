@@ -13,7 +13,7 @@ endif
 libv4lconvert_la_SOURCES = \
   libv4lconvert.c tinyjpeg.c sn9c10x.c sn9c20x.c pac207.c  mr97310a.c \
   flip.c crop.c jidctflt.c spca561-decompress.c \
-  rgbyuv.c sn9c2028-decomp.c spca501.c sq905c.c bayer.c hm12.c \
+  rgbyuv.c sn9c2028-decomp.c spca501.c sq905c.c bayer.c nv12_16l16.c \
   stv0680.c cpia1.c se401.c jpgl.c jpeg.c jl2005bcd.c \
   control/libv4lcontrol.c control/libv4lcontrol.h control/libv4lcontrol-priv.h \
   processing/libv4lprocessing.c processing/whitebalance.c processing/autogain.c \

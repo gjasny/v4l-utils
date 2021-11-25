@@ -1,6 +1,6 @@
 /*
 
-cx2341x HM12 conversion routines
+cx2341x NV12_16L16 conversion routines
 
 (C) 2009 Hans Verkuil <hverkuil@xs4all.nl>
 
@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
 #include "libv4lconvert-priv.h"
 #include <string.h>
 
-/* The HM12 format is used in the Conexant cx23415/6/8 MPEG encoder devices.
+/* The NV12_16L16 format is used in the Conexant cx23415/6/8 MPEG encoder devices.
    It is a macroblock format with separate Y and UV planes, each plane
    consisting of 16x16 values. All lines are always 720 bytes long. If the
    width of the image is less than 720, then the remainder is padding.
@@ -40,7 +40,7 @@ Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
 
 static const int stride = 720;
 
-static void v4lconvert_hm12_to_rgb(const unsigned char *src, unsigned char *dest,
+static void v4lconvert_nv12_16l16_to_rgb(const unsigned char *src, unsigned char *dest,
 		int width, int height, int rgb)
 {
 	unsigned int y, x, i, j;
@@ -91,16 +91,16 @@ static void v4lconvert_hm12_to_rgb(const unsigned char *src, unsigned char *dest
 	}
 }
 
-void v4lconvert_hm12_to_rgb24(const unsigned char *src, unsigned char *dest,
+void v4lconvert_nv12_16l16_to_rgb24(const unsigned char *src, unsigned char *dest,
 		int width, int height)
 {
-	v4lconvert_hm12_to_rgb(src, dest, width, height, 1);
+	v4lconvert_nv12_16l16_to_rgb(src, dest, width, height, 1);
 }
 
-void v4lconvert_hm12_to_bgr24(const unsigned char *src, unsigned char *dest,
+void v4lconvert_nv12_16l16_to_bgr24(const unsigned char *src, unsigned char *dest,
 		int width, int height)
 {
-	v4lconvert_hm12_to_rgb(src, dest, width, height, 0);
+	v4lconvert_nv12_16l16_to_rgb(src, dest, width, height, 0);
 }
 
 static void de_macro_uv(unsigned char *dstu, unsigned char *dstv,
@@ -146,7 +146,7 @@ static void de_macro_y(unsigned char *dst, const unsigned char *src,
 	}
 }
 
-void v4lconvert_hm12_to_yuv420(const unsigned char *src, unsigned char *dest,
+void v4lconvert_nv12_16l16_to_yuv420(const unsigned char *src, unsigned char *dest,
 		int width, int height, int yvu)
 {
 	de_macro_y(dest, src, width, height);
