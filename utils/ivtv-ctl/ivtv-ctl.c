@@ -35,6 +35,7 @@
 #include <math.h>
 
 #include <linux/videodev2.h>
+#include <v4l-getsubopt.h>
 
 /* copied from ivtv-driver.h */
 #define IVTV_DBGFLG_WARN    (1 << 0)
@@ -316,7 +317,7 @@ int main(int argc, char **argv)
 		    {
 			subs = optarg;
 			while (*subs != '\0') {
-				switch (getsubopt(&subs, subopts, &value)) {
+				switch (v4l_getsubopt(&subs, subopts, &value)) {
 				case SUB_YUV_MODE:
 					if (value == NULL) {
 						fprintf(stderr,
@@ -360,7 +361,7 @@ int main(int argc, char **argv)
 		case OptSetGPIO:
 			subs = optarg;
 			while (*subs != '\0') {
-				switch (getsubopt(&subs, subopts, &value)) {
+				switch (v4l_getsubopt(&subs, subopts, &value)) {
 				case SUB_DIR:
 					if (value == NULL) {
 						fprintf(stderr,

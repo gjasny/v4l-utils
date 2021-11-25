@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include <linux/cec-funcs.h>
+#include <v4l-getsubopt.h>
 #include "cec-htng-funcs.h"
 #include "cec-log.h"
 #include "cec-parse.h"
@@ -147,7 +148,7 @@ static __u8 *args2short_aud_fmt_codes(__u8 audio_format_code1,
 
 int cec_parse_subopt(char **subs, const char * const *subopts, char **value)
 {
-	int opt = getsubopt(subs, const_cast<char * const *>(subopts), value);
+	int opt = v4l_getsubopt(subs, const_cast<char * const *>(subopts), value);
 
 	if (opt == -1) {
 		fprintf(stderr, "Invalid suboptions specified\n");

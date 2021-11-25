@@ -185,7 +185,7 @@ static int parse_timing_subopt(char **subopt_str, int *value)
 		nullptr
 	};
 
-	opt = getsubopt(subopt_str, (char* const*) subopt_list, &opt_str);
+	opt = v4l_getsubopt(subopt_str, (char* const*) subopt_list, &opt_str);
 
 	if (opt == -1) {
 		fprintf(stderr, "Invalid suboptions specified\n");

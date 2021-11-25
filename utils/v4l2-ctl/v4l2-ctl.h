@@ -9,6 +9,7 @@
 
 #include <linux/videodev2.h>
 #include <linux/v4l2-subdev.h>
+#include <v4l-getsubopt.h>
 
 #include <v4l2-info.h>
 

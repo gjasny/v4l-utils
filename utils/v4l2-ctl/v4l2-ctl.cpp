@@ -347,7 +347,7 @@ static bool is_rgb_or_hsv(__u32 pixelformat)
 	case V4L2_PIX_FMT_YUV410:
 	case V4L2_PIX_FMT_YUV420:
 	case V4L2_PIX_FMT_HI240:
-	case V4L2_PIX_FMT_HM12:
+	case V4L2_PIX_FMT_NV12_16L16:
 	case V4L2_PIX_FMT_M420:
 	case V4L2_PIX_FMT_NV12:
 	case V4L2_PIX_FMT_NV21:
@@ -663,7 +663,7 @@ void print_video_formats_ext(cv4l_fd &fd, __u32 type, unsigned int mbus_code)
 
 int parse_subopt(char **subs, const char * const *subopts, char **value)
 {
-	int opt = getsubopt(subs, const_cast<char * const *>(subopts), value);
+	int opt = v4l_getsubopt(subs, const_cast<char * const *>(subopts), value);
 
 	if (opt == -1) {
 		fprintf(stderr, "Invalid suboptions specified\n");
