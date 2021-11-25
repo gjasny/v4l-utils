@@ -33,8 +33,9 @@ int testSubDevCap(struct node *node)
 
 	memset(&caps, 0xff, sizeof(caps));
 	// Must always be there
-	fail_on_test(doioctl(node, VIDIOC_SUBDEV_QUERYCAP, nullptr) != EFAULT);
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_QUERYCAP, &caps));
+	if (has_mmu)
+		fail_on_test(doioctl(node, VIDIOC_SUBDEV_QUERYCAP, nullptr) != EFAULT);
 	fail_on_test(check_0(caps.reserved, sizeof(caps.reserved)));
 	fail_on_test((caps.version >> 16) < 5);
 	fail_on_test(caps.capabilities & ~VALID_SUBDEV_CAPS);

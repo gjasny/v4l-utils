@@ -32,8 +32,9 @@ int testMediaDeviceInfo(struct node *node)
 	struct media_device_info mdinfo;
 
 	memset(&mdinfo, 0xff, sizeof(mdinfo));
-	fail_on_test(doioctl(node, MEDIA_IOC_DEVICE_INFO, nullptr) != EFAULT);
 	fail_on_test(doioctl(node, MEDIA_IOC_DEVICE_INFO, &mdinfo));
+	if (has_mmu)
+		fail_on_test(doioctl(node, MEDIA_IOC_DEVICE_INFO, nullptr) != EFAULT);
 	fail_on_test(check_0(mdinfo.reserved, sizeof(mdinfo.reserved)));
 	fail_on_test(check_string(mdinfo.driver, sizeof(mdinfo.driver)));
 	fail_on_test(mdinfo.model[0] && check_string(mdinfo.model, sizeof(mdinfo.model)));
@@ -127,21 +128,23 @@ int testMediaTopology(struct node *node)
 	fail_on_test(topology.reserved2);
 	fail_on_test(topology.reserved3);
 	fail_on_test(topology.reserved4);
-	topology.ptr_entities = 4;
-	fail_on_test(doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
-	topology.ptr_entities = 0;
-	topology.ptr_interfaces = 4;
-	fail_on_test(topology.num_interfaces &&
-		     doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
-	topology.ptr_interfaces = 0;
-	topology.ptr_pads = 4;
-	fail_on_test(topology.num_pads &&
-		     doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
-	topology.ptr_pads = 0;
-	topology.ptr_links = 4;
-	fail_on_test(topology.num_links &&
-		     doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
-	topology.ptr_links = 0;
+	if (has_mmu) {
+		topology.ptr_entities = 4;
+		fail_on_test(doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
+		topology.ptr_entities = 0;
+		topology.ptr_interfaces = 4;
+		fail_on_test(topology.num_interfaces &&
+			     doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
+		topology.ptr_interfaces = 0;
+		topology.ptr_pads = 4;
+		fail_on_test(topology.num_pads &&
+			     doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
+		topology.ptr_pads = 0;
+		topology.ptr_links = 4;
+		fail_on_test(topology.num_links &&
+			     doioctl(node, MEDIA_IOC_G_TOPOLOGY, &topology) != EFAULT);
+		topology.ptr_links = 0;
+	}
 	v2_ents = new media_v2_entity[topology.num_entities];
 	memset(v2_ents, 0xff, topology.num_entities * sizeof(*v2_ents));
 	topology.ptr_entities = (uintptr_t)v2_ents;
@@ -394,12 +397,14 @@ int testMediaEnum(struct node *node)
 		fail_on_test(links.entity != ent.id);
 		fail_on_test(links.pads);
 		fail_on_test(links.links);
-		links.pads = (struct media_pad_desc *)4;
-		fail_on_test(ent.pads && doioctl(node, MEDIA_IOC_ENUM_LINKS, &links) != EFAULT);
-		links.pads = nullptr;
-		links.links = (struct media_link_desc *)4;
-		fail_on_test(ent.links && doioctl(node, MEDIA_IOC_ENUM_LINKS, &links) != EFAULT);
-		links.links = nullptr;
+		if (has_mmu) {
+			links.pads = (struct media_pad_desc *)4;
+			fail_on_test(ent.pads && doioctl(node, MEDIA_IOC_ENUM_LINKS, &links) != EFAULT);
+			links.pads = nullptr;
+			links.links = (struct media_link_desc *)4;
+			fail_on_test(ent.links && doioctl(node, MEDIA_IOC_ENUM_LINKS, &links) != EFAULT);
+			links.links = nullptr;
+		}
 		links.pads = new media_pad_desc[ent.pads];
 		memset(links.pads, 0xff, ent.pads * sizeof(*links.pads));
 		links.links = new media_link_desc[ent.links];

@@ -58,6 +58,7 @@ extern bool is_uvcvideo; // We're testing the uvc driver
 extern int kernel_version;
 extern int media_fd;
 extern unsigned warnings;
+extern bool has_mmu;
 
 enum poll_mode {
 	POLL_MODE_NONE,

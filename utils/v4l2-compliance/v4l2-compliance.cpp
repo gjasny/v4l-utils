@@ -88,6 +88,7 @@ bool is_vivid;
 bool is_uvcvideo;
 int media_fd = -1;
 unsigned warnings;
+bool has_mmu = true;
 
 static unsigned color_component;
 static unsigned color_skip;
@@ -152,8 +153,21 @@ static struct option long_options[] = {
 
 static void print_sha()
 {
+	int fd = open("/dev/null", O_RDONLY);
+
+	if (fd >= 0) {
+		// FIONBIO is a write-only ioctl that takes an int argument that
+		// enables (!= 0) or disables (== 0) nonblocking mode of a fd.
+		//
+		// Passing a nullptr should return EFAULT on MMU capable machines,
+		// and it works if there is no MMU.
+		has_mmu = ioctl(fd, FIONBIO, nullptr);
+		close(fd);
+	}
 	printf("v4l2-compliance %s%s, ", PACKAGE_VERSION, STRING(GIT_COMMIT_CNT));
-	printf("%zd bits, %zd-bit time_t\n", sizeof(void *) * 8, sizeof(time_t) * 8);
+	printf("%zd bits, %zd-bit time_t%s\n",
+	       sizeof(void *) * 8, sizeof(time_t) * 8,
+	       has_mmu ? "" : ", has no MMU");
 	if (strlen(STRING(GIT_SHA)))
 		printf("v4l2-compliance SHA: %s %s\n",
 		       STRING(GIT_SHA), STRING(GIT_COMMIT_DATE));
@@ -623,9 +637,9 @@ static int testCap(struct node *node)
 		V4L2_CAP_VIDEO_M2M;
 
 	memset(&vcap, 0xff, sizeof(vcap));
-	// Must always be there
-	fail_on_test(doioctl(node, VIDIOC_QUERYCAP, nullptr) != EFAULT);
 	fail_on_test(doioctl(node, VIDIOC_QUERYCAP, &vcap));
+	if (has_mmu)
+		fail_on_test(doioctl(node, VIDIOC_QUERYCAP, nullptr) != EFAULT);
 	fail_on_test(check_ustring(vcap.driver, sizeof(vcap.driver)));
 	fail_on_test(check_ustring(vcap.card, sizeof(vcap.card)));
 	fail_on_test(check_ustring(vcap.bus_info, sizeof(vcap.bus_info)));
@@ -988,11 +1002,10 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 	}
 
 	if (driver.empty())
-		printf("Compliance test for device %s%s:\n\n",
-		       node.device, node.g_direct() ? "" : " (using libv4l2)");
+		printf("Compliance test for device ");
 	else
-		printf("Compliance test for %s device %s%s:\n\n",
-		       driver.c_str(), node.device, node.g_direct() ? "" : " (using libv4l2)");
+		printf("Compliance test for %s device ", driver.c_str());
+	printf("%s%s:\n\n", node.device, node.g_direct() ? "" : " (using libv4l2)");
 
 	if (node.g_caps() & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
 			 V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_SLICED_VBI_CAPTURE |
