@@ -24,19 +24,13 @@
  */
 
 #include <unistd.h>
-#include <features.h>		/* Uses _GNU_SOURCE to define getsubopt in stdlib.h */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <inttypes.h>
-#include <getopt.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <stdint.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/ioctl.h>
-#include <sys/time.h>
-#include <math.h>
 
 #include <linux/videodev2.h>
 
