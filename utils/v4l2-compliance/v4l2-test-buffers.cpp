@@ -2531,7 +2531,7 @@ public:
 		 */
 		if (!done) {
 			pthread_kill(thread, SIGUSR1);
-			usleep(100000);
+			sleep(1);
 		}
 
 		/*
@@ -2540,7 +2540,7 @@ public:
 		 */
 		if (!done) {
 			pthread_cancel(thread);
-			usleep(100000);
+			sleep(1);
 		}
 
 		pthread_join(thread, nullptr);
@@ -2635,7 +2635,7 @@ static int testBlockingDQBuf(struct node *node, cv4l_queue &q)
 	thread_dqbuf.start();
 
 	/* Wait for the child thread to start and block */
-	usleep(100000);
+	sleep(1);
 	/* Check that it is really blocking */
 	fail_on_test(thread_dqbuf.done);
 
@@ -2643,7 +2643,7 @@ static int testBlockingDQBuf(struct node *node, cv4l_queue &q)
 	thread_streamoff.start();
 
 	/* Wait for the second child to start and exit */
-	usleep(250000);
+	sleep(3);
 	fail_on_test(!thread_streamoff.done);
 
 	fail_on_test(node->streamoff(q.g_type()));
