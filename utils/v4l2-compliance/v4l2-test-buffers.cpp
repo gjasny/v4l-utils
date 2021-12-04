@@ -2431,8 +2431,10 @@ int testRequests(struct node *node, bool test_streaming)
 			// (sequence number & 0xff).
 			vivid_ro_ctrls.request_fd = buf_req_fds[i];
 			fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &vivid_ro_ctrls));
-			if (node->is_video && !node->can_output)
-				warn_once_on_test(vivid_ro_ctrl.value != (int)i);
+			if (node->is_video && !node->can_output &&
+			    vivid_ro_ctrl.value != (int)i)
+				warn_once("vivid_ro_ctrl.value (%d) != i (%u)\n",
+					  vivid_ro_ctrl.value, i);
 		}
 		fail_on_test(buf.querybuf(node, i));
 		// Check that all the buffers of the stopped stream are
@@ -2479,8 +2481,10 @@ int testRequests(struct node *node, bool test_streaming)
 			// For vivid check the final read-only value
 			vivid_ro_ctrls.which = 0;
 			fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &vivid_ro_ctrls));
-			if (node->is_video && !node->can_output)
-				warn_on_test(vivid_ro_ctrl.value != (int)(num_bufs - 1));
+			if (node->is_video && !node->can_output &&
+			    vivid_ro_ctrl.value != (int)(num_bufs - 1))
+				warn("vivid_ro_ctrl.value (%d) != num_bufs - 1 (%d)\n",
+				     vivid_ro_ctrl.value, num_bufs - 1);
 		}
 	}
 
