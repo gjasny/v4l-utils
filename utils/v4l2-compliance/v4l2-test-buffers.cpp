@@ -990,7 +990,8 @@ static int captureBufs(struct node *node, struct node *node_m2m_cap, const cv4l_
 			fail_on_test(ret == 0);
 			fail_on_test(ret < 0);
 			fail_on_test(!FD_ISSET(node->g_fd(), &rfds) &&
-				     !FD_ISSET(node->g_fd(), &wfds));
+				     !FD_ISSET(node->g_fd(), &wfds) &&
+				     !FD_ISSET(node->g_fd(), &efds));
 			can_read = FD_ISSET(node->g_fd(), &rfds);
 			have_event = FD_ISSET(node->g_fd(), &efds);
 		} else if (pollmode == POLL_MODE_EPOLL) {
