@@ -47,17 +47,18 @@ const char *argp_program_bug_address = "Mauro Carvalho Chehab <mchehab@kernel.or
 static const char doc[] = "\nA testing tool for the MC next geneneration API\n";
 
 static const struct argp_option options[] = {
-	{"entities",	'e',	0,		0,	"show entities", 0},
-	{"interfaces",	'i',	0,		0,	"show pads", 0},
-	{"data-links",	'l',	0,		0,	"show data links", 0},
-	{"intf-links",	'I',	0,		0,	"show interface links", 0},
-	{"dot",		'D',	0,		0,	"show in Graphviz format", 0},
-	{"max_tsout",	't',	"NUM_TSOUT",	0,	"max number of DTV TS out entities/interfaces in graphviz output (default: 5)", 0},
-	{"device",	'd',	"DEVICE",	0,	"media controller device (default: /dev/media0", 0},
+	{"entities",		'e',	0,		0,	"show entities", 0},
+	{"interfaces",		'i',	0,		0,	"show pads", 0},
+	{"data-links",		'l',	0,		0,	"show data links", 0},
+	{"intf-links",		'I',	0,		0,	"show interface links", 0},
+	{"ancillary-links",	'a',	0,		0,	"show ancillary links", 0},
+	{"dot",			'D',	0,		0,	"show in Graphviz format", 0},
+	{"max_tsout",		't',	"NUM_TSOUT",	0,	"max number of DTV TS out entities/interfaces in graphviz output (default: 5)", 0},
+	{"device",		'd',	"DEVICE",	0,	"media controller device (default: /dev/media0", 0},
 
-	{"help",        '?',	0,		0,	"Give this help list", -1},
-	{"usage",	-3,	0,		0,	"Give a short usage message"},
-	{"version",	'V',	0,		0,	"Print program version", -1},
+	{"help",		'?',	0,		0,	"Give this help list", -1},
+	{"usage",		-3,	0,		0,	"Give a short usage message"},
+	{"version",		'V',	0,		0,	"Print program version", -1},
 	{ 0, 0, 0, 0, 0, 0 }
 };
 
@@ -65,6 +66,7 @@ static int show_entities = 0;
 static int show_interfaces = 0;
 static int show_data_links = 0;
 static int show_intf_links = 0;
+static int show_ancillary_links = 0;
 static int show_dot = 0;
 static int max_tsout = 5;
 static char media_device[256] = "/dev/media0";
@@ -89,6 +91,9 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 		break;
 	case 'I':
 		show_intf_links++;
+		break;
+	case 'a':
+		show_ancillary_links++;
 		break;
 	case 'D':
 		show_dot++;
@@ -659,29 +664,41 @@ static void media_show_links(struct media_controller *mc)
 		struct media_v2_link *link = &links[i];
 		char *obj, *source_obj, *sink_obj;
 
-		color = BLUE;
-		if (media_type(link->source_id) == MEDIA_GRAPH_PAD) {
+		__u32 type = link->flags & MEDIA_LNK_FL_LINK_TYPE;
+
+		color = CYAN;
+		switch (type) {
+		case MEDIA_LNK_FL_DATA_LINK:
 			if (!show_data_links)
 				continue;
-			color = CYAN;
-		}
 
-		if (media_type(link->source_id) == MEDIA_GRAPH_INTF_DEVNODE) {
+			show(color, 0, "data");
+
+			break;
+		case MEDIA_LNK_FL_INTERFACE_LINK:
 			if (!show_intf_links)
 				continue;
+
+			color = BLUE;
+			show(color, 0, "interface");
+
+			break;
+		case MEDIA_LNK_FL_ANCILLARY_LINK:
+			if (!show_ancillary_links)
+				continue;
+
+			color = MAGENTA;
+			show(color, 0, "ancillary");
+			break;
 		}
 
 		obj = objname(link->id, '#');
 		source_obj = objname(link->source_id, '#');
 		sink_obj = objname(link->sink_id, '#');
 
-		if ((link->flags & MEDIA_LNK_FL_LINK_TYPE) == MEDIA_LNK_FL_INTERFACE_LINK)
-			show(color, 0, "interface ");
-		else
-			show(color, 0, "data ");
 		show(color, 0, "link %s: %s %s %s",
 		     obj, source_obj,
-		     ((link->flags & MEDIA_LNK_FL_LINK_TYPE) == MEDIA_LNK_FL_INTERFACE_LINK) ? "<=>" : "=>",
+		     ((type) == MEDIA_LNK_FL_DATA_LINK) ? "=>" : "<=>",
 		     sink_obj);
 		if (link->flags & MEDIA_LNK_FL_IMMUTABLE)
 			show(color, 0, " [IMMUTABLE]");
@@ -1117,7 +1134,7 @@ int main(int argc, char *argv[])
 		if (show_interfaces)
 			media_show_interfaces(mc);
 
-		if (show_data_links || show_intf_links)
+		if (show_data_links || show_intf_links || show_ancillary_links)
 			media_show_links(mc);
 	}
 
