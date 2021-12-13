@@ -261,7 +261,8 @@ int testMediaTopology(struct node *node)
 
 	for (unsigned i = 0; i < topology.num_links; i++) {
 		media_v2_link &link = v2_links[i];
-		bool is_iface = link.flags & MEDIA_LNK_FL_LINK_TYPE;
+		bool is_iface = (link.flags & MEDIA_LNK_FL_LINK_TYPE) ==
+			MEDIA_LNK_FL_INTERFACE_LINK;
 
 		fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
 		fail_on_test(!link.id);
@@ -460,7 +461,7 @@ int testMediaEnum(struct node *node)
 				link_disabled = links.links[i];
 
 			// This ioctl only returns data links
-			fail_on_test(fl & MEDIA_LNK_FL_LINK_TYPE);
+			fail_on_test((fl & MEDIA_LNK_FL_LINK_TYPE) != MEDIA_LNK_FL_DATA_LINK);
 			fail_on_test(links.links[i].sink.entity == links.links[i].source.entity);
 			if (is_sink) {
 				fail_on_test(links.links[i].sink.index >= ent.pads);
