@@ -470,6 +470,7 @@ static const char *event2s(__u32 event)
 static void log_event(struct cec_event &ev, bool show)
 {
 	bool is_high = ev.event == CEC_EVENT_PIN_CEC_HIGH;
+	bool is_initial = ev.flags & CEC_EVENT_FL_INITIAL_STATE;
 	__u16 pa;
 
 	if (ev.event != CEC_EVENT_PIN_CEC_LOW && ev.event != CEC_EVENT_PIN_CEC_HIGH &&
@@ -478,8 +479,13 @@ static void log_event(struct cec_event &ev, bool show)
 		printf("\n");
 	if ((ev.flags & CEC_EVENT_FL_DROPPED_EVENTS) && show)
 		printf("(warn: %s events were lost)\n", event2s(ev.event));
-	if ((ev.flags & CEC_EVENT_FL_INITIAL_STATE) && show)
-		printf("Initial ");
+	if (show) {
+		if (is_initial)
+			printf("Initial ");
+		else if (ev.event != CEC_EVENT_PIN_CEC_LOW && ev.event != CEC_EVENT_PIN_CEC_HIGH)
+			printf("%s: ", ts2s(ev.ts).c_str());
+	}
+
 	switch (ev.event) {
 	case CEC_EVENT_STATE_CHANGE:
 		pa = ev.state_change.phys_addr;
@@ -518,8 +524,6 @@ static void log_event(struct cec_event &ev, bool show)
 			printf("Event: Unknown (0x%x)\n", ev.event);
 		break;
 	}
-	if (verbose && show)
-		printf("\tTimestamp: %s\n", ts2s(ev.ts).c_str());
 }
 
 /*
