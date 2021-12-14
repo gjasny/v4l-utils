@@ -1116,9 +1116,33 @@ static void add_update_nit_dvbs(struct dvb_table_nit *nit,
 			     dvbs_dvbc_dvbs_freq_inner[d->fec]);
 	dvb_store_entry_prop(new, DTV_ROLLOFF,
 			     dvbs_rolloff[d->roll_off]);
-	if (d->roll_off != 0)
-		dvb_store_entry_prop(new, DTV_DELIVERY_SYSTEM,
-				     SYS_DVBS2);
+
+	/*
+	 * Check if the returned parameters are really DVB-S or not
+	 *
+	 * DVB-S supports only 0.35 roll-off, with QPSK and
+	 * Red-Solomon FEC 1/2, 2/3, 3/4, 5/6, 7/8. If anythign else is
+	 * reported, then it is DVB-S2.
+	 */
+
+	if ((d->roll_off != 0 && d->roll_off != ROLLOFF_35) ||
+	    (d->modulation_system != 0 && d->modulation_system != QPSK)) {
+		dvb_store_entry_prop(new, DTV_DELIVERY_SYSTEM, SYS_DVBS2);
+		return;
+	}
+
+	switch (d->fec) {
+	case FEC_NONE:
+	case FEC_AUTO:
+	case FEC_1_2:
+	case FEC_2_3:
+	case FEC_3_4:
+	case FEC_5_6:
+	case FEC_7_8:
+		return;
+	default:
+		dvb_store_entry_prop(new, DTV_DELIVERY_SYSTEM, SYS_DVBS2);
+	}
 }
 
 static void add_update_nit_isdbs(struct dvb_table_nit *nit,
