@@ -246,13 +246,28 @@ static void edid_add_block(struct v4l2_edid *e)
 
 static void read_edid_file(FILE *f, struct v4l2_edid *e)
 {
+	static const char *ignore_chars = ",:;";
 	char value[3] = { 0 };
+	char buf[256];
 	unsigned i = 0;
 	int c;
 
 	fseek(f, SEEK_SET, 0);
 	e->edid = nullptr;
 	e->blocks = 0;
+
+	/*
+	 * Skip the first line if it matches the edid-decode output.
+	 * After that first line the hex dump starts, and that's what we
+	 * want to use here.
+	 *
+	 * This makes it possible to use the edid-decode output as EDID
+	 * file.
+	 */
+	if (fgets(buf, sizeof(buf), f) &&
+	    !strstr(buf, "EDID (hex):") &&
+	    !strstr(buf, "edid-decode (hex):"))
+		fseek(f, SEEK_SET, 0);
 
 	while ((c = fgetc(f)) != EOF) {
 		if (sformat == RAW) {
@@ -265,8 +280,10 @@ static void read_edid_file(FILE *f, struct v4l2_edid *e)
 		/* Handle '0x' prefix */
 		if ((i & 1) && value[0] == '0' && (c == 'x' || c == 'X'))
 			i--;
-		if (!isxdigit(c))
+		if (isspace(c) || strchr(ignore_chars, c))
 			continue;
+		if (!isxdigit(c))
+			break;
 		if (i & 0x01) {
 			value[1] = c;
 			if (i % 256 == 1)
