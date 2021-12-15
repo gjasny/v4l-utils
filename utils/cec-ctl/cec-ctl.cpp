@@ -856,7 +856,7 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 	fd_set ex_fds;
 	int fd = node.fd;
 	FILE *fstore = nullptr;
-	time_t t;
+	time_t t, start_hour;
 
 	if (options[OptMonitorAll])
 		monitor = CEC_MODE_MONITOR_ALL;
@@ -913,14 +913,28 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 		printf("\n");
 
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
-	t = time(nullptr) + monitor_time;
+	start_hour = time(nullptr);
+	t = start_hour + monitor_time;
 
-	while (!monitor_time || time(nullptr) < t) {
+	while (1) {
+		time_t now = time(nullptr);
 		struct timeval tv = { 1, 0 };
 		bool pin_event = false;
 		int res;
 
 		fflush(stdout);
+		if (monitor_time && now >= t)
+			break;
+		if (store_pin && now - start_hour > 3600) {
+			clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
+			gettimeofday(&start_timeofday, nullptr);
+			fprintf(fstore, "# start_monotonic %lu.%09lu\n",
+				start_monotonic.tv_sec, start_monotonic.tv_nsec);
+			fprintf(fstore, "# start_timeofday %lu.%06lu\n",
+				start_timeofday.tv_sec, start_timeofday.tv_usec);
+			fflush(fstore);
+			start_hour = now;
+		}
 		FD_ZERO(&rd_fds);
 		FD_ZERO(&ex_fds);
 		FD_SET(fd, &rd_fds);
@@ -1035,6 +1049,20 @@ static void analyze(const char *analyze_pin)
 	while (fgets(s, sizeof(s), fanalyze)) {
 		unsigned event;
 
+		if (sscanf(s, "# start_monotonic %lu.%09lu\n", &tv_sec, &tv_nsec) == 2 &&
+		    tv_nsec < 1000000000) {
+			start_monotonic.tv_sec = tv_sec;
+			start_monotonic.tv_nsec = tv_nsec;
+			line++;
+			continue;
+		}
+		if (sscanf(s, "# start_timeofday %lu.%06lu\n", &tv_sec, &tv_usec) == 2 &&
+		    tv_usec < 1000000) {
+			start_timeofday.tv_sec = tv_sec;
+			start_timeofday.tv_usec = tv_usec;
+			line++;
+			continue;
+		}
 		if (s[0] == '#' || s[0] == '\n') {
 			line++;
 			continue;
