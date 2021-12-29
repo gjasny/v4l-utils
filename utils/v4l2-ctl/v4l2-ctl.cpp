@@ -1471,7 +1471,7 @@ int main(int argc, char **argv)
 	io_set(c_fd);
 	stds_set(c_fd);
 	vidcap_set(c_fd);
-	vidout_set(c_fd);
+	vidout_set(out_device ? c_out_fd : c_fd);
 	overlay_set(c_fd);
 	vbi_set(c_fd);
 	sdr_set(c_fd);
@@ -1488,7 +1488,7 @@ int main(int argc, char **argv)
 	io_get(c_fd);
 	stds_get(c_fd);
 	vidcap_get(c_fd);
-	vidout_get(c_fd);
+	vidout_get(out_device ? c_out_fd : c_fd);
 	overlay_get(c_fd);
 	vbi_get(c_fd);
 	sdr_get(c_fd);
@@ -1504,7 +1504,7 @@ int main(int argc, char **argv)
 	io_list(c_fd);
 	stds_list(c_fd);
 	vidcap_list(c_fd);
-	vidout_list(c_fd);
+	vidout_list(out_device ? c_out_fd : c_fd);
 	overlay_list(c_fd);
 	vbi_list(c_fd);
 	sdr_list(c_fd);
