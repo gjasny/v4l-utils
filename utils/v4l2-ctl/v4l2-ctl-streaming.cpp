@@ -2666,7 +2666,7 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 	unsigned cnt = 0;
 	cv4l_fmt fmt[2];
 
-	fd.g_fmt(fmt[OUT], out.g_type());
+	out_fd.g_fmt(fmt[OUT], out.g_type());
 	fd.g_fmt(fmt[CAP], in.g_type());
 	if (!(capabilities & (V4L2_CAP_VIDEO_CAPTURE |
 			      V4L2_CAP_VIDEO_CAPTURE_MPLANE |
@@ -2757,7 +2757,7 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 	}
 
 	fps_ts[CAP].determine_field(fd.g_fd(), in.g_type());
-	fps_ts[OUT].determine_field(fd.g_fd(), out.g_type());
+	fps_ts[OUT].determine_field(out_fd.g_fd(), out.g_type());
 
 	if (fd.streamon() || out_fd.streamon())
 		goto done;
