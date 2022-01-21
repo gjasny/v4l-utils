@@ -1197,13 +1197,18 @@ int lirc_receive(struct arguments *args, int fd, unsigned features)
 				case LIRC_MODE2_FREQUENCY:
 					fprintf(out, "carrier %u\n", val);
 					break;
+				case LIRC_MODE2_OVERFLOW:
+					fprintf(out, "overflow\n");
+					leading_space = true;
+					break;
 				}
 			} else {
 				switch (msg) {
 				case LIRC_MODE2_TIMEOUT:
-					fprintf(out, "-%u\n", val);
 					if (carrier)
-						fprintf(out, " # carrier %uHz, timeout %u\n", carrier, val);
+						fprintf(out, "-%u # carrier %uHz\n", val, carrier);
+					else
+						fprintf(out, "-%u\n", val);
 					leading_space = true;
 					carrier = 0;
 					break;
@@ -1215,6 +1220,14 @@ int lirc_receive(struct arguments *args, int fd, unsigned features)
 					break;
 				case LIRC_MODE2_FREQUENCY:
 					carrier = val;
+					break;
+				case LIRC_MODE2_OVERFLOW:
+					if (carrier)
+						fprintf(out, "# carrier %uHz, overflow\n", carrier);
+					else
+						fprintf(out, "# overflow\n");
+					leading_space = true;
+					carrier = 0;
 					break;
 				}
 			}
