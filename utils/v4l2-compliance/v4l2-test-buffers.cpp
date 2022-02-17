@@ -2032,8 +2032,7 @@ int testRequests(struct node *node, bool test_streaming)
 		if (qctrl.type != V4L2_CTRL_TYPE_INTEGER &&
 		    qctrl.type != V4L2_CTRL_TYPE_BOOLEAN)
 			continue;
-		if (qctrl.flags & V4L2_CTRL_FLAG_WRITE_ONLY ||
-		    qctrl.flags & V4L2_CTRL_FLAG_READ_ONLY)
+		if (qctrl.flags & V4L2_CTRL_FLAG_WRITE_ONLY)
 			continue;
 		if (is_vivid && V4L2_CTRL_ID2WHICH(qctrl.id) == V4L2_CTRL_CLASS_VIVID)
 			continue;
