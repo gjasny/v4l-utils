@@ -31,7 +31,8 @@ int testEncoder(struct node *node)
 	bool is_encoder = node->codec_mask & (STATEFUL_ENCODER | JPEG_ENCODER);
 	int ret;
 
-	if (IS_ENCODER(node))
+	fail_on_test((node->codec_mask & STATELESS_ENCODER) && !node->has_media);
+	if (IS_ENCODER(node) && node->has_media)
 		fail_on_test(node->function != MEDIA_ENT_F_PROC_VIDEO_ENCODER);
 	memset(&cmd, 0xff, sizeof(cmd));
 	memset(&cmd.raw, 0, sizeof(cmd.raw));
@@ -100,7 +101,8 @@ int testDecoder(struct node *node)
 	bool is_decoder = node->codec_mask & (STATEFUL_DECODER | JPEG_DECODER);
 	int ret;
 
-	if (IS_DECODER(node))
+	fail_on_test((node->codec_mask & STATELESS_DECODER) && !node->has_media);
+	if (IS_DECODER(node) && node->has_media)
 		fail_on_test(node->function != MEDIA_ENT_F_PROC_VIDEO_DECODER);
 	memset(&cmd, 0xff, sizeof(cmd));
 	memset(&cmd.raw, 0, sizeof(cmd.raw));

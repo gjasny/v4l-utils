@@ -120,6 +120,7 @@ struct base_node {
 	struct node *node2;	/* second open filehandle */
 	bool has_outputs;
 	bool has_inputs;
+	bool has_media;
 	unsigned tuners;
 	unsigned modulators;
 	unsigned inputs;

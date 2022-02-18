@@ -998,6 +998,7 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 			if (!node.is_v4l2())
 				driver = mdinfo.driver;
 			node.media_bus_info = mdinfo.bus_info;
+			node.has_media = true;
 		}
 	}
 
