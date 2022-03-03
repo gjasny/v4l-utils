@@ -471,19 +471,26 @@ static void log_event(struct cec_event &ev, bool show)
 {
 	bool is_high = ev.event == CEC_EVENT_PIN_CEC_HIGH;
 	bool is_initial = ev.flags & CEC_EVENT_FL_INITIAL_STATE;
+	bool is_pin_event = false;
 	__u16 pa;
 
 	if (ev.event != CEC_EVENT_PIN_CEC_LOW && ev.event != CEC_EVENT_PIN_CEC_HIGH &&
 	    ev.event != CEC_EVENT_PIN_HPD_LOW && ev.event != CEC_EVENT_PIN_HPD_HIGH &&
 	    ev.event != CEC_EVENT_PIN_5V_LOW && ev.event != CEC_EVENT_PIN_5V_HIGH)
 		printf("\n");
+	else
+		is_pin_event = true;
 	if ((ev.flags & CEC_EVENT_FL_DROPPED_EVENTS) && show)
 		printf("(warn: %s events were lost)\n", event2s(ev.event));
 	if (show) {
-		if (is_initial)
+		if (is_initial) {
 			printf("Initial ");
-		else if (ev.event != CEC_EVENT_PIN_CEC_LOW && ev.event != CEC_EVENT_PIN_CEC_HIGH)
-			printf("%s: ", ts2s(ev.ts).c_str());
+		} else if (ev.event != CEC_EVENT_PIN_CEC_LOW && ev.event != CEC_EVENT_PIN_CEC_HIGH) {
+			if (is_pin_event)
+				printf("%s: ", ts2s(ev.ts / 1000000000.0).c_str());
+			else
+				printf("%s: ", ts2s(ev.ts).c_str());
+		}
 	}
 
 	switch (ev.event) {
