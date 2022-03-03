@@ -972,7 +972,9 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 			    ev.event == CEC_EVENT_PIN_5V_LOW ||
 			    ev.event == CEC_EVENT_PIN_5V_HIGH)
 				pin_event = true;
-			generate_eob_event(ev.ts, fstore);
+			if (ev.event == CEC_EVENT_PIN_CEC_LOW ||
+			    ev.event == CEC_EVENT_PIN_CEC_HIGH)
+				generate_eob_event(ev.ts, fstore);
 			if (pin_event && fstore) {
 				unsigned int v = ev.event - CEC_EVENT_PIN_CEC_LOW;
 
