@@ -36,6 +36,7 @@
 
 static struct timespec start_monotonic;
 static struct timeval start_timeofday;
+static time_t valid_until_t;
 static bool ignore_la[16];
 static const char *edid_path;
 static bool is_paused;
@@ -368,11 +369,14 @@ static const char *power_status2s(__u8 power_status)
 
 std::string ts2s(__u64 ts)
 {
+	static char buf[64];
+	static unsigned last_secs;
+	static time_t last_t;
 	std::string s;
-	struct timeval sub;
+	struct timeval sub = {};
 	struct timeval res;
-	__u64 diff;
-	char buf[64];
+	unsigned secs;
+	__s64 diff;
 	time_t t;
 
 	if (!options[OptWallClock]) {
@@ -380,25 +384,35 @@ std::string ts2s(__u64 ts)
 		return buf;
 	}
 	diff = ts - start_monotonic.tv_sec * 1000000000ULL - start_monotonic.tv_nsec;
-	sub.tv_sec = diff / 1000000000ULL;
-	sub.tv_usec = (diff % 1000000000ULL) / 1000;
+	if (diff >= 0) {
+		sub.tv_sec = diff / 1000000000ULL;
+		sub.tv_usec = (diff % 1000000000ULL) / 1000;
+	}
 	timeradd(&start_timeofday, &sub, &res);
 	t = res.tv_sec;
-	s = ctime(&t);
-	s = s.substr(0, s.length() - 6);
-	sprintf(buf, "%03lu", res.tv_usec / 1000);
-	return s + "." + buf;
+	if (t >= valid_until_t) {
+		struct tm tm = *localtime(&t);
+		last_secs = tm.tm_min * 60 + tm.tm_sec;
+		last_t = t;
+		valid_until_t = t + 3600 - last_secs;
+		strftime(buf, sizeof(buf), "%a %b %e %T.000", &tm);
+	}
+	secs = last_secs + t - last_t;
+	sprintf(buf + 14, "%02u:%02u.%03lu", secs / 60, secs % 60, res.tv_usec / 1000);
+	return buf;
 }
 
 std::string ts2s(double ts)
 {
+	__u64 t = static_cast<__u64>(ts * 1000000000.0);
+
 	if (!options[OptWallClock]) {
 		char buf[64];
 
-		sprintf(buf, "%10.06f", ts);
+		sprintf(buf, "%llu.%06llu", t / 1000000000, (t % 1000000000) / 1000);
 		return buf;
 	}
-	return ts2s(static_cast<__u64>(ts * 1000000000.0));
+	return ts2s(t);
 }
 
 static __u64 current_ts()
@@ -1057,27 +1071,37 @@ static void analyze(const char *analyze_pin)
 
 	while (fgets(s, sizeof(s), fanalyze)) {
 		unsigned event;
+		char *p = s;
 
-		if (sscanf(s, "# start_monotonic %lu.%09lu\n", &tv_sec, &tv_nsec) == 2 &&
-		    tv_nsec < 1000000000) {
-			start_monotonic.tv_sec = tv_sec;
-			start_monotonic.tv_nsec = tv_nsec;
+		if (s[0] == '#') {
+			if (sscanf(s, "# start_monotonic %lu.%09lu\n", &tv_sec, &tv_nsec) == 2 &&
+			    tv_nsec < 1000000000) {
+				start_monotonic.tv_sec = tv_sec;
+				start_monotonic.tv_nsec = tv_nsec;
+			} else if (sscanf(s, "# start_timeofday %lu.%06lu\n", &tv_sec, &tv_usec) == 2 &&
+				   tv_usec < 1000000) {
+				start_timeofday.tv_sec = tv_sec;
+				start_timeofday.tv_usec = tv_usec;
+				valid_until_t = 0;
+			}
+			line++;
+			continue;
+		} else if (s[0] == '\n') {
 			line++;
 			continue;
 		}
-		if (sscanf(s, "# start_timeofday %lu.%06lu\n", &tv_sec, &tv_usec) == 2 &&
-		    tv_usec < 1000000) {
-			start_timeofday.tv_sec = tv_sec;
-			start_timeofday.tv_usec = tv_usec;
-			line++;
-			continue;
-		}
-		if (s[0] == '#' || s[0] == '\n') {
-			line++;
-			continue;
-		}
-		if (sscanf(s, "%lu.%09lu %d\n", &tv_sec, &tv_nsec, &event) != 3 ||
-		    (event & ~MONITOR_FL_DROPPED_EVENTS) > 5) {
+		tv_sec = tv_nsec = event = 0;
+		while (isdigit(*p))
+			tv_sec = tv_sec * 10 + *p++ - '0';
+		if (*p == '.')
+			p++;
+		while (isdigit(*p))
+			tv_nsec = tv_nsec * 10 + *p++ - '0';
+		if (*p == ' ')
+			p++;
+		while (isdigit(*p))
+			event = event * 10 + *p++ - '0';
+		if (*p != '\n' || (event & ~MONITOR_FL_DROPPED_EVENTS) > 5) {
 			fprintf(stderr, "malformed data at line %d\n", line);
 			break;
 		}
