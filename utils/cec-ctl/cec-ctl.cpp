@@ -394,7 +394,7 @@ std::string ts2s(__u64 ts)
 		struct tm tm = *localtime(&t);
 		last_secs = tm.tm_min * 60 + tm.tm_sec;
 		last_t = t;
-		valid_until_t = t + 3600 - last_secs;
+		valid_until_t = t + 60 - last_secs;
 		strftime(buf, sizeof(buf), "%a %b %e %T.000000", &tm);
 	}
 	secs = last_secs + t - last_t;
@@ -877,7 +877,7 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 	fd_set ex_fds;
 	int fd = node.fd;
 	FILE *fstore = nullptr;
-	time_t t, start_hour;
+	time_t t, start_minute;
 
 	if (options[OptMonitorAll])
 		monitor = CEC_MODE_MONITOR_ALL;
@@ -934,8 +934,8 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 		printf("\n");
 
 	fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
-	start_hour = time(nullptr);
-	t = start_hour + monitor_time;
+	start_minute = time(nullptr);
+	t = start_minute + monitor_time;
 
 	while (1) {
 		time_t now = time(nullptr);
@@ -946,16 +946,6 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 		fflush(stdout);
 		if (monitor_time && now >= t)
 			break;
-		if (store_pin && now - start_hour > 3600) {
-			clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
-			gettimeofday(&start_timeofday, nullptr);
-			fprintf(fstore, "# start_monotonic %lu.%09lu\n",
-				start_monotonic.tv_sec, start_monotonic.tv_nsec);
-			fprintf(fstore, "# start_timeofday %lu.%06lu\n",
-				start_timeofday.tv_sec, start_timeofday.tv_usec);
-			fflush(fstore);
-			start_hour = now;
-		}
 		FD_ZERO(&rd_fds);
 		FD_ZERO(&ex_fds);
 		FD_SET(fd, &rd_fds);
@@ -963,6 +953,23 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 		res = select(fd + 1, &rd_fds, nullptr, &ex_fds, &tv);
 		if (res < 0)
 			break;
+		if (store_pin && now - start_minute > 60 &&
+		    (FD_ISSET(fd, &rd_fds) || FD_ISSET(fd, &ex_fds))) {
+			/*
+			 * The drift between the monotonic and wallclock
+			 * time can be quite high (1 ms per minute), so
+			 * report this once a minute to ensure a sane
+			 * wallclock time when analyzing this later.
+			 */
+			clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
+			gettimeofday(&start_timeofday, nullptr);
+			fprintf(fstore, "# start_monotonic %lu.%09lu\n",
+				start_monotonic.tv_sec, start_monotonic.tv_nsec);
+			fprintf(fstore, "# start_timeofday %lu.%06lu\n",
+				start_timeofday.tv_sec, start_timeofday.tv_usec);
+			fflush(fstore);
+			start_minute = now;
+		}
 		if (FD_ISSET(fd, &rd_fds)) {
 			struct cec_msg msg = { };
 
