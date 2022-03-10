@@ -380,7 +380,7 @@ std::string ts2s(__u64 ts)
 	time_t t;
 
 	if (!options[OptWallClock]) {
-		sprintf(buf, "%llu.%03llus", ts / 1000000000, (ts % 1000000000) / 1000000);
+		sprintf(buf, "%llu.%06llus", ts / 1000000000, (ts % 1000000000) / 1000);
 		return buf;
 	}
 	diff = ts - start_monotonic.tv_sec * 1000000000ULL - start_monotonic.tv_nsec;
@@ -395,10 +395,10 @@ std::string ts2s(__u64 ts)
 		last_secs = tm.tm_min * 60 + tm.tm_sec;
 		last_t = t;
 		valid_until_t = t + 3600 - last_secs;
-		strftime(buf, sizeof(buf), "%a %b %e %T.000", &tm);
+		strftime(buf, sizeof(buf), "%a %b %e %T.000000", &tm);
 	}
 	secs = last_secs + t - last_t;
-	sprintf(buf + 14, "%02u:%02u.%03lu", secs / 60, secs % 60, res.tv_usec / 1000);
+	sprintf(buf + 14, "%02u:%02u.%06lu", secs / 60, secs % 60, res.tv_usec);
 	return buf;
 }
 
