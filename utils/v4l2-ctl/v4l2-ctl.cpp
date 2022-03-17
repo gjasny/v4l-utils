@@ -21,6 +21,7 @@
  */
 
 #include <cctype>
+#include <vector>
 
 #include <dirent.h>
 #include <getopt.h>
@@ -1106,6 +1107,12 @@ err:
 
 int main(int argc, char **argv)
 {
+	struct event {
+		int type;
+		__u32 ev;
+		__u32 id;
+		std::string name;
+	};
 	int i;
 	cv4l_fd c_fd;
 	cv4l_fd c_out_fd;
@@ -1124,12 +1131,7 @@ int main(int argc, char **argv)
 	const char *export_device = nullptr;
 	struct v4l2_capability vcap = {};
 	struct v4l2_subdev_capability subdevcap = {};
-	__u32 wait_for_event = 0;	/* wait for this event */
-	const char *wait_event_id = nullptr;
-	__u32 poll_for_event = 0;	/* poll for this event */
-	const char *poll_event_id = nullptr;
-	__u32 epoll_for_event = 0;	/* epoll for this event */
-	const char *epoll_event_id = nullptr;
+	std::vector<event> events;
 	unsigned secs = 0;
 	char short_options[26 * 2 * 3 + 1];
 	int idx = 0;
@@ -1151,6 +1153,8 @@ int main(int argc, char **argv)
 	}
 	while (true) {
 		int option_index = 0;
+		const char *name;
+		event new_ev;
 
 		short_options[idx] = 0;
 		ch = getopt_long(argc, argv, short_options,
@@ -1233,19 +1237,18 @@ int main(int argc, char **argv)
 			media_bus_info = optarg;
 			break;
 		case OptWaitForEvent:
-			wait_for_event = parse_event(optarg, &wait_event_id);
-			if (wait_for_event == 0)
-				return 1;
-			break;
 		case OptPollForEvent:
-			poll_for_event = parse_event(optarg, &poll_event_id);
-			if (poll_for_event == 0)
-				return 1;
-			break;
 		case OptEPollForEvent:
-			epoll_for_event = parse_event(optarg, &epoll_event_id);
-			if (epoll_for_event == 0)
+			new_ev.type = ch;
+			new_ev.ev = parse_event(optarg, &name);
+			new_ev.id = 0;
+			if (new_ev.ev == 0)
 				return 1;
+			if (new_ev.ev == V4L2_EVENT_SOURCE_CHANGE)
+				new_ev.id = strtoul(name, nullptr, 0);
+			else if (new_ev.ev == V4L2_EVENT_CTRL)
+				new_ev.name = name;
+			events.push_back(new_ev);
 			break;
 		case OptSleep:
 			secs = strtoul(optarg, nullptr, 0);
@@ -1399,21 +1402,15 @@ int main(int argc, char **argv)
 
 	common_process_controls(c_fd);
 
-	if (wait_for_event == V4L2_EVENT_CTRL && wait_event_id)
-		if (!common_find_ctrl_id(wait_event_id)) {
-			fprintf(stderr, "unknown control '%s'\n", wait_event_id);
+	for (auto &e : events) {
+		if (e.ev != V4L2_EVENT_CTRL)
+			continue;
+		e.id = common_find_ctrl_id(e.name.c_str());
+		if (!e.id) {
+			fprintf(stderr, "unknown control '%s'\n", e.name.c_str());
 			std::exit(EXIT_FAILURE);
 		}
-	if (poll_for_event == V4L2_EVENT_CTRL && poll_event_id)
-		if (!common_find_ctrl_id(poll_event_id)) {
-			fprintf(stderr, "unknown control '%s'\n", poll_event_id);
-			std::exit(EXIT_FAILURE);
-		}
-	if (epoll_for_event == V4L2_EVENT_CTRL && epoll_event_id)
-		if (!common_find_ctrl_id(epoll_event_id)) {
-			fprintf(stderr, "unknown control '%s'\n", epoll_event_id);
-			std::exit(EXIT_FAILURE);
-		}
+	}
 
 	if (options[OptAll]) {
 		options[OptGetVideoFormat] = 1;
@@ -1516,92 +1513,80 @@ int main(int argc, char **argv)
 
 	streaming_set(c_fd, c_out_fd, c_exp_fd);
 
-	if (options[OptWaitForEvent]) {
+	for (const auto &e : events) {
 		struct v4l2_event_subscription sub;
 		struct v4l2_event ev;
 
+		if (e.type != OptWaitForEvent)
+			continue;
 		memset(&sub, 0, sizeof(sub));
-		sub.type = wait_for_event;
-		if (wait_for_event == V4L2_EVENT_CTRL)
-			sub.id = common_find_ctrl_id(wait_event_id);
-		else if (wait_for_event == V4L2_EVENT_SOURCE_CHANGE)
-			sub.id = strtoul(wait_event_id, nullptr, 0);
+		sub.type = e.ev;
+		sub.id = e.id;
 		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub))
 			if (!doioctl(fd, VIDIOC_DQEVENT, &ev))
 				print_event(&ev);
+		doioctl(fd, VIDIOC_UNSUBSCRIBE_EVENT, &sub);
+	}
+
+	for (const auto &e : events) {
+		struct v4l2_event_subscription sub;
+
+		if (e.type == OptWaitForEvent)
+			continue;
+		memset(&sub, 0, sizeof(sub));
+		sub.flags = V4L2_EVENT_SUB_FL_SEND_INITIAL;
+		sub.type = e.ev;
+		sub.id = e.id;
+		doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub);
 	}
 
 	if (options[OptPollForEvent]) {
-		struct v4l2_event_subscription sub;
-		struct v4l2_event ev;
+		fd_set fds;
+		__u32 seq = 0;
 
-		memset(&sub, 0, sizeof(sub));
-		sub.flags = V4L2_EVENT_SUB_FL_SEND_INITIAL;
-		sub.type = poll_for_event;
-		if (poll_for_event == V4L2_EVENT_CTRL)
-			sub.id = common_find_ctrl_id(poll_event_id);
-		else if (poll_for_event == V4L2_EVENT_SOURCE_CHANGE)
-			sub.id = strtoul(poll_event_id, nullptr, 0);
-		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub)) {
-			fd_set fds;
-			__u32 seq = 0;
+		fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+		while (true) {
+			struct v4l2_event ev;
+			int res;
 
-			fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
-			while (true) {
-				int res;
-
-				FD_ZERO(&fds);
-				FD_SET(fd, &fds);
-				res = select(fd + 1, nullptr, nullptr, &fds, nullptr);
-				if (res <= 0)
-					break;
-				if (doioctl(fd, VIDIOC_DQEVENT, &ev))
-					break;
-				print_event(&ev);
-				if (ev.sequence > seq)
-					printf("\tMissed %d events\n",
-						ev.sequence - seq);
-				seq = ev.sequence + 1;
-			}
+			FD_ZERO(&fds);
+			FD_SET(fd, &fds);
+			res = select(fd + 1, nullptr, nullptr, &fds, nullptr);
+			if (res <= 0)
+				break;
+			if (doioctl(fd, VIDIOC_DQEVENT, &ev))
+				break;
+			print_event(&ev);
+			if (ev.sequence > seq)
+				printf("\tMissed %d events\n", ev.sequence - seq);
+			seq = ev.sequence + 1;
 		}
 	}
 
 	if (options[OptEPollForEvent]) {
 		struct epoll_event epoll_ev;
 		int epollfd = -1;
-		struct v4l2_event_subscription sub;
-		struct v4l2_event ev;
+		__u32 seq = 0;
 
 		epollfd = epoll_create1(0);
 		epoll_ev.events = EPOLLPRI;
 		epoll_ev.data.fd = fd;
 
-		memset(&sub, 0, sizeof(sub));
-		sub.flags = V4L2_EVENT_SUB_FL_SEND_INITIAL;
-		sub.type = epoll_for_event;
-		if (epoll_for_event == V4L2_EVENT_CTRL)
-			sub.id = common_find_ctrl_id(epoll_event_id);
-		else if (epoll_for_event == V4L2_EVENT_SOURCE_CHANGE)
-			sub.id = strtoul(epoll_event_id, nullptr, 0);
-		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub)) {
-			__u32 seq = 0;
+		fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+		epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &epoll_ev);
+		while (true) {
+			struct v4l2_event ev;
+			int res;
 
-			fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
-			epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &epoll_ev);
-			while (true) {
-				int res;
-
-				res = epoll_wait(epollfd, &epoll_ev, 1, -1);
-				if (res <= 0)
-					break;
-				if (doioctl(fd, VIDIOC_DQEVENT, &ev))
-					break;
-				print_event(&ev);
-				if (ev.sequence > seq)
-					printf("\tMissed %d events\n",
-						ev.sequence - seq);
-				seq = ev.sequence + 1;
-			}
+			res = epoll_wait(epollfd, &epoll_ev, 1, -1);
+			if (res <= 0)
+				break;
+			if (doioctl(fd, VIDIOC_DQEVENT, &ev))
+				break;
+			print_event(&ev);
+			if (ev.sequence > seq)
+				printf("\tMissed %d events\n", ev.sequence - seq);
+			seq = ev.sequence + 1;
 		}
 		close(epollfd);
 	}
