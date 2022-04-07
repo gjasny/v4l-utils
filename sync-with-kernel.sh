@@ -17,7 +17,7 @@ if [ -z "${KERNEL_DIR}" -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/lirc.h -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/bpf.h -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/bpf_common.h -o \
-     ! -f ${KERNEL_DIR}/drivers/media/tuners/tuner-xc2028-types.h -o \
+     ! -f ${KERNEL_DIR}/drivers/media/tuners/xc2028-types.h -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/input-event-codes.h ]; then
 	echo "Usage: $0 KERNEL_DIR"
 	echo
