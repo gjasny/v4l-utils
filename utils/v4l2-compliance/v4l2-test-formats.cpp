@@ -1341,8 +1341,16 @@ static int testParmType(struct node *node, unsigned type)
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		if (node->g_caps() & buftype2cap[type]) {
-			fail_on_test(ret && node->has_frmintervals);
-			fail_on_test(ret && node->has_enc_cap_frame_interval);
+			if (is_stateful_enc) {
+				if (V4L2_TYPE_IS_OUTPUT(type))
+					fail_on_test(ret && node->has_frmintervals);
+				else if (node->has_enc_cap_frame_interval)
+					fail_on_test(ret);
+				else
+					fail_on_test(!ret);
+			} else {
+				fail_on_test(ret && node->has_frmintervals);
+			}
 		}
 		break;
 	default:
