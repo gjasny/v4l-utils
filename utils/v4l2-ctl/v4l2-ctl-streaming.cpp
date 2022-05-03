@@ -394,7 +394,7 @@ static enum codec_type get_codec_type(cv4l_fd &fd)
 	return NOT_CODEC;
 }
 
-static int get_cap_compose_rect(cv4l_fd &fd)
+static void get_cap_compose_rect(cv4l_fd &fd)
 {
 	cv4l_disable_trace dt(fd);
 	v4l2_selection sel;
@@ -407,14 +407,12 @@ static int get_cap_compose_rect(cv4l_fd &fd)
 		support_cap_compose = true;
 		composed_width = sel.r.width;
 		composed_height = sel.r.height;
-		return 0;
-	}
-
-	support_cap_compose = false;
-	return 0;
+	} else {
+		support_cap_compose = false;
+    }
 }
 
-static int get_out_crop_rect(cv4l_fd &fd)
+static void get_out_crop_rect(cv4l_fd &fd)
 {
 	cv4l_disable_trace dt(fd);
 	v4l2_selection sel;
@@ -427,11 +425,9 @@ static int get_out_crop_rect(cv4l_fd &fd)
 		support_out_crop = true;
 		cropped_width = sel.r.width;
 		cropped_height = sel.r.height;
-		return 0;
+	} else {
+		support_out_crop = false;
 	}
-
-	support_out_crop = false;
-	return 0;
 }
 
 static void set_time_stamp(cv4l_buffer &buf)
