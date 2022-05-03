@@ -89,6 +89,8 @@ enum codec_type {
 	DECODER
 };
 
+static enum codec_type codec_type;
+
 #define QUEUE_ERROR -1
 #define QUEUE_STOPPED -2
 
@@ -352,7 +354,7 @@ void streaming_usage()
 	       	V4L_STREAM_PORT);
 }
 
-static enum codec_type get_codec_type(cv4l_fd &fd)
+static void get_codec_type(cv4l_fd &fd)
 {
 	cv4l_disable_trace dt(fd);
 	struct v4l2_fmtdesc fmt_desc = {};
@@ -361,11 +363,13 @@ static enum codec_type get_codec_type(cv4l_fd &fd)
 	int num_out_fmts = 0;
 	int num_compressed_out_fmts = 0;
 
+	codec_type = NOT_CODEC;
+
 	if (!fd.has_vid_m2m())
-		return NOT_CODEC;
+		return;
 
 	if (fd.enum_fmt(fmt_desc, true, 0, fd.g_type()))
-		return NOT_CODEC;
+		return;
 
 	do {
 		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED)
@@ -375,7 +379,7 @@ static enum codec_type get_codec_type(cv4l_fd &fd)
 
 
 	if (fd.enum_fmt(fmt_desc, true, 0, v4l_type_invert(fd.g_type())))
-		return NOT_CODEC;
+		return;
 
 	do {
 		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED)
@@ -384,14 +388,14 @@ static enum codec_type get_codec_type(cv4l_fd &fd)
 	} while (!fd.enum_fmt(fmt_desc));
 
 	if (num_compressed_out_fmts == 0 && num_compressed_cap_fmts == num_cap_fmts) {
-		return ENCODER;
+		codec_type = ENCODER;
+		return;
 	}
 
 	if (num_compressed_cap_fmts == 0 && num_compressed_out_fmts == num_out_fmts) {
-		return DECODER;
+		codec_type = DECODER;
+		return;
 	}
-
-	return NOT_CODEC;
 }
 
 static void get_cap_compose_rect(cv4l_fd &fd)
@@ -1105,7 +1109,8 @@ restart:
 		if (fmt.g_pixelformat() == V4L2_PIX_FMT_FWHT_STATELESS)
 			res = read_fwht_frame(fmt, static_cast<unsigned char *>(buf), fin,
 					      sz, expected_len, buf_len);
-		else if (support_out_crop && v4l2_fwht_find_pixfmt(fmt.g_pixelformat()))
+		else if (codec_type != NOT_CODEC && support_out_crop &&
+			 v4l2_fwht_find_pixfmt(fmt.g_pixelformat()))
 			res = read_write_padded_frame(fmt, static_cast<unsigned char *>(buf),
 						      fin, sz, expected_len, buf_len, true);
 		else
@@ -1365,7 +1370,8 @@ static void write_buffer_to_file(cv4l_fd &fd, cv4l_queue &q, cv4l_buffer &buf,
 		}
 		if (host_fd_to >= 0)
 			sz = fwrite(comp_ptr[j] + offset, 1, used, fout);
-		else if (support_cap_compose && v4l2_fwht_find_pixfmt(fmt.g_pixelformat()))
+		else if (codec_type != NOT_CODEC && support_cap_compose &&
+			 v4l2_fwht_find_pixfmt(fmt.g_pixelformat()))
 			read_write_padded_frame(fmt, static_cast<u8 *>(q.g_dataptr(buf.g_index(), j)) + offset,
 						fout, sz, used, used, false);
 		else
@@ -2258,7 +2264,6 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 
 	bool have_eos = subscribe_event(fd, V4L2_EVENT_EOS);
 	bool is_encoder = false;
-	enum codec_type codec_type = get_codec_type(fd);
 	bool ignore_count_skip = codec_type == ENCODER;
 
 	if (have_eos) {
@@ -2864,6 +2869,7 @@ void streaming_set(cv4l_fd &fd, cv4l_fd &out_fd, cv4l_fd &exp_fd)
 
 	get_cap_compose_rect(fd);
 	get_out_crop_rect(fd);
+	get_codec_type(fd);
 
 	if (do_cap && do_out && out_fd.g_fd() < 0)
 		streaming_set_m2m(fd, exp_fd);
