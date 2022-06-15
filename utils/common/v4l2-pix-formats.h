@@ -45,6 +45,7 @@
 	case V4L2_PIX_FMT_Y16_BE: return "16-bit Greyscale BE";
 	case V4L2_PIX_FMT_Y10BPACK: return "10-bit Greyscale (Packed)";
 	case V4L2_PIX_FMT_Y10P: return "10-bit Greyscale (MIPI Packed)";
+	case V4L2_PIX_FMT_IPU3_Y10: return "10-bit greyscale (IPU3 Packed)";
 	case V4L2_PIX_FMT_Y8I: return "Interleaved 8-bit Greyscale";
 	case V4L2_PIX_FMT_Y12I: return "Interleaved 12-bit Greyscale";
 	case V4L2_PIX_FMT_Z16: return "16-bit Depth";
@@ -81,6 +82,7 @@
 	case V4L2_PIX_FMT_NV61: return "Y/CrCb 4:2:2";
 	case V4L2_PIX_FMT_NV24: return "Y/CbCr 4:4:4";
 	case V4L2_PIX_FMT_NV42: return "Y/CrCb 4:4:4";
+	case V4L2_PIX_FMT_P010: return "10-bit Y/CrCb 4:2:0";
 	case V4L2_PIX_FMT_NV12_4L4: return "Y/CbCr 4:2:0 (4x4 Linear)";
 	case V4L2_PIX_FMT_NV12_16L16: return "Y/CbCr 4:2:0 (16x16 Linear)";
 	case V4L2_PIX_FMT_NV12_32L32: return "Y/CbCr 4:2:0 (32x32 Linear)";
@@ -214,3 +216,5 @@
 	case V4L2_PIX_FMT_SE401: return "GSPCA SE401";
 	case V4L2_PIX_FMT_S5C_UYVY_JPG: return "S5C73MX interleaved UYVY/JPEG";
 	case V4L2_PIX_FMT_MT21C: return "Mediatek Compressed Format";
+	case V4L2_PIX_FMT_QC08C: return "QCOM Compressed 8-bit Format";
+	case V4L2_PIX_FMT_QC10C: return "QCOM Compressed 10-bit Format";

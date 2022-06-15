@@ -76,7 +76,7 @@ function libdvbv5 {
 function xc3028-firmware {
 	SRCDIR=${TOPSRCDIR}/contrib/xc3028-firmware
 
-	cp -a ${KERNEL_DIR}/drivers/media/tuners/tuner-xc2028-types.h ${SRCDIR}/
+	cp -a ${KERNEL_DIR}/drivers/media/tuners/xc2028-types.h ${SRCDIR}/
 }
 
 function ioctl-test {

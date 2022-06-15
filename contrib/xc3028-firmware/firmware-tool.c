@@ -32,7 +32,7 @@
 #include <asm/byteorder.h>
 #include <asm/types.h>
 
-#include "tuner-xc2028-types.h"
+#include "xc2028-types.h"
 #include "linux/videodev2.h"
 
 #include "extract_head.h"
