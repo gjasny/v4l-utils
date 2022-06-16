@@ -348,8 +348,8 @@ static int standby_resume_standby(struct node *node, unsigned me, unsigned la, b
 	node->remote[la].in_standby = true;
 
 	if (unresponsive_cnt > 0)
-		warn("The device went correctly into standby, but was unresponsive %d times during the transition.\n",
-		     unresponsive_cnt);
+		announce("The device went correctly into standby, but was unresponsive %d time%s during the transition.\n",
+			 unresponsive_cnt, unresponsive_cnt == 1 ? "" : "s");
 
 	return 0;
 }
@@ -396,8 +396,8 @@ static int standby_resume_standby_toggle(struct node *node, unsigned me, unsigne
 	fail_on_test(interactive && !question("Is the device still in standby?"));
 	node->remote[la].in_standby = true;
 	if (unresponsive_cnt > 0)
-		warn("The device went correctly into standby, but was unresponsive %d times during the transition.\n",
-		     unresponsive_cnt);
+		announce("The device went correctly into standby, but was unresponsive %d time%s during the transition.\n",
+			 unresponsive_cnt, unresponsive_cnt == 1 ? "" : "s");
 
 	return 0;
 }
@@ -432,8 +432,8 @@ static int standby_resume_active_source_nowake(struct node *node, unsigned me, u
 
 	node->remote[la].in_standby = true;
 	if (unresponsive_cnt > 0)
-		warn("The device stayed correctly in standby, but was unresponsive %d times.\n",
-		     unresponsive_cnt);
+		warn("The device stayed correctly in standby, but was unresponsive %d time%s.\n",
+		     unresponsive_cnt, unresponsive_cnt == 1 ? "" : "s");
 	return 0;
 }
 
@@ -511,8 +511,8 @@ int standby_resume_wakeup(struct node *node, unsigned me, unsigned la, bool inte
 	fail_on_test(interactive && !question("Is the device in On state?"));
 
 	if (unresponsive_cnt > 0)
-		warn("The device went correctly out of standby, but was unresponsive %d times during the transition.\n",
-		     unresponsive_cnt);
+		announce("The device went correctly out of standby, but was unresponsive %d time%s during the transition.\n",
+			 unresponsive_cnt, unresponsive_cnt == 1 ? "" : "s");
 
 	return 0;
 }
@@ -557,8 +557,8 @@ static int standby_resume_wakeup_view_on(struct node *node, unsigned me, unsigne
 	fail_on_test(!transmit_timeout(node, &msg));
 
 	if (unresponsive_cnt > 0)
-		warn("The device went correctly out of standby, but was unresponsive %d times during the transition.\n",
-		     unresponsive_cnt);
+		announce("The device went correctly out of standby, but was unresponsive %d time%s during the transition.\n",
+			 unresponsive_cnt, unresponsive_cnt == 1 ? "" : "s");
 
 	return 0;
 }
