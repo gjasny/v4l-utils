@@ -448,6 +448,49 @@ static int checkInput(struct node *node, const struct v4l2_input &descr, unsigne
 	return 0;
 }
 
+static unsigned roundup(unsigned v, unsigned mult)
+{
+	return mult * ((v + mult - 1) / mult);
+}
+
+static int checkVividPixelArray(struct node *node)
+{
+	struct v4l2_query_ext_ctrl qextctrl = {
+		.id = VIVID_CID_U8_PIXEL_ARRAY
+	};
+	cv4l_fmt fmt;
+
+	fail_on_test(node->query_ext_ctrl(qextctrl));
+	fail_on_test(node->g_fmt(fmt));
+	fail_on_test(qextctrl.nr_of_dims != 2);
+	fail_on_test(qextctrl.dims[0] != roundup(fmt.g_width(), PIXEL_ARRAY_DIV));
+	fail_on_test(qextctrl.dims[1] != roundup(fmt.g_height(), PIXEL_ARRAY_DIV));
+	fail_on_test(qextctrl.minimum == qextctrl.default_value);
+
+	struct v4l2_ext_control ctrl = {
+		.id = VIVID_CID_U8_PIXEL_ARRAY
+	};
+	struct v4l2_ext_controls ctrls = {
+		.count = 1
+	};
+
+	ctrl.size = qextctrl.elems * qextctrl.elem_size;
+	ctrl.p_u8 = new unsigned char[ctrl.size];
+	ctrls.controls = &ctrl;
+	fail_on_test(node->g_ext_ctrls(ctrls));
+	for (unsigned i = 0; i < qextctrl.elems; i++) {
+		fail_on_test(ctrl.p_u8[i] != qextctrl.default_value);
+		ctrl.p_u8[i] = qextctrl.minimum;
+	}
+	fail_on_test(node->s_ext_ctrls(ctrls));
+	fail_on_test(node->g_ext_ctrls(ctrls));
+	for (unsigned i = 0; i < qextctrl.elems; i++) {
+		fail_on_test(ctrl.p_u8[i] != qextctrl.minimum);
+	}
+	delete [] ctrl.p_u8;
+	return 0;
+}
+
 int testInput(struct node *node)
 {
 	struct v4l2_input descr;
@@ -479,6 +522,14 @@ int testInput(struct node *node)
 		return fail("VIDIOC_G_INPUT didn't fill in the input\n");
 	if (node->is_radio)
 		return fail("radio can't have input support\n");
+	if (is_vivid && cur_input == 0) {
+		// for vivid start off with a different input than the
+		// current one. This ensures that the checkVividPixelArray()
+		// call later succeeds since switching to input 0 will reset
+		// that control to the default values.
+		input = 1;
+		doioctl(node, VIDIOC_S_INPUT, &input);
+	}
 	for (;;) {
 		memset(&descr, 0xff, sizeof(descr));
 		descr.index = i;
@@ -494,6 +545,8 @@ int testInput(struct node *node)
 			return fail("input set to %d, but becomes %d?!\n", i, input);
 		if (checkInput(node, descr, i))
 			return fail("invalid attributes for input %d\n", i);
+		if (is_vivid && node->is_video && checkVividPixelArray(node))
+			return fail("vivid pixel array control test failed\n");
 		node->inputs++;
 		i++;
 	}
