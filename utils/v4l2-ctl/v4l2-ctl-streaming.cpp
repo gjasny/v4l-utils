@@ -330,7 +330,7 @@ void streaming_usage()
 	       "  --stream-out-dmabuf\n"
 	       "                     output video using dmabuf [VIDIOC_(D)QBUF]\n"
 	       "                     Requires a corresponding --stream-mmap option.\n"
-	       "  --list-patterns    list available patterns for use with --stream-pattern.\n"
+	       "  --list-patterns    list available patterns for use with --stream-out-pattern.\n"
 	       "  --list-buffers     list all video buffers [VIDIOC_QUERYBUF]\n"
 	       "  --list-buffers-out list all video output buffers [VIDIOC_QUERYBUF]\n"
 	       "  --list-buffers-vbi list all VBI buffers [VIDIOC_QUERYBUF]\n"
