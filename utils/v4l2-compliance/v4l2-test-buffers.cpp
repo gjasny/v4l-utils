@@ -2007,6 +2007,30 @@ int testRequests(struct node *node, bool test_streaming)
 		.id = VIVID_CID_RO_INTEGER,
 	};
 	v4l2_ext_controls vivid_ro_ctrls = {};
+	// Note: the vivid dynamic array has range 10-90
+	// and the maximum number of elements is 100.
+	__u32 vivid_dyn_array[101] = {};
+	// Initialize with these values
+	static const __u32 vivid_dyn_array_init[16] = {
+		 6, 12, 18, 24, 30, 36, 42, 48,
+		54, 60, 66, 72, 78, 84, 90, 96
+	};
+	// This is the clamped version to compare against
+	static const __u32 vivid_dyn_array_clamped[16] = {
+		10, 12, 18, 24, 30, 36, 42, 48,
+		54, 60, 66, 72, 78, 84, 90, 90
+	};
+	const unsigned elem_size = sizeof(vivid_dyn_array[0]);
+	v4l2_ext_control vivid_dyn_array_ctrl = {
+		.id = VIVID_CID_U32_DYN_ARRAY,
+		.size = elem_size,
+		.p_u32 = vivid_dyn_array,
+	};
+	v4l2_ext_controls vivid_dyn_array_ctrls = {
+		.which = V4L2_CTRL_WHICH_REQUEST_VAL,
+		.count = 1,
+		.controls = &vivid_dyn_array_ctrl,
+	};
 	bool have_controls;
 	int ret;
 
@@ -2318,6 +2342,34 @@ int testRequests(struct node *node, bool test_streaming)
 		ctrls.request_fd = buf_req_fds[i];
 		if (i % 3 < 2)
 			fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+		if (is_vivid) {
+			// For vivid, check dynamic array support:
+			vivid_dyn_array_ctrls.request_fd = buf_req_fds[i];
+			vivid_dyn_array_ctrl.size = sizeof(vivid_dyn_array);
+			memset(vivid_dyn_array, 0xff, sizeof(vivid_dyn_array));
+			// vivid_dyn_array_ctrl.size is too large, must return ENOSPC
+			fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS,
+					     &vivid_dyn_array_ctrls) != ENOSPC);
+			// and size is set at 100 elems
+			fail_on_test(vivid_dyn_array_ctrl.size != 100 * elem_size);
+			// Check that the array is not overwritten
+			fail_on_test(vivid_dyn_array[0] != 0xffffffff);
+			if (i % 3 < 2) {
+				unsigned size = (2 + 2 * (i % 8)) * elem_size;
+
+				// Set proper size, varies per request
+				vivid_dyn_array_ctrl.size = size;
+				memcpy(vivid_dyn_array, vivid_dyn_array_init, size);
+				fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS,
+						     &vivid_dyn_array_ctrls));
+				// check that the size is as expected
+				fail_on_test(vivid_dyn_array_ctrl.size != size);
+				// and the array values are correctly clamped
+				fail_on_test(memcmp(vivid_dyn_array, vivid_dyn_array_clamped, size));
+				// and the end of the array is not overwritten
+				fail_on_test(vivid_dyn_array[size / elem_size] != 0xffffffff);
+			}
+		}
 		// Re-init the unqueued request
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, nullptr));
 
@@ -2330,6 +2382,15 @@ int testRequests(struct node *node, bool test_streaming)
 		ctrls.request_fd = buf_req_fds[i];
 		if (i % 3 < 2)
 			fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+		if (is_vivid && i % 3 < 2) {
+			// Set the dynamic array control again
+			vivid_dyn_array_ctrls.request_fd = buf_req_fds[i];
+			vivid_dyn_array_ctrl.size = (2 + 2 * (i % 8)) * elem_size;
+			memcpy(vivid_dyn_array, vivid_dyn_array_init,
+			       sizeof(vivid_dyn_array_init));
+			fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS,
+					     &vivid_dyn_array_ctrls));
+		}
 
 		// After the re-init the buffer is no longer marked for
 		// a request. If a request has been queued before (hence
@@ -2436,6 +2497,20 @@ int testRequests(struct node *node, bool test_streaming)
 			    vivid_ro_ctrl.value != (int)i)
 				warn_once("vivid_ro_ctrl.value (%d) != i (%u)\n",
 					  vivid_ro_ctrl.value, i);
+
+			// Check that the dynamic control array is set as
+			// expected and with the correct values.
+			vivid_dyn_array_ctrls.request_fd = buf_req_fds[i];
+			memset(vivid_dyn_array, 0xff, sizeof(vivid_dyn_array));
+			vivid_dyn_array_ctrl.size = sizeof(vivid_dyn_array);
+			fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &vivid_dyn_array_ctrls));
+			unsigned size = (2 + 2 * (i % 8)) * elem_size;
+			if (i % 3 == 2)
+				size = (2 + 2 * ((i - 1) % 8)) * elem_size;
+			fail_on_test(vivid_dyn_array_ctrl.size != size);
+			fail_on_test(memcmp(vivid_dyn_array, vivid_dyn_array_clamped,
+					    vivid_dyn_array_ctrl.size));
+			fail_on_test(vivid_dyn_array[size / elem_size] != 0xffffffff);
 		}
 		fail_on_test(buf.querybuf(node, i));
 		// Check that all the buffers of the stopped stream are
@@ -2486,6 +2561,21 @@ int testRequests(struct node *node, bool test_streaming)
 			    vivid_ro_ctrl.value != (int)(num_bufs - 1))
 				warn("vivid_ro_ctrl.value (%d) != num_bufs - 1 (%d)\n",
 				     vivid_ro_ctrl.value, num_bufs - 1);
+
+			// and the final dynamic array value
+			v4l2_query_ext_ctrl q_dyn_array = {
+				.id = VIVID_CID_U32_DYN_ARRAY,
+			};
+			fail_on_test(doioctl(node, VIDIOC_QUERY_EXT_CTRL, &q_dyn_array));
+			unsigned elems = 2 + 2 * ((num_bufs - 1) % 8);
+			if ((num_bufs - 1) % 3 == 2)
+				elems = 2 + 2 * ((num_bufs - 2) % 8);
+			fail_on_test(q_dyn_array.elems != elems);
+			vivid_dyn_array_ctrls.which = 0;
+			fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &vivid_dyn_array_ctrls));
+			fail_on_test(vivid_dyn_array_ctrl.size != elems * elem_size);
+			fail_on_test(memcmp(vivid_dyn_array, vivid_dyn_array_clamped,
+					    vivid_dyn_array_ctrl.size));
 		}
 	}
 

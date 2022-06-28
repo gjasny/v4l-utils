@@ -390,6 +390,9 @@ static bool fill_subset(const struct v4l2_query_ext_ctrl &qc, ctrl_subset &subse
 		subset.size[d] = qc.dims[d];
 	}
 
+	if (qc.flags & V4L2_CTRL_FLAG_DYNAMIC_ARRAY)
+		subset.size[0] = qc.elems;
+
 	std::string s = name2var(qc.name);
 
 	if (ctrl_subsets.find(s) != ctrl_subsets.end()) {
@@ -489,6 +492,8 @@ static void print_value(int fd, const v4l2_query_ext_ctrl &qc, const v4l2_ext_co
 			memset(&subset, 0, sizeof(subset));
 			for (unsigned i = 0; i < qc.nr_of_dims; i++)
 				subset.size[i] = qc.dims[i];
+			if (qc.flags & V4L2_CTRL_FLAG_DYNAMIC_ARRAY)
+				subset.size[0] = qc.elems;
 		}
 		print_array(qc, ctrl, subset);
 		return;
@@ -665,6 +670,8 @@ static void print_qctrl(int fd, const v4l2_query_ext_ctrl &qc,
 		printf(" value=");
 		print_value(fd, qc, ctrl, false, false);
 	} else {
+		if (qc.flags & V4L2_CTRL_FLAG_DYNAMIC_ARRAY)
+			printf(" elems=%u", qc.elems);
 		printf(" dims=");
 		for (i = 0; i < qc.nr_of_dims; i++)
 			printf("[%u]", qc.dims[i]);

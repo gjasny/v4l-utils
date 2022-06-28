@@ -627,6 +627,150 @@ static int checkExtendedCtrl(const struct v4l2_ext_control &ctrl, const struct t
 	default:
 		break;
 	}
+	if (qctrl.flags & V4L2_CTRL_FLAG_DYNAMIC_ARRAY) {
+		fail_on_test(qctrl.nr_of_dims != 1);
+		unsigned tot_elems = qctrl.dims[0];
+		fail_on_test(qctrl.elems > tot_elems);
+		fail_on_test(!qctrl.elems);
+	}
+	return 0;
+}
+
+static int checkVividDynArray(struct node *node,
+			      struct v4l2_ext_control &ctrl,
+			      const struct test_query_ext_ctrl &qctrl)
+{
+	struct v4l2_query_ext_ctrl qextctrl = {};
+	unsigned max_elems = qctrl.dims[0];
+	unsigned max_size = qctrl.elem_size * max_elems;
+
+	delete [] ctrl.string;
+	// Allocate a buffer that's one element more than the max
+	ctrl.string = new char[max_size + qctrl.elem_size];
+	ctrl.size = qctrl.elem_size;
+	ctrl.p_u32[0] = (qctrl.minimum + qctrl.maximum) / 2;
+	// Set the last element + 1, must never be overwritten
+	ctrl.p_u32[max_elems] = 0xdeadbeef;
+
+	struct v4l2_ext_controls ctrls = {};
+	ctrls.count = 1;
+	ctrls.controls = &ctrl;
+	// Set the array to a single element
+	fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+
+	qextctrl.id = ctrl.id;
+	// Check that only one element is reported
+	fail_on_test(doioctl(node, VIDIOC_QUERY_EXT_CTRL, &qextctrl));
+	fail_on_test(qextctrl.elems != 1);
+
+	// If the size is less than elem_size, the ioctl must return -EFAULT
+	ctrl.size = 0;
+	fail_on_test(doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls) != EFAULT);
+	ctrl.size = qctrl.elem_size - 1;
+	fail_on_test(doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls) != EFAULT);
+	ctrl.size = max_size + qctrl.elem_size;
+	fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
+	// Check that ctrl.size is reset to the current size of the array (1 element)
+	fail_on_test(ctrl.size != qctrl.elem_size);
+	ctrl.size = max_size + qctrl.elem_size;
+	// Attempting to set more than max_elems must result in -ENOSPC
+	fail_on_test(doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls) != ENOSPC);
+	fail_on_test(ctrl.size != max_size);
+	ctrl.size = max_size + qctrl.elem_size;
+	fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls) != ENOSPC);
+	fail_on_test(ctrl.size != max_size);
+	fail_on_test(doioctl(node, VIDIOC_QUERY_EXT_CTRL, &qextctrl));
+	// Verify that the number of elements is still 1
+	fail_on_test(qextctrl.elems != 1);
+
+	ctrl.size = max_size;
+	for (unsigned i = 0; i < max_elems; i++)
+		ctrl.p_u32[i] = i;
+	// Try the max number of elements
+	fail_on_test(doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls));
+	// Check that the values are clamped
+	for (unsigned i = 0; i < max_elems; i++) {
+		unsigned j = i;
+		if (j < qctrl.minimum)
+			j = qctrl.minimum;
+		else if (j > qctrl.maximum)
+			j = qctrl.maximum;
+		fail_on_test(ctrl.p_u32[i] != j);
+	}
+	fail_on_test(ctrl.size != max_size);
+	fail_on_test(doioctl(node, VIDIOC_QUERY_EXT_CTRL, &qextctrl));
+	// Verify that the number of elements is still 1
+	fail_on_test(qextctrl.elems != 1);
+	memset(ctrl.string, 0xff, max_size);
+	fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
+	// Check that there is still just one element returned.
+	fail_on_test(ctrl.size != qctrl.elem_size);
+	fail_on_test(ctrl.p_u32[0] != (qctrl.minimum + qctrl.maximum) / 2);
+
+	ctrl.size = max_size;
+	for (unsigned i = 0; i < max_elems; i++)
+		ctrl.p_u32[i] = i;
+	// Set the max number of elements
+	fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+	for (unsigned i = 0; i < max_elems; i++) {
+		unsigned j = i;
+		if (j < qctrl.minimum)
+			j = qctrl.minimum;
+		else if (j > qctrl.maximum)
+			j = qctrl.maximum;
+		fail_on_test(ctrl.p_u32[i] != j);
+	}
+	fail_on_test(doioctl(node, VIDIOC_QUERY_EXT_CTRL, &qextctrl));
+	// Check that it is updated
+	fail_on_test(qextctrl.elems != max_elems);
+	memset(ctrl.string, 0xff, max_size);
+	ctrl.size = qctrl.elem_size;
+	// Check that ENOSPC is returned if the size is too small
+	fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != ENOSPC);
+	// And updated to the actual required size
+	fail_on_test(ctrl.size != max_size);
+	fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
+	for (unsigned i = 0; i < max_elems; i++) {
+		unsigned j = i;
+		if (j < qctrl.minimum)
+			j = qctrl.minimum;
+		else if (j > qctrl.maximum)
+			j = qctrl.maximum;
+		fail_on_test(ctrl.p_u32[i] != j);
+	}
+	// Check that the end of the buffer isn't overwritten
+	fail_on_test(ctrl.p_u32[max_elems] != 0xdeadbeef);
+
+	ctrl.size = qctrl.elem_size;
+	ctrls.which = V4L2_CTRL_WHICH_DEF_VAL;
+	// Check that ENOSPC is returned if the size is too small
+	fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls) != ENOSPC);
+	// And updated to the actual required size
+	fail_on_test(ctrl.size != max_size);
+	fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
+	for (unsigned i = 0; i < max_elems; i++)
+		fail_on_test(ctrl.p_u32[i] != 50);
+	// Check that the end of the buffer isn't overwritten
+	fail_on_test(ctrl.p_u32[max_elems] != 0xdeadbeef);
+
+	ctrls.which = 0;
+	ctrl.size = qctrl.elem_size;
+	ctrl.p_u32[0] = (qctrl.minimum + qctrl.maximum) / 2;
+	// Back to just one element
+	fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+	fail_on_test(doioctl(node, VIDIOC_QUERY_EXT_CTRL, &qextctrl));
+	// Check this.
+	fail_on_test(qextctrl.elems != 1);
+
+	ctrl.size = max_size;
+	ctrls.which = V4L2_CTRL_WHICH_DEF_VAL;
+	memset(ctrl.string, 0xff, max_size);
+	// And updated to the actual required size
+	fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
+	fail_on_test(ctrl.size != qctrl.elem_size);
+	fail_on_test(ctrl.p_u32[0] != 50);
+	fail_on_test(ctrl.p_u32[1] != 0xffffffff);
+
 	return 0;
 }
 
@@ -751,6 +895,9 @@ int testExtendedControls(struct node *node)
 				return fail("s_ext_ctrls returned invalid control contents (%08x)\n", qctrl.id);
 		}
 
+		if (is_vivid && ctrl.id == VIVID_CID_U32_DYN_ARRAY &&
+		    checkVividDynArray(node, ctrl, qctrl))
+			return fail("dynamic array tests failed\n");
 		if (qctrl.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD)
 			delete [] ctrl.string;
 		ctrl.string = nullptr;
