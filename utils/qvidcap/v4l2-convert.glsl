@@ -292,6 +292,12 @@ void main()
 	yuv.r = color.b;
 	yuv.g = color.g;
 	yuv.b = color.r;
+#elif PIXFMT == V4L2_PIX_FMT_YUVA32 || PIXFMT == V4L2_PIX_FMT_YUVX32
+	vec4 color = texture(tex, xy);
+#if PIXFMT == V4L2_PIX_FMT_YUVA32
+	alpha = color.a;
+#endif
+	yuv = color.rgb;
 #elif PIXFMT == V4L2_PIX_FMT_YUV565
 	yuv = texture(tex, xy).rgb;
 #elif PIXFMT == V4L2_PIX_FMT_YUV422P || PIXFMT == V4L2_PIX_FMT_YUV420 || PIXFMT == V4L2_PIX_FMT_YVU420 || \

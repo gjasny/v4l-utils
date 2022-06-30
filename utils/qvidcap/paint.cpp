@@ -159,6 +159,8 @@ void CaptureWin::paintGL()
 	case V4L2_PIX_FMT_XYUV32:
 	case V4L2_PIX_FMT_VUYA32:
 	case V4L2_PIX_FMT_VUYX32:
+	case V4L2_PIX_FMT_YUVA32:
+	case V4L2_PIX_FMT_YUVX32:
 		render_YUV_packed(m_v4l_fmt.g_pixelformat());
 		break;
 
@@ -355,6 +357,8 @@ static const struct define defines[] = {
 	DEF(V4L2_PIX_FMT_XYUV32),
 	DEF(V4L2_PIX_FMT_VUYA32),
 	DEF(V4L2_PIX_FMT_VUYX32),
+	DEF(V4L2_PIX_FMT_YUVA32),
+	DEF(V4L2_PIX_FMT_YUVX32),
 	DEF(V4L2_PIX_FMT_RGB32),
 	DEF(V4L2_PIX_FMT_XRGB32),
 	DEF(V4L2_PIX_FMT_ARGB32),
@@ -595,6 +599,8 @@ void CaptureWin::changeShader()
 	case V4L2_PIX_FMT_XYUV32:
 	case V4L2_PIX_FMT_VUYA32:
 	case V4L2_PIX_FMT_VUYX32:
+	case V4L2_PIX_FMT_YUVA32:
+	case V4L2_PIX_FMT_YUVX32:
 		shader_YUV_packed();
 		break;
 
@@ -945,6 +951,8 @@ void CaptureWin::shader_YUV_packed()
 	case V4L2_PIX_FMT_XYUV32:
 	case V4L2_PIX_FMT_VUYA32:
 	case V4L2_PIX_FMT_VUYX32:
+	case V4L2_PIX_FMT_YUVA32:
+	case V4L2_PIX_FMT_YUVX32:
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(), 0,
 			     GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 		break;
@@ -1310,6 +1318,8 @@ void CaptureWin::render_YUV_packed(__u32 format)
 	case V4L2_PIX_FMT_XYUV32:
 	case V4L2_PIX_FMT_VUYA32:
 	case V4L2_PIX_FMT_VUYX32:
+	case V4L2_PIX_FMT_YUVA32:
+	case V4L2_PIX_FMT_YUVX32:
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_v4l_fmt.g_width(), m_v4l_fmt.g_height(),
 				GL_RGBA, GL_UNSIGNED_BYTE, m_curData[0]);
 		break;

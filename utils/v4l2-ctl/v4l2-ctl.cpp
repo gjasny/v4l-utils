@@ -345,6 +345,8 @@ static bool is_rgb_or_hsv(__u32 pixelformat)
 	case V4L2_PIX_FMT_XYUV32:
 	case V4L2_PIX_FMT_VUYA32:
 	case V4L2_PIX_FMT_VUYX32:
+	case V4L2_PIX_FMT_YUVA32:
+	case V4L2_PIX_FMT_YUVX32:
 	case V4L2_PIX_FMT_YUV410:
 	case V4L2_PIX_FMT_YUV420:
 	case V4L2_PIX_FMT_HI240:
