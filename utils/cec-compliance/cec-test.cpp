@@ -1161,6 +1161,13 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 		announce("The device didn't support Give Device Power Status.");
 		announce("Assuming that the device is powered on.");
 	}
+	if (la != CEC_LOG_ADDR_UNREGISTERED &&
+	    node->remote[la].phys_addr == CEC_PHYS_ADDR_INVALID) {
+		announce("The device has an invalid physical address, this");
+		announce("makes it impossible to run the compliance test.");
+		ok(FAIL_CRITICAL);
+		return;
+	}
 
 	/* Ensure that the remote device knows the initiator's primary device type.*/
 	struct cec_msg msg;
