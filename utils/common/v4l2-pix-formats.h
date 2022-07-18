@@ -72,6 +72,8 @@
 	case V4L2_PIX_FMT_XYUV32: return "32-bit XYUV 8-8-8-8";
 	case V4L2_PIX_FMT_VUYA32: return "32-bit VUYA 8-8-8-8";
 	case V4L2_PIX_FMT_VUYX32: return "32-bit VUYX 8-8-8-8";
+	case V4L2_PIX_FMT_YUVA32: return "32-bit YUVA 8-8-8-8";
+	case V4L2_PIX_FMT_YUVX32: return "32-bit YUVX 8-8-8-8";
 	case V4L2_PIX_FMT_YUV410: return "Planar YUV 4:1:0";
 	case V4L2_PIX_FMT_YUV420: return "Planar YUV 4:2:0";
 	case V4L2_PIX_FMT_HI240: return "8-bit Dithered RGB (BTTV)";
@@ -82,10 +84,11 @@
 	case V4L2_PIX_FMT_NV61: return "Y/CrCb 4:2:2";
 	case V4L2_PIX_FMT_NV24: return "Y/CbCr 4:4:4";
 	case V4L2_PIX_FMT_NV42: return "Y/CrCb 4:4:4";
-	case V4L2_PIX_FMT_P010: return "10-bit Y/CrCb 4:2:0";
+	case V4L2_PIX_FMT_P010: return "10-bit Y/CbCr 4:2:0";
 	case V4L2_PIX_FMT_NV12_4L4: return "Y/CbCr 4:2:0 (4x4 Linear)";
 	case V4L2_PIX_FMT_NV12_16L16: return "Y/CbCr 4:2:0 (16x16 Linear)";
 	case V4L2_PIX_FMT_NV12_32L32: return "Y/CbCr 4:2:0 (32x32 Linear)";
+	case V4L2_PIX_FMT_P010_4L4: return "10-bit Y/CbCr 4:2:0 (4x4 Linear)";
 	case V4L2_PIX_FMT_NV12M: return "Y/CbCr 4:2:0 (N-C)";
 	case V4L2_PIX_FMT_NV21M: return "Y/CrCb 4:2:0 (N-C)";
 	case V4L2_PIX_FMT_NV16M: return "Y/CbCr 4:2:2 (N-C)";
