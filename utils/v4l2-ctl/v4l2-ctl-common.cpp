@@ -623,6 +623,21 @@ static void print_qctrl(int fd, const v4l2_query_ext_ctrl &qc,
 	case V4L2_CTRL_TYPE_H264_PRED_WEIGHTS:
 		printf("%31s %#8.8x (h264-pred-weights):", s.c_str(), qc.id);
 		break;
+	case V4L2_CTRL_TYPE_HEVC_SPS:
+		printf("%31s %#8.8x (hevc-sps):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_HEVC_PPS:
+		printf("%31s %#8.8x (hevc-sps):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_HEVC_SLICE_PARAMS:
+		printf("%31s %#8.8x (hevc-slice-params):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_HEVC_SCALING_MATRIX:
+		printf("%31s %#8.8x (hevc-scaling-matrix):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_HEVC_DECODE_PARAMS:
+		printf("%31s %#8.8x (hevc-decode-params):", s.c_str(), qc.id);
+		break;
 	case V4L2_CTRL_TYPE_VP8_FRAME:
 		printf("%31s %#8.8x (vp8-frame):", s.c_str(), qc.id);
 		break;
