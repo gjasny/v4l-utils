@@ -422,6 +422,8 @@ std::string mi_linkflags2s(__u32 flags)
 		return "Data" + s;
 	case MEDIA_LNK_FL_INTERFACE_LINK:
 		return "Interface" + s;
+	case MEDIA_LNK_FL_ANCILLARY_LINK:
+		return "Ancillary" + s;
 	default:
 		return "Unknown (" + num2s(flags) + ")" + s;
 	}
