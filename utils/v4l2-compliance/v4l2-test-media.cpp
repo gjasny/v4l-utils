@@ -263,6 +263,8 @@ int testMediaTopology(struct node *node)
 		media_v2_link &link = v2_links[i];
 		bool is_iface = (link.flags & MEDIA_LNK_FL_LINK_TYPE) ==
 			MEDIA_LNK_FL_INTERFACE_LINK;
+		bool is_anc_link = (link.flags & MEDIA_LNK_FL_LINK_TYPE) ==
+			MEDIA_LNK_FL_ANCILLARY_LINK;
 
 		fail_on_test(check_0(link.reserved, sizeof(link.reserved)));
 		fail_on_test(!link.id);
@@ -280,9 +282,17 @@ int testMediaTopology(struct node *node)
 			media_v2_entity &ent = *v2_entity_map[link.sink_id];
 
 			if (show_info)
-				printf("\t\tLink: 0x%08x (%s to interface %s)\n", link.id,
+				printf("\t\tInterface Link: 0x%08x (%s to %s)\n", link.id,
 				       ent.name, devpath.c_str());
 			ents_with_intf.insert(ent.id);
+		} else if (is_anc_link) {
+			fail_on_test(v2_entities_set.find(link.source_id) == v2_entities_set.end());
+			fail_on_test(v2_entities_set.find(link.sink_id) == v2_entities_set.end());
+			media_v2_entity &src_ent = *v2_entity_map[link.source_id];
+			media_v2_entity &sink_ent = *v2_entity_map[link.sink_id];
+			if (show_info)
+				printf("\t\tAncillary Link: 0x%08x (%s <-> %s)\n", link.id,
+				       src_ent.name, sink_ent.name);
 		} else {
 			fail_on_test(v2_pads_set.find(link.source_id) == v2_pads_set.end());
 			fail_on_test(v2_pads_set.find(link.sink_id) == v2_pads_set.end());
@@ -291,7 +301,7 @@ int testMediaTopology(struct node *node)
 			fail_on_test(!(v2_pad_map[link.sink_id]->flags & MEDIA_PAD_FL_SINK));
 			num_data_links++;
 			if (show_info)
-				printf("\t\tLink: 0x%08x (%s:%u -> %s:%u, %s)\n", link.id,
+				printf("\t\tData Link: 0x%08x (%s:%u -> %s:%u, %s)\n", link.id,
 				       v2_entity_map[v2_pad_map[link.source_id]->entity_id]->name,
 				       v2_pad_map[link.source_id]->index,
 				       v2_entity_map[v2_pad_map[link.sink_id]->entity_id]->name,
