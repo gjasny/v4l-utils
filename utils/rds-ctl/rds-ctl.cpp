@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include <linux/videodev2.h>
+#include <v4l2-info.h>
 #include <libv4l2rds.h>
 #include <v4l-getsubopt.h>
 
@@ -245,29 +246,6 @@ static std::string tcap2s(unsigned cap)
 		s += "freq-bands ";
 	if (cap & V4L2_TUNER_CAP_HWSEEK_PROG_LIM)
 		s += "hwseek-prog-lim ";
-	return s;
-}
-
-static std::string cap2s(unsigned cap)
-{
-	std::string s;
-
-	if (cap & V4L2_CAP_RDS_CAPTURE)
-		s += "\t\tRDS Capture\n";
-	if (cap & V4L2_CAP_RDS_OUTPUT)
-		s += "\t\tRDS Output\n";
-	if (cap & V4L2_CAP_TUNER)
-		s += "\t\tTuner\n";
-	if (cap & V4L2_CAP_MODULATOR)
-		s += "\t\tModulator\n";
-	if (cap & V4L2_CAP_RADIO)
-		s += "\t\tRadio\n";
-	if (cap & V4L2_CAP_READWRITE)
-		s += "\t\tRead/Write\n";
-	if (cap & V4L2_CAP_STREAMING)
-		s += "\t\tStreaming\n";
-	if (cap & V4L2_CAP_DEVICE_CAPS)
-		s += "\t\tDevice Capabilities\n";
 	return s;
 }
 
@@ -825,25 +803,6 @@ static int parse_cl(int argc, char **argv)
 	return 0;
 }
 
-static void print_driver_info(const struct v4l2_capability *vcap)
-{
-
-	printf("Driver Info:\n");
-	printf("\tDriver name   : %s\n", vcap->driver);
-	printf("\tCard type     : %s\n", vcap->card);
-	printf("\tBus info      : %s\n", vcap->bus_info);
-	printf("\tDriver version: %d.%d.%d\n",
-			vcap->version >> 16,
-			(vcap->version >> 8) & 0xff,
-			vcap->version & 0xff);
-	printf("\tCapabilities  : 0x%08X\n", vcap->capabilities);
-	printf("%s", cap2s(vcap->capabilities).c_str());
-	if (vcap->capabilities & V4L2_CAP_DEVICE_CAPS) {
-		printf("\tDevice Caps   : 0x%08X\n", vcap->device_caps);
-		printf("%s", cap2s(vcap->device_caps).c_str());
-	}
-}
-
 static void set_options(const int fd, const int capabilities, struct v4l2_frequency *vf,
 			struct v4l2_tuner *tuner)
 {
@@ -999,7 +958,7 @@ int main(int argc, char **argv)
 
 	/* Info options */
 	if (params.options[OptGetDriverInfo])
-		print_driver_info(&vcap);
+		v4l2_info_capability(vcap);
 	/* Set options */
 	set_options(fd, vcap.capabilities, &vf, &tuner);
 	/* Get options */
