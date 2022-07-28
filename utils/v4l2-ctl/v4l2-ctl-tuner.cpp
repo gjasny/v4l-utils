@@ -45,112 +45,6 @@ void tuner_usage()
 	       );
 }
 
-static const char *audmode2s(int audmode)
-{
-	switch (audmode) {
-		case V4L2_TUNER_MODE_STEREO: return "stereo";
-		case V4L2_TUNER_MODE_LANG1: return "lang1";
-		case V4L2_TUNER_MODE_LANG2: return "lang2";
-		case V4L2_TUNER_MODE_LANG1_LANG2: return "bilingual";
-		case V4L2_TUNER_MODE_MONO: return "mono";
-		default: return "unknown";
-	}
-}
-
-static const char *ttype2s(int type)
-{
-	switch (type) {
-		case V4L2_TUNER_RADIO: return "radio";
-		case V4L2_TUNER_ANALOG_TV: return "Analog TV";
-		case V4L2_TUNER_DIGITAL_TV: return "Digital TV";
-		case V4L2_TUNER_SDR: return "SDR";
-		case V4L2_TUNER_RF: return "RF";
-		default: return "unknown";
-	}
-}
-
-static std::string rxsubchans2s(int rxsubchans)
-{
-	std::string s;
-
-	if (rxsubchans & V4L2_TUNER_SUB_MONO)
-		s += "mono ";
-	if (rxsubchans & V4L2_TUNER_SUB_STEREO)
-		s += "stereo ";
-	if (rxsubchans & V4L2_TUNER_SUB_LANG1)
-		s += "lang1 ";
-	if (rxsubchans & V4L2_TUNER_SUB_LANG2)
-		s += "lang2 ";
-	if (rxsubchans & V4L2_TUNER_SUB_RDS)
-		s += "rds ";
-	return s;
-}
-
-static std::string txsubchans2s(int txsubchans)
-{
-	std::string s;
-
-	if (txsubchans & V4L2_TUNER_SUB_MONO)
-		s += "mono ";
-	if (txsubchans & V4L2_TUNER_SUB_STEREO)
-		s += "stereo ";
-	if (txsubchans & V4L2_TUNER_SUB_LANG1)
-		s += "bilingual ";
-	if (txsubchans & V4L2_TUNER_SUB_SAP)
-		s += "sap ";
-	if (txsubchans & V4L2_TUNER_SUB_RDS)
-		s += "rds ";
-	return s;
-}
-
-static std::string tcap2s(unsigned cap)
-{
-	std::string s;
-
-	if (cap & V4L2_TUNER_CAP_LOW)
-		s += "62.5 Hz ";
-	else if (cap & V4L2_TUNER_CAP_1HZ)
-		s += "1 Hz ";
-	else
-		s += "62.5 kHz ";
-	if (cap & V4L2_TUNER_CAP_NORM)
-		s += "multi-standard ";
-	if (cap & V4L2_TUNER_CAP_HWSEEK_BOUNDED)
-		s += "hwseek-bounded ";
-	if (cap & V4L2_TUNER_CAP_HWSEEK_WRAP)
-		s += "hwseek-wrap ";
-	if (cap & V4L2_TUNER_CAP_STEREO)
-		s += "stereo ";
-	if (cap & V4L2_TUNER_CAP_LANG1)
-		s += "lang1 ";
-	if (cap & V4L2_TUNER_CAP_LANG2)
-		s += "lang2 ";
-	if (cap & V4L2_TUNER_CAP_RDS)
-		s += "rds ";
-	if (cap & V4L2_TUNER_CAP_RDS_BLOCK_IO)
-		s += "rds-block-I/O ";
-	if (cap & V4L2_TUNER_CAP_RDS_CONTROLS)
-		s += "rds-controls ";
-	if (cap & V4L2_TUNER_CAP_FREQ_BANDS)
-		s += "freq-bands ";
-	if (cap & V4L2_TUNER_CAP_HWSEEK_PROG_LIM)
-		s += "hwseek-prog-lim ";
-	return s;
-}
-
-static std::string modulation2s(unsigned modulation)
-{
-	switch (modulation) {
-	case V4L2_BAND_MODULATION_VSB:
-		return "VSB";
-	case V4L2_BAND_MODULATION_FM:
-		return "FM";
-	case V4L2_BAND_MODULATION_AM:
-		return "AM";
-	}
-	return "Unknown";
-}
-
 static void parse_freq_seek(char *optarg, struct v4l2_hw_freq_seek &seek)
 {
 	char *value;
@@ -395,7 +289,7 @@ void tuner_get(cv4l_fd &_fd)
 		if (doioctl(fd, VIDIOC_G_TUNER, &vt) == 0) {
 			printf("Tuner %d:\n", vt.index);
 			printf("\tName                 : %s\n", vt.name);
-			printf("\tType                 : %s\n", ttype2s(vt.type));
+			printf("\tType                 : %s\n", ttype2s(vt.type).c_str());
 			printf("\tCapabilities         : %s\n", tcap2s(vt.capability).c_str());
 			if (vt.capability & V4L2_TUNER_CAP_LOW)
 				printf("\tFrequency range      : %.3f MHz - %.3f MHz\n",
@@ -410,7 +304,7 @@ void tuner_get(cv4l_fd &_fd)
 			if (vt.type != V4L2_TUNER_SDR && vt.type != V4L2_TUNER_RF) {
 				printf("\tSignal strength/AFC  : %ld%%/%d\n",
 				       lround(vt.signal / 655.35), vt.afc);
-				printf("\tCurrent audio mode   : %s\n", audmode2s(vt.audmode));
+				printf("\tCurrent audio mode   : %s\n", audmode2s(vt.audmode).c_str());
 				printf("\tAvailable subchannels: %s\n", rxsubchans2s(vt.rxsubchans).c_str());
 			}
 		}
@@ -424,7 +318,7 @@ void tuner_get(cv4l_fd &_fd)
 		if (doioctl(fd, VIDIOC_G_MODULATOR, &mt) == 0) {
 			printf("Modulator %d:\n", modulator.index);
 			printf("\tName                 : %s\n", mt.name);
-			printf("\tType                 : %s\n", ttype2s(mt.type));
+			printf("\tType                 : %s\n", ttype2s(mt.type).c_str());
 			printf("\tCapabilities         : %s\n", tcap2s(mt.capability).c_str());
 			if (mt.capability & V4L2_TUNER_CAP_LOW)
 				printf("\tFrequency range      : %.1f MHz - %.1f MHz\n",

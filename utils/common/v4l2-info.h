@@ -118,4 +118,22 @@ std::string bufferflags2s(__u32 flags);
 /* Return vbi flags description */
 std::string vbiflags2s(__u32 flags);
 
+/* Return tuner type description */
+std::string ttype2s(int type);
+
+/* Return audio mode description */
+std::string audmode2s(int audmode);
+
+/* Return RX subchannels description */
+std::string rxsubchans2s(int rxsubchans);
+
+/* Return TX subchannels description */
+std::string txsubchans2s(int txsubchans);
+
+/* Return tuner capabilities description */
+std::string tcap2s(unsigned cap);
+
+/* Return band modulation description */
+std::string modulation2s(unsigned modulation);
+
 #endif

@@ -187,81 +187,6 @@ static int doioctl_name(int fd, unsigned long int request, void *parm, const cha
 
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)
 
-static const char *audmode2s(int audmode)
-{
-	switch (audmode) {
-		case V4L2_TUNER_MODE_STEREO: return "stereo";
-		case V4L2_TUNER_MODE_LANG1: return "lang1";
-		case V4L2_TUNER_MODE_LANG2: return "lang2";
-		case V4L2_TUNER_MODE_LANG1_LANG2: return "bilingual";
-		case V4L2_TUNER_MODE_MONO: return "mono";
-		default: return "unknown";
-	}
-}
-
-static std::string rxsubchans2s(int rxsubchans)
-{
-	std::string s;
-
-	if (rxsubchans & V4L2_TUNER_SUB_MONO)
-		s += "mono ";
-	if (rxsubchans & V4L2_TUNER_SUB_STEREO)
-		s += "stereo ";
-	if (rxsubchans & V4L2_TUNER_SUB_LANG1)
-		s += "lang1 ";
-	if (rxsubchans & V4L2_TUNER_SUB_LANG2)
-		s += "lang2 ";
-	if (rxsubchans & V4L2_TUNER_SUB_RDS)
-		s += "rds ";
-	return s;
-}
-
-static std::string tcap2s(unsigned cap)
-{
-	std::string s;
-
-	if (cap & V4L2_TUNER_CAP_LOW)
-		s += "62.5 Hz ";
-	else
-		s += "62.5 kHz ";
-	if (cap & V4L2_TUNER_CAP_NORM)
-		s += "multi-standard ";
-	if (cap & V4L2_TUNER_CAP_HWSEEK_BOUNDED)
-		s += "hwseek-bounded ";
-	if (cap & V4L2_TUNER_CAP_HWSEEK_WRAP)
-		s += "hwseek-wrap ";
-	if (cap & V4L2_TUNER_CAP_STEREO)
-		s += "stereo ";
-	if (cap & V4L2_TUNER_CAP_LANG1)
-		s += "lang1 ";
-	if (cap & V4L2_TUNER_CAP_LANG2)
-		s += "lang2 ";
-	if (cap & V4L2_TUNER_CAP_RDS)
-		s += "rds ";
-	if (cap & V4L2_TUNER_CAP_RDS_BLOCK_IO)
-		s += "rds-block-I/O ";
-	if (cap & V4L2_TUNER_CAP_RDS_CONTROLS)
-		s += "rds-controls ";
-	if (cap & V4L2_TUNER_CAP_FREQ_BANDS)
-		s += "freq-bands ";
-	if (cap & V4L2_TUNER_CAP_HWSEEK_PROG_LIM)
-		s += "hwseek-prog-lim ";
-	return s;
-}
-
-static std::string modulation2s(unsigned modulation)
-{
-	switch (modulation) {
-	case V4L2_BAND_MODULATION_VSB:
-		return "VSB";
-	case V4L2_BAND_MODULATION_FM:
-		return "FM";
-	case V4L2_BAND_MODULATION_AM:
-		return "AM";
-	}
-	return "Unknown";
-}
-
 static bool is_radio_dev(const char *name)
 {
 	return !memcmp(name, "radio", 5);
@@ -866,7 +791,7 @@ static void get_options(const int fd, const int capabilities, struct v4l2_freque
 					 vt.rangelow / 16.0, vt.rangehigh / 16.0);
 			printf("\tSignal strength/AFC  : %ld%%/%d\n",
 				lround(vt.signal / 655.25), vt.afc);
-			printf("\tCurrent audio mode   : %s\n", audmode2s(vt.audmode));
+			printf("\tCurrent audio mode   : %s\n", audmode2s(vt.audmode).c_str());
 			printf("\tAvailable subchannels: %s\n",
 					rxsubchans2s(vt.rxsubchans).c_str());
 		}
