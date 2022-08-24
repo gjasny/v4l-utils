@@ -932,7 +932,10 @@ void common_control_event(int fd, const struct v4l2_event *ev)
 		qctrl.id = ev->id;
 		if (!query_ext_ctrl_ioctl(fd, qctrl)) {
 			ctrl_str2q[name2var(qctrl.name)] = qctrl;
-			printf("\tdimensions: [%u]\n", qctrl.dims[0]);
+			printf("\tdimensions: ");
+			for (unsigned i = 0; i < qctrl.nr_of_dims; i++)
+				printf("[%u]", qctrl.dims[i]);
+			printf("\n");
 		}
 	}
 }
