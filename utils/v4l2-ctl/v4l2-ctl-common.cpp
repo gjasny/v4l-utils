@@ -902,7 +902,7 @@ void common_process_controls(cv4l_fd &fd)
 	}
 }
 
-void common_control_event(const struct v4l2_event *ev)
+void common_control_event(int fd, const struct v4l2_event *ev)
 {
 	const struct v4l2_event_ctrl *ctrl;
 
@@ -925,6 +925,15 @@ void common_control_event(const struct v4l2_event *ev)
 		else
 			printf("\trange: min=%d max=%d step=%d default=%d\n",
 				ctrl->minimum, ctrl->maximum, ctrl->step, ctrl->default_value);
+	}
+	if (ctrl->changes & V4L2_EVENT_CTRL_CH_DIMENSIONS) {
+		v4l2_query_ext_ctrl qctrl = {};
+	
+		qctrl.id = ev->id;
+		if (!query_ext_ctrl_ioctl(fd, qctrl)) {
+			ctrl_str2q[name2var(qctrl.name)] = qctrl;
+			printf("\tdimensions: [%u]\n", qctrl.dims[0]);
+		}
 	}
 }
 

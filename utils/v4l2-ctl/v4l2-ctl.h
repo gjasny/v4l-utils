@@ -340,7 +340,7 @@ void common_set(cv4l_fd &fd);
 void common_get(cv4l_fd &fd);
 void common_list(cv4l_fd &fd);
 void common_process_controls(cv4l_fd &fd);
-void common_control_event(const struct v4l2_event *ev);
+void common_control_event(int fd, const struct v4l2_event *ev);
 int common_find_ctrl_id(const char *name);
 
 // v4l2-ctl-tuner.cpp

@@ -890,7 +890,7 @@ int parse_selection_target(const char *s, unsigned int &target)
 }
 
 
-static void print_event(const struct v4l2_event *ev)
+static void print_event(int fd, const struct v4l2_event *ev)
 {
 	printf("%lld.%06ld: event %u, pending %u: ",
 			static_cast<__u64>(ev->timestamp.tv_sec), ev->timestamp.tv_nsec / 1000,
@@ -903,7 +903,7 @@ static void print_event(const struct v4l2_event *ev)
 		printf("eos\n");
 		break;
 	case V4L2_EVENT_CTRL:
-		common_control_event(ev);
+		common_control_event(fd, ev);
 		break;
 	case V4L2_EVENT_FRAME_SYNC:
 		printf("frame_sync %d\n", ev->u.frame_sync.frame_sequence);
@@ -1524,7 +1524,7 @@ int main(int argc, char **argv)
 		sub.id = e.id;
 		if (!doioctl(fd, VIDIOC_SUBSCRIBE_EVENT, &sub))
 			if (!doioctl(fd, VIDIOC_DQEVENT, &ev))
-				print_event(&ev);
+				print_event(fd, &ev);
 		doioctl(fd, VIDIOC_UNSUBSCRIBE_EVENT, &sub);
 	}
 
@@ -1556,7 +1556,7 @@ int main(int argc, char **argv)
 				break;
 			if (doioctl(fd, VIDIOC_DQEVENT, &ev))
 				break;
-			print_event(&ev);
+			print_event(fd, &ev);
 			if (ev.sequence > seq)
 				printf("\tMissed %d events\n", ev.sequence - seq);
 			seq = ev.sequence + 1;
@@ -1583,7 +1583,7 @@ int main(int argc, char **argv)
 				break;
 			if (doioctl(fd, VIDIOC_DQEVENT, &ev))
 				break;
-			print_event(&ev);
+			print_event(fd, &ev);
 			if (ev.sequence > seq)
 				printf("\tMissed %d events\n", ev.sequence - seq);
 			seq = ev.sequence + 1;
