@@ -677,8 +677,6 @@ static int seek_chunks(struct chunk_hunk *fhunk,
 		}
 	}
 
-	free(temp_data);
-
 	/* Method 2: seek for base firmware */
 	if (!base_start)
 		base_start = seek;
@@ -727,6 +725,8 @@ static int seek_chunks(struct chunk_hunk *fhunk,
 			hunk->hint_method = 3;
 
 			base_start = p;
+
+			free(temp_data);
 
 			return 2;
 		}
@@ -785,6 +785,8 @@ not_found:
 #endif
 	memset(fhunk, 0, sizeof(struct chunk_hunk));
 	printf("Couldn't find firmware\n");
+
+	free(temp_data);
 	return 0;
 
 	/* Method 4: Seek for first firmware chunks */
