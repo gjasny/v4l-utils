@@ -1497,6 +1497,7 @@ int dvb_remote_fe_set_parms(struct dvb_v5_fe_parms *par)
 	struct queued_msg *msg = NULL;
 	int ret, i;
 	char buf[REMOTE_BUF_SIZE], lnb_name[80] = "", *p = buf;
+	char cmd[CMD_SIZE];
 	size_t size = sizeof(buf);
 
 	if (priv->disconnected)
@@ -1536,7 +1537,8 @@ int dvb_remote_fe_set_parms(struct dvb_v5_fe_parms *par)
 		size -= ret;
 	}
 
-	msg = send_buf(dvb, priv->fd, "fe_set_parms", buf, p - buf);
+	strcpy(cmd, "fe_set_parms");
+	msg = send_buf(dvb, priv->fd, cmd, buf, p - buf);
 	if (!msg)
 		goto error;
 
