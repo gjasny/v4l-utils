@@ -580,6 +580,9 @@ if [ $vicodec -eq 1 -a $setup -eq 0 ]; then
 
 	decful_opts='-z platform:vicodec -d stateful-decoder-source --stream-mmap --stream-out-mmap'
 	decless_opts='-z platform:vicodec -d stateless-decoder-source --stream-mmap --stream-out-mmap'
+	vicodec_tests=0
+	vicodec_ok=0
+	vicodec_fail=0
 	echo
 	echo stateful decode | tee /dev/kmsg
 	echo
@@ -588,7 +591,14 @@ if [ $vicodec -eq 1 -a $setup -eq 0 ]; then
 	echo stateless decode | tee /dev/kmsg
 	echo
 	$v4l2_ctl $decless_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 --stream-to=$tmpdir/raw.yu12.1280.24.stateless
-	cmp $tmpdir/raw.yu12.1280.24 $tmpdir/raw.yu12.1280.24.stateless
+	vicodec_tests=$((vicodec_tests+1))
+	if cmp $tmpdir/raw.yu12.1280.24 $tmpdir/raw.yu12.1280.24.stateless ; then
+		echo "OK: stateless decode" | tee -a $tmp
+		vicodec_ok=$((vicodec_ok+1))
+	else
+		echo "FAIL: stateless decode: unexpected output" | tee -a $tmp
+		vicodec_fail=$((vicodec_fail+1))
+	fi
 
 	echo
 	echo stateful decode with dynamic resolution changes for every frame | tee /dev/kmsg
@@ -596,7 +606,14 @@ if [ $vicodec -eq 1 -a $setup -eq 0 ]; then
 	$v4l2_ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.2.12 --stream-to=$tmpdir/raw.yu12.mix.2.12
 	# v4l2-ctl does not yet reallocate buffers if they are too small for the new format
 	$v4l2_ctl $decless_opts -v width=1920,height=1088 --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.2.12 --stream-to=$tmpdir/raw.yu12.mix.2.12.stateless
-	cmp $tmpdir/raw.yu12.mix.2.12 $tmpdir/raw.yu12.mix.2.12.stateless
+	vicodec_tests=$((vicodec_tests+1))
+	if cmp $tmpdir/raw.yu12.mix.2.12 $tmpdir/raw.yu12.mix.2.12.stateless ; then
+		echo "OK: stateful decode with dynamic resolution changes for every frame" | tee -a $tmp
+		vicodec_ok=$((vicodec_ok+1))
+	else
+		echo "FAIL: stateful decode with dynamic resolution changes for every frame: unexpected output" | tee -a $tmp
+		vicodec_fail=$((vicodec_fail+1))
+	fi
 
 	echo
 	echo stateful decode with dynamic resolution changes for every other frame | tee /dev/kmsg
@@ -604,7 +621,15 @@ if [ $vicodec -eq 1 -a $setup -eq 0 ]; then
 	$v4l2_ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.4.6 --stream-to=$tmpdir/raw.yu12.mix.4.6
 	# v4l2-ctl does not yet reallocate buffers if they are too small for the new format
 	$v4l2_ctl $decless_opts -v width=1920,height=1088 --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.4.6 --stream-to=$tmpdir/raw.yu12.mix.4.6.stateless
-	cmp $tmpdir/raw.yu12.mix.4.6 $tmpdir/raw.yu12.mix.4.6.stateless
+	vicodec_tests=$((vicodec_tests+1))
+	if cmp $tmpdir/raw.yu12.mix.4.6 $tmpdir/raw.yu12.mix.4.6.stateless ; then
+		echo "OK: stateful decode with dynamic resolution changes for every other frame" | tee -a $tmp
+		vicodec_ok=$((vicodec_ok+1))
+	else
+		echo "FAIL: stateful decode with dynamic resolution changes for every other frame: unexpected output" | tee -a $tmp
+		vicodec_fail=$((vicodec_fail+1))
+	fi
+	echo Total for vicodec cmp tests: $vicodec_tests, Succeeded: $vicodec_ok, Failed: $vicodec_fail, Warnings: 0 | tee -a $tmp
 
 	rm -rf $tmpdir
 	echo
