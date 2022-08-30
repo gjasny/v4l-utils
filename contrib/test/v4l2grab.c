@@ -206,8 +206,6 @@ static char *prt_caps(uint32_t caps, char *s)
 		strcat (s,"RADIO ");
 	if (V4L2_CAP_READWRITE & caps)
 		strcat (s,"READWRITE ");
-	if (V4L2_CAP_ASYNCIO & caps)
-		strcat (s,"ASYNCIO ");
 	if (V4L2_CAP_STREAMING & caps)
 		strcat (s,"STREAMING ");
 	if (V4L2_CAP_EXT_PIX_FORMAT & caps)
@@ -226,12 +224,6 @@ static char *prt_caps(uint32_t caps, char *s)
 		strcat (s,"SDR_OUTPUT ");
 	if(V4L2_CAP_META_CAPTURE & caps)
 		strcat (s,"META_CAPTURE ");
-	if(V4L2_CAP_READWRITE & caps)
-		strcat (s,"READWRITE ");
-	if(V4L2_CAP_ASYNCIO & caps)
-		strcat (s,"ASYNCIO ");
-	if(V4L2_CAP_STREAMING & caps)
-		strcat (s,"STREAMING ");
 	if(V4L2_CAP_META_OUTPUT & caps)
 		strcat (s,"META_OUTPUT ");
 	if(V4L2_CAP_TOUCH & caps)

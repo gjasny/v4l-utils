@@ -92,10 +92,10 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tAudio\n";
 	if (cap & V4L2_CAP_RADIO)
 		s += "\t\tRadio\n";
+	if (cap & V4L2_CAP_IO_MC)
+		s += "\t\tI/O MC\n";
 	if (cap & V4L2_CAP_READWRITE)
 		s += "\t\tRead/Write\n";
-	if (cap & V4L2_CAP_ASYNCIO)
-		s += "\t\tAsync I/O\n";
 	if (cap & V4L2_CAP_STREAMING)
 		s += "\t\tStreaming\n";
 	if (cap & V4L2_CAP_EXT_PIX_FORMAT)
