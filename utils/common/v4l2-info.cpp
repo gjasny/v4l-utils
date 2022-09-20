@@ -347,6 +347,7 @@ std::string quantization2s(int val)
 
 static constexpr flag_def pixflags_def[] = {
 	{ V4L2_PIX_FMT_FLAG_PREMUL_ALPHA,  "premultiplied-alpha" },
+	{ V4L2_PIX_FMT_FLAG_SET_CSC,  "set-csc" },
 	{ 0, nullptr }
 };
 
