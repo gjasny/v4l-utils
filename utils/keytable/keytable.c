@@ -382,14 +382,16 @@ static int add_keymap(struct keymap *map, const char *fname)
 
 		protocol = parse_sysfs_protocol(map->protocol, false);
 		if (protocol == SYSFS_INVALID) {
-			struct bpf_protocol *b;
+			if (strcmp(map->protocol, "none")) {
+				struct bpf_protocol *b;
 
-			b = malloc(sizeof(*b));
-			b->name = strdup(map->protocol);
-			b->param = map->param;
-			/* steal param */
-			map->param = NULL;
-			add_bpf_protocol(b);
+				b = malloc(sizeof(*b));
+				b->name = strdup(map->protocol);
+				b->param = map->param;
+				/* steal param */
+				map->param = NULL;
+				add_bpf_protocol(b);
+			}
 		} else {
 			ch_proto |= protocol;
 		}
@@ -2105,11 +2107,6 @@ int main(int argc, char *argv[])
 			}
 			add_keymap(map, fname);
 			free_keymap(map);
-			if (!keytable) {
-				fprintf(stderr, _("Empty keymap %s\n"), fname);
-				free(fname);
-				return -1;
-			}
 			free(fname);
 			clear = 1;
 			matches++;
