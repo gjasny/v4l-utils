@@ -16,12 +16,7 @@ static std::string num2s(unsigned num, bool is_hex = true)
 	return buf;
 }
 
-struct flag_def {
-	unsigned flag;
-	const char *str;
-};
-
-static std::string flags2s(unsigned val, const flag_def *def)
+std::string flags2s(unsigned val, const flag_def *def)
 {
 	std::string s;
 

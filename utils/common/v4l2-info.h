@@ -11,6 +11,14 @@
 #include <linux/videodev2.h>
 #include <linux/v4l2-subdev.h>
 
+struct flag_def {
+	unsigned flag;
+	const char *str;
+};
+
+/* Return a comma-separated string of flags or hex value if unknown */
+std::string flags2s(unsigned val, const flag_def *def);
+
 /* Print capability information */
 void v4l2_info_capability(const v4l2_capability &cap);
 void v4l2_info_subdev_capability(const v4l2_subdev_capability &subdevcap);
