@@ -1266,7 +1266,7 @@ void common_get(cv4l_fd &_fd)
 
 					if (qc.nr_of_dims) {
 						print_value(fd, qc, ctrl, true, true);
-						return;
+						continue;
 					}
 
 					printf("%s: ", name.c_str());
