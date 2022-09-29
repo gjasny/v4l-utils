@@ -220,7 +220,8 @@ int testQueryExtControls(struct node *node)
 		}
 
 		if (which == V4L2_CTRL_CLASS_USER &&
-		    (qctrl.type < V4L2_CTRL_COMPOUND_TYPES) &&
+		    qctrl.type < V4L2_CTRL_COMPOUND_TYPES &&
+		    !qctrl.nr_of_dims &&
 		    qctrl.type != V4L2_CTRL_TYPE_INTEGER64 &&
 		    qctrl.type != V4L2_CTRL_TYPE_STRING &&
 		    qctrl.type != V4L2_CTRL_TYPE_CTRL_CLASS) {
@@ -363,7 +364,8 @@ int testQueryControls(struct node *node)
 			break;
 		id = qctrl.id;
 		fail_on_test(node->controls.find(qctrl.id) == node->controls.end());
-		fail_on_test(qctrl.step || qctrl.minimum || qctrl.maximum || qctrl.default_value);
+		if (qctrl.type >= V4L2_CTRL_COMPOUND_TYPES)
+			fail_on_test(qctrl.step || qctrl.minimum || qctrl.maximum || qctrl.default_value);
 		compound_controls++;
 	}
 	fail_on_test(compound_controls != num_compound_ctrls);
@@ -439,7 +441,7 @@ int testSimpleControls(struct node *node)
 	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
 		test_query_ext_ctrl &qctrl = iter->second;
 
-		if (qctrl.type >= V4L2_CTRL_COMPOUND_TYPES)
+		if (qctrl.type >= V4L2_CTRL_COMPOUND_TYPES || qctrl.nr_of_dims)
 			continue;
 		if (is_vivid && V4L2_CTRL_ID2WHICH(qctrl.id) == V4L2_CTRL_CLASS_VIVID)
 			continue;
@@ -593,6 +595,16 @@ static int checkExtendedCtrl(const struct v4l2_ext_control &ctrl, const struct t
 
 	if (ctrl.id != qctrl.id)
 		return fail("control id mismatch\n");
+
+	if (qctrl.flags & V4L2_CTRL_FLAG_DYNAMIC_ARRAY) {
+		fail_on_test(qctrl.nr_of_dims != 1);
+		unsigned tot_elems = qctrl.dims[0];
+		fail_on_test(qctrl.elems > tot_elems);
+		fail_on_test(!qctrl.elems);
+	}
+	if (qctrl.nr_of_dims)
+		return 0;
+
 	switch (qctrl.type) {
 	case V4L2_CTRL_TYPE_INTEGER:
 	case V4L2_CTRL_TYPE_INTEGER64:
@@ -626,12 +638,6 @@ static int checkExtendedCtrl(const struct v4l2_ext_control &ctrl, const struct t
 		break;
 	default:
 		break;
-	}
-	if (qctrl.flags & V4L2_CTRL_FLAG_DYNAMIC_ARRAY) {
-		fail_on_test(qctrl.nr_of_dims != 1);
-		unsigned tot_elems = qctrl.dims[0];
-		fail_on_test(qctrl.elems > tot_elems);
-		fail_on_test(!qctrl.elems);
 	}
 	return 0;
 }
