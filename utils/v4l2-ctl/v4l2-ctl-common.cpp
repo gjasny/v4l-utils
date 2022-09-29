@@ -723,6 +723,7 @@ static int print_control(int fd, struct v4l2_query_ext_ctrl &qctrl, bool show_me
 	ctrls.controls = &ext_ctrl;
 	if (qctrl.type == V4L2_CTRL_TYPE_INTEGER64 ||
 	    qctrl.type == V4L2_CTRL_TYPE_STRING ||
+	    qctrl.nr_of_dims ||
 	    qctrl.type >= V4L2_CTRL_COMPOUND_TYPES ||
 	    (V4L2_CTRL_ID2WHICH(qctrl.id) != V4L2_CTRL_CLASS_USER &&
 	     qctrl.id < V4L2_CID_PRIVATE_BASE)) {
