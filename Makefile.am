@@ -2,7 +2,11 @@ AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 AM_MAKEFLAGS = $(word 1, $(subst 1, -w, $(filter 1, $(V))) --no-print-directory)
 
-SUBDIRS = v4l-utils-po libdvbv5-po lib
+SUBDIRS = lib
+
+if USE_NLS
+SUBDIRS += v4l-utils-po libdvbv5-po
+endif
 
 if WITH_V4LUTILS
 SUBDIRS += utils contrib
