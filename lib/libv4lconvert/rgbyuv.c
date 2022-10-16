@@ -93,7 +93,7 @@ void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest,
 #define CLIP(color) (unsigned char)(((color) > 0xFF) ? 0xff : (((color) < 0) ? 0 : (color)))
 
 void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dest,
-		int width, int height, int yvu)
+		int width, int height, int stride, int yvu)
 {
 	int i, j;
 
@@ -101,11 +101,11 @@ void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dest,
 	const unsigned char *usrc, *vsrc;
 
 	if (yvu) {
-		vsrc = src + width * height;
-		usrc = vsrc + (width * height) / 4;
+		vsrc = src + stride * height;
+		usrc = vsrc + (stride * height) / 4;
 	} else {
-		usrc = src + width * height;
-		vsrc = usrc + (width * height) / 4;
+		usrc = src + stride * height;
+		vsrc = usrc + (stride * height) / 4;
 	}
 
 	for (i = 0; i < height; i++) {
@@ -138,16 +138,20 @@ void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dest,
 			usrc++;
 			vsrc++;
 		}
+		ysrc += stride - width;
 		/* Rewind u and v for next line */
 		if (!(i & 1)) {
 			usrc -= width / 2;
 			vsrc -= width / 2;
+		} else {
+			usrc += (stride - width) / 2;
+			vsrc += (stride - width) / 2;
 		}
 	}
 }
 
 void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dest,
-		int width, int height, int yvu)
+		int width, int height, int stride, int yvu)
 {
 	int i, j;
 
@@ -155,11 +159,11 @@ void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dest,
 	const unsigned char *usrc, *vsrc;
 
 	if (yvu) {
-		vsrc = src + width * height;
-		usrc = vsrc + (width * height) / 4;
+		vsrc = src + stride * height;
+		usrc = vsrc + (stride * height) / 4;
 	} else {
-		usrc = src + width * height;
-		vsrc = usrc + (width * height) / 4;
+		usrc = src + stride * height;
+		vsrc = usrc + (stride * height) / 4;
 	}
 
 	for (i = 0; i < height; i++) {
@@ -192,10 +196,14 @@ void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dest,
 			usrc++;
 			vsrc++;
 		}
+		ysrc += stride - width;
 		/* Rewind u and v for next line */
-		if (!(i&1)) {
+		if (!(i & 1)) {
 			usrc -= width / 2;
 			vsrc -= width / 2;
+		} else {
+			usrc += (stride - width) / 2;
+			vsrc += (stride - width) / 2;
 		}
 	}
 }
