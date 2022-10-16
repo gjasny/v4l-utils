@@ -304,17 +304,21 @@ void v4lconvert_yuyv_to_yuv420(const unsigned char *src, unsigned char *dest,
 }
 
 void v4lconvert_nv16_to_yuyv(const unsigned char *src, unsigned char *dest,
-		int width, int height)
+		int width, int height, int stride)
 {
 	const unsigned char *y, *cbcr;
-	int count = 0;
+	int i, j;
 
 	y = src;
-	cbcr = src + width*height;
+	cbcr = src + stride * height;
 
-	while (count++ < width*height) {
-		*dest++ = *y++;
-		*dest++ = *cbcr++;
+	for (i = 0; i < height; i++) {
+		for (j = 0; j < width; j++) {
+			*dest++ = *y++;
+			*dest++ = *cbcr++;
+		}
+		y += stride - width;
+		cbcr += stride - width;
 	}
 }
 

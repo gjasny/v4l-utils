@@ -1445,10 +1445,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 		if (!tmpbuf)
 			return v4lconvert_oom_error(data);
 
-		v4lconvert_nv16_to_yuyv(src, tmpbuf, width, height);
+		v4lconvert_nv16_to_yuyv(src, tmpbuf, width, height, bytesperline);
 		src_pix_fmt = V4L2_PIX_FMT_YUYV;
 		src = tmpbuf;
-		bytesperline = bytesperline * 2;
+		bytesperline = width * 2;
 		/* fall through */
 	}
 	case V4L2_PIX_FMT_YUYV:
@@ -1482,10 +1482,10 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 			return v4lconvert_oom_error(data);
 
 		/* Note NV61 is NV16 with U and V swapped so this becomes yvyu. */
-		v4lconvert_nv16_to_yuyv(src, tmpbuf, width, height);
+		v4lconvert_nv16_to_yuyv(src, tmpbuf, width, height, bytesperline);
 		src_pix_fmt = V4L2_PIX_FMT_YVYU;
 		src = tmpbuf;
-		bytesperline = bytesperline * 2;
+		bytesperline = width * 2;
 		/* fall through */
 	}
 	case V4L2_PIX_FMT_YVYU:
