@@ -178,10 +178,10 @@ int v4lconvert_y10b_to_yuv420(struct v4lconvert_data *data,
 	const unsigned char *src, unsigned char *dest, int width, int height);
 
 void v4lconvert_rgb565_to_rgb24(const unsigned char *src, unsigned char *dest,
-		int width, int height);
+		int width, int height, int stride);
 
 void v4lconvert_rgb565_to_bgr24(const unsigned char *src, unsigned char *dest,
-		int width, int height);
+		int width, int height, int stride);
 
 void v4lconvert_rgb565_to_yuv420(const unsigned char *src, unsigned char *dest,
 		const struct v4l2_format *src_fmt, int yvu);
