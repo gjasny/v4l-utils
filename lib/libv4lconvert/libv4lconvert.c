@@ -937,16 +937,16 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 	case V4L2_PIX_FMT_NV12:
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
-			v4lconvert_nv12_to_rgb24(src, dest, width, height, 0);
+			v4lconvert_nv12_to_rgb24(src, dest, width, height, bytesperline, 0);
 			break;
 		case V4L2_PIX_FMT_BGR24:
-			v4lconvert_nv12_to_rgb24(src, dest, width, height, 1);
+			v4lconvert_nv12_to_rgb24(src, dest, width, height, bytesperline, 1);
 			break;
 		case V4L2_PIX_FMT_YUV420:
-			v4lconvert_nv12_to_yuv420(src, dest, width, height, 0);
+			v4lconvert_nv12_to_yuv420(src, dest, width, height, bytesperline, 0);
 			break;
 		case V4L2_PIX_FMT_YVU420:
-			v4lconvert_nv12_to_yuv420(src, dest, width, height, 1);
+			v4lconvert_nv12_to_yuv420(src, dest, width, height, bytesperline, 1);
 			break;
 		}
 		break;
