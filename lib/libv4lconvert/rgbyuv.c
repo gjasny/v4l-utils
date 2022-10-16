@@ -857,11 +857,11 @@ void v4lconvert_hsv_to_rgb24(const unsigned char *src, unsigned char *dest,
 }
 
 void v4lconvert_nv12_to_rgb24(const unsigned char *src, unsigned char *dest,
-		int width, int height, int bgr)
+		int width, int height, int stride, int bgr)
 {
 	int i, j;
 	const unsigned char *ysrc = src;
-	const unsigned char *uvsrc = src + width * height;
+	const unsigned char *uvsrc = src + stride * height;
 
 	for (i = 0; i < height; i++) {
 		for (j = 0; j < width; j ++) {
@@ -879,18 +879,21 @@ void v4lconvert_nv12_to_rgb24(const unsigned char *src, unsigned char *dest,
 				uvsrc += 2;
 		}
 
+		ysrc += stride - width;
 		/* Rewind u and v for next line */
 		if (!(i&1))
 			uvsrc -= width;
+		else
+			uvsrc += stride - width;
 	}
 }
 
 void v4lconvert_nv12_to_yuv420(const unsigned char *src, unsigned char *dest,
-		int width, int height, int yvu)
+		int width, int height, int stride, int yvu)
 {
 	int i, j;
 	const unsigned char *ysrc = src;
-	const unsigned char *uvsrc = src + width * height;
+	const unsigned char *uvsrc = src + stride * height;
 	unsigned char *ydst = dest;
 	unsigned char *udst, *vdst;
 
@@ -902,7 +905,7 @@ void v4lconvert_nv12_to_yuv420(const unsigned char *src, unsigned char *dest,
 		vdst = udst + ((width / 2) * (height / 2));
 	}
 
-	for (i = 0; i < height; i++)
+	for (i = 0; i < height; i++) {
 		for (j = 0; j < width; j++) {
 			*ydst++ = *ysrc++;
 			if (((i % 2) == 0) && ((j % 2) == 0)) {
@@ -910,4 +913,9 @@ void v4lconvert_nv12_to_yuv420(const unsigned char *src, unsigned char *dest,
 				*vdst++ = *uvsrc++;
 			}
 		}
+
+		ysrc += stride - width;
+		if ((i % 2) == 0)
+			uvsrc += stride - width;
+	}
 }
