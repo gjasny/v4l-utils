@@ -511,7 +511,7 @@ void v4lconvert_swap_uv(const unsigned char *src, unsigned char *dest,
 }
 
 void v4lconvert_rgb565_to_rgb24(const unsigned char *src, unsigned char *dest,
-		int width, int height)
+		int width, int height, int stride)
 {
 	int j;
 	while (--height >= 0) {
@@ -525,11 +525,12 @@ void v4lconvert_rgb565_to_rgb24(const unsigned char *src, unsigned char *dest,
 
 			src += 2;
 		}
+		src += stride - 2 * width;
 	}
 }
 
 void v4lconvert_rgb565_to_bgr24(const unsigned char *src, unsigned char *dest,
-		int width, int height)
+		int width, int height, int stride)
 {
 	int j;
 	while (--height >= 0) {
@@ -543,6 +544,7 @@ void v4lconvert_rgb565_to_bgr24(const unsigned char *src, unsigned char *dest,
 
 			src += 2;
 		}
+		src += stride - 2 * width;
 	}
 }
 
