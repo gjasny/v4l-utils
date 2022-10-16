@@ -118,10 +118,10 @@ void v4lconvert_rgb24_to_yuv420(const unsigned char *src, unsigned char *dest,
 		const struct v4l2_format *src_fmt, int bgr, int yvu, int bpp);
 
 void v4lconvert_yuv420_to_rgb24(const unsigned char *src, unsigned char *dst,
-		int width, int height, int yvu);
+		int width, int height, int stride, int yvu);
 
 void v4lconvert_yuv420_to_bgr24(const unsigned char *src, unsigned char *dst,
-		int width, int height, int yvu);
+		int width, int height, int stride, int yvu);
 
 void v4lconvert_yuyv_to_rgb24(const unsigned char *src, unsigned char *dst,
 		int width, int height, int stride);
