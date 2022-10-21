@@ -18,6 +18,7 @@ unload=0
 unbind_time=1
 reunbind_time=9
 rmmod_time=1
+modprobe_time=3
 kobj_rel=0
 v4l2_ctl=v4l2-ctl
 v4l2_compliance=v4l2-compliance
@@ -173,7 +174,8 @@ if [ $kobj_rel -eq 1 ]; then
 	echo Detected CONFIG_DEBUG_KOBJECT_RELEASE=y
 	unbind_time=10
 	reunbind_time=14
-	rmmod_time=5
+	rmmod_time=10
+	modprobe_time=10
 fi
 
 if [ $unload -eq 1 ]; then
@@ -187,7 +189,7 @@ fi
 
 rmmod vivid 2&>/dev/null
 modprobe vivid n_devs=3 multiplanar=1,2,2 cache_hints=1,0,0 #allocators=0,1,1
-sleep 3
+sleep $modprobe_time
 
 tmp=`mktemp`
 
@@ -315,7 +317,7 @@ if [ $vivid -eq 1 -a $setup -eq 0 ]; then
 	fi
 
 	modprobe vivid n_devs=3 multiplanar=1,2,2 cache_hints=1,0,0 #allocators=0,1,1
-	sleep 3
+	sleep $modprobe_time
 
 	$v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
 	$v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
@@ -336,7 +338,7 @@ fi
 if [ $vim2m -eq 1 ]; then
 	rmmod vim2m 2&>/dev/null
 	modprobe vim2m
-	sleep 1
+	sleep $modprobe_time
 	dmesg -n notice
 
 	if ! $v4l2_ctl -z platform:vim2m ; then
@@ -412,7 +414,7 @@ fi
 if [ $vimc -eq 1 ]; then
 	rmmod vimc 2&>/dev/null
 	modprobe vimc
-	sleep 1
+	sleep $modprobe_time
 	dmesg -n notice
 
 	if ! $v4l2_ctl -z platform:vimc -d "Sensor A" ; then
@@ -516,7 +518,7 @@ if [ $vicodec -eq 1 ]; then
 
 	rmmod vicodec 2&>/dev/null
 	modprobe vicodec
-	sleep 2
+	sleep $modprobe_time
 	dmesg -n notice
 
 	if ! $v4l2_ctl -z platform:vicodec ; then
@@ -690,7 +692,7 @@ fi
 if [ $vidtv -eq 1 ]; then
 	rmmod dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod 2&>/dev/null
 	modprobe vidtv
-	sleep 2
+	sleep $modprobe_time
 	dmesg -n notice
 
 	if ! media-ctl -d platform:vidtv ; then
