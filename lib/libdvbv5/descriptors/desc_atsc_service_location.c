@@ -34,21 +34,28 @@ int atsc_desc_service_location_init(struct dvb_v5_fe_parms *parms,
 	int i;
 	size_t len, dlen = desc->length;
 
-	len = sizeof(*s_loc);
+	// raw data should have one element
+	len = sizeof(u_int16_t) + sizeof(u_int8_t) + sizeof(struct atsc_desc_service_location_elementary);
 	if (dlen < len) {
 		dvb_logwarn("ATSC service location descriptor is too small");
 		return -1;
 	}
 
-	memcpy(s_loc, p, len);
-	p += len;
-	dlen -= len;
+	memcpy(&s_loc->bitfield , p, sizeof(u_int16_t));
+	p += sizeof(u_int16_t);
+	dlen -= sizeof(u_int16_t);
+	bswap16(s_loc->bitfield);
+
+	memcpy(&s_loc->number_elements , p, sizeof(u_int8_t));
+	p += sizeof(u_int8_t);
+	dlen -= sizeof(u_int8_t);
 
 	bswap16(s_loc->bitfield);
 
 	len = s_loc->number_elements * sizeof(*s_loc->elementary);
 	if (dlen < len) {
-		dvb_logwarn("ATSC service location descriptor is too small");
+		dvb_logwarn("ATSC service location descriptor is too small for %d elements",
+			    s_loc->number_elements);
 		return -1;
 	}
 	if (dlen > len) {
