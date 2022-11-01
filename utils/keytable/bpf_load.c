@@ -63,19 +63,17 @@ struct bpf_file {
 
 static int load_and_attach(int lirc_fd, struct bpf_file *bpf_file, struct bpf_insn *prog, int size)
 {
-	struct bpf_load_program_attr load_attr;
-	int fd, err;
+	LIBBPF_OPTS(bpf_prog_load_opts, opts);
+	int fd, err, insn_cnt;
 
-	memset(&load_attr, 0, sizeof(struct bpf_load_program_attr));
+	insn_cnt = size / sizeof(struct bpf_insn);
 
-	load_attr.prog_type = BPF_PROG_TYPE_LIRC_MODE2;
-	load_attr.expected_attach_type = BPF_LIRC_MODE2;
-	load_attr.name = bpf_file->name;
-	load_attr.insns = prog;
-	load_attr.insns_cnt = size / sizeof(struct bpf_insn);
-	load_attr.license = bpf_file->license;
+	opts.expected_attach_type = BPF_LIRC_MODE2;
+	opts.log_buf = bpf_log_buf;
+	opts.log_size = LOG_BUF_SIZE;
 
-	fd = bpf_load_program_xattr(&load_attr, bpf_log_buf, LOG_BUF_SIZE);
+	fd = bpf_prog_load(BPF_PROG_TYPE_LIRC_MODE2, bpf_file->name,
+				bpf_file->license, prog, insn_cnt, &opts);
 	if (fd < 0) {
 		printf("bpf_load_program() err=%m\n%s", bpf_log_buf);
 		return -1;
@@ -95,6 +93,9 @@ static int build_raw_map(struct bpf_map_data *map, struct raw_entry *raw, int nu
 	int no_patterns, value_size, fd, key, i;
 	struct raw_entry *e;
 	struct raw_pattern *p;
+	LIBBPF_OPTS(bpf_map_create_opts, opts,
+		.map_flags = map->def.map_flags,
+	);
 
 	no_patterns = 0;
 
@@ -110,14 +111,13 @@ static int build_raw_map(struct bpf_map_data *map, struct raw_entry *raw, int nu
 
 	value_size = sizeof(struct raw_pattern) + max_length * sizeof(short);
 
-	fd = bpf_create_map_node(map->def.type,
-				 map->name,
-				 map->def.key_size,
-				 value_size,
-				 no_patterns,
-				 map->def.map_flags,
-				 numa_node);
-
+	opts.numa_node = numa_node;
+	fd = bpf_map_create(map->def.type,
+			    map->name,
+			    map->def.key_size,
+			    value_size,
+			    no_patterns,
+			    &opts);
 	if (fd < 0) {
 		printf(_("failed to create a map: %d %s\n"),
 		       errno, strerror(errno));
@@ -174,27 +174,34 @@ static int load_maps(struct bpf_file *bpf_file, struct raw_entry *raw)
 
 		if (maps[i].def.type == BPF_MAP_TYPE_ARRAY_OF_MAPS ||
 		    maps[i].def.type == BPF_MAP_TYPE_HASH_OF_MAPS) {
-			int inner_map_fd = bpf_file->map_fd[maps[i].def.inner_map_idx];
+			LIBBPF_OPTS(bpf_map_create_opts, opts,
+				.inner_map_fd = bpf_file->map_fd[maps[i].def.inner_map_idx],
+				.map_flags = maps[i].def.map_flags,
+				.numa_node = numa_node,
+			);
 
-			bpf_file->map_fd[i] = bpf_create_map_in_map_node(
+			bpf_file->map_fd[i] = bpf_map_create(
 							maps[i].def.type,
 							maps[i].name,
 							maps[i].def.key_size,
-							inner_map_fd,
+							4,
 							maps[i].def.max_entries,
-							maps[i].def.map_flags,
-							numa_node);
+							&opts);
 		} else if (!strcmp(maps[i].name, "raw_map")) {
 			bpf_file->map_fd[i] = build_raw_map(&maps[i], raw, numa_node);
 		} else {
-			bpf_file->map_fd[i] = bpf_create_map_node(
+			LIBBPF_OPTS(bpf_map_create_opts, opts,
+				.map_flags = maps[i].def.map_flags,
+				.numa_node = numa_node,
+			);
+
+			bpf_file->map_fd[i] = bpf_map_create(
 							maps[i].def.type,
 							maps[i].name,
 							maps[i].def.key_size,
 							maps[i].def.value_size,
 							maps[i].def.max_entries,
-							maps[i].def.map_flags,
-							numa_node);
+							&opts);
 		}
 
 		if (bpf_file->map_fd[i] < 0) {
