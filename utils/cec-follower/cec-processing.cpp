@@ -332,7 +332,8 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me, __u8
 		/* Standby */
 
 	case CEC_MSG_STANDBY:
-		enter_standby(node);
+		if (!node->ignore_standby || (++node->standby_cnt % node->ignore_standby))
+			enter_standby(node);
 		return;
 
 
@@ -366,7 +367,8 @@ static void processMsg(struct node *node, struct cec_msg &msg, unsigned me, __u8
 	case CEC_MSG_TEXT_VIEW_ON:
 		if (!cec_has_tv(1 << me))
 			break;
-		exit_standby(node);
+		if (!node->ignore_view_on || (++node->view_on_cnt % node->ignore_view_on))
+			exit_standby(node);
 		return;
 	case CEC_MSG_SET_STREAM_PATH: {
 		__u16 phys_addr;

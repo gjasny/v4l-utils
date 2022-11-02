@@ -96,6 +96,12 @@ is emulating a TV.
 Ignore messages from logical address \fI<la>\fR and opcode
 \fI<opcode>\fR. 'all' can be used for \fI<la>\fR or \fI<opcode>\fR to match
 all logical addresses or opcodes.
+.TP
+\fB\-\-ignore\-standby\fR \fI<n>\fR
+Ignore every <n>th received Standby message.
+.TP
+\fB\-\-ignore\-view\-on\fR \fI<n>\fR
+Ignore every <n>th received Image/Text View On message.
 
 .SH EXIT STATUS
 On success, it returns 0. Otherwise, it will return the error code.

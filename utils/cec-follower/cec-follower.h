@@ -86,6 +86,10 @@ struct node {
 
 	bool ignore_la[16];
 	unsigned short ignore_opcode[256];
+	unsigned standby_cnt;
+	unsigned ignore_standby;
+	unsigned view_on_cnt;
+	unsigned ignore_view_on;
 };
 
 struct Timer {
