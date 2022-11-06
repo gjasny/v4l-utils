@@ -2023,23 +2023,13 @@ int testRequests(struct node *node, bool test_streaming)
 	const unsigned elem_size = sizeof(vivid_dyn_array[0]);
 	v4l2_ext_control vivid_dyn_array_ctrl = {
 		.id = VIVID_CID_U32_DYN_ARRAY,
-		.size = elem_size,
-		.p_u32 = vivid_dyn_array,
 	};
-	v4l2_ext_controls vivid_dyn_array_ctrls = {
-		.which = V4L2_CTRL_WHICH_REQUEST_VAL,
-		.count = 1,
-		.controls = &vivid_dyn_array_ctrl,
-	};
+	v4l2_ext_controls vivid_dyn_array_ctrls = {};
 	unsigned vivid_pixel_array_size = 0;
 	v4l2_ext_control vivid_pixel_array_ctrl = {
 		.id = VIVID_CID_U8_PIXEL_ARRAY,
 	};
-	v4l2_ext_controls vivid_pixel_array_ctrls = {
-		.which = V4L2_CTRL_WHICH_REQUEST_VAL,
-		.count = 1,
-		.controls = &vivid_pixel_array_ctrl,
-	};
+	v4l2_ext_controls vivid_pixel_array_ctrls = {};
 	bool have_controls;
 	int ret;
 
@@ -2364,15 +2354,22 @@ int testRequests(struct node *node, bool test_streaming)
 		if (is_vivid) {
 			// For vivid, check modifiable array support
 			memset(vivid_pixel_array, i, vivid_pixel_array_size);
+			vivid_pixel_array_ctrls.which = V4L2_CTRL_WHICH_REQUEST_VAL;
+			vivid_pixel_array_ctrls.count = 1;
+			vivid_pixel_array_ctrls.controls = &vivid_pixel_array_ctrl;
 			vivid_pixel_array_ctrls.request_fd = buf_req_fds[i];
 			fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS,
 					     &vivid_pixel_array_ctrls));
 			fail_on_test(vivid_pixel_array[vivid_pixel_array_size] != 0xff);
 
 			// For vivid, check dynamic array support:
-			vivid_dyn_array_ctrls.request_fd = buf_req_fds[i];
 			vivid_dyn_array_ctrl.size = sizeof(vivid_dyn_array);
+			vivid_dyn_array_ctrl.p_u32 = vivid_dyn_array;
 			memset(vivid_dyn_array, 0xff, sizeof(vivid_dyn_array));
+			vivid_dyn_array_ctrls.which = V4L2_CTRL_WHICH_REQUEST_VAL;
+			vivid_dyn_array_ctrls.count = 1;
+			vivid_dyn_array_ctrls.controls = &vivid_dyn_array_ctrl;
+			vivid_dyn_array_ctrls.request_fd = buf_req_fds[i];
 			// vivid_dyn_array_ctrl.size is too large, must return ENOSPC
 			fail_on_test(doioctl(node, VIDIOC_S_EXT_CTRLS,
 					     &vivid_dyn_array_ctrls) != ENOSPC);

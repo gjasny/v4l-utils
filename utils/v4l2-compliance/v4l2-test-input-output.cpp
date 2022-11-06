@@ -470,12 +470,11 @@ static int checkVividPixelArray(struct node *node)
 	struct v4l2_ext_control ctrl = {
 		.id = VIVID_CID_U8_PIXEL_ARRAY
 	};
-	struct v4l2_ext_controls ctrls = {
-		.count = 1
-	};
+	struct v4l2_ext_controls ctrls = {};
 
 	ctrl.size = qextctrl.elems * qextctrl.elem_size;
 	ctrl.p_u8 = new unsigned char[ctrl.size];
+	ctrls.count = 1;
 	ctrls.controls = &ctrl;
 	fail_on_test(node->g_ext_ctrls(ctrls));
 	for (unsigned i = 0; i < qextctrl.elems; i++) {
