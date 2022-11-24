@@ -258,7 +258,17 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 
 		// Check that the driver does not overwrites the kernel pixelformat description
 		std::string descr = pixfmt2s(fmtdesc.pixelformat);
+		// In v6.2 the Y/CbCr and Y/CrCb strings were replaced by
+		// Y/UV and Y/VU. Accept both variants for now.
+		std::string descr_alt = descr;
+		size_t idx = descr_alt.find("Y/UV", 0);
+		if (idx != std::string::npos)
+			descr_alt.replace(idx, 4, "Y/CbCr");
+		idx = descr_alt.find("Y/VU", 0);
+		if (idx != std::string::npos)
+			descr_alt.replace(idx, 4, "Y/CrCb");
 		if (strcmp(descr.c_str(), (const char *)fmtdesc.description) &&
+		    strcmp(descr_alt.c_str(), (const char *)fmtdesc.description) &&
 		    memcmp(descr.c_str(), "Unknown", 7))
 			return fail("fmtdesc.description mismatch: was '%s', expected '%s'\n",
 				    fmtdesc.description, descr.c_str());

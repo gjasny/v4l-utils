@@ -700,6 +700,7 @@ struct parse_event abs_events[] = {
 	{"ABS_TILT_Y", 0x1b},
 	{"ABS_TOOL_WIDTH", 0x1c},
 	{"ABS_VOLUME", 0x20},
+	{"ABS_PROFILE", 0x21},
 	{"ABS_MISC", 0x28},
 	{"ABS_RESERVED", 0x2e},
 	{"ABS_MT_SLOT", 0x2f},

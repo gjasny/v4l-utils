@@ -61,6 +61,12 @@ static inline u32 prandom_u32_max(u32 ep_ro)
 	return rand() % ep_ro;
 }
 
+static inline u32 get_random_u8(void)
+{
+	return prandom_u32_max(256);
+}
+
+
 struct tpg_rbg_color8 {
 	unsigned char r, g, b;
 };
