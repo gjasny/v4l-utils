@@ -50,39 +50,62 @@ struct fe_status_name fe_status_name[8] = {
 	{ FE_TIMEDOUT,    "TIMEDOUT" },
 };
 
-const char *fe_code_rate_name[14] = {
-	[FEC_1_2] =  "1/2",
-	[FEC_2_3] =  "2/3",
-	[FEC_2_5] =  "2/5",
-	[FEC_3_4] =  "3/4",
-	[FEC_3_5] =  "3/5",
-	[FEC_4_5] =  "4/5",
-	[FEC_5_6] =  "5/6",
-	[FEC_6_7] =  "6/7",
-	[FEC_7_8] =  "7/8",
-	[FEC_8_9] =  "8/9",
-	[FEC_9_10] = "9/10",
-	[FEC_AUTO] = "AUTO",
-	[FEC_NONE] = "NONE",
-	[13] = NULL,
+const char *fe_code_rate_name[30] = {
+	[FEC_1_2] =   "1/2",
+	[FEC_1_3] =   "1/3",
+	[FEC_1_4] =   "1/4",
+	[FEC_2_3] =   "2/3",
+	[FEC_2_5] =   "2/5",
+	[FEC_3_4] =   "3/4",
+	[FEC_3_5] =   "3/5",
+	[FEC_4_5] =   "4/5",
+	[FEC_5_6] =   "5/6",
+	[FEC_5_9] =   "5/9",
+	[FEC_6_7] =   "6/7",
+	[FEC_7_8] =   "7/8",
+	[FEC_7_9] =   "7/9",
+	[FEC_8_9] =   "8/9",
+	[FEC_8_15] =  "8/15",
+	[FEC_9_10] =  "9/10",
+	[FEC_9_20] =  "9/20",
+	[FEC_11_15] = "11/15",
+	[FEC_11_20] = "11/20",
+	[FEC_13_18] = "13/18",
+	[FEC_13_45] = "13/45",
+	[FEC_23_36] = "23/36",
+	[FEC_25_36] = "25/36",
+	[FEC_26_45] = "26/45",
+	[FEC_28_45] = "28/45",
+	[FEC_32_45] = "32/45",
+	[FEC_77_90] = "77/90",
+	[FEC_AUTO] =  "AUTO",
+	[FEC_NONE] =  "NONE",
+	[29] = NULL,
 };
 
-const char *fe_modulation_name[15] = {
-	[APSK_16] =  "APSK/16",
-	[APSK_32] =  "APSK/32",
-	[DQPSK] =    "DQPSK",
-	[PSK_8] =    "PSK/8",
-	[QAM_4_NR] = "QAM/4_NR",
-	[QAM_16] =   "QAM/16",
-	[QAM_32] =   "QAM/32",
-	[QAM_64] =   "QAM/64",
-	[QAM_128] =  "QAM/128",
-	[QAM_256] =  "QAM/256",
-	[QAM_AUTO] = "QAM/AUTO",
-	[QPSK] =     "QPSK",
-	[VSB_8] =    "VSB/8",
-	[VSB_16] =   "VSB/16",
-	[14] = NULL,
+const char *fe_modulation_name[22] = {
+	[APSK_8_L] =  "APSK/8_L",
+	[APSK_16] =   "APSK/16",
+	[APSK_16_L] = "APSK/16_L",
+	[APSK_32] =   "APSK/32",
+	[APSK_32_L] = "APSK/32_L",
+	[APSK_64] =   "APSK/64",
+	[APSK_64_L] = "APSK/64_L",
+	[DQPSK] =     "DQPSK",
+	[PSK_8] =     "PSK/8",
+	[QAM_4_NR] =  "QAM/4_NR",
+	[QAM_16] =    "QAM/16",
+	[QAM_32] =    "QAM/32",
+	[QAM_64] =    "QAM/64",
+	[QAM_128] =   "QAM/128",
+	[QAM_256] =   "QAM/256",
+	[QAM_1024] =  "QAM/1024",
+	[QAM_4096] =  "QAM/4096",
+	[QAM_AUTO] =  "QAM/AUTO",
+	[QPSK] =      "QPSK",
+	[VSB_8] =     "VSB/8",
+	[VSB_16] =    "VSB/16",
+	[21] = NULL,
 };
 
 const char *fe_transmission_mode_name[10] = {
@@ -109,11 +132,12 @@ const unsigned fe_bandwidth_name[8] = {
 	[7] = 0,
 };
 
-const char *fe_guard_interval_name[12] = {
+const char *fe_guard_interval_name[13] = {
 	[GUARD_INTERVAL_1_4] =    "1/4",
 	[GUARD_INTERVAL_1_8] =    "1/8",
 	[GUARD_INTERVAL_1_16] =   "1/16",
 	[GUARD_INTERVAL_1_32] =   "1/32",
+	[GUARD_INTERVAL_1_64] =   "1/64",
 	[GUARD_INTERVAL_1_128] =  "1/128",
 	[GUARD_INTERVAL_19_128] = "19/128",
 	[GUARD_INTERVAL_19_256] = "19/256",
@@ -121,7 +145,7 @@ const char *fe_guard_interval_name[12] = {
 	[GUARD_INTERVAL_PN420] =  "PN420",
 	[GUARD_INTERVAL_PN595] =  "PN595",
 	[GUARD_INTERVAL_PN945] =  "PN945",
-	[11] = NULL,
+	[12] = NULL,
 };
 
 const char *fe_hierarchy_name[6] = {
@@ -160,12 +184,15 @@ const char *fe_pilot_name[4] = {
 	[3] = NULL,
 };
 
-const char *fe_rolloff_name[5] = {
+const char *fe_rolloff_name[8] = {
+	[ROLLOFF_5] =    "5",
+	[ROLLOFF_10] =   "10",
+	[ROLLOFF_15] =   "15",
 	[ROLLOFF_20] =   "20",
 	[ROLLOFF_25] =   "25",
 	[ROLLOFF_35] =   "35",
 	[ROLLOFF_AUTO] = "AUTO",
-	[4] = NULL,
+	[7] = NULL,
 };
 
 const char *dvb_v5_name[72] = {
@@ -243,13 +270,14 @@ const char *dvb_v5_name[72] = {
 	[71] = NULL,
 };
 
-const char *delivery_system_name[20] = {
+const char *delivery_system_name[21] = {
 	[SYS_ATSC] =         "ATSC",
 	[SYS_ATSCMH] =       "ATSCMH",
 	[SYS_CMMB] =         "CMMB",
 	[SYS_DAB] =          "DAB",
 	[SYS_DSS] =          "DSS",
 	[SYS_DTMB] =         "DTMB",
+	[SYS_DVBC2] =        "DVBC2",
 	[SYS_DVBC_ANNEX_A] = "DVBC/ANNEX_A",
 	[SYS_DVBC_ANNEX_B] = "DVBC/ANNEX_B",
 	[SYS_DVBC_ANNEX_C] = "DVBC/ANNEX_C",
@@ -263,6 +291,6 @@ const char *delivery_system_name[20] = {
 	[SYS_ISDBT] =        "ISDBT",
 	[SYS_TURBO] =        "TURBO",
 	[SYS_UNDEFINED] =    "UNDEFINED",
-	[19] = NULL,
+	[20] = NULL,
 };
 
