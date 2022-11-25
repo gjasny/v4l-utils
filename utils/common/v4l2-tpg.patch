@@ -167,7 +167,7 @@ diff --git a/utils/common/v4l2-tpg.h b/utils/common/v4l2-tpg.h
 index 0b0ddb87..91da74ec 100644
 --- a/utils/common/v4l2-tpg.h
 +++ b/utils/common/v4l2-tpg.h
-@@ -8,13 +8,59 @@
+@@ -8,13 +8,65 @@
  #ifndef _V4L2_TPG_H_
  #define _V4L2_TPG_H_
  
@@ -228,6 +228,12 @@ index 0b0ddb87..91da74ec 100644
 +{
 +	return rand() % ep_ro;
 +}
++
++static inline u32 get_random_u8(void)
++{
++	return prandom_u32_max(256);
++}
++
 +
  struct tpg_rbg_color8 {
  	unsigned char r, g, b;
