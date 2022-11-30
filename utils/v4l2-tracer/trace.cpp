@@ -410,9 +410,19 @@ void trace_v4l2_ext_control(void *arg, json_object *parent_obj, std::string key_
 	case V4L2_CID_STATELESS_MPEG2_QUANTISATION:
 		trace_v4l2_ctrl_mpeg2_quantisation_gen(p->p_mpeg2_quantisation, v4l2_ext_control_obj);
 		break;
+	case V4L2_CID_MPEG_VIDEO_DEC_PTS:
+	case V4L2_CID_MPEG_VIDEO_DEC_FRAME:
+	case V4L2_CID_MPEG_VIDEO_DEC_CONCEAL_COLOR:
+	case V4L2_CID_PIXEL_RATE:
+		json_object_object_add(v4l2_ext_control_obj, "value64", json_object_new_int64(p->value64));
+		break;
 	default:
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "warning: cannot trace control: %s\n", val2s(p->id, control_val_def).c_str());
+		if (p->size) {
+			fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
+			fprintf(stderr, "warning: cannot trace control: %s\n", val2s(p->id, control_val_def).c_str());
+		} else {
+			json_object_object_add(v4l2_ext_control_obj, "value", json_object_new_int(p->value));
+		}
 		break;
 	}
 

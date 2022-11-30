@@ -726,7 +726,23 @@ struct v4l2_ext_control *retrace_v4l2_ext_control(json_object *parent_obj, int c
 		p->value = retrace_v4l2_ext_control_value(v4l2_ext_control_obj,
 		                                          v4l2_stateless_hevc_start_code_val_def);
 		break;
+	case V4L2_CID_MPEG_VIDEO_DEC_PTS:
+	case V4L2_CID_MPEG_VIDEO_DEC_FRAME:
+	case V4L2_CID_MPEG_VIDEO_DEC_CONCEAL_COLOR:
+	case V4L2_CID_PIXEL_RATE: {
+		json_object *value64_obj;
+
+		if (json_object_object_get_ex(v4l2_ext_control_obj, "value64", &value64_obj))
+			p->value64 = json_object_get_int64(value64_obj);
+		break;
+	}
 	default:
+		if (!p->size) {
+			json_object *value_obj;
+
+			if (json_object_object_get_ex(v4l2_ext_control_obj, "value", &value_obj))
+				p->value = json_object_get_int(value_obj);
+		}
 		break;
 	}
 
