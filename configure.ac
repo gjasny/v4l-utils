@@ -32,6 +32,8 @@ AC_CONFIG_FILES([Makefile
 	utils/v4l2-ctl/Makefile
 	utils/v4l2-dbg/Makefile
 	utils/v4l2-sysfs-path/Makefile
+	utils/v4l2-tracer/Makefile
+	utils/v4l2-tracer/v4l2-tracer.1
 	utils/qv4l2/Makefile
 	utils/libcecutil/Makefile
 	utils/cec-ctl/Makefile
@@ -311,6 +313,15 @@ AS_IF([test "x$with_libudev" != xno -o "x$enable_libdvbv5" != xno],
             )])
 
 AC_SUBST([JPEG_LIBS])
+
+JSONC_VERSION_REQUIRED="0.15";
+PKG_CHECK_MODULES(JSONC, [json-c >= $JSONC_VERSION_REQUIRED], [jsonc_pkgconfig=yes], [jsonc_pkgconfig=no])
+AC_SUBST([JSONC_CFLAGS])
+AC_SUBST([JSONC_LIBS])
+AM_CONDITIONAL([HAVE_JSONC], [test x$jsonc_pkgconfig = xyes])
+if test "x$jsonc_pkgconfig" = "xno"; then
+    AC_MSG_WARN(json-c $JSONC_VERSION_REQUIRED or higher required for v4l2-tracer)
+fi
 
 # Check for pthread
 
@@ -646,6 +657,7 @@ compile time options summary
     QT version                 : $QT_VERSION
     ALSA support               : $USE_ALSA
     SDL support		       : $sdl_pc
+    JSON-C                     : $jsonc_pkgconfig >= $JSONC_VERSION_REQUIRED
 
     build dynamic libs         : $enable_shared
     build static libs          : $enable_static

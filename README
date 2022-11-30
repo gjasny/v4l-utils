@@ -45,6 +45,8 @@ you'll need also:
 	alsa-lib-devel doxygen libjpeg-turbo-devel qt5-qtbase-devel
 	libudev-devel mesa-libGLU-devel
 
+The v4l2-tracer also needs the json-c library.
+On Debian: libjson-c-dev; on Fedora: json-c-devel.
 
 After downloading and installing the needed packages, you should run:
 
@@ -226,6 +228,12 @@ Installed by make install under <prefix>/sbin.
 v4l2-sysfs-path:
 FIXME add description.
 Installed by make install under <prefix>/bin.
+
+v4l2-tracer:
+Tool to trace, record and replay userspace applications
+that implement the v4l2 memory-to-memory stateless video
+decoder interface.
+Installed by 'make install' under <prefix>/bin.
 
 xc3028-firmware:
 Xceive XC2028/3028 tuner module firmware manipulation tool.

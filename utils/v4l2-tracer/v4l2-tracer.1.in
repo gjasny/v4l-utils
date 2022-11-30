@@ -1,0 +1,111 @@
+.TH "V4L2-TRACER" "1" "November 2022" "v4l-utils @PACKAGE_VERSION@" "User Commands"
+.SH NAME
+v4l2-tracer - An application to trace and replay stateless video decoding.
+.SH SYNOPSIS
+\fBv4l2-tracer \fR[options] \fBtrace\fR <\fItracee\fR>
+.RS
+.RE
+\fBv4l2-tracer \fR[options] \fBretrace\fR  <\fItrace_file\fR>\fB.json\fR
+.RS
+.RE
+\fBv4l2-tracer clean\fR  <\fIfile\fR>\fB.json\fR
+.RS
+.RE
+
+.SH DESCRIPTION
+The v4l2-tracer utility traces, records and replays userspace applications
+that implement the v4l2 memory-to-memory stateless video decoder interface.
+.SS Trace
+Trace system calls and video frame data passed by userspace application <\fItracee\fR> to kernel driver.
+All stateless codec controls in user-space API can be traced. Outputs a JSON-formatted trace file.
+.SS Retrace
+Read the JSON-formatted <\fItrace_file\fR>\fB.json\fR. Replay the same system calls and pass the same video frame data to kernel driver.
+Outputs a JSON-formatted retrace file.
+
+.SS Clean
+Remove lines with irrelevant differences (e.g. file descriptors and memory addresses) from JSON files.
+Outputs a clean copy, not necessarily still in JSON-format.
+
+.SH OPTIONS
+.SS Common Options
+.TP
+\fB\-c\fR, \fB\-\-compact\fR
+Write minimal whitespace in JSON file.
+.TP
+\fB\-g\fR, \fB\-\-debug\fR
+Turn on verbose reporting plus additional debug info.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Display this message.
+.TP
+\fB\-r\fR, \fB\-\-raw\fR
+Write decoded video frame data to JSON file.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Turn on verbose reporting.
+.TP
+\fB\-y\fR, \fB\-\-yuv\fR
+Write decoded video frame data to yuv file.
+
+.SS Retrace Options
+.TP
+\fB\-d\fR, \fB\-\-device\fR <\fIdev\fR>
+Use a different video device than specified in the trace file.
+.RS
+<\fIdev\fR> must be a digit corresponding to an existing /dev/video<\fIdev\fR>
+.RE
+.TP
+\fB\-m\fR, \fB\-\-media\fR <\fIdev\fR>
+Use a different media device than specified in the trace file.
+.RS
+<\fIdev\fR> must be a digit corresponding to an existing /dev/media<\fIdev\fR>
+.RE
+
+.SH EXIT STATUS
+On success, it returns 0. Otherwise, it will return 1 or an error code.
+
+.SH EXAMPLE
+.TP
+Trace an application decoding VP8 video:
+.EX
+\fIv4l2-tracer trace gst-launch-1.0 -- filesrc location=test-25fps.vp8 ! parsebin ! v4l2slvp8dec ! videocodectestsink\fR
+.EE
+.TP
+A trace file is generated:
+.EE
+\fI71827_trace.json\fR
+.TP
+Retrace the trace file:
+.EX
+\fIv4l2-tracer retrace 71827_trace.json\fR
+.EE
+.TP
+Specify device nodes if retracing on a different driver:
+.EX
+\fIv4l2-tracer -d0 -m0 retrace 71827_trace.json\fR
+.EE
+.TP
+A retrace file is generated:
+.EE
+\fI71827_trace_retrace.json\fR
+.EX
+.TP
+Remove file descriptors and addresses (optional):
+.EX
+\fIv4l2-tracer clean 71827_trace.json\fR
+.EE
+.EX
+\fIv4l2-tracer clean 71827_trace_retrace.json\fR
+.EE
+.TP
+Clean files are generated for comparison:
+.EX
+\fIclean_71827_trace.json\fR
+.EE
+.EE
+\fIclean_71827_trace_retrace.json\fR
+.EX
+
+.SH BUGS
+Bug reports or questions about this utility should be sent to the
+linux-media@vger.kernel.org mailinglist.

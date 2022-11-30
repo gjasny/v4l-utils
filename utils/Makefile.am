@@ -15,6 +15,11 @@ SUBDIRS = \
 	cec-follower \
 	rds-ctl
 
+if HAVE_JSONC
+SUBDIRS += \
+	v4l2-tracer
+endif
+
 if WITH_LIBDVBV5
 SUBDIRS += \
 	dvb
