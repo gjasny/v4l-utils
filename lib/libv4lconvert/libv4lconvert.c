@@ -1245,7 +1245,7 @@ static int v4lconvert_convert_pixfmt(struct v4lconvert_data *data,
 		switch (dest_pix_fmt) {
 		case V4L2_PIX_FMT_RGB24:
 	        case V4L2_PIX_FMT_BGR24:
-			v4lconvert_grey_to_rgb24(src, dest, width, height);
+			v4lconvert_grey_to_rgb24(src, dest, width, height, bytesperline);
 			break;
 		case V4L2_PIX_FMT_YUV420:
 		case V4L2_PIX_FMT_YVU420:

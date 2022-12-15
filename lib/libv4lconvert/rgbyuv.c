@@ -654,7 +654,7 @@ void v4lconvert_y16_to_yuv420(const unsigned char *src, unsigned char *dest,
 }
 
 void v4lconvert_grey_to_rgb24(const unsigned char *src, unsigned char *dest,
-		int width, int height)
+		int width, int height, int stride)
 {
 	int j;
 	while (--height >= 0) {
@@ -664,6 +664,7 @@ void v4lconvert_grey_to_rgb24(const unsigned char *src, unsigned char *dest,
 			*dest++ = *src;
 			src++;
 		}
+		src += stride - width;
 	}
 }
 
