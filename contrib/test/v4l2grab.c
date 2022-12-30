@@ -102,6 +102,7 @@ static const struct video_formats supported_formats[] = {
 	{ V4L2_PIX_FMT_NV61,     8, 0, -1, 0},
 	{ V4L2_PIX_FMT_YUV420,   8, 1, 1, 0},
 	{ V4L2_PIX_FMT_YVU420,   8, 1, 1, 0},
+	{ V4L2_PIX_FMT_YUV422P,  8, 0, 1, 0},
 };
 
 static const struct video_formats *video_fmt_props(unsigned int pixformat)
@@ -390,6 +391,7 @@ static void copy_two_pixels(struct v4l2_format *fmt,
 
 		break;
 	case V4L2_PIX_FMT_YUV420:
+	case V4L2_PIX_FMT_YUV422P:
 		u = plane1[0];
 		v = plane2[0];
 
