@@ -470,12 +470,12 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt,
 
 	if (h_dec) {
 		num_planes++;
-		needed_size += plane0_size / h_dec;
+		needed_size += plane0_size >> h_dec;
 	}
 
 	if (w_dec) {
 		num_planes++;
-		needed_size += plane0_size / w_dec;
+		needed_size += plane0_size >> w_dec;
 	}
 
 	plane0_size = plane0_size >> 3;
@@ -486,9 +486,9 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt,
 		fprintf(stderr, "Image size: %u bytes, need %u, being:\n", imagesize, needed_size);
 		fprintf(stderr, "\tPlane0 size: %u bytes\n", plane0_size);
 		if (h_dec)
-			fprintf(stderr, "\tH Plane size: %u bytes\n", plane0_size / h_dec);
+			fprintf(stderr, "\tH Plane size: %u bytes\n", plane0_size >> h_dec);
 		if (w_dec)
-			fprintf(stderr, "\tW Plane size: %u bytes\n", plane0_size / w_dec);
+			fprintf(stderr, "\tW Plane size: %u bytes\n", plane0_size >> w_dec);
 
 		// FIXME: should we bail-out here?
 		// exit(EXIT_FAILURE);
