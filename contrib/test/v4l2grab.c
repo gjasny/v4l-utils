@@ -68,8 +68,8 @@ static void xioctl(int fh, unsigned long int request, void *arg)
 struct video_formats {
 	unsigned int pixformat;
 	unsigned int depth;
-	unsigned int y_decimation;
-	unsigned int x_decimation;
+	int y_decimation;
+	int x_decimation;
 
 	unsigned int is_rgb:1;
 };
@@ -82,22 +82,22 @@ struct colorspace_parms {
 };
 
 static const struct video_formats supported_formats[] = {
-	{ V4L2_PIX_FMT_BGR32,   32, 0, 0, 1},
-	{ V4L2_PIX_FMT_ABGR32,  32, 0, 0, 1},
-	{ V4L2_PIX_FMT_XBGR32,  32, 0, 0, 1},
-	{ V4L2_PIX_FMT_RGB32,   32, 0, 0, 1},
-	{ V4L2_PIX_FMT_ARGB32,  32, 0, 0, 1},
-	{ V4L2_PIX_FMT_XRGB32,  32, 0, 0, 1},
-	{ V4L2_PIX_FMT_BGR24,   24, 0, 0, 1},
-	{ V4L2_PIX_FMT_RGB24,   24, 0, 0, 1},
-	{ V4L2_PIX_FMT_RGB565,  16, 0, 0, 1},
-	{ V4L2_PIX_FMT_RGB565X, 16, 0, 0, 1},
-	{ V4L2_PIX_FMT_YUYV,    16, 0, 0, 0},
-	{ V4L2_PIX_FMT_UYVY,    16, 0, 0, 0},
-	{ V4L2_PIX_FMT_YVYU,    16, 0, 0, 0},
-	{ V4L2_PIX_FMT_VYUY,    16, 0, 0, 0},
-	{ V4L2_PIX_FMT_NV12,     8, 1, 0, 0},
-	{ V4L2_PIX_FMT_NV21,     8, 1, 0, 0},
+	{ V4L2_PIX_FMT_BGR32,   32, -1, -1, 1},
+	{ V4L2_PIX_FMT_ABGR32,  32, -1, -1, 1},
+	{ V4L2_PIX_FMT_XBGR32,  32, -1, -1, 1},
+	{ V4L2_PIX_FMT_RGB32,   32, -1, -1, 1},
+	{ V4L2_PIX_FMT_ARGB32,  32, -1, -1, 1},
+	{ V4L2_PIX_FMT_XRGB32,  32, -1, -1, 1},
+	{ V4L2_PIX_FMT_BGR24,   24, -1, -1, 1},
+	{ V4L2_PIX_FMT_RGB24,   24, -1, -1, 1},
+	{ V4L2_PIX_FMT_RGB565,  16, -1, -1, 1},
+	{ V4L2_PIX_FMT_RGB565X, 16, -1, -1, 1},
+	{ V4L2_PIX_FMT_YUYV,    16, -1, -1, 0},
+	{ V4L2_PIX_FMT_UYVY,    16, -1, -1, 0},
+	{ V4L2_PIX_FMT_YVYU,    16, -1, -1, 0},
+	{ V4L2_PIX_FMT_VYUY,    16, -1, -1, 0},
+	{ V4L2_PIX_FMT_NV12,     8, 1, -1, 0},
+	{ V4L2_PIX_FMT_NV21,     8, 1, -1, 0},
 	{ V4L2_PIX_FMT_YUV420,   8, 1, 1, 0},
 	{ V4L2_PIX_FMT_YVU420,   8, 1, 1, 0},
 };
@@ -466,19 +466,19 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt,
 		return 0;
 
 	depth = video_fmt->depth;
-	h_dec = video_fmt->y_decimation;
-	w_dec = video_fmt->x_decimation;
 
 	plane0_size = width * height * depth;
 	needed_size = plane0_size;
 
-	if (h_dec) {
+	if (video_fmt->y_decimation >= 0) {
 		num_planes++;
+		h_dec = video_fmt->y_decimation;
 		needed_size += plane0_size >> h_dec;
 	}
 
-	if (w_dec) {
+	if (video_fmt->x_decimation >= 0) {
 		num_planes++;
+		w_dec = video_fmt->x_decimation;
 		needed_size += plane0_size >> w_dec;
 	}
 
@@ -489,9 +489,9 @@ static unsigned int convert_to_rgb24(struct v4l2_format *fmt,
 		fprintf(stderr, "Warning: Image too small! ");
 		fprintf(stderr, "Image size: %u bytes, need %u, being:\n", imagesize, needed_size);
 		fprintf(stderr, "\tPlane0 size: %u bytes\n", plane0_size);
-		if (h_dec)
+		if (video_fmt->y_decimation >= 0)
 			fprintf(stderr, "\tH Plane size: %u bytes\n", plane0_size >> h_dec);
-		if (w_dec)
+		if (video_fmt->x_decimation >= 0)
 			fprintf(stderr, "\tW Plane size: %u bytes\n", plane0_size >> w_dec);
 
 		// FIXME: should we bail-out here?
