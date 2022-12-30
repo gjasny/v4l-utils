@@ -370,28 +370,32 @@ static void copy_two_pixels(struct v4l2_format *fmt,
 
 		break;
 	case V4L2_PIX_FMT_NV12:
+		u = plane1[0];
+		v = plane1[1];
+
+		for (i = 0; i < 2; i++)
+			convert_yuv(c, plane0[i], u, v, dst);
+
+		break;
 	case V4L2_PIX_FMT_NV21:
-		if (fourcc == V4L2_PIX_FMT_NV12) {
-			u = plane1[0];
-			v = plane1[1];
-		} else {
-			u = plane1[1];
-			v = plane1[0];
-		}
+		v = plane1[0];
+		u = plane1[1];
 
 		for (i = 0; i < 2; i++)
 			convert_yuv(c, plane0[i], u, v, dst);
 
 		break;
 	case V4L2_PIX_FMT_YUV420:
+		u = plane1[0];
+		v = plane2[0];
+
+		for (i = 0; i < 2; i++)
+			convert_yuv(c, plane0[i], u, v, dst);
+
+		break;
 	case V4L2_PIX_FMT_YVU420:
-		if (fourcc == V4L2_PIX_FMT_YUV420) {
-			u = plane1[0];
-			v = plane2[0];
-		} else {
-			u = plane2[0];
-			v = plane1[0];
-		}
+		v = plane1[0];
+		u = plane2[0];
 
 		for (i = 0; i < 2; i++)
 			convert_yuv(c, plane0[i], u, v, dst);
