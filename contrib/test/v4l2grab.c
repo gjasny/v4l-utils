@@ -911,7 +911,7 @@ static int mmap_capture_loop(int fd, struct buffer *buffers,
 			fprintf(fout, "P6\n%d %d 255\n",
 				fmt->fmt.pix.width, fmt->fmt.pix.height);
 
-		if (!out_buf) {
+		if (!ppm_output || !out_buf) {
 			out_buf = buffers[buf.index].start;
 			size = buf.bytesused;
 		} else {
