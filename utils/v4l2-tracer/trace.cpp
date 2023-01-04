@@ -71,7 +71,7 @@ void trace_mmap(void *addr, size_t len, int prot, int flags, int fildes, off_t o
 	json_object *mmap_obj = json_object_new_object();
 
 	if (errno)
-		json_object_object_add(mmap_obj, "errno", json_object_new_string(strerrorname_np(errno)));
+		json_object_object_add(mmap_obj, "errno", json_object_new_string(STRERR(errno)));
 
 	json_object *mmap_args = json_object_new_object();
 	json_object_object_add(mmap_args, "addr", json_object_new_int64((int64_t)addr));

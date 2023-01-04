@@ -201,7 +201,7 @@ int munmap(void *start, size_t length)
 	json_object *munmap_obj = json_object_new_object();
 
 	if (errno)
-		json_object_object_add(munmap_obj, "errno", json_object_new_string(strerrorname_np(errno)));
+		json_object_object_add(munmap_obj, "errno", json_object_new_string(STRERR(errno)));
 
 	json_object *munmap_args = json_object_new_object();
 	json_object_object_add(munmap_args, "start", json_object_new_int64((int64_t)start));
@@ -242,7 +242,7 @@ int ioctl(int fd, unsigned long cmd, ...)
 		int ret = (*original_ioctl)(fd, cmd, arg);
 		if (errno)
 			json_object_object_add(ioctl_obj, "errno",
-			                       json_object_new_string(strerrorname_np(errno)));
+			                       json_object_new_string(STRERR(errno)));
 		write_json_object_to_json_file(ioctl_obj);
 		json_object_put(ioctl_obj);
 		return ret;
@@ -270,7 +270,7 @@ int ioctl(int fd, unsigned long cmd, ...)
 	int ret = (*original_ioctl)(fd, cmd, arg);
 
 	if (errno)
-		json_object_object_add(ioctl_obj, "errno", json_object_new_string(strerrorname_np(errno)));
+		json_object_object_add(ioctl_obj, "errno", json_object_new_string(STRERR(errno)));
 
 	/* Trace driver arguments if userspace will be reading them i.e. _IOR or _IOWR ioctls */
 	if ((cmd & IOC_OUT) != 0U) {

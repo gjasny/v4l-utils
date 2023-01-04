@@ -34,6 +34,12 @@
 #define STR(x) #x
 #define STRING(x) STR(x)
 
+#ifdef HAVE_STRERRORNAME_NP
+#define STRERR(x) strerrorname_np(x)
+#else
+#define STRERR(x) strerror(x)
+#endif
+
 struct val_def {
 	long val;
 	const char *str;

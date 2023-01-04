@@ -323,6 +323,8 @@ if test "x$jsonc_pkgconfig" = "xno"; then
     AC_MSG_WARN(json-c $JSONC_VERSION_REQUIRED or higher required for v4l2-tracer)
 fi
 
+AC_CHECK_FUNCS([strerrorname_np], AC_DEFINE([HAVE_STRERRORNAME_NP],[1],[glibc has function strerrorname_np]))
+
 # Check for pthread
 
 AS_IF([test x$enable_shared != xno],
