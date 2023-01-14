@@ -881,7 +881,7 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 
 	if (options[OptMonitorAll])
 		monitor = CEC_MODE_MONITOR_ALL;
-	else if (options[OptMonitorPin] || options[OptStorePin])
+	else if (options[OptMonitorPin])
 		monitor = CEC_MODE_MONITOR_PIN;
 
 	if (!(node.caps & CEC_CAP_MONITOR_ALL) && monitor == CEC_MODE_MONITOR_ALL) {
@@ -2787,7 +2787,7 @@ int main(int argc, char **argv)
 
 	if (node.num_log_addrs == 0) {
 		if (options[OptMonitor] || options[OptMonitorAll] ||
-		    options[OptMonitorPin] || options[OptStorePin])
+		    options[OptMonitorPin])
 			goto skip_la;
 		if (warn_if_unconfigured)
 			fprintf(stderr, "\nAdapter is unconfigured, please configure it first.\n");
@@ -2877,7 +2877,7 @@ int main(int argc, char **argv)
 
 skip_la:
 	if (options[OptMonitor] || options[OptMonitorAll] ||
-	    options[OptMonitorPin] || options[OptStorePin]) {
+	    options[OptMonitorPin]) {
 		monitor(node, monitor_time, store_pin);
 	} else if (options[OptWaitForMsgs]) {
 		wait_for_msgs(node, monitor_time);
