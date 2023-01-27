@@ -3,6 +3,7 @@
  * Copyright 2018 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
+#include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <iostream>
