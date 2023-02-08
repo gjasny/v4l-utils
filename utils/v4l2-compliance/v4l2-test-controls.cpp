@@ -780,6 +780,70 @@ static int checkVividDynArray(struct node *node,
 	return 0;
 }
 
+static int checkVividControls(struct node *node,
+			      struct v4l2_ext_control &ctrl,
+			      struct v4l2_ext_controls &ctrls,
+			      const struct test_query_ext_ctrl &qctrl)
+{
+	int ret;
+
+	switch (ctrl.id) {
+	case VIVID_CID_INTEGER64:
+		ctrl.value64 = qctrl.minimum;
+		ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+		if (ret)
+			return fail("could not set minimum value\n");
+		ctrl.value64 = qctrl.maximum;
+		ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+		if (ret)
+			return fail("could not set maximum value\n");
+		ctrl.value64 = qctrl.default_value;
+		ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+		if (ret)
+			return fail("could not set default value\n");
+		return 0;
+
+	case VIVID_CID_STRING:
+		delete [] ctrl.string;
+		ctrl.string = new char[qctrl.maximum + 1];
+		memset(ctrl.string, 'A', qctrl.minimum);
+		ctrl.string[qctrl.minimum] = '\0';
+		ctrl.size = 3;
+		ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+		if (ret)
+			return fail("could not set minimum string value\n");
+		memset(ctrl.string, 'Z', qctrl.maximum);
+		ctrl.string[qctrl.maximum] = '\0';
+		ctrl.size = 5;
+		ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+		if (ret)
+			return fail("could not set maximum string value\n");
+		memset(ctrl.string, ' ', qctrl.minimum);
+		ctrl.string[qctrl.minimum] = '\0';
+		ctrl.size = 3;
+		ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+		if (ret)
+			return fail("could not set default string value\n");
+		return 0;
+
+	case VIVID_CID_AREA:
+		ctrl.p_area->width = 200;
+		ctrl.p_area->height = 100;
+		ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+		if (ret)
+			return fail("could not set area value\n");
+		ctrl.p_area->width = 1000;
+		ctrl.p_area->height = 2000;
+		ret = doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls);
+		if (ret)
+			return fail("could not set area value\n");
+		return 0;
+
+	default:
+		return fail("should not happen\n");
+	}
+}
+
 int testExtendedControls(struct node *node)
 {
 	qctrl_map::iterator iter;
@@ -901,6 +965,11 @@ int testExtendedControls(struct node *node)
 				return fail("s_ext_ctrls returned invalid control contents (%08x)\n", qctrl.id);
 		}
 
+		if (is_vivid && (ctrl.id == VIVID_CID_INTEGER64 ||
+				 ctrl.id == VIVID_CID_STRING ||
+				 ctrl.id == VIVID_CID_AREA) &&
+		    checkVividControls(node, ctrl, ctrls, qctrl))
+			return fail("vivid control tests failed\n");
 		if (is_vivid && ctrl.id == VIVID_CID_U32_DYN_ARRAY &&
 		    checkVividDynArray(node, ctrl, qctrl))
 			return fail("dynamic array tests failed\n");
