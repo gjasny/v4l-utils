@@ -56,14 +56,14 @@ static inline void *vzalloc(unsigned long size)
 
 #define clamp_t(type, val, min, max) clamp((type)val, (type)min, (type)max)
 
-static inline u32 prandom_u32_max(u32 ep_ro)
+static inline u32 get_random_u32_below(u32 ep_ro)
 {
 	return rand() % ep_ro;
 }
 
 static inline u32 get_random_u8(void)
 {
-	return prandom_u32_max(256);
+	return get_random_u32_below(256);
 }
 
 
