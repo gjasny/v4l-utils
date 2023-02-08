@@ -106,6 +106,8 @@ static std::string subdevcap2s(unsigned cap)
 
 	if (cap & V4L2_SUBDEV_CAP_RO_SUBDEV)
 		s += "\t\tRead-Only Sub-Device\n";
+	if (cap & V4L2_SUBDEV_CAP_STREAMS)
+		s += "\t\tStreams Support\n";
 	return s;
 }
 
