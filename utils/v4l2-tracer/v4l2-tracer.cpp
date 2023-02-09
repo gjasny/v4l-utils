@@ -10,6 +10,16 @@
 
 int tracer(int argc, char *argv[], bool retrace = false);
 
+pid_t tracee_pid = 0;
+
+void v4l2_tracer_sig_handler(int signum)
+{
+	fprintf(stderr, "%s:%s:%d: received: %d\n", __FILE__, __func__, __LINE__, signum);
+	kill(tracee_pid, signum);
+	/* Wait for tracee to handle the signal first before v4l2-tracer exits. */
+	wait(nullptr);
+}
+
 enum Options {
 	V4l2TracerOptCompactPrint = 'c',
 	V4l2TracerOptSetVideoDevice = 'd',
@@ -307,7 +317,8 @@ int tracer(int argc, char *argv[], bool retrace)
 		fprintf(stderr, "Loading libv4l2tracer: %s\n", libv4l2tracer_path.c_str());
 	setenv("LD_PRELOAD", libv4l2tracer_path.c_str(), 0);
 
-	if (fork() == 0) {
+	tracee_pid = fork();
+	if (tracee_pid == 0) {
 
 		if (is_debug()) {
 			fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
@@ -328,16 +339,10 @@ int tracer(int argc, char *argv[], bool retrace)
 	int exec_result = 0;
 	wait(&exec_result);
 
-	if (WEXITSTATUS(exec_result)) {
-		fprintf(stderr, "Trace error: %s\n", trace_filename.c_str());
+	if (WIFEXITED(exec_result))
+		WEXITSTATUS(exec_result);
 
-		trace_file = fopen(trace_filename.c_str(), "a");
-		fseek(trace_file, 0L, SEEK_END);
-		fputs("\n]\n", trace_file);
-		fclose(trace_file);
-
-		exit(EXIT_FAILURE);
-	}
+	fprintf(stderr, "Tracee exited with status: %d\n", exec_result);
 
 	/* Close the json-array and the trace file. */
 	trace_file = fopen(trace_filename.c_str(), "a");
@@ -352,7 +357,7 @@ int tracer(int argc, char *argv[], bool retrace)
 	fprintf(stderr, "%s", trace_filename.c_str());
 	fprintf(stderr, "\n");
 
-	return 0;
+	return exec_result;
 }
 
 int main(int argc, char *argv[])
@@ -387,6 +392,11 @@ int main(int argc, char *argv[])
 		print_usage();
 		return ret;
 	}
+
+	struct sigaction act = {};
+	act.sa_handler = v4l2_tracer_sig_handler;
+	sigaction(SIGINT, &act, nullptr);
+	sigaction(SIGTERM, &act, nullptr);
 
 	if (command == "trace") {
 		ret = tracer(argc, argv);
