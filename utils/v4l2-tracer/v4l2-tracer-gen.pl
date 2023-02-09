@@ -158,14 +158,37 @@ sub clean_up_line {
 sub get_val_def_name {
 	my $member = shift;
 	my $struct_name = shift;
-	if ($member =~ /type/) {
-		if ($struct_name =~ /.*fmt|format|buf|parm|crop|selection|vbi.*/) {
-			return "v4l2_buf_type_val_def";
-		} elsif ($struct_name =~ /ctrl$/) {
-			return "v4l2_ctrl_type_val_def";
-		} else {
-			return "nullptr"; # will print as hex string
+	@structs_that_use_v4l2_buf_type = qw(v4l2_fmtdesc v4l2_requestbuffers v4l2_buffer v4l2_crop
+	                                     v4l2_exportbuffer v4l2_cropcap v4l2_selection
+	                                     v4l2_sliced_vbi_cap v4l2_format v4l2_streamparm);
+	@structs_that_use_v4l2_ctrl_type = qw(v4l2_queryctrl v4l2_query_ext_ctrl);
+	if ($member eq "type") {
+		foreach (@structs_that_use_v4l2_buf_type) {
+			if ($struct_name eq $_) {
+				return "v4l2_buf_type_val_def";
+			}
 		}
+		foreach (@structs_that_use_v4l2_tuner_type) {
+			if ($struct_name eq $_) {
+				return "v4l2_tuner_type_val_def";
+			}
+		}
+		foreach (@structs_that_use_v4l2_ctrl_type) {
+			if ($struct_name eq $_) {
+				return "v4l2_ctrl_type_val_def";
+			}
+		}
+		if ($struct_name eq "v4l2_frmsizeenum") {
+			return "v4l2_frmsizetypes_val_def";
+		}
+		if ($struct_name eq "v4l2_frmivalenum") {
+			return "v4l2_frmivaltypes_val_def";
+		}
+		return "nullptr"; # will print as hex string
+	}
+	# special treatment for struct v4l2_input which has members named both "tuner" and "type"
+	if (($member eq "tuner") && ($struct_name eq "v4l2_input")) {
+		return "v4l2_tuner_type_val_def";
 	}
 	if ($member =~ /pixelformat/) {
 		return "v4l2_pix_fmt_val_def";
@@ -181,12 +204,15 @@ sub get_val_def_name {
 	if ($member =~ /memory/) {
 		return "v4l2_memory_val_def";
 	}
-	if ($member =~ /field/) {
-		if ($struct_name =~ /.*pix|buffer.*/) {
-			return "v4l2_field_val_def";
-		} else {
-			return "nullptr"; # will print as hex string
+	@structs_that_use_v4l2_field = qw(v4l2_pix_format v4l2_buffer v4l2_framebuffer v4l2_window
+	                                  v4l2_pix_format_mplane v4l2_event_vsync);
+	if ($member eq "field") {
+		foreach (@structs_that_use_v4l2_field) {
+			if ($struct_name eq $_) {
+				return "v4l2_field_val_def";
+			}
 		}
+		return "nullptr"; # will print as hex string
 	}
 	if ($member =~ /^id$/) {
 		if ($struct_name =~ /.*control|query.*/) {
