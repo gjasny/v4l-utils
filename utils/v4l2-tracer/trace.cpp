@@ -556,12 +556,30 @@ json_object *trace_ioctl_args(unsigned long cmd, void *arg)
 	case VIDIOC_S_PARM:
 		trace_v4l2_streamparm(arg, ioctl_args);
 		break;
+	case VIDIOC_ENUMINPUT:
+		trace_v4l2_input_gen(arg, ioctl_args);
+		break;
 	case VIDIOC_G_CTRL:
 	case VIDIOC_S_CTRL:
 		trace_v4l2_control_gen(arg, ioctl_args);
 		break;
 	case VIDIOC_QUERYCTRL:
 		trace_v4l2_queryctrl_gen(arg, ioctl_args);
+		break;
+	case VIDIOC_G_INPUT:
+	case VIDIOC_S_INPUT: {
+		int *input = static_cast<int*>(arg);
+		json_object_object_add(ioctl_args, "input", json_object_new_int(*input));
+		break;
+	}
+	case VIDIOC_G_OUTPUT:
+	case VIDIOC_S_OUTPUT: {
+		int *output = static_cast<int*>(arg);
+		json_object_object_add(ioctl_args, "output", json_object_new_int(*output));
+		break;
+	}
+	case VIDIOC_ENUMOUTPUT:
+		trace_v4l2_output_gen(arg, ioctl_args);
 		break;
 	case VIDIOC_G_CROP:
 	case VIDIOC_S_CROP:

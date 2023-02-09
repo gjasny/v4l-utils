@@ -184,6 +184,12 @@ sub get_val_def_name {
 		if ($struct_name eq "v4l2_frmivalenum") {
 			return "v4l2_frmivaltypes_val_def";
 		}
+		if ($struct_name eq "v4l2_input") {
+			return $val_def_name = "input_type_val_def";
+		}
+		if ($struct_name eq "v4l2_output") {
+			return $val_def_name = "output_type_val_def";
+		}
 		return "nullptr"; # will print as hex string
 	}
 	# special treatment for struct v4l2_input which has members named both "tuner" and "type"
@@ -236,6 +242,9 @@ sub get_val_def_name {
 	}
 	if ($member =~ /xfer_func/) {
 		return "v4l2_xfer_func_val_def";
+	}
+	if (($member eq "status") && ($struct_name eq "v4l2_input")) {
+		$val_def_name = "input_field_val_def";
 	}
 	return "";
 }
@@ -868,10 +877,40 @@ while (<>) {
 		flag_def_gen("V4L2_BUF_CAP_SUPPORTS_MMAP_CACHE_HINTS");
 		next;
 	}
+	if (grep {/^#define V4L2_STD_PAL_B\s+/} $_) {
+		printf $fh_common_info_h "constexpr flag_def std_flag_def[] = {\n";
+		flag_def_gen("V4L2_STD_ALL");
+		next
+	}
 	if (grep {/^#define V4L2_MODE_HIGHQUALITY\s+/} $_) {
 		printf $fh_common_info_h "constexpr val_def streamparm_val_def[] = {\n";
 		val_def_gen("V4L2_CAP_TIMEPERFRAME");
 		next;
+	}
+	if (grep {/^#define V4L2_INPUT_TYPE_TUNER\s+/} $_) {
+		printf $fh_common_info_h "constexpr val_def input_type_val_def[] = {\n";
+		val_def_gen("V4L2_INPUT_TYPE_TOUCH");
+		next
+	}
+	if (grep {/^#define V4L2_IN_ST_NO_POWER\s+/} $_) {
+		printf $fh_common_info_h "constexpr val_def input_field_val_def[] = {\n";
+		val_def_gen("V4L2_IN_ST_VTR");
+		next
+	}
+	if (grep {/^#define V4L2_IN_CAP_DV_TIMINGS\s+/} $_) {
+		printf $fh_common_info_h "constexpr flag_def input_cap_flag_def[] = {\n";
+		flag_def_gen("V4L2_IN_CAP_NATIVE_SIZE");
+		next
+	}
+	if (grep {/^#define V4L2_OUTPUT_TYPE_MODULATOR\s+/} $_) {
+		printf $fh_common_info_h "constexpr val_def output_type_val_def[] = {\n";
+		val_def_gen("V4L2_OUTPUT_TYPE_ANALOGVGAOVERLAY");
+		next
+	}
+	if (grep {/^#define V4L2_OUT_CAP_DV_TIMINGS\s+/} $_) {
+		printf $fh_common_info_h "constexpr flag_def output_cap_flag_def[] = {\n";
+		flag_def_gen("V4L2_OUT_CAP_NATIVE_SIZE");
+		next
 	}
 	if (grep {/^#define V4L2_ENC_CMD_START\s+/} $_) {
 		printf $fh_common_info_h "constexpr val_def encoder_cmd_val_def[] = {\n";

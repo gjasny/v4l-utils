@@ -614,6 +614,17 @@ void retrace_vidioc_queryctrl(int fd_retrace, json_object *ioctl_args)
 	free(ptr);
 }
 
+void retrace_vidioc_enuminput(int fd_retrace, json_object *ioctl_args)
+{
+	struct v4l2_input *ptr = retrace_v4l2_input_gen(ioctl_args);
+	ioctl(fd_retrace, VIDIOC_ENUMINPUT, ptr);
+
+	if (is_verbose() || (errno != 0))
+		perror("VIDIOC_ENUMINPUT");
+
+	free(ptr);
+}
+
 void retrace_vidioc_g_control(int fd_retrace, json_object *ioctl_args)
 {
 	struct v4l2_control *ptr = retrace_v4l2_control_gen(ioctl_args);
@@ -632,6 +643,61 @@ void retrace_vidioc_s_control(int fd_retrace, json_object *ioctl_args)
 
 	if (is_verbose() || (errno != 0))
 		perror("VIDIOC_S_CTRL");
+
+	free(ptr);
+}
+
+void retrace_vidioc_g_input(int fd_retrace, json_object *ioctl_args)
+{
+	int input = 0;
+	ioctl(fd_retrace, VIDIOC_G_INPUT, &input);
+
+	if (is_verbose() || (errno != 0))
+		perror("VIDIOC_G_INPUT");
+}
+
+void retrace_vidioc_s_input(int fd_retrace, json_object *ioctl_args)
+{
+	int input = 0;
+	json_object *input_obj;
+	if (json_object_object_get_ex(ioctl_args, "input", &input_obj))
+		input = json_object_get_int(input_obj);
+
+	ioctl(fd_retrace, VIDIOC_S_INPUT, &input);
+
+	if (is_verbose() || (errno != 0))
+		perror("VIDIOC_S_INPUT");
+}
+
+void retrace_vidioc_g_output(int fd_retrace, json_object *ioctl_args)
+{
+	int output = 0;
+	ioctl(fd_retrace, VIDIOC_G_OUTPUT, &output);
+
+	if (is_verbose() || (errno != 0))
+		perror("VIDIOC_G_OUTPUT");
+}
+
+void retrace_vidioc_s_output(int fd_retrace, json_object *ioctl_args)
+{
+	int output = 0;
+	json_object *output_obj;
+	if (json_object_object_get_ex(ioctl_args, "output", &output_obj))
+		output = json_object_get_int(output_obj);
+
+	ioctl(fd_retrace, VIDIOC_S_OUTPUT, &output);
+
+	if (is_verbose() || (errno != 0))
+		perror("VIDIOC_S_OUTPUT");
+}
+
+void retrace_vidioc_enumoutput(int fd_retrace, json_object *ioctl_args)
+{
+	struct v4l2_output *ptr = retrace_v4l2_output_gen(ioctl_args);
+	ioctl(fd_retrace, VIDIOC_ENUMOUTPUT, ptr);
+
+	if (is_verbose() || (errno != 0))
+		perror("VIDIOC_ENUMOUTPUT");
 
 	free(ptr);
 }
@@ -1165,6 +1231,9 @@ void retrace_ioctl(json_object *syscall_obj)
 	case VIDIOC_S_PARM:
 		retrace_vidioc_s_parm(fd_retrace, ioctl_args_user);
 		break;
+	case VIDIOC_ENUMINPUT:
+		retrace_vidioc_enuminput(fd_retrace, ioctl_args_user);
+		break;
 	case VIDIOC_G_CTRL:
 		retrace_vidioc_g_control(fd_retrace, ioctl_args_user);
 		break;
@@ -1173,6 +1242,21 @@ void retrace_ioctl(json_object *syscall_obj)
 		break;
 	case VIDIOC_QUERYCTRL:
 		retrace_vidioc_queryctrl(fd_retrace, ioctl_args_user);
+		break;
+	case VIDIOC_G_INPUT:
+		retrace_vidioc_g_input(fd_retrace, ioctl_args_user);
+		break;
+	case VIDIOC_S_INPUT:
+		retrace_vidioc_s_input(fd_retrace, ioctl_args_user);
+		break;
+	case VIDIOC_G_OUTPUT:
+		retrace_vidioc_g_output(fd_retrace, ioctl_args_user);
+		break;
+	case VIDIOC_S_OUTPUT:
+		retrace_vidioc_s_output(fd_retrace, ioctl_args_user);
+		break;
+	case VIDIOC_ENUMOUTPUT:
+		retrace_vidioc_enumoutput(fd_retrace, ioctl_args_user);
 		break;
 	case VIDIOC_G_CROP:
 		retrace_vidioc_g_crop(fd_retrace, ioctl_args_user);
