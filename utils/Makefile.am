@@ -15,7 +15,7 @@ SUBDIRS = \
 	cec-follower \
 	rds-ctl
 
-if HAVE_JSONC
+if WITH_V4L2_TRACER
 SUBDIRS += \
 	v4l2-tracer
 endif

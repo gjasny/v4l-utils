@@ -497,6 +497,14 @@ AC_ARG_ENABLE(v4l2-compliance-32,
    esac]
 )
 
+AC_ARG_ENABLE(v4l2-tracer,
+  AS_HELP_STRING([--disable-v4l2-tracer], [disable v4l2-tracer compilation]),
+  [case "${enableval}" in
+     yes | no ) ;;
+     *) AC_MSG_ERROR(bad value ${enableval} for --disable-v4l2-tracer) ;;
+   esac]
+)
+
 AC_ARG_ENABLE(v4l2-ctl-libv4l,
   AS_HELP_STRING([--disable-v4l2-ctl-libv4l], [disable use of libv4l in v4l2-ctl]),
   [case "${enableval}" in
@@ -578,6 +586,7 @@ AM_CONDITIONAL([WITH_V4L2_CTL_32], [test x${enable_v4l2_ctl_32} = xyes])
 AM_CONDITIONAL([WITH_V4L2_COMPLIANCE], [test x$ac_cv_func_fork = xyes])
 AM_CONDITIONAL([WITH_V4L2_COMPLIANCE_LIBV4L], [test x$ac_cv_func_fork = xyes -a x${enable_v4l2_compliance_libv4l} != xno])
 AM_CONDITIONAL([WITH_V4L2_COMPLIANCE_32], [test x$ac_cv_func_fork = xyes -a x${enable_v4l2_compliance_32} = xyes])
+AM_CONDITIONAL([WITH_V4L2_TRACER], [test x$jsonc_pkgconfig = xyes -a x$enable_v4l2_tracer != xno])
 PKG_CHECK_MODULES([LIBBPF], [libbpf >= 0.7], [bpf_pc=yes], [bpf_pc=no])
 AM_CONDITIONAL([WITH_BPF],          [test x$enable_bpf != xno -a x$libelf_pkgconfig = xyes -a x$CLANG = xclang -a x$bpf_pc = xyes])
 
@@ -628,6 +637,7 @@ AM_COND_IF([WITH_V4L2_CTL_32], [USE_V4L2_CTL_32="yes"], [USE_V4L2_CTL_32="no"])
 AM_COND_IF([WITH_V4L2_COMPLIANCE], [USE_V4L2_COMPLIANCE="yes"], [USE_V4L2_COMPLIANCE="no"])
 AM_COND_IF([WITH_V4L2_COMPLIANCE_LIBV4L], [USE_V4L2_COMPLIANCE_LIBV4L="yes"], [USE_V4L2_COMPLIANCE_LIBV4L="no"])
 AM_COND_IF([WITH_V4L2_COMPLIANCE_32], [USE_V4L2_COMPLIANCE_32="yes"], [USE_V4L2_COMPLIANCE_32="no"])
+AM_COND_IF([WITH_V4L2_TRACER], [USE_V4L2_TRACER="yes"], [USE_V4L2_TRACER="no"])
 AM_COND_IF([WITH_BPF],         [USE_BPF="yes"
                                 AC_DEFINE([HAVE_BPF], [1], [BPF IR decoder support enabled])],
 				[USE_BPF="no"])
@@ -679,5 +689,6 @@ compile time options summary
     v4l2-compliance            : $USE_V4L2_COMPLIANCE
     v4l2-compliance uses libv4l: $USE_V4L2_COMPLIANCE_LIBV4L
     v4l2-compliance-32         : $USE_V4L2_COMPLIANCE_32
+    v4l2-tracer                : $USE_V4L2_TRACER
     BPF IR Decoders:           : $USE_BPF
 EOF
