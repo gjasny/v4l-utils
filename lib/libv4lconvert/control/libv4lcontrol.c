@@ -725,16 +725,21 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, void *dev_ops_priv,
 
 	if (shm_fd >= 0) {
 		/* Set the shared memory size */
-		ftruncate(shm_fd, V4LCONTROL_SHM_SIZE);
+		int ret = ftruncate(shm_fd, V4LCONTROL_SHM_SIZE);
+		if (ret) {
+			perror("libv4lcontrol: shm ftruncate failed");
+			close(shm_fd);
+		} else {
+			/* Retrieve a pointer to the shm object */
+			data->shm_values = mmap(NULL, V4LCONTROL_SHM_SIZE,
+						PROT_READ | PROT_WRITE,
+						MAP_SHARED, shm_fd, 0);
+			close(shm_fd);
 
-		/* Retreive a pointer to the shm object */
-		data->shm_values = mmap(NULL, V4LCONTROL_SHM_SIZE, (PROT_READ | PROT_WRITE),
-				MAP_SHARED, shm_fd, 0);
-		close(shm_fd);
-
-		if (data->shm_values == MAP_FAILED) {
-			perror("libv4lcontrol: error shm mmap failed");
-			data->shm_values = NULL;
+			if (data->shm_values == MAP_FAILED) {
+				perror("libv4lcontrol: shm mmap failed");
+				data->shm_values = NULL;
+			}
 		}
 	} else
 		perror("libv4lcontrol: error creating shm segment failed");
