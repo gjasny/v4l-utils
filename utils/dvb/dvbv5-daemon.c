@@ -24,14 +24,11 @@
 #define _LARGEFILE_SOURCE 1
 #define _LARGEFILE64_SOURCE 1
 
-#include <config.h>
-
 #ifdef HAVE_BACKTRACE
 #include <execinfo.h>
 #endif
 
 #include <argp.h>
-#include <config.h>
 #include <endian.h>
 #include <netinet/in.h>
 #include <poll.h>

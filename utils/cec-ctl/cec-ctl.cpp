@@ -25,12 +25,6 @@
 #include "cec-log.h"
 #include "cec-parse.h"
 
-#ifdef __ANDROID__
-#include <android-config.h>
-#else
-#include <config.h>
-#endif
-
 #include "cec-ctl.h"
 #include "compiler.h"
 

@@ -20,7 +20,6 @@
 
 #include "libdvbv5/dvb-file.h"
 #include "libdvbv5/dvb-dev.h"
-#include <config.h>
 #include <argp.h>
 #include <signal.h>
 #include <stdlib.h>

@@ -21,7 +21,6 @@
  *   c.f. EN 300 468 annex A
  */
 
-#include <config.h>
 #include <iconv.h>
 #include <stdio.h>
 #include <stdlib.h>

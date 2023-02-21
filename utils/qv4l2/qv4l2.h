@@ -20,8 +20,6 @@
 #ifndef QV4L2_H
 #define QV4L2_H
 
-#include <config.h>
-
 #include <QMainWindow>
 #include <QTabWidget>
 #include <QSignalMapper>

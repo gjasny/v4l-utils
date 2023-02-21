@@ -26,8 +26,6 @@
  *
  */
 
-#include <config.h>
-
 #ifdef HAVE_ALSA
 #include "alsa_stream.h"
 

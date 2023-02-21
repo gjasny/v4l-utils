@@ -23,8 +23,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <config.h>
-
 #include "dvb-fe-priv.h"
 #include "dvb-dev-priv.h"
 

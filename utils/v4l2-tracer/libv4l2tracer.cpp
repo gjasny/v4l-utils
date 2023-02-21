@@ -4,7 +4,6 @@
  */
 
 #include "trace.h"
-#include <config.h> /* For PROMOTED_MODE_T */
 #include <dlfcn.h>
 #include <stdarg.h>
 

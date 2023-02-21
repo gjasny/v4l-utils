@@ -27,8 +27,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <config.h>
-
 #ifdef HAVE_PTHREAD
 #  include <pthread.h>
 #endif

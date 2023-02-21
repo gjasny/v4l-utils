@@ -24,8 +24,6 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-#include <config.h>
-
 #ifdef ENABLE_NLS
 # include "gettext.h"
 # include <libintl.h>

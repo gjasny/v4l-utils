@@ -19,11 +19,6 @@
 #ifndef __LIBV4LCONVERT_PRIV_H
 #define __LIBV4LCONVERT_PRIV_H
 
-#ifdef ANDROID
-#include <android-config.h>
-#else
-#include <config.h>
-#endif
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>

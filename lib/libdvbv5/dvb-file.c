@@ -50,8 +50,6 @@
 #include <libdvbv5/desc_hierarchy.h>
 #include <libdvbv5/countries.h>
 
-#include <config.h>
-
 #ifdef ENABLE_NLS
 # include "gettext.h"
 # include <libintl.h>

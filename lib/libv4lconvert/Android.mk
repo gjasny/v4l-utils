@@ -35,6 +35,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_CFLAGS += -Wno-missing-field-initializers
 LOCAL_CFLAGS += -Wno-sign-compare
+LOCAL_CFLAGS += -include ../../android-config.h
 
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/../include \

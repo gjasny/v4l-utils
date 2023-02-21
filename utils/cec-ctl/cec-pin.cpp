@@ -8,12 +8,6 @@
 #include <linux/cec.h>
 #include "cec-htng.h"
 
-#ifdef __ANDROID__
-#include <android-config.h>
-#else
-#include <config.h>
-#endif
-
 #include "cec-ctl.h"
 #include "cec-log.h"
 

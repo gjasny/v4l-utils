@@ -25,8 +25,6 @@
 #include "dvb-fe-priv.h"
 #include <libdvbv5/dvb-v5-std.h>
 
-#include <config.h>
-
 #ifdef ENABLE_NLS
 # include "gettext.h"
 # include <libintl.h>

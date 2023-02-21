@@ -27,12 +27,6 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-#ifdef ANDROID
-#include <android-config.h>
-#else
-#include <config.h>
-#endif
-
 #ifdef HAVE_SYS_KLOG_H
 #include <sys/klog.h>
 #endif

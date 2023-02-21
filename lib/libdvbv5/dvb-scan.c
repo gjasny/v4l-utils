@@ -61,8 +61,6 @@
 #include <libdvbv5/desc_t2_delivery.h>
 #include <libdvbv5/desc_sat.h>
 
-#include <config.h>
-
 #ifdef ENABLE_NLS
 # include "gettext.h"
 # include <libintl.h>

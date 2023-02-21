@@ -24,7 +24,6 @@
 #undef _FILE_OFFSET_BITS
 #define _LARGEFILE64_SOURCE 1
 
-#include <config.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <fcntl.h>

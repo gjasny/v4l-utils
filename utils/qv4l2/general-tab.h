@@ -21,8 +21,6 @@
 #ifndef GENERAL_TAB_H
 #define GENERAL_TAB_H
 
-#include <config.h>
-
 #include <QSpinBox>
 #include <QCheckBox>
 #include <QDoubleSpinBox>

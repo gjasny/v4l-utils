@@ -28,11 +28,6 @@
 #undef _FILE_OFFSET_BITS
 #define _LARGEFILE64_SOURCE 1
 
-#ifdef ANDROID
-#include <android-config.h>
-#else
-#include <config.h>
-#endif
 #include <stdarg.h>
 #include <stdlib.h>
 #include <fcntl.h>

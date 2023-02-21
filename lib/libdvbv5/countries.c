@@ -15,7 +15,6 @@
  *
  */
 
-#include <config.h>
 #include "libdvbv5/countries.h"
 
 #include <ctype.h>

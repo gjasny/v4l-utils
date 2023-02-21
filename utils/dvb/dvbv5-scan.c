@@ -30,8 +30,6 @@
 #include <sys/time.h>
 #include <argp.h>
 
-#include <config.h>
-
 #ifdef ENABLE_NLS
 # define _(string) gettext(string)
 # include "gettext.h"

@@ -6,8 +6,6 @@
 #ifndef CAPTURE_WIN_GL_H
 #define CAPTURE_WIN_GL_H
 
-#include <config.h>
-
 #ifdef HAVE_QTGL
 #define GL_GLEXT_PROTOTYPES
 #define QT_NO_OPENGL_ES_2

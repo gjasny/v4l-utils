@@ -8,8 +8,6 @@
 #ifndef QVIDCAP_H
 #define QVIDCAP_H
 
-#include <config.h>
-
 // Must come before cv4l-helpers.h
 #include <libv4l2.h>
 

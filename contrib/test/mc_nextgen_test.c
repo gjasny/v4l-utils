@@ -19,8 +19,6 @@
  * Or, point your browser to http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
  * */
 
-#include <config.h>
-
 #include <linux/media.h>
 
 #include <argp.h>

@@ -11,12 +11,6 @@
 #include <linux/cec-funcs.h>
 #include "cec-htng-funcs.h"
 
-#ifdef ANDROID
-#include <android-config.h>
-#else
-#include <config.h>
-#endif
-
 #include <cec-info.h>
 #include <cec-log.h>
 #include <set>

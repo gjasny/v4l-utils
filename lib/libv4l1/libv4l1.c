@@ -47,7 +47,6 @@
       in turn will call v4l1_open, so therefor v4l1_open (for example) may not
       use the regular open()!
 */
-#include <config.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>

@@ -26,8 +26,6 @@
 #include <argp.h>
 #include <sysexits.h>
 
-#include <config.h>
-
 #include <linux/lirc.h>
 
 #include "ir-encode.h"

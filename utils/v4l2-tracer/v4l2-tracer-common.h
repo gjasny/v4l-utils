@@ -8,7 +8,6 @@
 
 #include "v4l2-info.h"
 #include "codec-fwht.h"
-#include "config.h"
 #include "media-info.h"
 #include <algorithm>
 #include <dirent.h>

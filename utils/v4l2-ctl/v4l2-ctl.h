@@ -1,12 +1,6 @@
 #ifndef _V4L2_CTL_H
 #define _V4L2_CTL_H
 
-#ifdef ANDROID
-#include <android-config.h>
-#else
-#include <config.h>
-#endif
-
 #include <linux/videodev2.h>
 #include <linux/v4l2-subdev.h>
 #include <v4l-getsubopt.h>

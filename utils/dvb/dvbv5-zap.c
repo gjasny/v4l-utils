@@ -49,8 +49,6 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include <config.h>
-
 #ifdef ENABLE_NLS
 # define _(string) gettext(string)
 # include "gettext.h"

@@ -41,10 +41,10 @@ common_arguments = [
     '-D_GNU_SOURCE',
     '-DPROMOTED_MODE_T=int',
     '-DENABLE_NLS',
+    '-include', meson.current_build_dir() / 'config.h',
 ]
 
 v4l2_utils_incdir_arr = [
-    '.', # Needed for config.h
     'lib' / 'include',
 ]
 

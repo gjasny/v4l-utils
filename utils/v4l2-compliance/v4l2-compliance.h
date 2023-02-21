@@ -29,12 +29,6 @@
 #include <linux/v4l2-subdev.h>
 #include <linux/media.h>
 
-#ifdef ANDROID
-#include <android-config.h>
-#else
-#include <config.h>
-#endif
-
 #ifndef NO_LIBV4L2
 #include <libv4l2.h>
 #endif
