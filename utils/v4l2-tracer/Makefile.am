@@ -33,6 +33,6 @@ gen.intermediate: v4l2-tracer-gen.pl $(V4L2_TRACER_GEN_PREREQS)
 clean-local:
 	-rm -vf $(V4L2_TRACER_GEN)
 
-EXTRA_DIST = v4l2-tracer.1, v4l2-tracer-gen.pl
+EXTRA_DIST = v4l2-tracer.1.in v4l2-tracer-gen.pl
 
 endif
