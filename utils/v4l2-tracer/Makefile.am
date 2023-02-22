@@ -1,9 +1,10 @@
 if HAVE_JSONC
 
 lib_LTLIBRARIES = libv4l2tracer.la
-libv4l2tracer_la_SOURCES = libv4l2tracer.cpp trace-gen.cpp trace-helper.cpp trace.cpp \
+libv4l2tracer_la_SOURCES = libv4l2tracer.cpp trace-helper.cpp trace.cpp \
 v4l2-tracer-common.cpp $(top_srcdir)/utils/common/v4l2-info.cpp \
 $(top_srcdir)/utils/common/media-info.cpp
+nodist_libv4l2tracer_la_SOURCES = trace-gen.cpp
 libv4l2tracer_la_CPPFLAGS = -I$(top_srcdir)/utils/common $(JSONC_CFLAGS)
 libv4l2tracer_la_LDFLAGS = -avoid-version -module -shared -export-dynamic -ldl $(JSONC_LIBS)
 libv4l2tracer_la_LIBTOOLFLAGS = --tag=disable-static
@@ -11,9 +12,10 @@ libv4l2tracer_la_LIBTOOLFLAGS = --tag=disable-static
 bin_PROGRAMS = v4l2-tracer
 man_MANS = v4l2-tracer.1
 
-v4l2_tracer_SOURCES = v4l2-tracer.cpp retrace-gen.cpp retrace-helper.cpp retrace.cpp \
+v4l2_tracer_SOURCES = v4l2-tracer.cpp retrace-helper.cpp retrace.cpp \
 v4l2-tracer-common.cpp $(top_srcdir)/utils/common/v4l2-info.cpp \
 $(top_srcdir)/utils/common/media-info.cpp
+nodist_v4l2_tracer_SOURCES = retrace-gen.cpp
 v4l2_tracer_CPPFLAGS = -I$(top_srcdir)/utils/common -DLIBTRACER_PATH=$(libdir) $(JSONC_CFLAGS) \
 $(GIT_SHA) $(GIT_COMMIT_CNT) $(GIT_COMMIT_DATE)
 v4l2_tracer_LDFLAGS = -lrt -lpthread $(JSONC_LIBS)
