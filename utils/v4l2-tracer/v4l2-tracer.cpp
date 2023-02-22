@@ -345,8 +345,8 @@ int tracer(int argc, char *argv[], bool retrace)
 	fprintf(stderr, "Tracee exited with status: %d\n", exec_result);
 
 	/* Close the json-array and the trace file. */
-	trace_file = fopen(trace_filename.c_str(), "a");
-	fseek(trace_file, 0L, SEEK_END);
+	trace_file = fopen(trace_filename.c_str(), "r+");
+	fseek(trace_file, -2L, SEEK_END);
 	fputs("\n]\n", trace_file);
 	fclose(trace_file);
 
