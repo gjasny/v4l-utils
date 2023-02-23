@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: v4l-utils 1.8.1\n"
 "Report-Msgid-Bugs-To: linux-media@vger.Kernel.org\n"
-"POT-Creation-Date: 2021-10-15 18:41+0200\n"
+"POT-Creation-Date: 2023-02-23 09:16+0100\n"
 "PO-Revision-Date: 2015-12-30 10:00+0000\n"
 "Last-Translator: Copied by Zanata <copied-by-zanata@zanata.org>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
@@ -13,8 +13,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Zanata 4.6.2\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 
 #: lib/libdvbv5/dvb-fe.c:151
 #, c-format
@@ -308,8 +308,8 @@ msgstr "Не вдалося додати властивість %s\n"
 msgid "Can't add property %d\n"
 msgstr "Не вдалося додати властивість %s\n"
 
-#: lib/libdvbv5/dvb-file.c:245 lib/libdvbv5/dvb-file.c:761
-#: lib/libdvbv5/dvb-file.c:1348
+#: lib/libdvbv5/dvb-file.c:245 lib/libdvbv5/dvb-file.c:758
+#: lib/libdvbv5/dvb-file.c:1345
 msgid "Allocating memory for dvb_file"
 msgstr "Отримуємо пам’ять під dvb_file"
 
@@ -338,7 +338,7 @@ msgstr "пропущено параметр %i (%s)"
 msgid "parameter %s invalid: %s"
 msgstr "некоректний параметр %s: %s"
 
-#: lib/libdvbv5/dvb-file.c:387 lib/libdvbv5/dvb-file.c:846
+#: lib/libdvbv5/dvb-file.c:387 lib/libdvbv5/dvb-file.c:843
 #, c-format
 msgid "ERROR %s while parsing line %d of %s\n"
 msgstr "ПОМИЛКА %s під час обробки рядка %d з %s\n"
@@ -377,148 +377,148 @@ msgstr "не передбачена властивість %s під час об
 msgid "ERROR: %s while parsing entry %d of %s\n"
 msgstr "ПОМИЛКА %s під час обробки запису %d з %s\n"
 
-#: lib/libdvbv5/dvb-file.c:797
+#: lib/libdvbv5/dvb-file.c:794
 #, c-format
 msgid "Missing channel group"
 msgstr "Пропущено групу каналів"
 
-#: lib/libdvbv5/dvb-file.c:810
+#: lib/libdvbv5/dvb-file.c:807
 #, c-format
 msgid "key/value without a channel group"
 msgstr "ключ/значення без групи каналів"
 
-#: lib/libdvbv5/dvb-file.c:815
+#: lib/libdvbv5/dvb-file.c:812
 #, c-format
 msgid "missing key"
 msgstr "не вказано ключ"
 
-#: lib/libdvbv5/dvb-file.c:824
+#: lib/libdvbv5/dvb-file.c:821
 #, c-format
 msgid "missing value"
 msgstr "не вистачає значення"
 
-#: lib/libdvbv5/dvb-file.c:832
+#: lib/libdvbv5/dvb-file.c:829
 #, c-format
 msgid "value %s is invalid for %s"
 msgstr "значення %s є некоректним для %s"
 
-#: lib/libdvbv5/dvb-file.c:1227
+#: lib/libdvbv5/dvb-file.c:1224
 #, c-format
 msgid "Channel %s (service ID %d) not found on PMT. Skipping it."
 msgstr ""
 "Канал %s (ідентифікатор служби %d) у PMT не знайдено. Пропускаємо його."
 
-#: lib/libdvbv5/dvb-file.c:1245
+#: lib/libdvbv5/dvb-file.c:1242
 msgid "Not enough memory"
 msgstr "Не вистачає пам'яті"
 
-#: lib/libdvbv5/dvb-file.c:1276
+#: lib/libdvbv5/dvb-file.c:1273
 msgid "Couldn't get frontend props"
 msgstr "Не вдалося отримати властивості інтерфейсу виведення"
 
-#: lib/libdvbv5/dvb-file.c:1305
+#: lib/libdvbv5/dvb-file.c:1302
 #, c-format
 msgid "Storing Service ID %d: '%s'"
 msgstr "Зберігаємо ідентифікатор служби %d: «%s»"
 
-#: lib/libdvbv5/dvb-file.c:1320
+#: lib/libdvbv5/dvb-file.c:1317
 msgid "reserved"
 msgstr "зарезервовано"
 
-#: lib/libdvbv5/dvb-file.c:1321
+#: lib/libdvbv5/dvb-file.c:1318
 msgid "digital television"
 msgstr "цифрове телебачення"
 
-#: lib/libdvbv5/dvb-file.c:1322
+#: lib/libdvbv5/dvb-file.c:1319
 msgid "digital radio"
 msgstr "цифрове радіо"
 
-#: lib/libdvbv5/dvb-file.c:1323
+#: lib/libdvbv5/dvb-file.c:1320
 msgid "Teletext"
 msgstr "Телетекст"
 
-#: lib/libdvbv5/dvb-file.c:1324
+#: lib/libdvbv5/dvb-file.c:1321
 msgid "NVOD reference"
 msgstr "Еталонне NVOD"
 
-#: lib/libdvbv5/dvb-file.c:1325
+#: lib/libdvbv5/dvb-file.c:1322
 msgid "NVOD time-shifted"
 msgstr "NVOD із часовим зсувом"
 
-#: lib/libdvbv5/dvb-file.c:1326
+#: lib/libdvbv5/dvb-file.c:1323
 msgid "mosaic"
 msgstr "мозаїка"
 
-#: lib/libdvbv5/dvb-file.c:1327
+#: lib/libdvbv5/dvb-file.c:1324
 msgid "PAL coded signal"
 msgstr "Сигнал, закодований у PAL"
 
-#: lib/libdvbv5/dvb-file.c:1328
+#: lib/libdvbv5/dvb-file.c:1325
 msgid "SECAM coded signal"
 msgstr "Сигнал, закодований у SECAM"
 
-#: lib/libdvbv5/dvb-file.c:1329
+#: lib/libdvbv5/dvb-file.c:1326
 msgid "D/D2-MAC"
 msgstr "D/D2-MAC"
 
-#: lib/libdvbv5/dvb-file.c:1330
+#: lib/libdvbv5/dvb-file.c:1327
 msgid "FM Radio"
 msgstr "FM-радіо"
 
-#: lib/libdvbv5/dvb-file.c:1331
+#: lib/libdvbv5/dvb-file.c:1328
 msgid "NTSC coded signal"
 msgstr "Сигнал, закодований у NTSC"
 
-#: lib/libdvbv5/dvb-file.c:1332
+#: lib/libdvbv5/dvb-file.c:1329
 msgid "data broadcast"
 msgstr "трансляція даних"
 
-#: lib/libdvbv5/dvb-file.c:1333
+#: lib/libdvbv5/dvb-file.c:1330
 msgid "user defined"
 msgstr "визначений користувачем"
 
-#: lib/libdvbv5/dvb-file.c:1372
+#: lib/libdvbv5/dvb-file.c:1369
 #, c-format
 msgid "Virtual channel %s, name = %s"
 msgstr "Віртуальний канал %s, назва = %s"
 
-#: lib/libdvbv5/dvb-file.c:1401
+#: lib/libdvbv5/dvb-file.c:1398
 #, c-format
 msgid "Service %s, provider %s: %s"
 msgstr "Служба %s, постачальник даних %s: %s"
 
-#: lib/libdvbv5/dvb-file.c:1414
+#: lib/libdvbv5/dvb-file.c:1411
 #, c-format
 msgid "Storing as channel %s"
 msgstr "Зберігаємо як канал %s"
 
-#: lib/libdvbv5/dvb-file.c:1457
+#: lib/libdvbv5/dvb-file.c:1454
 msgid "WARNING: no SDT table - storing channel(s) without their names"
 msgstr "ПОПЕРЕДЖЕННЯ: немає таблиці SDT — зберігаємо записи каналів без назв"
 
-#: lib/libdvbv5/dvb-file.c:1459
+#: lib/libdvbv5/dvb-file.c:1456
 msgid "WARNING: Some Service IDs are not at the SDT table"
 msgstr ""
 
-#: lib/libdvbv5/dvb-file.c:1488
+#: lib/libdvbv5/dvb-file.c:1485
 #, c-format
 msgid "File format %s is unknown\n"
 msgstr "Невідомий формат файла %s\n"
 
-#: lib/libdvbv5/dvb-file.c:1533
+#: lib/libdvbv5/dvb-file.c:1530
 #, c-format
 msgid "ERROR: Delivery system %s is not known. Valid values are:\n"
 msgstr ""
 "ПОМИЛКА: невідома система надання даних %s. Коректними значеннями є такі:\n"
 
-#: lib/libdvbv5/dvb-file.c:1577
+#: lib/libdvbv5/dvb-file.c:1574
 #, c-format
 msgid "Currently, VDR format is supported only for output\n"
 msgstr ""
 "У поточній версії підтримку формату VDR передбачено лише для виведення "
 "даних\n"
 
-#: lib/libdvbv5/dvb-file.c:1580
+#: lib/libdvbv5/dvb-file.c:1577
 #, c-format
 msgid "Format is not supported\n"
 msgstr "Підтримки цього формату не передбачено\n"

@@ -1,3 +1,202 @@
+v4l-utils-1.24.0
+----------------
+
+Ariel D'Alessandro (1):
+      Move README to markdown syntax
+
+Benjamin Mugnier (1):
+      libv4lconvert: Fix v4lconvert_grey_to_rgb24 not taking stride into account
+
+Daniel Scally (2):
+      mc_nextgen_test: Display ancillary links
+      v4l2-compliance: Account for ancillary links
+
+David Fries (1):
+      qv4l2: Add capture toggle and close hotkeys to CaptureWin
+
+Deborah Brouwer (9):
+      v4l2-info: add flag V4L2_PIX_FMT_FLAG_SET_CSC
+      v4l2-info: move flags2s to v4l2-info.h
+      utils: add v4l2-tracer utility
+      v4l2-tracer: check for strerrorname_np()
+      v4l2-tracer: add signal handling
+      v4l2-tracer: refactor autogeneration script
+      v4l2-tracer: add exact matching for 'type' and 'field'
+      v4l2-tracer: add INPUT and OUTPUT ioctls
+      v4l2-tracer: remove trailing comma from JSON trace
+
+Dikshita Agarwal (2):
+      Add check for READ ONLY flag
+      Add check for READ ONLY flag
+
+Gregor Jasny (8):
+      buildsystem: Start v4l-utils 1.23.0 development cycle
+      configure.ac: Add copy of gnulib visibility.m4
+      bootstrap.sh: Replace which with POSIX compliant command -v
+      m4: Update ax_pthread to latest
+      v4l2-tracer: do not distribute generated files
+      xc3028-firmware: distribute proper header
+      v4l2-tracer: distribute man page template
+      v4l2-tracer: add headers to distribute them
+
+Hans Verkuil (70):
+      cec-compliance: wake up remote device if needed
+      decode_tm6000: fix compiler warning
+      libdvbv5/dvb-dev-remote.c: fix send_fmt prototype
+      v4l2-compliance: improve failure message
+      v4l2-compliance: add missing return
+      v4l2-ctl: pass bus_info to mi_get_media_fd()
+      test-media: increase sleep after modprobe vivid to 3
+      v4l2-compliance: show value with 'delta_ms > 10' fail msg
+      v4l2-compliance: relax time32-64 test
+      v4l-utils: update to latest media_stage kernel
+      v4l2-ctl/compliance: add stateless VP9 support
+      libv4lconvert: HM12 -> NV12_16L16
+      v4l-utils: use v4l_getsubopt instead of getsubopt
+      sliced-vbi-detect/test.c: drop unused headers
+      v4l2-compliance: detect no-mmu systems
+      v4l2-compliance: increase sleeps that are too short
+      v4l2-compliance: improve select() check in captureBufs()
+      v4l2-compliance: improve two vivid_ro_ctrl warnings
+      cec-ctl: show timestamp for events
+      cec-ctl: periodically insert monotonic/wallclock time
+      v4l2-ctl: support edid-decode output as --set-edid input
+      Revert "Add check for READ ONLY flag"
+      v4l2-compliance: only check function if an MC is present
+      cec-ctl: fix timestamp log for HPD/5V changes
+      cec-ctl: only generate eob for CEC pin events
+      cec-ctl: improve --analyze-pin performance
+      cec-ctl: show timestamps in microsecond precision
+      cec-ctl: store the wallclock/monotonic clocks every minute
+      qv4l2: fix search/replace mistake in vbi-tab.cpp/h license text
+      v4l2-ctl: allow waiting/polling for multiple events
+      sync-with-kernel.sh: tuner-xc2028-types.h -> xc2028-types.h
+      v4l-utils: sync to latest kernel
+      v4l2-compliance: fix G/S_PARM tests for stateful encoders
+      v4l-utils: sync-with-kernel
+      cec-compliance: make <GET CEC VERSION> mandatory
+      cec-compliance: replace warn by announce if unresponsive
+      cec-compliance: don't test if PA is invalid
+      v4l-utils: sync with latest kernel headers
+      v4l2-compliance: detect V4L2_PIX_FMT_HEVC_SLICE
+      v4l2-ctl: support HEVC controls
+      v4l2-compliance/ctl: add dynamic array support
+      media-info: support ancillary links
+      v4l2-compliance: show ancillary links
+      v4l2-dbg: drop cap2s(), use v4l2_info_capability() instead
+      rds-ctl: drop cap2s(), use v4l2_info_capability() instead
+      v4l2-ctl/rds-ctl: move tuner info helpers to v4l2-info.cpp
+      v4l-utils: sync with upstream kernel
+      v4l2-ctl: add support for V4L2_EVENT_CTRL_CH_DIMENSIONS
+      v4l2-ctl: show all dimensions for V4L2_EVENT_CTRL_CH_DIMENSIONS
+      v4l2-compliance: check vivid pixel array control behavior
+      v4l2-compliance: test of vivid's pixel array in requests
+      xc3028-firmware: fix use-after-free
+      libdvbv5: fix string overread
+      test-media: check results of cmp in the vicodec tests
+      v4l-utils: sync with upstream media tree
+      v4l-utils: sync with upstream git repo
+      v4l2-ctl: print_control should check for array controls
+      v4l2-ctl: -C foo -C bar only shows foo
+      v4l2-compliance: support INTEGER and INTEGER64 control arrays
+      test-media: wait longer after rmmod/modprobe if DEBUG_KOBJECT_RELEASE=y
+      cec-follower: add --ignore-standby/view-on options
+      v4l2-compliance: support g++ 7.5.0
+      v4l-utils: sync with upstream git repo
+      v4l2-tpg.patch: add missing get_random_u8()
+      v4l-utils: sync with latest upstream git repo
+      v4l2-tracer: add support for most basic controls
+      cec-ctl: --store-pin shouldn't enable pin monitoring
+      v4l-utils: sync with latest upstream git repo
+      v4l2-info: add support for new V4L2_SUBDEV_CAP_STREAMS capability
+      v4l2-compliance: add tests for area, string and integer64 controls
+
+Hans de Goede (4):
+      libv4lconvert: Fix v4lconvert_yuv420_to_rgb/bgr24() not taking stride into account
+      libv4lconvert: Fix v4lconvert_rgb565_to_rgb/bgr24() not taking stride into account
+      libv4lconvert: Fix v4lconvert_nv12_*() not taking stride into account
+      libv4lconvert: Fix v4lconvert_nv16_to_yuyv() not taking stride into account
+
+Jorge Maidana (1):
+      qv4l2: enable the play action on non-streaming radio rx
+
+Khem Raj (1):
+      media-info: Include missing <cstdint> for uintptr_t
+
+Laurent Pinchart (7):
+      v4l2-ctl: Operate on output device if specified
+      libv4l2subdev: Fix compilation error by including missing header
+      v4l2 utils: Support V4L2_PIX_FMT_YUV[AX]32
+      libdvbv5: Fix invalid header file name in Doxygen INPUT
+      libdvbv5: Fix Doygen deprecation warnings
+      keytable: Add -fno-stack-protector compilation option
+      libv4lconvert: Don't ignore return value of ftruncate()
+
+Martin VallevandMartin Vallevand (1):
+      libdvbv5: cleanup ASTC service location parsing
+
+Mauro Carvalho Chehab (24):
+      v4l2grab: print the fourcc when libv4l won't handle it
+      v4l2grab: accept other formats than RGB24
+      v4l2grab: optimize conversion routines
+      v4l2grab: use BT.709 by default on YUV conversion
+      v4l2grab: pass fmt to the conversion function
+      v4l2grab: add support for handling colorspace
+      v4l2grab: rework conversion routines to add more YUV formats
+      v4l2grab: add the basic logic to support planar formats
+      v4l2grab: add support for YUV 420 planar and semi-planar formats
+      v4l2grab: add RGB 32 format and variants
+      v4l2grab: don't try to convert formats on raw mode
+      v4l2grab: add a way to explicitly enable raw mode
+      v4l2grab: use an array for format properties
+      v4l2grab: properly implement quantization
+      v4l2grab: avoid the risc of having sizeimage == 0
+      v4l2grab: estimate the frame rate
+      v4l2grab: fix buffer conversion size
+      v4l2grab: fix raw output on mmap
+      v4l2grab: validate it the returned image is big enough
+      v4l2grab: fix image size calculation for some formats
+      v4l2grab: expand video format switch case
+      v4l2grab: allow adding planars with full size
+      v4l2grab: add support for NV16 and NV61
+      v4l2grab: add support for 422P format
+
+Niklas Söderlund (1):
+      configure.ac: Add option to disable compilation of v4l2-tracer
+
+Peter Kjellerstedt (1):
+      configure.ac, Makefile.am: Support building without NLS
+
+Ricardo Ribalda (1):
+      v4l2-compliance: Let uvcvideo return -EACCES
+
+Sakari Ailus (1):
+      utils: Allow choosing v4l2-tracer-gen.pl output
+
+Sean Young (4):
+      ir-ctl: allow for different gaps to be specified
+      v4l-utils: sync with latest media staging tree
+      ir-ctl: report ir overflow
+      keytable: provide configuration for empty keymap
+
+Simon Arlott (2):
+      libdvbv5: Read all "other" PIDs for channels
+      dvbv5-zap: Record all the channel video/audio/other PIDs
+
+Sudip Mukherjee (1):
+      keytable: Convert deprecated libbpf API
+
+Umang Jain (1):
+      v4l2-ctl: Fix typo in --list-patterns help text
+
+Vedant Paranjape (1):
+      v4l2-utils: Fix incorrect use of fd in streaming_set_cap2out
+
+Xavier Roumegue (2):
+      v4l2-utils: Change get_(cap_compose|out_crop)_rect() return type to void
+      v4l2-utils: read/write full frame from/to file for m2m non codec driver
+
+
 v4l-utils-1.22.0
 ----------------
 
