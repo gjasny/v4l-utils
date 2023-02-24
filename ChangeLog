@@ -1,6 +1,13 @@
 v4l-utils-1.24.0
 ----------------
 
+Hans Verkuil (1):
+      v4l2-tracer: use __s64 instead of long
+
+
+v4l-utils-1.24.0
+----------------
+
 Ariel D'Alessandro (1):
       Move README to markdown syntax
 
