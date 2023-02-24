@@ -41,7 +41,7 @@
 #endif
 
 struct val_def {
-	long val;
+	__s64 val;
 	const char *str;
 };
 
