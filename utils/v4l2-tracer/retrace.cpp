@@ -1166,7 +1166,7 @@ void retrace_media_ioc_request_alloc(int fd_retrace, json_object *ioctl_args)
 
 void retrace_ioctl(json_object *syscall_obj)
 {
-	long cmd = 0;
+	__s64 cmd = 0;
 	int fd_retrace = 0;
 
 	json_object *fd_trace_obj;
