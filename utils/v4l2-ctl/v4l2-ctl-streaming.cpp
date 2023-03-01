@@ -18,7 +18,9 @@ static unsigned stream_count;
 static unsigned stream_skip;
 static __u32 memory = V4L2_MEMORY_MMAP;
 static __u32 out_memory = V4L2_MEMORY_MMAP;
-static int stream_sleep = -1;
+static int stream_sleep_count = -1;
+static unsigned stream_sleep_ms = 1000;
+static unsigned stream_sleep_mode = 1;
 static bool stream_no_query;
 static unsigned stream_pat;
 static bool stream_loop;
@@ -93,6 +95,7 @@ static enum codec_type codec_type;
 
 #define QUEUE_ERROR -1
 #define QUEUE_STOPPED -2
+#define QUEUE_OFF_ON -3
 
 class fps_timestamps {
 private:
@@ -129,6 +132,28 @@ public:
 	double fps();
 	unsigned dropped();
 };
+
+static bool need_sleep(unsigned count)
+{
+	if (stream_sleep_count <= 0)
+		return false;
+
+	if (!(stream_sleep_mode & 1) && count > (unsigned)stream_sleep_count)
+		return false;
+
+	return !(count % stream_sleep_count);
+}
+
+static void do_sleep()
+{
+	while (!stream_sleep_ms)
+		sleep(100);
+
+	struct timespec t;
+	t.tv_sec = stream_sleep_ms / 1000;
+	t.tv_nsec = (stream_sleep_ms % 1000) * 1000000;
+	nanosleep(&t, NULL);
+}
 
 void fps_timestamps::determine_field(int fd, unsigned type)
 {
@@ -254,10 +279,15 @@ void streaming_usage()
 	       "                     skipped buffers as is passed by --stream-skip.\n"
 	       "  --stream-skip <count>\n"
 	       "                     skip the first <count> buffers. The default is 0.\n"
-	       "  --stream-sleep <count>\n"
-	       "                     sleep for 1 second every <count> buffers. If <count> is 0,\n"
-	       "                     then sleep forever right after streaming starts. The default\n"
-	       "                     is -1 (never sleep).\n"
+	       "  --stream-sleep count=<c>,sleep=<ms>,mode=<mode>\n"
+	       "                     Sleep for <ms> milliseconds (default=1000) after <c> buffers.\n"
+	       "                     If <c> is 0, then only sleep right after streaming starts.\n"
+	       "                     If <ms> is 0, then sleep forever.\n"
+	       "                     There are different modes for this:\n"
+	       "                     <mode>=0: the sleep happens only once after <c> buffers.\n"
+	       "                     <mode>=1: the sleep happens every <c> buffers (default).\n"
+	       "                     <mode>=2: as 0, but call STREAMOFF/ON before/after the sleep.\n"
+	       "                     <mode>=3: as 1, but call STREAMOFF/ON before/after the sleep.\n"
 #ifndef NO_STREAM_TO
 	       "  --stream-to <file> stream to this file. The default is to discard the\n"
 	       "                     data. If <file> is '-', then the data is written to stdout\n"
@@ -644,6 +674,7 @@ static void list_buffers(cv4l_fd &fd, unsigned buftype)
 
 void streaming_cmd(int ch, char *optarg)
 {
+	char *value, *subs;
 	unsigned i;
 	int speed;
 
@@ -655,7 +686,32 @@ void streaming_cmd(int ch, char *optarg)
 		stream_skip = strtoul(optarg, nullptr, 0);
 		break;
 	case OptStreamSleep:
-		stream_sleep = strtol(optarg, nullptr, 0);
+		subs = optarg;
+		while (*subs != '\0') {
+			static constexpr const char *subopts[] = {
+				"count",
+				"sleep",
+				"mode",
+				nullptr
+			};
+
+			switch (parse_subopt(&subs, subopts, &value)) {
+			case 0:
+				stream_sleep_count = strtoul(value, nullptr, 0);
+				break;
+			case 1:
+				stream_sleep_ms = strtoul(value, nullptr, 0);
+				break;
+			case 2:
+				stream_sleep_mode = strtoul(value, nullptr, 0);
+				if (stream_sleep_mode < 4)
+					break;
+				fallthrough;
+			default:
+				vidcap_usage();
+				std::exit(EXIT_FAILURE);
+			}
+		}
 		break;
 	case OptStreamNoQuery:
 		stream_no_query = true;
@@ -1472,8 +1528,11 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 	if (ignore_count_skip)
 		return 0;
 
-	if (stream_sleep > 0 && count % stream_sleep == 0)
-		sleep(1);
+	if (need_sleep(count)) {
+		if (stream_sleep_mode & 2)
+			return QUEUE_OFF_ON;
+		do_sleep();
+	}
 
 	if (is_empty_frame || is_error_frame)
 		return 0;
@@ -1625,8 +1684,11 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 	if (ignore_count_skip)
 		return 0;
 
-	if (stream_sleep > 0 && count % stream_sleep == 0)
-		sleep(1);
+	if (need_sleep(count)) {
+		if (stream_sleep_mode & 2)
+			return QUEUE_OFF_ON;
+		do_sleep();
+	}
 
 	if (stream_skip) {
 		stream_skip--;
@@ -1838,6 +1900,9 @@ recover:
 	if (q.obtain_bufs(&fd))
 		goto done;
 
+	fd.g_fmt(fmt);
+
+restart:
 	if (q.queue_all(&fd))
 		goto done;
 
@@ -1849,10 +1914,8 @@ recover:
 	fd.s_trace(0);
 	exp_fd.s_trace(0);
 
-	fd.g_fmt(fmt);
-
-	while (stream_sleep == 0)
-		sleep(100);
+	if (stream_sleep_count == 0)
+		do_sleep();
 
 	if (use_poll)
 		fcntl(fd.g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
@@ -1906,6 +1969,14 @@ recover:
 		if (FD_ISSET(fd.g_fd(), &read_fds)) {
 			r = do_handle_cap(fd, q, fout, nullptr,
 					  count, fps_ts, fmt, false);
+			if (r == QUEUE_OFF_ON) {
+				if (verbose)
+					fprintf(stderr, "streamoff, sleep %d ms, streamon\n", stream_sleep_ms);
+				fd.streamoff();
+				do_sleep();
+				goto restart;
+			}
+
 			if (r < 0)
 				break;
 		}
@@ -2116,6 +2187,7 @@ static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 	if (q.obtain_bufs(&fd))
 		goto done;
 
+restart:
 	if (do_setup_out_buffers(fd, q, fin, true, false) < 0)
 		goto done;
 
@@ -2127,8 +2199,8 @@ static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 	fd.s_trace(0);
 	exp_fd.s_trace(0);
 
-	while (stream_sleep == 0)
-		sleep(100);
+	if (stream_sleep_count == 0)
+		do_sleep();
 
 	if (use_poll)
 		fcntl(fd.g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
@@ -2164,6 +2236,13 @@ static void streaming_set_out(cv4l_fd &fd, cv4l_fd &exp_fd)
 		}
 		r = do_handle_out(fd, q, fin, nullptr,
 				  count, fps_ts, fmt, stopped, false);
+		if (r == QUEUE_OFF_ON) {
+			if (verbose)
+				fprintf(stderr, "streamoff, sleep %d ms, streamon\n", stream_sleep_ms);
+			fd.streamoff();
+			do_sleep();
+			goto restart;
+		}
 		if (r == QUEUE_STOPPED)
 			stopped = true;
 		if (r < 0)
@@ -2303,8 +2382,8 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 	fps_ts[CAP].determine_field(fd.g_fd(), in.g_type());
 	fps_ts[OUT].determine_field(fd.g_fd(), out.g_type());
 
-	while (stream_sleep == 0)
-		sleep(100);
+	if (stream_sleep_count == 0)
+		do_sleep();
 
 	fcntl(fd.g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
 
@@ -2766,8 +2845,8 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 	fd.s_trace(0);
 	out_fd.s_trace(0);
 
-	while (stream_sleep == 0)
-		sleep(100);
+	if (stream_sleep_count == 0)
+		do_sleep();
 
 	if (use_poll)
 		fcntl(fd.g_fd(), F_SETFL, fd_flags | O_NONBLOCK);
