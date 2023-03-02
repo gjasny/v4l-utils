@@ -1972,7 +1972,10 @@ restart:
 			if (r == QUEUE_OFF_ON) {
 				if (verbose)
 					fprintf(stderr, "streamoff, sleep %d ms, streamon\n", stream_sleep_ms);
+				else
+					fprintf(stderr, "\n");
 				fd.streamoff();
+				fps_ts.reset();
 				do_sleep();
 				goto restart;
 			}
@@ -2239,7 +2242,10 @@ restart:
 		if (r == QUEUE_OFF_ON) {
 			if (verbose)
 				fprintf(stderr, "streamoff, sleep %d ms, streamon\n", stream_sleep_ms);
+			else
+				fprintf(stderr, "\n");
 			fd.streamoff();
+			fps_ts.reset();
 			do_sleep();
 			goto restart;
 		}
