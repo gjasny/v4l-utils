@@ -19,7 +19,7 @@ static unsigned stream_skip;
 static __u32 memory = V4L2_MEMORY_MMAP;
 static __u32 out_memory = V4L2_MEMORY_MMAP;
 static int stream_sleep_count = -1;
-static unsigned stream_sleep_ms = 1000;
+static int stream_sleep_ms = 1000;
 static unsigned stream_sleep_mode = 1;
 static bool stream_no_query;
 static unsigned stream_pat;
@@ -146,12 +146,28 @@ static bool need_sleep(unsigned count)
 
 static void do_sleep()
 {
-	while (!stream_sleep_ms)
-		sleep(100);
+	int ms = stream_sleep_ms;
+
+	if (!ms) {
+		fprintf(stderr, "sleeping forever...\n");
+		while (1)
+			sleep(100);
+	}
+
+	if (ms < 0)
+		ms = ((__u64)-ms * rand()) / RAND_MAX + 1;
+
+	if (stream_sleep_mode >= 2)
+		fprintf(stderr, "streamoff, sleep %d ms, streamon\n", ms);
+	else if (stream_sleep_ms < 0 || verbose)
+		fprintf(stderr, "sleep %d ms\n", ms);
+	else
+		fprintf(stderr, "\n");
+	fflush(stderr);
 
 	struct timespec t;
-	t.tv_sec = stream_sleep_ms / 1000;
-	t.tv_nsec = (stream_sleep_ms % 1000) * 1000000;
+	t.tv_sec = ms / 1000;
+	t.tv_nsec = (ms % 1000) * 1000000;
 	nanosleep(&t, NULL);
 }
 
@@ -282,7 +298,8 @@ void streaming_usage()
 	       "  --stream-sleep count=<c>,sleep=<ms>,mode=<mode>\n"
 	       "                     Sleep for <ms> milliseconds (default=1000) after <c> buffers.\n"
 	       "                     If <c> is 0, then only sleep right after streaming starts.\n"
-	       "                     If <ms> is 0, then sleep forever.\n"
+	       "                     If <ms> is 0, then sleep forever, if <ms> is negative, then\n"
+	       "                     sleep for a random time between 1 and -<ms>.\n"
 	       "                     There are different modes for this:\n"
 	       "                     <mode>=0: the sleep happens only once after <c> buffers.\n"
 	       "                     <mode>=1: the sleep happens every <c> buffers (default).\n"
@@ -708,7 +725,7 @@ void streaming_cmd(int ch, char *optarg)
 					break;
 				fallthrough;
 			default:
-				vidcap_usage();
+				streaming_usage();
 				std::exit(EXIT_FAILURE);
 			}
 		}
@@ -1970,10 +1987,6 @@ restart:
 			r = do_handle_cap(fd, q, fout, nullptr,
 					  count, fps_ts, fmt, false);
 			if (r == QUEUE_OFF_ON) {
-				if (verbose)
-					fprintf(stderr, "streamoff, sleep %d ms, streamon\n", stream_sleep_ms);
-				else
-					fprintf(stderr, "\n");
 				fd.streamoff();
 				fps_ts.reset();
 				do_sleep();
@@ -2240,10 +2253,6 @@ restart:
 		r = do_handle_out(fd, q, fin, nullptr,
 				  count, fps_ts, fmt, stopped, false);
 		if (r == QUEUE_OFF_ON) {
-			if (verbose)
-				fprintf(stderr, "streamoff, sleep %d ms, streamon\n", stream_sleep_ms);
-			else
-				fprintf(stderr, "\n");
 			fd.streamoff();
 			fps_ts.reset();
 			do_sleep();
