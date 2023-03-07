@@ -41,6 +41,8 @@ static bool ignore_la[16];
 static const char *edid_path;
 static bool is_paused;
 
+#define CEC_CTL_VERSION 2
+
 #define POLL_FAKE_OPCODE 256
 static unsigned short ignore_opcode[257];
 
@@ -481,26 +483,24 @@ static const char *event2s(__u32 event)
 	}
 }
 
-static void log_event(struct cec_event &ev, bool show)
+static void log_event(struct cec_event &ev, bool show, bool pin_logging = false)
 {
 	bool is_high = ev.event == CEC_EVENT_PIN_CEC_HIGH;
 	bool is_initial = ev.flags & CEC_EVENT_FL_INITIAL_STATE;
-	bool is_pin_event = false;
 	__u16 pa;
 
 	if (ev.event != CEC_EVENT_PIN_CEC_LOW && ev.event != CEC_EVENT_PIN_CEC_HIGH &&
 	    ev.event != CEC_EVENT_PIN_HPD_LOW && ev.event != CEC_EVENT_PIN_HPD_HIGH &&
 	    ev.event != CEC_EVENT_PIN_5V_LOW && ev.event != CEC_EVENT_PIN_5V_HIGH)
 		printf("\n");
-	else
-		is_pin_event = true;
+
 	if ((ev.flags & CEC_EVENT_FL_DROPPED_EVENTS) && show)
 		printf("(warn: %s events were lost)\n", event2s(ev.event));
 	if (show) {
 		if (is_initial) {
 			printf("Initial ");
 		} else if (ev.event != CEC_EVENT_PIN_CEC_LOW && ev.event != CEC_EVENT_PIN_CEC_HIGH) {
-			if (is_pin_event)
+			if (pin_logging)
 				printf("%s: ", ts2s(ev.ts / 1000000000.0).c_str());
 			else
 				printf("%s: ", ts2s(ev.ts).c_str());
@@ -510,7 +510,10 @@ static void log_event(struct cec_event &ev, bool show)
 	switch (ev.event) {
 	case CEC_EVENT_STATE_CHANGE:
 		pa = ev.state_change.phys_addr;
-		if (show)
+		if (show && pin_logging)
+			printf("Event: State Change: PA: %x.%x.%x.%x, LA mask: 0x%04x\n",
+			       cec_phys_addr_exp(pa), ev.state_change.log_addr_mask);
+		else if (show)
 			printf("Event: State Change: PA: %x.%x.%x.%x, LA mask: 0x%04x, Conn Info: %s\n",
 			       cec_phys_addr_exp(pa),
 			       ev.state_change.log_addr_mask,
@@ -785,12 +788,12 @@ static void generate_eob_event(__u64 ts, FILE *fstore)
 	};
 
 	if (fstore) {
-		fprintf(fstore, "%llu.%09llu %d\n",
+		fprintf(fstore, "%llu.%09llu 0x%x\n",
 			ev_eob.ts / 1000000000, ev_eob.ts % 1000000000,
 			ev_eob.event - CEC_EVENT_PIN_CEC_LOW);
 		fflush(fstore);
 	}
-	log_event(ev_eob, fstore != stdout);
+	log_event(ev_eob, fstore != stdout, true);
 }
 
 static void show_msg(const cec_msg &msg)
@@ -868,7 +871,8 @@ static void wait_for_msgs(const struct node &node, __u32 monitor_time)
 	}
 }
 
-#define MONITOR_FL_DROPPED_EVENTS     (1 << 16)
+#define MONITOR_STATE_CHANGE		0x10
+#define MONITOR_FL_DROPPED_EVENTS	(1 << 16)
 
 static void monitor(const struct node &node, __u32 monitor_time, const char *store_pin)
 {
@@ -920,7 +924,7 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 			std::exit(EXIT_FAILURE);
 		}
 		fprintf(fstore, "# cec-ctl --store-pin\n");
-		fprintf(fstore, "# version 1\n");
+		fprintf(fstore, "# version %d\n", CEC_CTL_VERSION);
 		fprintf(fstore, "# start_monotonic %lu.%09lu\n",
 			start_monotonic.tv_sec, start_monotonic.tv_nsec);
 		fprintf(fstore, "# start_timeofday %lu.%06lu\n",
@@ -996,17 +1000,27 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 			if (ev.event == CEC_EVENT_PIN_CEC_LOW ||
 			    ev.event == CEC_EVENT_PIN_CEC_HIGH)
 				generate_eob_event(ev.ts, fstore);
-			if (pin_event && fstore) {
+			if (fstore && ev.event == CEC_EVENT_STATE_CHANGE) {
+				unsigned int v = MONITOR_STATE_CHANGE;
+
+				if (ev.flags & CEC_EVENT_FL_DROPPED_EVENTS)
+					v |= MONITOR_FL_DROPPED_EVENTS;
+
+				fprintf(fstore, "%llu.%09llu 0x%x 0x%04x 0x%04x\n",
+					ev.ts / 1000000000, ev.ts % 1000000000, v,
+					ev.state_change.phys_addr, ev.state_change.log_addr_mask);
+				fflush(fstore);
+			} else if (fstore && pin_event) {
 				unsigned int v = ev.event - CEC_EVENT_PIN_CEC_LOW;
 
 				if (ev.flags & CEC_EVENT_FL_DROPPED_EVENTS)
 					v |= MONITOR_FL_DROPPED_EVENTS;
-				fprintf(fstore, "%llu.%09llu %d\n",
+				fprintf(fstore, "%llu.%09llu 0x%x\n",
 					ev.ts / 1000000000, ev.ts % 1000000000, v);
 				fflush(fstore);
 			}
 			if (!pin_event || options[OptMonitorPin])
-				log_event(ev, fstore != stdout);
+				log_event(ev, fstore != stdout, true);
 		}
 		if (!res && eob_ts) {
 			struct timespec ts;
@@ -1019,6 +1033,31 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 	}
 	if (fstore && fstore != stdout)
 		fclose(fstore);
+}
+
+static unsigned read_val(char **p)
+{
+	unsigned v = 0;
+
+	while (**p == ' ')
+		(*p)++;
+
+	if ((*p)[0] == '0' && (*p)[1] == 'x') {
+		(*p) += 2;
+		while (isxdigit(**p)) {
+			if (isdigit(**p))
+				v = v * 16 + **p - '0';
+			else
+				v = v * 16 + tolower(**p) - 'a' + 10;
+			(*p)++;
+		}
+	} else {
+		while (isdigit(**p)) {
+			v = v * 10 + **p - '0';
+			(*p)++;
+		}
+	}
+	return v;
 }
 
 static void analyze(const char *analyze_pin)
@@ -1046,9 +1085,13 @@ static void analyze(const char *analyze_pin)
 		goto err;
 	line++;
 	if (!fgets(s, sizeof(s), fanalyze) ||
-	    sscanf(s, "# version %u\n", &version) != 1 ||
-	    version != 1)
+	    sscanf(s, "# version %u\n", &version) != 1)
 		goto err;
+	if (version > CEC_CTL_VERSION) {
+		fprintf(stderr, "Pin store file has version %d, but we only support up to version %d\n",
+			version, CEC_CTL_VERSION);
+		std::exit(EXIT_FAILURE);
+	}
 	line++;
 	if (!fgets(s, sizeof(s), fanalyze) ||
 	    sscanf(s, "# start_monotonic %lu.%09lu\n", &tv_sec, &tv_nsec) != 2 ||
@@ -1104,29 +1147,45 @@ static void analyze(const char *analyze_pin)
 			p++;
 		while (isdigit(*p))
 			tv_nsec = tv_nsec * 10 + *p++ - '0';
-		if (*p == ' ')
-			p++;
-		while (isdigit(*p))
-			event = event * 10 + *p++ - '0';
-		if (*p != '\n' || (event & ~MONITOR_FL_DROPPED_EVENTS) > 5) {
+		event = read_val(&p);
+
+		bool dropped_events = event & MONITOR_FL_DROPPED_EVENTS;
+		event &= ~MONITOR_FL_DROPPED_EVENTS;
+
+		__u16 pa = 0;
+		__u16 la_mask = 0;
+
+		if (event == MONITOR_STATE_CHANGE) {
+			pa = read_val(&p);
+			la_mask = read_val(&p);
+		}
+		if (*p != '\n') {
 			fprintf(stderr, "malformed data at line %d\n", line);
+			break;
+		}
+		if (event != MONITOR_STATE_CHANGE && event > 5) {
+			fprintf(stderr, "unknown event at line %d\n", line);
 			break;
 		}
 		ev.ts = tv_sec * 1000000000ULL + tv_nsec;
 		ev.flags = 0;
-		if (event & MONITOR_FL_DROPPED_EVENTS) {
-			event &= ~MONITOR_FL_DROPPED_EVENTS;
+		if (dropped_events)
 			ev.flags = CEC_EVENT_FL_DROPPED_EVENTS;
+		if (event == MONITOR_STATE_CHANGE) {
+			ev.event = CEC_EVENT_STATE_CHANGE;
+			ev.state_change.phys_addr = pa;
+			ev.state_change.log_addr_mask = la_mask;
+		} else {
+			ev.event = event + CEC_EVENT_PIN_CEC_LOW;
 		}
-		ev.event = event + CEC_EVENT_PIN_CEC_LOW;
-		log_event(ev, true);
+		log_event(ev, true, true);
 		line++;
 	}
 
 	if (eob_ts) {
 		ev.event = CEC_EVENT_PIN_CEC_HIGH;
 		ev.ts = eob_ts;
-		log_event(ev, true);
+		log_event(ev, true, true);
 	}
 
 	if (fanalyze != stdin)
