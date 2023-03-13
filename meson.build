@@ -81,9 +81,6 @@ dep_qt5 = dependency('qt5', modules: ['Core', 'Gui', 'Widgets', 'OpenGL'],
                      required : get_option('qvidcap').enabled() or get_option('qv4l2').enabled())
 
 dep_libbpf = dependency('bpf', required : get_option('bpf'), version : '>=0.7')
-if not dep_libbpf.found()
-    dep_libbpf = cc.find_library('bpf', has_headers: 'bpf/bpf.h', required : get_option('bpf'))
-endif
 
 dep_sdl = dependency('SDL2', required: false)
 if not dep_sdl.found()
