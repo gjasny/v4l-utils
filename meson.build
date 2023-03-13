@@ -59,7 +59,6 @@ v4l2_utils_incdir = include_directories(v4l2_utils_incdir_arr)
 prog_bash = find_program('bash')
 prog_clang = find_program('clang', required : get_option('bpf'))
 prog_doxygen = find_program('doxygen', required : get_option('doxygen-doc'))
-prog_git = find_program('git')
 prog_grep = find_program('grep')
 prog_perl = find_program('perl')
 
@@ -313,15 +312,23 @@ add_project_arguments(c_arguments, language : 'c')
 add_project_arguments(cpp_arguments, language : 'cpp')
 add_project_link_arguments(cpp_arguments, language : 'cpp')
 
-git_sha = run_command(prog_git, '-C', meson.project_source_root(), 'rev-parse', '--short=12', 'HEAD',
-                      check : true).stdout().strip()
+git_sha = ''
+git_commit_cnt = ''
+git_commit_date = ''
+
+if fs.is_dir('.git')
+    prog_git = find_program('git')
+    git_sha = run_command(prog_git, '-C', meson.project_source_root(), 'rev-parse', '--short=12', 'HEAD',
+                          check : true).stdout().strip()
+    git_commit_cnt = '-' + run_command(prog_git, '-C', meson.project_source_root(), 'rev-list', '--count', 'HEAD',
+                                 check : true).stdout().strip()
+    git_commit_date = run_command(prog_git, '-C', meson.project_source_root(), 'show', '--quiet',
+                                  '--date=format-local:%F %T', '--format=%cd',
+                                  env : ['TZ=UTC'], check : true).stdout().strip()
+endif
+
 conf.set('GIT_SHA', git_sha)
-git_commit_cnt = run_command(prog_git, '-C', meson.project_source_root(), 'rev-list', '--count', 'HEAD',
-                             check : true).stdout().strip()
-conf.set('GIT_COMMIT_CNT', '-' + git_commit_cnt)
-git_commit_date = run_command(prog_git, '-C', meson.project_source_root(), 'show', '--quiet',
-                              '--date=format-local:%F %T', '--format=%cd',
-                              env : ['TZ=UTC'], check : true).stdout().strip()
+conf.set('GIT_COMMIT_CNT', git_commit_cnt)
 conf.set('GIT_COMMIT_DATE', git_commit_date)
 
 man_pages = []
