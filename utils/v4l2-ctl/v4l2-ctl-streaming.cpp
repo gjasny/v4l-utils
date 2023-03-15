@@ -149,6 +149,12 @@ static void do_sleep()
 	int ms = stream_sleep_ms;
 
 	if (!ms) {
+		// For modes 2 and 3 just don't sleep in this case
+		if (stream_sleep_mode >= 2) {
+			fprintf(stderr, "streamoff, streamon\n");
+			return;
+		}
+
 		fprintf(stderr, "sleeping forever...\n");
 		while (1)
 			sleep(100);
@@ -298,8 +304,10 @@ void streaming_usage()
 	       "  --stream-sleep count=<c>,sleep=<ms>,mode=<mode>\n"
 	       "                     Sleep for <ms> milliseconds (default=1000) after <c> buffers.\n"
 	       "                     If <c> is 0, then only sleep right after streaming starts.\n"
-	       "                     If <ms> is 0, then sleep forever, if <ms> is negative, then\n"
-	       "                     sleep for a random time between 1 and -<ms>.\n"
+	       "                     If <ms> is 0, then sleep forever (modes 0 and 1) or not at all\n"
+	       "                     (for modes 2 and 3), if <ms> is positive, then sleep for <ms>\n"
+	       "                     milliseconds, if <ms> is negative, then sleep for a random\n"
+	       "                     time between 1 and -<ms> milliseconds.\n"
 	       "                     There are different modes for this:\n"
 	       "                     <mode>=0: the sleep happens only once after <c> buffers.\n"
 	       "                     <mode>=1: the sleep happens every <c> buffers (default).\n"
