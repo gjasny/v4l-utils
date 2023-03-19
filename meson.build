@@ -1,6 +1,6 @@
 project('v4l-utils', 'c', 'cpp',
     version: '1.25.0',
-    meson_version : '>= 0.57',
+    meson_version : '>= 0.56',
     default_options : [
         'buildtype=debugoptimized',
         'warning_level=1',
@@ -140,15 +140,18 @@ conf.set_quoted('LOCALEDIR', get_option('prefix') / get_option('datadir') / 'loc
 # external library otherwise.
 if meson.version().version_compare('>= 0.60')
     dep_iconv = dependency('iconv', required : false)
+    found_iconv =dep_iconv.found()
 else
     if cc.has_function('iconv_open')
-        dep_iconv = declare_dependency()
+        dep_iconv = []
+        found_iconv = true
     else
-        dep_iconv = cc.find_library('iconv', required : false)
+        dep_iconv = [cc.find_library('iconv', required : false)]
+        found_iconv = dep_iconv.found()
     endif
 endif
 
-if dep_iconv.found()
+if found_iconv
     conf.set('HAVE_ICONV', 1)
     iconv_const_test = '''#include <iconv.h>
 size_t iconv (iconv_t cd, char * *inbuf, size_t *inbytesleft, char * *outbuf, size_t *outbytesleft);
@@ -357,21 +360,21 @@ configure_file(input : 'v4l-utils.spec.in', output : 'v4l-utils.spec',
                configuration : conf)
 
 summary({
-            'ALSA' : dep_alsa,
-            'GL' : dep_gl,
-            'GLU' : dep_glu,
-            'JSON-C' : dep_jsonc,
+            'ALSA' : dep_alsa.found(),
+            'GL' : dep_gl.found(),
+            'GLU' : dep_glu.found(),
+            'JSON-C' : dep_jsonc.found(),
             'Qt5' : [
-                dep_qt5,
+                dep_qt5.found(),
                 have_qt5_opengl ? 'with QtGL' : 'without QtGL',
             ],
-            'SDL' : dep_sdl,
-            'X11' : dep_x11,
+            'SDL' : dep_sdl.found(),
+            'X11' : dep_x11.found(),
             'gconv' : have_gconv,
-            'iconv' : dep_iconv,
-            'libjpeg' : dep_jpeg,
-            'libudev' : dep_libudev,
-            'threads' : dep_threads,
+            'iconv' : found_iconv,
+            'libjpeg' : dep_jpeg.found(),
+            'libudev' : dep_libudev.found(),
+            'threads' : dep_threads.found(),
         }, bool_yn : true, section : 'Dependencies')
 
 summary({
