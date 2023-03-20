@@ -15,15 +15,16 @@ doxyfile = configure_file(input : 'Doxyfile.in',
                           output : 'Doxyfile',
                           configuration : cdata)
 
-doxygen_install_dir = join_paths(get_option('datadir'), 'doc',
-                                 '@0@'.format(meson.project_name()))
+doxygen_install_dirs = []
 
 doxygen_output = []
 if get_option('doxygen-html')
     doxygen_output += 'html'
+    doxygen_install_dirs += get_option('datadir') / 'doc' / '@0@'.format(meson.project_name())
 endif
 if get_option('doxygen-man')
     doxygen_output += 'man'
+    doxygen_install_dirs += get_option('mandir') / '..'
 endif
 
 custom_target('doxygen',
@@ -31,4 +32,4 @@ custom_target('doxygen',
               output : doxygen_output,
               command : [prog_doxygen, doxyfile],
               install : true,
-              install_dir : doxygen_install_dir)
+              install_dir : doxygen_install_dirs)
