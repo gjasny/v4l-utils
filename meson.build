@@ -80,7 +80,7 @@ dep_librt = cc.find_library('rt')
 dep_qt5 = dependency('qt5', modules: ['Core', 'Gui', 'Widgets', 'OpenGL'],
                      required : get_option('qvidcap').enabled() or get_option('qv4l2').enabled())
 
-dep_libbpf = dependency('bpf', required : get_option('bpf'), version : '>=0.7')
+dep_libbpf = dependency('libbpf', required : get_option('bpf'), version : '>=0.7')
 
 dep_sdl = dependency('SDL2', required: false)
 if not dep_sdl.found()
