@@ -59,11 +59,13 @@ function keytable {
 	cd ${SRCDIR}
 	echo generating ${SRCDIR}/parse.h
 	./gen_input_events.pl < ${KERNEL_DIR}/usr/include/linux/input-event-codes.h  > ${SRCDIR}/parse.h
-	mkdir -p ${SRCDIR}/rc_keymaps
 	rm -f ${SRCDIR}/rc_keymaps/*
 	echo storing existing keymaps at ${SRCDIR}/rc_keymaps/
 	./gen_keytables.pl ${KERNEL_DIR};
 	cp ${SRCDIR}/rc_keymaps_userspace/* ${SRCDIR}/rc_keymaps/
+	echo "ir_keytable_rc_keymaps = files(" >${SRCDIR}/rc_keymaps/meson.build
+	ls ${SRCDIR}/rc_keymaps | grep toml | perl -ne "chomp; printf(\"    '\$_',\n\");" >>${SRCDIR}/rc_keymaps/meson.build
+	echo ")" >>${SRCDIR}/rc_keymaps/meson.build
 }
 
 function libdvbv5 {
