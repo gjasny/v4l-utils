@@ -35,6 +35,9 @@
 	case V4L2_PIX_FMT_BGRX32: return "32-bit XBGR 8-8-8-8";
 	case V4L2_PIX_FMT_RGBA32: return "32-bit RGBA 8-8-8-8";
 	case V4L2_PIX_FMT_RGBX32: return "32-bit RGBX 8-8-8-8";
+	case V4L2_PIX_FMT_RGBX1010102: return "32-bit RGBX 10-10-10-2";
+	case V4L2_PIX_FMT_RGBA1010102: return "32-bit RGBA 10-10-10-2";
+	case V4L2_PIX_FMT_ARGB2101010: return "32-bit ARGB 2-10-10-10";
 	case V4L2_PIX_FMT_GREY: return "8-bit Greyscale";
 	case V4L2_PIX_FMT_Y4: return "4-bit Greyscale";
 	case V4L2_PIX_FMT_Y6: return "6-bit Greyscale";
@@ -179,6 +182,9 @@
 	case V4L2_PIX_FMT_NV12M_8L128: return "NV12M (8x128 Linear)";
 	case V4L2_PIX_FMT_NV12_10BE_8L128: return "10-bit NV12 (8x128 Linear, BE)";
 	case V4L2_PIX_FMT_NV12M_10BE_8L128: return "10-bit NV12M (8x128 Linear, BE)";
+	case V4L2_PIX_FMT_Y210: return "10-bit YUYV Packed";
+	case V4L2_PIX_FMT_Y212: return "12-bit YUYV Packed";
+	case V4L2_PIX_FMT_Y216: return "16-bit YUYV Packed";
 	case V4L2_PIX_FMT_MJPEG: return "Motion-JPEG";
 	case V4L2_PIX_FMT_JPEG: return "JFIF JPEG";
 	case V4L2_PIX_FMT_DV: return "1394";
