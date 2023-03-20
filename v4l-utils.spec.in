@@ -1,12 +1,12 @@
 Name:           v4l-utils
 Version:        @PACKAGE_VERSION@
-Release:        2%{?dist}
+Release:        1%{?dist}
 Summary:        Utilities for video4linux and DVB devices
 # libdvbv5, dvbv5 utils, ir-keytable and v4l2-sysfs-path are GPLv2 only
 License:        GPLv2+ and GPLv2
 URL:            http://www.linuxtv.org/downloads/v4l-utils/
 
-Source0:        http://linuxtv.org/downloads/v4l-utils/v4l-utils-%{version}.tar.bz2
+Source0:        http://linuxtv.org/downloads/v4l-utils/v4l-utils-%{version}.tar.xz
 
 BuildRequires:  alsa-lib-devel
 BuildRequires:  desktop-file-utils
@@ -15,24 +15,29 @@ BuildRequires:  gettext
 BuildRequires:  kernel-headers
 BuildRequires:  libjpeg-devel
 BuildRequires:  qt5-qtbase-devel
+BuildRequires:  meson >= 0.56
+BuildRequires:  json-c-devel
+
 BuildRequires:  systemd-devel
+# For /usr/share/pkgconfig/udev.pc
+BuildRequires:  systemd
 
-# BPF decoder dependencies
 
-%define with_bpf 1
+# BPF decoder dependencies - currently broken
+%define with_bpf 0
 
 %if %{with_bpf}
 BuildRequires:  elfutils-libelf-devel clang
 %endif
 
 # For /lib/udev/rules.d ownership
-Requires:       udev
+Requires:       systemd-udev
 Requires:       libv4l%{?_isa} = %{version}-%{release}
 
 %description
 v4l-utils is a collection of various video4linux (V4L) and DVB utilities. The
-main v4l-utils package contains cx18-ctl, ir-keytable, ir-ctl, ivtv-ctl,
-v4l2-ctl and v4l2-sysfs-path.
+main v4l-utils package contains cx18-ctl, ir-keytable, ivtv-ctl, v4l2-ctl and
+v4l2-sysfs-path.
 
 
 %package        devel-tools
@@ -86,6 +91,14 @@ License:        GPLv2
 %description -n libdvbv5
 Libraries to control, scan and zap on Digital TV channels
 
+%package -n libdvbv5-gconv
+Summary:        Gconv files with the charsets For Digital TV.
+License:        GPLv2
+
+%description -n libdvbv5-gconv
+Some digital TV standards define their own charsets. Add library
+support for them: EN 300 468 and ARIB STD-B24
+
 %package -n     libv4l-devel
 Summary:        Development files for libv4l
 License:        LGPLv2+
@@ -109,25 +122,15 @@ files for developing applications that use libdvbv5.
 
 %prep
 %autosetup -p1
+%meson -Dbpf=disabled -Ddoxygen-man=true -Ddoxygen-html=false
 
 %build
-%configure --disable-static --enable-libdvbv5 --enable-doxygen-man
-# Don't use rpath!
-sed -i 's|^hardcode_libdir_flag_spec=.*|hardcode_libdir_flag_spec=""|g' libtool
-sed -i 's|^runpath_var=LD_RUN_PATH|runpath_var=DIE_RPATH_DIE|g' libtool
-make %{?_smp_mflags}
-make doxygen-run
-
+%meson_build
 
 %install
-%{!?_udevrulesdir: %global _udevrulesdir /lib/udev/rules.d}
-%{!?_systemdsystemunitdir: %global _systemdsystemunitdir /lib/systemd/system}
-%make_install
-find $RPM_BUILD_ROOT -name '*.la' -exec rm -f {} ';'
+%meson_install
+find $RPM_BUILD_ROOT -name '*.la' -delete
 rm -f $RPM_BUILD_ROOT%{_libdir}/{v4l1compat.so,v4l2convert.so}
-mkdir -p $RPM_BUILD_ROOT%{_mandir}/man3/
-cp -arv %{_builddir}/%{name}-%{version}/doxygen-doc/man/man3 $RPM_BUILD_ROOT%{_mandir}/
-rm $RPM_BUILD_ROOT%{_mandir}/man3/_*3
 desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/qv4l2.desktop
 %find_lang %{name}
 %find_lang libdvbv5
@@ -143,7 +146,6 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/qv4l2.desktop
 %config(noreplace) %{_sysconfdir}/rc_maps.cfg
 %{_udevrulesdir}/70-infrared.rules
 %{_udevrulesdir}/../rc_keymaps/*
-%{_systemdsystemunitdir}/50-rc_keymap.conf
 %{_bindir}/cx18-ctl
 %{_bindir}/cec*
 %{_bindir}/dvb*
@@ -170,6 +172,7 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/qv4l2.desktop
 %doc README.md
 %{_bindir}/qv4l2
 %{_bindir}/qvidcap
+%{_bindir}/v4l2-tracer
 %{_datadir}/applications/qv4l2.desktop
 %{_datadir}/applications/qvidcap.desktop
 %{_datadir}/icons/hicolor/*/apps/qv4l2.*
@@ -179,7 +182,7 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/qv4l2.desktop
 
 %files -n libv4l
 %doc ChangeLog README.libv4l TODO
-%license COPYING.libv4l COPYING
+%license COPYING.libv4l COPYING.libdvbv5 COPYING
 %{_libdir}/libv4l
 %{_libdir}/libv4l*.so.*
 
@@ -194,6 +197,10 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/qv4l2.desktop
 %license COPYING
 %{_libdir}/libdvbv5*.so.*
 
+%files -n libdvbv5-gconv
+%{_libdir}/gconv/*.so
+%{_libdir}/gconv/gconv-modules
+
 %files -n libdvbv5-devel
 %{_includedir}/libdvbv5/*.h
 %{_libdir}/libdvbv5*.so
@@ -202,6 +209,9 @@ desktop-file-validate $RPM_BUILD_ROOT%{_datadir}/applications/qv4l2.desktop
 
 
 %changelog
+* Mon Mar 20 2023 Mauro Carvalho Chehab <mchehab+samsung@kernel.org> 1.25.0-1
+- Updated to latest development branch
+
 * Sun Sep 22 2019 Mauro Carvalho Chehab <mchehab+samsung@kernel.org> 1.18.0-1
 - Updated to latest stable release
 
