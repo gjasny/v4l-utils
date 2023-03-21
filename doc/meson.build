@@ -8,7 +8,7 @@ cdata.set('DOCDIR', 'doc')
 cdata.set('GENERATE_HTML', get_option('doxygen-html'))
 cdata.set('GENERATE_MAN', get_option('doxygen-man'))
 cdata.set('PROJECT', meson.project_name())
-cdata.set('SRCDIR', meson.project_source_root())
+cdata.set('SRCDIR', source_root)
 cdata.set('VERSION', as_version)
 
 doxyfile = configure_file(input : 'Doxyfile.in',

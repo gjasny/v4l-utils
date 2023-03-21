@@ -1,6 +1,6 @@
 project('v4l-utils', 'c', 'cpp',
     version: '1.25.0',
-    meson_version : '>= 0.56',
+    meson_version : '>= 0.54',
     default_options : [
         'buildtype=debugoptimized',
         'warning_level=1',
@@ -8,6 +8,9 @@ project('v4l-utils', 'c', 'cpp',
         'cpp_std=gnu++11',
     ],
     license : 'LGPL 2.1+')
+
+# meson >= 0.56 can use instead meson.project_source_root()
+source_root = meson.current_source_dir()
 
 cc = meson.get_compiler('c')
 cpp = meson.get_compiler('cpp')
@@ -140,7 +143,7 @@ conf.set_quoted('LOCALEDIR', get_option('prefix') / get_option('datadir') / 'loc
 # external library otherwise.
 if meson.version().version_compare('>= 0.60')
     dep_iconv = dependency('iconv', required : false)
-    found_iconv =dep_iconv.found()
+    found_iconv = dep_iconv.found()
 else
     if cc.has_function('iconv_open')
         dep_iconv = []
@@ -318,11 +321,11 @@ git_commit_date = ''
 
 if fs.is_dir('.git')
     prog_git = find_program('git')
-    git_sha = run_command(prog_git, '-C', meson.project_source_root(), 'rev-parse', '--short=12', 'HEAD',
+    git_sha = run_command(prog_git, '-C', source_root, 'rev-parse', '--short=12', 'HEAD',
                           check : true).stdout().strip()
-    git_commit_cnt = '-' + run_command(prog_git, '-C', meson.project_source_root(), 'rev-list', '--count', 'HEAD',
+    git_commit_cnt = '-' + run_command(prog_git, '-C', source_root, 'rev-list', '--count', 'HEAD',
                                  check : true).stdout().strip()
-    git_commit_date = run_command(prog_git, '-C', meson.project_source_root(), 'show', '--quiet',
+    git_commit_date = run_command(prog_git, '-C', source_root, 'show', '--quiet',
                                   '--date=format-local:%F %T', '--format=%cd',
                                   env : ['TZ=UTC'], check : true).stdout().strip()
 endif
@@ -333,7 +336,7 @@ conf.set('GIT_COMMIT_DATE', git_commit_date)
 
 man_pages = []
 
-i18n_gettext_arguments = ['--directory=' + meson.project_source_root(),
+i18n_gettext_arguments = ['--directory=' + source_root,
                           '--keyword=_', '--keyword=N_', '--keyword=P_:1,2']
 subdir('libdvbv5-po')
 subdir('v4l-utils-po')
