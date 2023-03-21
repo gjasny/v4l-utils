@@ -473,8 +473,6 @@ sub output_arrays($$$$$)
 
 my $fe_file = "$dir/linux/dvb/frontend.h";
 
-copy $fe_file, "../include/dvb-frontend.h";
-
 # Generate a header file with the API conversions
 open OUT, ">dvb-v5.h" or die "Can't write on dvb-v5.h";
 gen_fe $fe_file;
