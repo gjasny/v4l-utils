@@ -235,11 +235,9 @@ int tracer(int argc, char *argv[], bool retrace)
 		trace_id = json_file_name.substr(0, json_file_name.find(".json"));
 		trace_id += "_retrace";
 	} else {
-		const int timestamp_start_pos = 5;
-		trace_id = std::to_string(time(nullptr));
-		// trace_id = trace_id.substr(timestamp_start_pos, std::string::npos) + "_trace";
+		const int timestamp_start_pos = 1;
+		trace_id = std::to_string(100000 + time(nullptr) % 100000);
 		trace_id = trace_id.substr(timestamp_start_pos) + "_trace";
-
 	}
 	setenv("TRACE_ID", trace_id.c_str(), 0);
 	std::string trace_filename = trace_id + ".json";
