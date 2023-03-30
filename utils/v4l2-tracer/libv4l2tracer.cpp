@@ -3,6 +3,11 @@
  * Copyright 2022 Collabora Ltd.
  */
 
+/* ensure we see *64 variants and they aren't transparently used */
+#undef _LARGEFILE_SOURCE
+#undef _FILE_OFFSET_BITS
+#define _LARGEFILE64_SOURCE 1
+
 #include "trace.h"
 #include <config.h> /* For PROMOTED_MODE_T */
 #include <dlfcn.h>
