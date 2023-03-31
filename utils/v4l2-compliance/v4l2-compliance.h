@@ -210,6 +210,10 @@ private:
 	std::set<int> fhs;
 };
 
+#ifndef __FILE_NAME__
+#define __FILE_NAME__ __FILE__
+#endif
+
 #define COLOR_GREEN(s) "\033[32m" s "\033[0m"
 #define COLOR_RED(s) "\033[1;31m" s "\033[0m"
 #define COLOR_BOLD(s) "\033[1m" s "\033[0m"
@@ -227,7 +231,7 @@ private:
 			printf("\t\t%s: %s(%d): " fmt,		\
 			       show_colors ?			\
 			       COLOR_BOLD("warn") : "warn",	\
-			       __FILE__, __LINE__, ##args);	\
+			       __FILE_NAME__, __LINE__, ##args);	\
 		if (exit_on_warn)				\
 			std::exit(EXIT_FAILURE);		\
 	} while (0)
@@ -265,7 +269,7 @@ private:
 #define fail(fmt, args...) 						\
 ({ 									\
 	printf("\t\t%s: %s(%d): " fmt, show_colors ?			\
-	       COLOR_RED("fail") : "fail", __FILE__, __LINE__, ##args);	\
+	       COLOR_RED("fail") : "fail", __FILE_NAME__, __LINE__, ##args);	\
 	if (exit_on_fail)						\
 		std::exit(EXIT_FAILURE);				\
 	1;								\

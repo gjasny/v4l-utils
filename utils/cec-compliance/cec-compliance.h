@@ -175,6 +175,10 @@ struct remote_subtest {
 
 using vec_remote_subtests = std::vector<remote_subtest>;
 
+#ifndef __FILE_NAME__
+#define __FILE_NAME__ __FILE__
+#endif
+
 #define OK			0
 #define FAIL			1
 #define OK_PRESUMED		2
@@ -220,7 +224,7 @@ using vec_remote_subtests = std::vector<remote_subtest>;
 	if (show_warnings)						\
 		printf("\t\%s: %s(%d): " fmt,				\
 		       show_colors ? COLOR_BOLD("warn") : "warn",	\
-		       __FILE__, __LINE__, ##args);			\
+		       __FILE_NAME__, __LINE__, ##args);			\
 	if (exit_on_warn)						\
 		std::exit(EXIT_FAILURE);				\
 	0;								\
@@ -251,7 +255,7 @@ using vec_remote_subtests = std::vector<remote_subtest>;
 #define fail(fmt, args...) 						\
 ({ 									\
 	printf("\t\t%s: %s(%d): " fmt, show_colors ?			\
-	       COLOR_RED("fail") : "fail", __FILE__, __LINE__, ##args);	\
+	       COLOR_RED("fail") : "fail", __FILE_NAME__, __LINE__, ##args);	\
 	if (exit_on_fail)						\
 		std::exit(EXIT_FAILURE);				\
 	FAIL;								\

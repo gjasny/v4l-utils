@@ -196,6 +196,10 @@ struct short_audio_desc {
 #define SAD_EXT_TYPE_AC_4			12
 #define SAD_EXT_TYPE_LPCM_3D_AUDIO		13
 
+#ifndef __FILE_NAME__
+#define __FILE_NAME__ __FILE__
+#endif
+
 #define info(fmt, args...) 					\
 	do {							\
 		if (show_info)					\
@@ -212,7 +216,7 @@ struct short_audio_desc {
 	do {							\
 		warnings++;					\
 		if (show_warnings)				\
-			printf("\t\twarn: %s(%d): " fmt, __FILE__, __LINE__, ##args);	\
+			printf("\t\twarn: %s(%d): " fmt, __FILE_NAME__, __LINE__, ##args);	\
 	} while (0)
 
 #define warn_once(fmt, args...)						\
@@ -224,7 +228,7 @@ struct short_audio_desc {
 			warnings++;					\
 			if (show_warnings)				\
 				printf("\t\twarn: %s(%d): " fmt,	\
-					__FILE__, __LINE__, ##args); 	\
+					__FILE_NAME__, __LINE__, ##args); 	\
 		}							\
 	} while (0)
 
