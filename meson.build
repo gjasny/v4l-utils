@@ -47,6 +47,16 @@ common_arguments = [
     '-include', meson.current_build_dir() / 'config.h',
 ]
 
+v4l2_wrapper_args = [
+    # As the library needs to provide both 32-bit and 64-bit versions
+    # of file operations, disable transparent large file support (fixes
+    # 'Error: symbol `open64/mmap64' is already defined' compile failure
+    # otherwise)
+    '-U_FILE_OFFSET_BITS',
+    '-D_FILE_OFFSET_BITS=32',
+    '-D_LARGEFILE64_SOURCE',
+]
+
 v4l2_utils_incdir_arr = [
     'lib' / 'include',
 ]

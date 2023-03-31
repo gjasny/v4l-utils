@@ -69,5 +69,6 @@ v4l2convert = shared_module('v4l2convert',
                             name_prefix : '',
                             install : true,
                             install_dir : libv4l2privdir,
+                            c_args : v4l2_wrapper_args,
                             dependencies : v4l2convert_deps,
                             include_directories : v4l2_utils_incdir)

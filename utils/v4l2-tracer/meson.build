@@ -70,21 +70,10 @@ libv4l2_tracer_incdir = [
     v4l2_utils_incdir,
 ]
 
-libv4l2_tracer_cpp_args = [
-    # Meson enables large file support unconditionally, which redirects file
-    # operations to 64-bit versions. This results in some symbols being
-    # renamed, for instance open() being renamed to open64(). As the library
-    # needs to provide both 32-bit and 64-bit versions of file operations,
-    # disable transparent large file support.
-    '-U_FILE_OFFSET_BITS',
-    '-D_FILE_OFFSET_BITS=32',
-    '-D_LARGEFILE64_SOURCE',
-]
-
 libv4l2tracer = shared_module('v4l2tracer',
                               libv4l2tracer_sources,
                               install : true,
-                              cpp_args : libv4l2_tracer_cpp_args,
+                              cpp_args : v4l2_wrapper_args,
                               dependencies : libv4l2tracer_deps,
                               include_directories : libv4l2_tracer_incdir)
 

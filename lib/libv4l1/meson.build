@@ -60,5 +60,6 @@ v4l1compat = shared_module('v4l1compat',
                            name_prefix : '',
                            install : true,
                            install_dir : libv4l1privdir,
+                           c_args : v4l2_wrapper_args,
                            dependencies : v4l1compat_deps,
                            include_directories : v4l2_utils_incdir)
