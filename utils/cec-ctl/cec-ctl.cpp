@@ -123,6 +123,7 @@ enum Option {
 	OptFeatSourceHasARCRx,
 	OptStressTestPowerCycle,
 	OptTestPowerCycle,
+	OptTestRandomPowerStates,
 	OptVendorCommand = 508,
 	OptVendorCommandWithID,
 	OptVendorRemoteButtonDown,
@@ -224,6 +225,7 @@ static struct option long_options[] = {
 
 	{ "test-power-cycle", optional_argument, nullptr, OptTestPowerCycle }, \
 	{ "stress-test-power-cycle", required_argument, nullptr, OptStressTestPowerCycle }, \
+	{ "test-random-power-states", required_argument, nullptr, OptTestRandomPowerStates }, \
 
 	{ nullptr, 0, nullptr, 0 }
 };
@@ -339,6 +341,16 @@ static void usage()
 	       "                           before transmitting <Image View On>.\n"
 	       "                           If <secs2> is specified, then sleep for <secs2> seconds\n"
 	       "                           before transmitting <Standby>.\n"
+	       "  --test-random-power-states cnt=<count>[,max-sleep=<maxsecs>][,min-sleep=<minsecs>][,seed=<seed>]\n"
+	       "                           Randomly transmit <Standby> or <Image View On> up to <count> times.\n"
+	       "			   If <count> is 0, then never stop. After each transmit wait between\n"
+	       "                           <min-sleep> (default 0) and <max-sleep> (default 10) seconds.\n"
+	       "                           If <seed> is specified, then set the randomizer seed to\n"
+	       "                           that value instead of using the current time as seed.\n"
+	       "                           This test does not check if the display reached the new state,\n"
+	       "                           it checks if the display can handle this situation without\n"
+	       "                           locking up. After every 10 cycles it attempts to properly\n"
+	       "                           wake up the display and check if that works. If not, this test fails.\n"
 	       "\n"
 	       CEC_PARSE_USAGE
 	       "\n"
@@ -1355,15 +1367,12 @@ static int init_power_cycle_test(const struct node &node, unsigned repeats, unsi
 			printf("Transmit Standby to TV: ");
 			fflush(stdout);
 			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
-			static bool sent;
 			cec_msg_standby(&msg);
 
 			tries = 0;
 			unsigned hpd_is_low_cnt = 0;
 			for (;;) {
-			if (!sent) { sent=true;
 				ret = transmit_msg_retry(node, msg);
-			} else ret = 0;
 				// The first standby transmit must always succeed,
 				// later standbys may fail with ENONET
 				if (ret && (ret != ENONET || !tries)) {
@@ -1867,6 +1876,193 @@ static void stress_test_power_cycle(const struct node &node, unsigned cnt,
 	}
 }
 
+static void test_random_pwr_states(const struct node &node, unsigned cnt,
+				   double min_sleep, double max_sleep,
+				   bool has_seed, unsigned seed)
+{
+	struct cec_log_addrs laddrs = { };
+	struct cec_msg msg;
+	unsigned iter = 0;
+	unsigned min_usleep = 1000000.0 * (max_sleep ? min_sleep : 0);
+	unsigned mod_usleep = 0;
+	unsigned from, wakeup_la;
+	__u16 pa;
+	int ret;
+
+	if (max_sleep)
+		mod_usleep = 1000000.0 * (max_sleep - min_sleep) + 1;
+
+	if (!has_seed)
+		seed = time(nullptr);
+
+	if (mod_usleep)
+		printf("Randomizer seed: %u\n\n", seed);
+
+	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+	if (pa == CEC_PHYS_ADDR_INVALID || !pa) {
+		cec_msg_init(&msg, 0xf, CEC_LOG_ADDR_TV);
+		cec_msg_image_view_on(&msg);
+		if (transmit_msg_retry(node, msg)) {
+			printf("FAIL: Image View On failed\n");
+			std::exit(EXIT_FAILURE);
+		}
+		sleep(15);
+		doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+		if (pa == CEC_PHYS_ADDR_INVALID || !pa) {
+			printf("FAIL: invalid physical address\n");
+			std::exit(EXIT_FAILURE);
+		}
+		printf("Physical Address: %x.%x.%x.%x\n",
+		       cec_phys_addr_exp(pa));
+	}
+
+	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+	if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID) {
+		printf("FAIL: invalid logical address\n");
+		std::exit(EXIT_FAILURE);
+	}
+	from = laddrs.log_addr[0];
+
+	init_power_cycle_test(node, 2, 30);
+
+	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+	if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+		wakeup_la = laddrs.log_addr[0];
+	else
+		wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
+
+	bool hpd_is_low = wakeup_la == CEC_LOG_ADDR_UNREGISTERED;
+
+	printf("The Hotplug Detect pin %s when in Standby\n\n",
+	       hpd_is_low ? "is pulled low" : "remains high");
+
+	srandom(seed);
+
+	for (;;) {
+		unsigned usecs1 = mod_usleep ? random() % mod_usleep : 0;
+		unsigned usecs2 = mod_usleep ? random() % mod_usleep : 0;
+
+		usecs1 += min_usleep;
+		usecs2 += min_usleep;
+
+		iter++;
+
+		bool verify_result = iter % 10 == 0;
+
+		if (verify_result)
+			usecs1 = 30 * 1000000;
+
+		if (usecs1)
+			printf("%s: Sleep %.2fs before Image View On\n", ts2s(current_ts()).c_str(),
+			       usecs1 / 1000000.0);
+		fflush(stdout);
+		usleep(usecs1);
+		printf("%s: ", ts2s(current_ts()).c_str());
+		printf("Transmit Image View On from LA %s (iteration %u): ", cec_la2s(wakeup_la), iter);
+
+		cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
+		cec_msg_image_view_on(&msg);
+		for (int i = 0; i < 50; i++) {
+			ret = transmit_msg_retry(node, msg);
+			if (!ret)
+				break;
+			usleep(200000);
+		}
+		if (ret)
+			printf("%s\n", strerror(ret));
+		else
+			printf("OK\n");
+
+		if (verify_result) {
+			printf("%s: Sleep %.2fs before verifying power state\n", ts2s(current_ts()).c_str(),
+			       usecs1 / 1000000.0);
+			fflush(stdout);
+			usleep(usecs1);
+			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+			cec_msg_give_device_power_status(&msg, true);
+			printf("%s: ", ts2s(current_ts()).c_str());
+			printf("Transmit Give Device Power Status from LA %s: ", cec_la2s(from));
+			ret = transmit_msg_retry(node, msg);
+			if (!ret) {
+				__u8 pwr;
+
+				cec_ops_report_power_status(&msg, &pwr);
+				printf("%s\n", power_status2s(pwr));
+				if (pwr == CEC_OP_POWER_STATUS_ON)
+					goto done;
+			} else {
+				printf("%s\n", strerror(ret));
+			}
+			printf("%s: ", ts2s(current_ts()).c_str());
+			printf("Retry transmit Image View On from LA %s: ", cec_la2s(wakeup_la));
+
+			cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
+			cec_msg_image_view_on(&msg);
+			ret = transmit_msg_retry(node, msg);
+			if (ret) {
+				printf("%s\n", strerror(ret));
+				printf("FAIL: never woke up\n");
+				std::exit(EXIT_FAILURE);
+			}
+			printf("OK\n");
+			printf("%s: Sleep %.2fs before verifying power state\n", ts2s(current_ts()).c_str(),
+			       usecs1 / 1000000.0);
+			fflush(stdout);
+			usleep(usecs1);
+			cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+			cec_msg_give_device_power_status(&msg, true);
+			printf("%s: ", ts2s(current_ts()).c_str());
+			printf("Retry transmit Give Device Power Status from LA %s: ", cec_la2s(from));
+			ret = transmit_msg_retry(node, msg);
+			if (ret) {
+				printf("%s\n", strerror(ret));
+			} else {
+				__u8 pwr;
+
+				cec_ops_report_power_status(&msg, &pwr);
+				printf("%s\n", power_status2s(pwr));
+				if (pwr == CEC_OP_POWER_STATUS_ON)
+					goto done;
+			}
+			printf("FAIL: never woke up\n");
+			std::exit(EXIT_FAILURE);
+		}
+done:
+
+		if (cnt && iter == cnt)
+			break;
+
+		if (usecs2)
+			printf("%s: Sleep %.2fs before Standby\n", ts2s(current_ts()).c_str(),
+			       usecs2 / 1000000.0);
+		fflush(stdout);
+		usleep(usecs2);
+		printf("%s: ", ts2s(current_ts()).c_str());
+		printf("Transmit Standby from LA %s (iteration %u): ", cec_la2s(from), iter);
+
+		/*
+		 * Some displays only accept Standby from the Active Source.
+		 * So make us the Active Source before sending Standby.
+		 */
+		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+		cec_msg_active_source(&msg, pa);
+		transmit_msg_retry(node, msg);
+		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
+		cec_msg_standby(&msg);
+		for (int i = 0; i < 50; i++) {
+			ret = transmit_msg_retry(node, msg);
+			if (!ret)
+				break;
+			usleep(200000);
+		}
+		if (ret)
+			printf("%s\n", strerror(ret));
+		else
+			printf("OK\n");
+	}
+}
+
+
 static int calc_node_val(const char *s)
 {
 	s = std::strrchr(s, '/') + 1;
@@ -2093,6 +2289,11 @@ int main(int argc, char **argv)
 	double stress_test_pwr_cycle_sleep_before_off = 0;
 	unsigned int test_pwr_cycle_polls = 15;
 	unsigned int test_pwr_cycle_sleep = 10;
+	unsigned int test_random_pwr_states_cnt = 0;
+	double test_random_pwr_states_min_sleep = 0;
+	double test_random_pwr_states_max_sleep = 10;
+	bool test_random_pwr_states_has_seed = false;
+	unsigned int test_random_pwr_states_seed = 0;
 	bool warn_if_unconfigured = false;
 	__u16 phys_addr;
 	__u8 from = 0, to = 0, first_to = 0xff;
@@ -2548,6 +2749,43 @@ int main(int argc, char **argv)
 			break;
 		}
 
+		case OptTestRandomPowerStates: {
+			static constexpr const char *arg_names[] = {
+				"cnt",
+				"min-sleep",
+				"max-sleep",
+				"seed",
+				nullptr
+			};
+			char *value, *subs = optarg;
+
+			while (*subs != '\0') {
+				switch (cec_parse_subopt(&subs, arg_names, &value)) {
+				case 0:
+					test_random_pwr_states_cnt = strtoul(value, nullptr, 0);
+					break;
+				case 1:
+					test_random_pwr_states_min_sleep = strtod(value, nullptr);
+					break;
+				case 2:
+					test_random_pwr_states_max_sleep = strtod(value, nullptr);
+					break;
+				case 3:
+					test_random_pwr_states_has_seed = true;
+					test_random_pwr_states_seed = strtoul(value, nullptr, 0);
+					break;
+				default:
+					std::exit(EXIT_FAILURE);
+				}
+			}
+			if (test_random_pwr_states_min_sleep > test_random_pwr_states_max_sleep) {
+				fprintf(stderr, "min-sleep > max-sleep\n");
+				std::exit(EXIT_FAILURE);
+			}
+			warn_if_unconfigured = true;
+			break;
+		}
+
 		case OptVersion:
 			print_version();
 			std::exit(EXIT_SUCCESS);
@@ -2815,7 +3053,8 @@ int main(int argc, char **argv)
 			phys_addrs[la] = (phys_addr << 8) | la;
 	}
 
-	if (options[OptTestPowerCycle] || options[OptStressTestPowerCycle]) {
+	if (options[OptTestPowerCycle] || options[OptStressTestPowerCycle] ||
+	    options[OptTestRandomPowerStates]) {
 		print_version();
 		printf("\n");
 	}
@@ -2927,6 +3166,12 @@ int main(int argc, char **argv)
 					stress_test_pwr_cycle_repeats,
 					stress_test_pwr_cycle_sleep_before_on,
 					stress_test_pwr_cycle_sleep_before_off);
+	if (options[OptTestRandomPowerStates])
+		test_random_pwr_states(node, test_random_pwr_states_cnt,
+				       test_random_pwr_states_min_sleep,
+				       test_random_pwr_states_max_sleep,
+				       test_random_pwr_states_has_seed,
+				       test_random_pwr_states_seed);
 
 skip_la:
 	if (options[OptMonitor] || options[OptMonitorAll] ||
