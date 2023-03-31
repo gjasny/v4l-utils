@@ -11,7 +11,6 @@ libcecutil_sources = files(
 
 libcecutil_deps = [
     dep_libdl,
-    dep_libv4lconvert,
     dep_threads,
 ]
 
