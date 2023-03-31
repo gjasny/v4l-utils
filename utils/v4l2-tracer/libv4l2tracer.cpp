@@ -83,6 +83,7 @@ int open(const char *path, int oflag, ...)
 	return fd;
 }
 
+#if defined(linux) && defined(__GLIBC__)
 int open64(const char *path, int oflag, ...)
 {
 	errno = 0;
@@ -110,6 +111,7 @@ int open64(const char *path, int oflag, ...)
 
 	return fd;
 }
+#endif
 
 int close(int fd)
 {
@@ -156,6 +158,7 @@ void *mmap(void *addr, size_t len, int prot, int flags, int fildes, off_t off)
 	return buf_address_pointer;
 }
 
+#if defined(linux) && defined(__GLIBC__)
 void *mmap64(void *addr, size_t len, int prot, int flags, int fildes, off_t off)
 {
 	errno = 0;
@@ -170,6 +173,7 @@ void *mmap64(void *addr, size_t len, int prot, int flags, int fildes, off_t off)
 
 	return buf_address_pointer;
 }
+#endif
 
 int munmap(void *start, size_t length)
 {
