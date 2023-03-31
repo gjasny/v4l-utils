@@ -310,7 +310,7 @@ int tracer(int argc, char *argv[], bool retrace)
 		else
 			closedir(directory_pointer);
 	} else {
-		libv4l2tracer_path = STRING(LIBTRACER_PATH);
+		libv4l2tracer_path = LIBTRACER_PATH;
 	}
 	libv4l2tracer_path += "/libv4l2tracer.so";
 	if (is_verbose())

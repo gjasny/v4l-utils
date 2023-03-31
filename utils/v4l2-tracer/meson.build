@@ -111,7 +111,7 @@ v4l2_tracer_deps = [
 ]
 
 v4l2_tracer_cpp_args = [
-    '-DLIBTRACER_PATH=@0@'.format(get_option('prefix') / get_option('libdir')),
+    '-DLIBTRACER_PATH="@0@"'.format(get_option('prefix') / get_option('libdir')),
 ]
 
 if have_visibility
