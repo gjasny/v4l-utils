@@ -12,11 +12,19 @@ The easiest way to quickly test a CEC adapter of an HDMI output is:
 
 	cec-ctl -d/dev/cecX --playback -S
 
+This is what you would use if the HDMI output of your device supports
+CEC: your device will play back video, so it is a CEC Playback device.
+
 And for an HDMI input:
 
 	cec-ctl -d/dev/cecX --tv -S
 
+This is what you would use if your device has an HDMI input, i.e. it
+acts like a TV.
+
 Both commands configure the CEC adapter and show the CEC topology.
+The '--playback' and '--tv' options configure \fIyour\fR device, they are
+not about what device you will be talking to.
 
 To put a display to standby use:
 
