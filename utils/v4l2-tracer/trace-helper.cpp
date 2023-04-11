@@ -19,10 +19,7 @@ bool is_video_or_media_device(const char *path)
 
 void add_device(int fd, std::string path)
 {
-	if (is_debug()) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "fd: %d, path: %s\n", fd, path.c_str());
-	}
+	debug_line_info("\n\tfd: %d, path: %s", fd, path.c_str());
 	std::pair<int, std::string> new_pair = std::make_pair(fd, path);
 	ctx_trace.devices.insert(new_pair);
 }
@@ -59,10 +56,7 @@ void print_decode_order(void)
 
 void set_decode_order(long decode_order)
 {
-	if (is_debug()) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "%ld\n", decode_order);
-	}
+	debug_line_info("\n\t%ld", decode_order);
 
 	std::list<long>::iterator it;
 	it = find(ctx_trace.decode_order.begin(), ctx_trace.decode_order.end(), decode_order);
@@ -185,10 +179,7 @@ long get_buffer_bytesused_trace(int fd, __u32 offset)
 
 void set_buffer_display_order(int fd, __u32 offset, long display_order)
 {
-	if (is_debug()) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "%ld\n", display_order);
-	}
+	debug_line_info("\n\t%ld", display_order);
 	for (auto &b : ctx_trace.buffers) {
 		if ((b.fd == fd) && (b.offset == offset)) {
 			b.display_order = display_order;
@@ -263,9 +254,7 @@ void s_ext_ctrls_setup(struct v4l2_ext_controls *ext_controls)
 	if (ext_controls->which != V4L2_CTRL_WHICH_REQUEST_VAL)
 		return;
 
-	if (is_debug())
-		fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-
+	debug_line_info();
 	/*
 	 * Since userspace sends H264 frames out of order, get information
 	 * about the correct display order of each frame so that v4l2-tracer
@@ -287,7 +276,7 @@ void s_ext_ctrls_setup(struct v4l2_ext_controls *ext_controls)
 			int pic_order_cnt_lsb = ctrl.p_h264_decode_params->pic_order_cnt_lsb;
 
 			if (is_debug()) {
-				fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
+				line_info();
 				fprintf(stderr, "\tprev_pic_order_cnt_lsb: %d\n", prev_pic_order_cnt_lsb);
 				fprintf(stderr, "\tprev_pic_order_cnt_msb: %ld\n", prev_pic_order_cnt_msb);
 				fprintf(stderr, "\tpic_order_cnt_lsb: %d\n", pic_order_cnt_lsb);
@@ -318,10 +307,7 @@ void s_ext_ctrls_setup(struct v4l2_ext_controls *ext_controls)
 				pic_order_cnt_msb = prev_pic_order_cnt_msb + (pic_order_cnt_lsb - prev_pic_order_cnt_lsb);
 			}
 
-			if (is_debug()) {
-				fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-				fprintf(stderr, "\tpic_order_cnt_msb: %ld\n", pic_order_cnt_msb);
-			}
+			debug_line_info("\n\tpic_order_cnt_msb: %ld", pic_order_cnt_msb);
 			ctx_trace.fmt.h264.pic_order_cnt_lsb = pic_order_cnt_lsb;
 			set_decode_order(pic_order_cnt_msb);
 			break;
@@ -334,10 +320,7 @@ void s_ext_ctrls_setup(struct v4l2_ext_controls *ext_controls)
 
 void qbuf_setup(struct v4l2_buffer *buf)
 {
-	if (is_debug()) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "%s, index: %d\n", buftype2s((int) buf->type).c_str(), buf->index);
-	}
+	debug_line_info("\n\t%s, index: %d", buftype2s((int) buf->type).c_str(), buf->index);
 
 	int buf_fd = get_buffer_fd_trace(buf->type, buf->index);
 	__u32 buf_offset = get_buffer_offset_trace(buf->type, buf->index);
@@ -369,10 +352,6 @@ void qbuf_setup(struct v4l2_buffer *buf)
 			set_decode_order(get_decode_order() + 1);
 
 		set_buffer_display_order(buf_fd, buf_offset, get_decode_order());
-
-		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		}
 		print_decode_order();
 		print_buffers_trace();
 	}
@@ -380,9 +359,7 @@ void qbuf_setup(struct v4l2_buffer *buf)
 
 void streamoff_cleanup(v4l2_buf_type buf_type)
 {
-
-	if (is_debug())
-		fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
+	debug_line_info();
 	if (is_verbose() || (getenv("V4L2_TRACER_OPTION_WRITE_DECODED_TO_YUV_FILE") != nullptr)) {
 		fprintf(stderr, "VIDIOC_STREAMOFF: %s\n", buftype2s(buf_type).c_str());
 		fprintf(stderr, "%s, %s %s, width: %d, height: %d\n",

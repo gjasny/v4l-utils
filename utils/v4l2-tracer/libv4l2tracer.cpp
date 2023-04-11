@@ -67,11 +67,7 @@ int open(const char *path, int oflag, ...)
 	int (*original_open)(const char *path, int oflag, ...) = nullptr;
 	original_open = (int (*)(const char*, int, ...)) dlsym(RTLD_NEXT, "open");
 	int fd = (*original_open)(path, oflag, mode);
-
-	if (is_debug()) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "fd: %d, path: %s\n", fd, path);
-	}
+	debug_line_info("\n\tfd: %d, path: %s", fd, path);
 
 	if (getenv("V4L2_TRACER_PAUSE_TRACE") != nullptr)
 		return fd;
@@ -79,10 +75,6 @@ int open(const char *path, int oflag, ...)
 	if (is_video_or_media_device(path)) {
 		trace_open(fd, path, oflag, mode, false);
 		add_device(fd, path);
-	}
-
-	if (is_debug()) {
-		fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	}
 	print_devices();
 
@@ -103,11 +95,7 @@ int open64(const char *path, int oflag, ...)
 	int (*original_open64)(const char *path, int oflag, ...) = nullptr;
 	original_open64 = (int (*)(const char*, int, ...)) dlsym(RTLD_NEXT, "open64");
 	int fd = (*original_open64)(path, oflag, mode);
-
-	if (is_debug()) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "fd: %d, path: %s\n", fd, path);
-	}
+	debug_line_info("\n\tfd: %d, path: %s", fd, path);
 
 	if (getenv("V4L2_TRACER_PAUSE_TRACE") != nullptr)
 		return fd;
@@ -115,10 +103,6 @@ int open64(const char *path, int oflag, ...)
 	if (is_video_or_media_device(path)) {
 		add_device(fd, path);
 		trace_open(fd, path, oflag, mode, true);
-	}
-
-	if (is_debug()) {
-		fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	}
 	print_devices();
 
@@ -135,10 +119,7 @@ int close(int fd)
 		return (*original_close)(fd);
 
 	std::string path = get_device(fd);
-	if (is_debug()) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "fd: %d, path: %s\n", fd, path.c_str());
-	}
+	debug_line_info("\n\tfd: %d, path: %s", fd, path.c_str());
 
 	/* Only trace the close if a corresponding open was also traced. */
 	if (!path.empty()) {
@@ -152,10 +133,6 @@ int close(int fd)
 		/* If we removed the last device, close the json trace file. */
 		if (!ctx_trace.devices.size())
 			close_json_file();
-	}
-
-	if (is_debug()) {
-		fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
 	}
 	print_devices();
 

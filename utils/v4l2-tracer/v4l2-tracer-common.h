@@ -39,6 +39,22 @@
 #define STRERR(x) strerror(x)
 #endif
 
+#ifndef __FILE_NAME__
+#define __FILE_NAME__ __FILE__
+#endif
+
+#define line_info(fmt, args...)					\
+	do {								\
+		fprintf(stderr, "%s:%s:%d " fmt "\n",			\
+		        __FILE_NAME__, __func__, __LINE__, ##args);	\
+	} while (0)							\
+
+#define debug_line_info(fmt, args...)		\
+	do {					\
+		if (is_debug())			\
+			line_info(fmt, ##args);	\
+	} while (0)				\
+
 struct val_def {
 	__s64 val;
 	const char *str;

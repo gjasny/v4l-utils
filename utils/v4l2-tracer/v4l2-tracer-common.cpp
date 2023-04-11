@@ -211,11 +211,9 @@ long s2number(const char *char_str)
 	try {
 		num = std::strtol(str.c_str(), nullptr, 0); /* base is auto-detected */
 	} catch (std::invalid_argument& ia) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "string \'%s\' is invalid\n", str.c_str());
+		line_info("\n\tString \'%s\' is invalid.", str.c_str());
 	} catch (std::out_of_range& oor) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "string \'%s\' is out of range\n", str.c_str());
+		line_info("\n\tString \'%s\' is out of range.", str.c_str());
 	}
 	return num;
 }

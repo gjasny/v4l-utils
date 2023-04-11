@@ -118,18 +118,12 @@ std::string get_path_retrace_from_path_trace(std::string path_trace, json_object
 	/* If user set the media or video path just return that path. */
 	if (is_media && (getenv("V4L2_TRACER_OPTION_SET_MEDIA_DEVICE") != nullptr)) {
 		path_media = getenv("V4L2_TRACER_OPTION_SET_MEDIA_DEVICE");
-		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-			fprintf(stderr, "Use path set by user: %s ", path_media.c_str());
-		}
+		debug_line_info("\n\tUse path set by user: %s", path_media.c_str());
 		return path_media;
 	}
 	if (is_video && (getenv("V4L2_TRACER_OPTION_SET_VIDEO_DEVICE") != nullptr)) {
 		path_video = getenv("V4L2_TRACER_OPTION_SET_VIDEO_DEVICE");
-		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-			fprintf(stderr, "Use path set by user: %s ", path_video.c_str());
-		}
+		debug_line_info("\n\tUse path set by user: %s", path_video.c_str());
 		return path_video;
 	}
 
@@ -143,8 +137,7 @@ std::string get_path_retrace_from_path_trace(std::string path_trace, json_object
 
 	path_media = get_path_media(driver);
 	if (path_media.empty()) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "warning: driver: %s not found\n", driver.c_str());
+		line_info("\n\tWarning: driver: \'%s\' not found.", driver.c_str());
 		return "";
 	}
 
@@ -206,21 +199,15 @@ void write_to_output_buffer(unsigned char *buffer_pointer, int bytesused, json_o
 				i++;
 				byteswritten++;
 			} catch (std::invalid_argument& ia) {
-				fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-				fprintf(stderr, "\'%s\' is an invalid argument.\n",
-				        compressed_video_data.substr(i,2).c_str());
+				line_info("\n\t\'%s\' is an invalid argument.\n",
+				          compressed_video_data.substr(i,2).c_str());
 			} catch (std::out_of_range& oor) {
-				fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-				fprintf(stderr, "\'%s\' is out of range.\n",
-				        compressed_video_data.substr(i,2).c_str());
+				line_info("\n\t\'%s\' is out of range.\n",
+				          compressed_video_data.substr(i,2).c_str());
 			}
 		}
 	}
-
-	if (is_debug()) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "bytesused: %d, byteswritten: %d\n", bytesused, byteswritten);
-	}
+	debug_line_info("\n\tbytesused: %d, byteswritten: %d", bytesused, byteswritten);
 }
 
 void compare_program_versions(json_object *v4l2_tracer_info_obj)
@@ -232,9 +219,8 @@ void compare_program_versions(json_object *v4l2_tracer_info_obj)
 		package_version_trace = json_object_get_string(package_version_obj);
 	std::string package_version_retrace = PACKAGE_VERSION;
 	if (package_version_trace != package_version_retrace) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "warning: trace package version \'%s\' does not match current: \'%s\':\n",
-		        package_version_trace.c_str(), package_version_retrace.c_str());
+		line_info("\n\tWarning: trace package version \'%s\' does not match current: \'%s\'",
+		          package_version_trace.c_str(), package_version_retrace.c_str());
 		print_v4l2_tracer_info();
 		return;
 	}
@@ -246,9 +232,8 @@ void compare_program_versions(json_object *v4l2_tracer_info_obj)
 		git_sha_trace = json_object_get_string(git_sha_obj);
 	std::string git_sha_retrace = (STRING(GIT_SHA));
 	if (git_sha_trace != git_sha_retrace) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "warning: sha in trace file \'%s\' does not match current sha: \'%s\'\n",
-		        git_sha_trace.c_str(),  git_sha_retrace.c_str());
+		line_info("\n\tWarning: sha in trace file \'%s\' does not match current sha: \'%s\'",
+		          git_sha_trace.c_str(),  git_sha_retrace.c_str());
 		print_v4l2_tracer_info();
 		return;
 	}

@@ -181,11 +181,8 @@ void trace_mem_decoded(void)
 			 */
 			if (it->bytesused < expected_length)
 				break;
-			if (is_debug()) {
-				fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-				fprintf(stderr, "displaying: %ld, %s, index: %d\n",
-				        it->display_order, buftype2s(it->type).c_str(), it->index);
-			}
+			debug_line_info("\n\tDisplaying: %ld, %s, index: %d",
+			                it->display_order, buftype2s(it->type).c_str(), it->index);
 			displayed_count++;
 
 			if (getenv("V4L2_TRACER_OPTION_WRITE_DECODED_TO_YUV_FILE") != nullptr) {
@@ -417,12 +414,10 @@ void trace_v4l2_ext_control(void *arg, json_object *parent_obj, std::string key_
 		json_object_object_add(v4l2_ext_control_obj, "value64", json_object_new_int64(p->value64));
 		break;
 	default:
-		if (p->size) {
-			fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-			fprintf(stderr, "warning: cannot trace control: %s\n", val2s(p->id, control_val_def).c_str());
-		} else {
+		if (p->size)
+			line_info("\n\tWarning: cannot trace control: %s", val2s(p->id, control_val_def).c_str());
+		else
 			json_object_object_add(v4l2_ext_control_obj, "value", json_object_new_int(p->value));
-		}
 		break;
 	}
 

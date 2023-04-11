@@ -14,7 +14,7 @@ pid_t tracee_pid = 0;
 
 void v4l2_tracer_sig_handler(int signum)
 {
-	fprintf(stderr, "%s:%s:%d: received: %d\n", __FILE__, __func__, __LINE__, signum);
+	line_info("\n\tReceived signum: %d", signum);
 	kill(tracee_pid, signum);
 	/* Wait for tracee to handle the signal first before v4l2-tracer exits. */
 	wait(nullptr);
@@ -80,8 +80,7 @@ int get_options(int argc, char *argv[])
 			try {
 				std::stoi(device_num, nullptr, 0);
 			} catch (std::exception& e) {
-				fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-				fprintf(stderr, "can't convert <dev> \'%s\' to integer\n", device_num.c_str());
+				line_info("\n\tCan't convert <dev> \'%s\' to integer.", device_num.c_str());
 				return -1;
 			}
 			if (device_num[0] >= '0' && device_num[0] <= '9' && device_num.length() <= 3) {
@@ -89,8 +88,7 @@ int get_options(int argc, char *argv[])
 				path_video += optarg;
 				setenv("V4L2_TRACER_OPTION_SET_VIDEO_DEVICE", path_video.c_str(), 0);
 			} else {
-				fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-				fprintf(stderr, "cannot use device number\'%s\'\n", device_num.c_str());
+				line_info("\n\tCan't use device number\'%s\'", device_num.c_str());
 				return -1;
 			}
 			break;
@@ -107,8 +105,7 @@ int get_options(int argc, char *argv[])
 			try {
 				std::stoi(device_num, nullptr, 0);
 			} catch (std::exception& e) {
-				fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-				fprintf(stderr, "can't convert <dev> \'%s\' to integer\n", device_num.c_str());
+				line_info("\n\tCan't convert <dev> \'%s\' to integer.", device_num.c_str());
 				return -1;
 			}
 			if (device_num[0] >= '0' && device_num[0] <= '9' && device_num.length() <= 3) {
@@ -116,8 +113,7 @@ int get_options(int argc, char *argv[])
 				path_media += optarg;
 				setenv("V4L2_TRACER_OPTION_SET_MEDIA_DEVICE", path_media.c_str(), 0);
 			} else {
-				fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-				fprintf(stderr, "cannot use device number\'%s\'\n", device_num.c_str());
+				line_info("\n\tCan't use device number\'%s\'", device_num.c_str());
 				return -1;
 			}
 			break;
@@ -150,8 +146,7 @@ int clean(std::string trace_filename)
 {
 	FILE *trace_file = fopen(trace_filename.c_str(), "r");
 	if (trace_file == nullptr) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "cannot open \'%s\'\n", trace_filename.c_str());
+		line_info("\n\tCan't open \'%s\'", trace_filename.c_str());
 		return 1;
 	}
 
@@ -160,8 +155,7 @@ int clean(std::string trace_filename)
 	std::string clean_filename = "clean_" + trace_filename;
 	FILE *clean_file = fopen(clean_filename.c_str(), "w");
 	if (clean_file == nullptr) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "cannot open \'%s\'\n", clean_filename.c_str());
+		line_info("\n\tCan't open \'%s\'", clean_filename.c_str());
 		return 1;
 	}
 
@@ -215,9 +209,8 @@ int tracer(int argc, char *argv[], bool retrace)
 	if (retrace) {
 		std::string trace_file = argv[optind];
 		if (trace_file.find(".json") == std::string::npos) {
-			fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-			fprintf(stderr, "Trace file \'%s\' must have .json file extension\n",
-			        trace_file.c_str());
+			line_info("\n\tTrace file \'%s\' must have .json file extension",
+			          trace_file.c_str());
 			print_usage();
 			return -1;
 		}
@@ -321,17 +314,15 @@ int tracer(int argc, char *argv[], bool retrace)
 	if (tracee_pid == 0) {
 
 		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-			fprintf(stderr, "tracee: ");
+			line_info();
+			fprintf(stderr, "\ttracee: ");
 			for (int i = 0; i < exec_index; i++)
 				fprintf(stderr,"%s ", exec[i]);
 			fprintf(stderr, "\n");
 		}
 
 		execvpe(exec[0], (char* const*) exec, environ);
-
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "could not execute application \'%s\'", exec[0]);
+		line_info("\n\tCould not execute application \'%s\'", exec[0]);
 		perror(" ");
 		return errno;
 	}
@@ -372,14 +363,12 @@ int main(int argc, char *argv[])
 	ret = get_options(argc, argv);
 
 	if (ret < 0) {
-		if (is_debug())
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
+		debug_line_info();
 		return ret;
 	}
 
 	if (optind == argc) {
-		if (is_debug())
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
+		debug_line_info();
 		print_usage();
 		return ret;
 	}
@@ -387,8 +376,7 @@ int main(int argc, char *argv[])
 	std::string command = argv[optind++];
 
 	if (optind == argc) {
-		if (is_debug())
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
+		debug_line_info();
 		print_usage();
 		return ret;
 	}
@@ -412,8 +400,7 @@ int main(int argc, char *argv[])
 		ret = clean (argv[optind]);
 	} else {
 		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-			fprintf(stderr, "tracee: ");
+			line_info("Invalid command");
 			for (int i = 0; i < argc; i++)
 				fprintf(stderr,"%s ", argv[i]);
 			fprintf(stderr, "\n");

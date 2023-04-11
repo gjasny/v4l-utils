@@ -37,8 +37,7 @@ void retrace_mmap(json_object *mmap_obj, bool is_mmap64)
 
 	int fd_retrace = get_fd_retrace_from_fd_trace(fd_trace);
 	if (fd_retrace < 0) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "bad or missing file descriptor.\n");
+		line_info("\n\tBad or missing file descriptor.");
 		return;
 	}
 
@@ -57,9 +56,7 @@ void retrace_mmap(json_object *mmap_obj, bool is_mmap64)
 			perror("mmap64");
 		else
 			perror("mmap");
-		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		}
+		debug_line_info();
 		print_context();
 		exit(EXIT_FAILURE);
 	}
@@ -80,9 +77,8 @@ void retrace_mmap(json_object *mmap_obj, bool is_mmap64)
 			perror("mmap64");
 		else
 			perror("mmap");
-		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		}
+
+		debug_line_info();
 		print_context();
 	}
 }
@@ -137,11 +133,8 @@ void retrace_open(json_object *jobj, bool is_open64)
 	 * Try using the same path as in the trace file.
 	 */
 	if (path_retrace.empty()) {
-		if (is_verbose()) {
-			fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-			fprintf(stderr, "warning: can't find retrace device. Attempting to use: %s\n",
-			        path_trace.c_str());
-		}
+		line_info("\n\tWarning: can't find retrace device.\
+		          \n\tAttempting to use: %s", path_trace.c_str());
 		path_retrace = path_trace;
 	}
 
@@ -161,8 +154,7 @@ void retrace_open(json_object *jobj, bool is_open64)
 		fd_retrace = open(path_retrace.c_str(), oflag, mode);
 
 	if (fd_retrace <= 0) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "cannot open: %s\n", path_retrace.c_str());
+		line_info("\n\tCan't open: %s", path_retrace.c_str());
 		exit(fd_retrace);
 	}
 
@@ -174,9 +166,7 @@ void retrace_open(json_object *jobj, bool is_open64)
 			perror("open64");
 		else
 			perror("open");
-		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		}
+		debug_line_info();
 		print_context();
 	}
 }
@@ -197,9 +187,7 @@ void retrace_close(json_object *jobj)
 	if (is_verbose() || (errno != 0)) {
 		fprintf(stderr, "fd: %d ", fd_retrace);
 		perror("close");
-		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		}
+		debug_line_info();
 		print_context();
 	}
 }
@@ -314,10 +302,8 @@ struct v4l2_buffer *retrace_v4l2_buffer(json_object *ioctl_args)
 		json_object *request_fd_obj;
 		json_object_object_get_ex(buf_obj, "request_fd", &request_fd_obj);
 		buf->request_fd = (__s32) get_fd_retrace_from_fd_trace(json_object_get_int(request_fd_obj));
-		if (buf->request_fd < 0) {
-			fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-			fprintf(stderr, "bad or missing file descriptor\n");
-		}
+		if (buf->request_fd < 0)
+			line_info("\n\tBad or missing file descriptor.\n");
 	}
 
 	return buf;
@@ -352,9 +338,7 @@ void retrace_vidioc_querybuf(int fd_retrace, json_object *ioctl_args_user)
 		fprintf(stderr, "%s, index: %d, fd: %d, ",
 		        buftype2s((int) buf->type).c_str(), buf->index, fd_retrace);
 		perror("VIDIOC_QUERYBUF");
-		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		}
+		debug_line_info();
 		print_context();
 	}
 
@@ -378,9 +362,7 @@ void retrace_vidioc_qbuf(int fd_retrace, json_object *ioctl_args_user)
 		fprintf(stderr, "%s, index: %d, fd: %d, ",
 		        buftype2s((int) ptr->type).c_str(), ptr->index, fd_retrace);
 		perror("VIDIOC_QBUF");
-		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		}
+		debug_line_info();
 		print_context();
 	}
 
@@ -400,12 +382,12 @@ void retrace_vidioc_dqbuf(int fd_retrace, json_object *ioctl_args_user)
 	int ret = poll(pfds, 1, poll_timeout_ms);
 	free(pfds);
 	if (ret == -1) {
-		fprintf(stderr, "%s:%s:%d: poll error: ", __FILE__, __func__, __LINE__);
+		line_info("\n\tPoll error.");
 		perror("");
 		exit(EXIT_FAILURE);
 	}
 	if (ret == 0) {
-		fprintf(stderr, "%s:%s:%d: poll timed out\n", __FILE__, __func__, __LINE__);
+		line_info("\n\tPoll timed out.");
 		exit(EXIT_FAILURE);
 	}
 
@@ -415,9 +397,7 @@ void retrace_vidioc_dqbuf(int fd_retrace, json_object *ioctl_args_user)
 		fprintf(stderr, "%s, index: %d, fd: %d, ",
 		        buftype2s((int) buf->type).c_str(), buf->index, fd_retrace);
 		perror("VIDIOC_DQBUF");
-		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		}
+		debug_line_info();
 		print_context();
 	}
 
@@ -438,9 +418,7 @@ void retrace_vidioc_prepare_buf(int fd_retrace, json_object *ioctl_args_user)
 		fprintf(stderr, "%s, index: %d, fd: %d, ",
 		        buftype2s((int) buf->type).c_str(), buf->index, fd_retrace);
 		perror("VIDIOC_PREPARE_BUF");
-		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		}
+		debug_line_info();
 		print_context();
 	}
 
@@ -458,9 +436,7 @@ void retrace_vidioc_create_bufs(int fd_retrace, json_object *ioctl_args)
 
 	if (is_verbose() || (errno != 0)) {
 		perror("VIDIOC_CREATE_BUFS");
-		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		}
+		debug_line_info();
 		print_context();
 	}
 
@@ -744,7 +720,7 @@ __u32 *retrace_v4l2_dynamic_array(json_object *v4l2_ext_control_obj)
 
 	__u32 *ptr = static_cast<__u32 *>(calloc(elems, sizeof(__u32)));
 	if (ptr == nullptr) {
-		fprintf(stderr, "%s:%s:%d: memory allocation failed.\n", __FILE__, __func__, __LINE__);
+		line_info("\n\tMemory allocation failed.");
 		return ptr;
 	}
 
@@ -875,9 +851,8 @@ struct v4l2_ext_control *retrace_v4l2_ext_control(json_object *parent_obj, int c
 		p->ptr = retrace_v4l2_ctrl_mpeg2_quantisation_gen(v4l2_ext_control_obj);
 		break;
 	default:
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "warning: cannot retrace control: %s\n",
-		        val2s(p->id, control_val_def).c_str());
+		line_info("\n\tWarning: cannot retrace control: %s",
+		          val2s(p->id, control_val_def).c_str());
 		break;
 	}
 
@@ -911,8 +886,7 @@ struct v4l2_ext_controls *retrace_v4l2_ext_controls(json_object *parent_obj)
 			int request_fd_trace = json_object_get_int(request_fd_obj);
 			int request_fd_retrace = get_fd_retrace_from_fd_trace(request_fd_trace);
 			if (request_fd_retrace < 0) {
-				fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-				fprintf(stderr, "bad file descriptor\n");
+				line_info("\n\tBad file descriptor.");
 				return ptr;
 			}
 			ptr->request_fd = (__s32) request_fd_retrace;
@@ -965,9 +939,7 @@ void retrace_vidioc_s_ext_ctrls(int fd_retrace, json_object *ioctl_args)
 
 	if (is_verbose() || (errno != 0)) {
 		perror("VIDIOC_S_EXT_CTRLS");
-		if (is_debug()) {
-			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		}
+		debug_line_info();
 		print_context();
 	}
 }
@@ -1173,8 +1145,7 @@ void retrace_ioctl(json_object *syscall_obj)
 	json_object_object_get_ex(syscall_obj, "fd", &fd_trace_obj);
 	fd_retrace = get_fd_retrace_from_fd_trace(json_object_get_int(fd_trace_obj));
 	if (fd_retrace < 0) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "bad file descriptor\n");
+		line_info("\n\tBad file descriptor.");
 		return;
 	}
 
@@ -1310,12 +1281,11 @@ void retrace_ioctl(json_object *syscall_obj)
 		ioctl(fd_retrace, MEDIA_REQUEST_IOC_REINIT);
 		break;
 	default:
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "warning: cannot retrace ioctl");
 		if (json_object_get_string(cmd_obj) != nullptr)
-			fprintf(stderr, ": \'%s\'\n", json_object_get_string(cmd_obj));
+			line_info("\n\tWarning: cannot retrace ioctl: \'%s\'\n",
+			          json_object_get_string(cmd_obj));
 		else
-			fprintf(stderr, "\n");
+			line_info("\n\tWarning: cannot retrace ioctl.");
 		break;
 	}
 }
@@ -1348,11 +1318,8 @@ void retrace_mem(json_object *mem_obj)
 	if (type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE || type == V4L2_BUF_TYPE_VIDEO_OUTPUT)
 		write_to_output_buffer(buffer_pointer, bytesused, mem_obj);
 
-	if (is_debug()) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "%s, bytesused: %d, offset: %d, addr: %ld\n",
-		        buftype2s(type).c_str(), bytesused, offset, buffer_address_retrace);
-	}
+	debug_line_info("\n\t%s, bytesused: %d, offset: %d, addr: %ld",
+	                buftype2s(type).c_str(), bytesused, offset, buffer_address_retrace);
 	print_context();
 }
 
@@ -1408,9 +1375,7 @@ void retrace_object(json_object *jobj)
 	if (json_object_object_get_ex(jobj, "Trace", &temp_obj)) {
 		return;
 	}
-
-	fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-	fprintf(stderr, "warning: unexpected JSON object in trace file.\n");
+	line_info("\n\tWarning: unexpected JSON object in trace file.");
 }
 
 void retrace_array(json_object *root_array_obj)
@@ -1419,10 +1384,8 @@ void retrace_array(json_object *root_array_obj)
 	struct array_list *array_list_pointer = json_object_get_array(root_array_obj);
 	size_t json_objects_in_file = array_list_length(array_list_pointer);
 
-	if (json_objects_in_file < 3) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "warning: trace file may be empty.\n");
-	}
+	if (json_objects_in_file < 3)
+		line_info("\n\tWarning: trace file may be empty.");
 
 	for (size_t i = 0; i < json_objects_in_file; i++) {
 		jobj = (json_object *) array_list_get_idx(array_list_pointer, i);
@@ -1434,8 +1397,7 @@ int retrace(std::string trace_filename)
 {
 	FILE *trace_file = fopen(trace_filename.c_str(), "r");
 	if (trace_file == nullptr) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "Trace file error: \'%s\'\n", trace_filename.c_str());
+		line_info("\n\tTrace file error: \'%s\'", trace_filename.c_str());
 		return 1;
 	}
 	fclose(trace_file);
@@ -1445,8 +1407,7 @@ int retrace(std::string trace_filename)
 	json_object *root_array_obj = json_object_from_file(trace_filename.c_str());
 
 	if (root_array_obj == nullptr) {
-		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
-		fprintf(stderr, "cannot get JSON-object from file: %s\n", trace_filename.c_str());
+		line_info("\n\tCan't get JSON-object from file: %s", trace_filename.c_str());
 		return 1;
 	}
 
