@@ -59,8 +59,8 @@ void retrace_mmap(json_object *mmap_obj, bool is_mmap64)
 			perror("mmap");
 		if (is_debug()) {
 			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-			print_context();
 		}
+		print_context();
 		exit(EXIT_FAILURE);
 	}
 
@@ -82,8 +82,8 @@ void retrace_mmap(json_object *mmap_obj, bool is_mmap64)
 			perror("mmap");
 		if (is_debug()) {
 			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-			print_context();
 		}
+		print_context();
 	}
 }
 
@@ -176,8 +176,8 @@ void retrace_open(json_object *jobj, bool is_open64)
 			perror("open");
 		if (is_debug()) {
 			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-			print_context();
 		}
+		print_context();
 	}
 }
 
@@ -199,8 +199,8 @@ void retrace_close(json_object *jobj)
 		perror("close");
 		if (is_debug()) {
 			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-			print_context();
 		}
+		print_context();
 	}
 }
 
@@ -354,8 +354,8 @@ void retrace_vidioc_querybuf(int fd_retrace, json_object *ioctl_args_user)
 		perror("VIDIOC_QUERYBUF");
 		if (is_debug()) {
 			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-			print_context();
 		}
+		print_context();
 	}
 
 	free(buf);
@@ -380,8 +380,8 @@ void retrace_vidioc_qbuf(int fd_retrace, json_object *ioctl_args_user)
 		perror("VIDIOC_QBUF");
 		if (is_debug()) {
 			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-			print_context();
 		}
+		print_context();
 	}
 
 	free(ptr);
@@ -417,8 +417,8 @@ void retrace_vidioc_dqbuf(int fd_retrace, json_object *ioctl_args_user)
 		perror("VIDIOC_DQBUF");
 		if (is_debug()) {
 			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-			print_context();
 		}
+		print_context();
 	}
 
 	if (buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
@@ -440,8 +440,8 @@ void retrace_vidioc_prepare_buf(int fd_retrace, json_object *ioctl_args_user)
 		perror("VIDIOC_PREPARE_BUF");
 		if (is_debug()) {
 			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-			print_context();
 		}
+		print_context();
 	}
 
 	if (buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
@@ -460,8 +460,8 @@ void retrace_vidioc_create_bufs(int fd_retrace, json_object *ioctl_args)
 		perror("VIDIOC_CREATE_BUFS");
 		if (is_debug()) {
 			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-			print_context();
 		}
+		print_context();
 	}
 
 	free(ptr);
@@ -967,8 +967,8 @@ void retrace_vidioc_s_ext_ctrls(int fd_retrace, json_object *ioctl_args)
 		perror("VIDIOC_S_EXT_CTRLS");
 		if (is_debug()) {
 			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-			print_context();
 		}
+		print_context();
 	}
 }
 
@@ -1352,8 +1352,8 @@ void retrace_mem(json_object *mem_obj)
 		fprintf(stderr, "%s:%s:%d: ", __FILE__, __func__, __LINE__);
 		fprintf(stderr, "%s, bytesused: %d, offset: %d, addr: %ld\n",
 		        buftype2s(type).c_str(), bytesused, offset, buffer_address_retrace);
-		print_context();
 	}
+	print_context();
 }
 
 void retrace_object(json_object *jobj)

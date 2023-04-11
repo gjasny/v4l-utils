@@ -83,8 +83,8 @@ int open(const char *path, int oflag, ...)
 
 	if (is_debug()) {
 		fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		print_devices();
 	}
+	print_devices();
 
 	return fd;
 }
@@ -119,8 +119,8 @@ int open64(const char *path, int oflag, ...)
 
 	if (is_debug()) {
 		fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		print_devices();
 	}
+	print_devices();
 
 	return fd;
 }
@@ -156,8 +156,8 @@ int close(int fd)
 
 	if (is_debug()) {
 		fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-		print_devices();
 	}
+	print_devices();
 
 	return (*original_close)(fd);
 }

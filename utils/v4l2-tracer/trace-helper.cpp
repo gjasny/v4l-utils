@@ -39,6 +39,8 @@ std::string get_device(int fd)
 
 void print_devices(void)
 {
+	if (!is_debug())
+		return;
 	if (ctx_trace.devices.size())
 		fprintf(stderr, "Devices:\n");
 	for (auto &device_pair : ctx_trace.devices)
@@ -47,6 +49,8 @@ void print_devices(void)
 
 void print_decode_order(void)
 {
+	if (!is_debug())
+		return;
 	fprintf(stderr, "Decode order: ");
 	for (auto &num : ctx_trace.decode_order)
 		fprintf(stderr, "%ld, ",  num);
@@ -65,8 +69,7 @@ void set_decode_order(long decode_order)
 	if (it == ctx_trace.decode_order.end())
 		ctx_trace.decode_order.push_front(decode_order);
 
-	if (is_debug())
-		print_decode_order();
+	print_decode_order();
 }
 
 long get_decode_order(void)
@@ -230,6 +233,8 @@ bool buffer_is_mapped(unsigned long buffer_address)
 
 void print_buffers_trace(void)
 {
+	if (!is_debug())
+		return;
 	for (auto &b : ctx_trace.buffers) {
 		fprintf(stderr, "fd: %d, %s, index: %d, display_order: %ld, bytesused: %d, ",
 		        b.fd, buftype2s(b.type).c_str(), b.index, b.display_order, b.bytesused);
@@ -367,9 +372,9 @@ void qbuf_setup(struct v4l2_buffer *buf)
 
 		if (is_debug()) {
 			fprintf(stderr, "%s:%s:%d\n", __FILE__, __func__, __LINE__);
-			print_decode_order();
-			print_buffers_trace();
 		}
+		print_decode_order();
+		print_buffers_trace();
 	}
 }
 

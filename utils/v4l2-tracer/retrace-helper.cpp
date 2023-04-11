@@ -256,6 +256,8 @@ void compare_program_versions(json_object *v4l2_tracer_info_obj)
 
 void print_context(void)
 {
+	if (!is_debug())
+		return;
 	print_fds();
 	print_buffers_retrace();
 	fprintf(stderr, "\n");
