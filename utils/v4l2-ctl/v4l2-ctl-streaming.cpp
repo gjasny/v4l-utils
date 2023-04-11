@@ -636,6 +636,8 @@ static void print_concise_buffer(FILE *f, cv4l_buffer &buf, cv4l_fmt &fmt,
 			fprintf(stderr, " dropped: %u", dropped);
 	}
 
+	fprintf(f, " field: %s", field2s(buf.g_field()).c_str());
+
 	__u32 fl = buf.g_flags() & (V4L2_BUF_FLAG_ERROR |
 				    V4L2_BUF_FLAG_KEYFRAME |
 				    V4L2_BUF_FLAG_PFRAME |
