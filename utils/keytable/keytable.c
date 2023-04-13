@@ -1752,7 +1752,7 @@ static bool attach_bpf(const char *lirc_name, const char *bpf_prog, struct proto
 	struct rlimit rl;
 	int fd, ret;
 
-	fd = open(lirc_name, O_RDONLY);
+	fd = open(lirc_name, O_RDWR);
 	if (fd == -1) {
 		perror(lirc_name);
 		return false;
@@ -1843,7 +1843,7 @@ static void clear_bpf(const char *lirc_name)
 	unsigned int features, i;
 	int ret, prog_fd, fd;
 
-	fd = open(lirc_name, O_RDONLY);
+	fd = open(lirc_name, O_RDWR);
 	if (fd == -1) {
 		perror(lirc_name);
 		return;
