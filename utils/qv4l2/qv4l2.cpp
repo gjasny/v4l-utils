@@ -324,7 +324,11 @@ ApplicationWindow::ApplicationWindow() :
 #endif
 
 	QMenu *helpMenu = menuBar()->addMenu("&Help");
+#if QT_VERSION < 0x060000
 	helpMenu->addAction("&About", this, SLOT(about()), Qt::Key_F1);
+#else
+	helpMenu->addAction("&About", Qt::Key_F1, this, SLOT(about()));
+#endif
 
 	QAction *whatAct = QWhatsThis::createAction(this);
 	helpMenu->addAction(whatAct);
