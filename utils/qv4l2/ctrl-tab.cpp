@@ -252,7 +252,11 @@ void ApplicationWindow::addCtrl(QGridLayout *grid, const v4l2_query_ext_ctrl &qe
 	struct v4l2_querymenu qmenu;
 	QWidget *wContainer = new QWidget();
 	QHBoxLayout *m_boxLayout = new QHBoxLayout(wContainer);
+#if QT_VERSION < 0x060000
 	m_boxLayout->setMargin(0);
+#else
+	m_boxLayout->setContentsMargins(0, 0, 0, 0);
+#endif
 	__u64 dif;
 
 	switch (qec.type) {

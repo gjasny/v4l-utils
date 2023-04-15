@@ -430,8 +430,11 @@ void GeneralTab::inputSection(v4l2_input vin)
 		QLabel *l = new QLabel("Refresh Tuner Status", parentWidget());
 		QWidget *w = new QWidget(parentWidget());
 		QHBoxLayout *box = new QHBoxLayout(w);
-
+#if QT_VERSION < 0x060000
 		box->setMargin(0);
+#else
+		box->setContentsMargins(0, 0, 0, 0);
+#endif
 		m_detectSubchans = new QToolButton(w);
 		m_detectSubchans->setIcon(QIcon(":/enterbutt.png"));
 		m_subchannels = new QLabel("", w);

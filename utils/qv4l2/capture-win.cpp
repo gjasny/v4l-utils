@@ -127,7 +127,11 @@ void CaptureWin::buildWindow(QWidget *videoSurface)
 	int l, t, r, b;
 	m_vboxLayout = new QVBoxLayout(this);
 	m_vboxLayout->getContentsMargins(&l, &t, &r, &b);
+#if QT_VERSION < 0x060000
 	m_vboxLayout->setMargin(0);
+#else
+	m_vboxLayout->setContentsMargins(0, 0, 0, 0);
+#endif
 	m_vboxLayout->addWidget(videoSurface, 1000, Qt::AlignCenter);
 
 	setContextMenuPolicy(Qt::CustomContextMenu);
