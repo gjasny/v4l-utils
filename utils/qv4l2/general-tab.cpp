@@ -1110,7 +1110,7 @@ bool GeneralTab::createAudioDeviceList()
 
 void GeneralTab::changeAudioDevice()
 {
-	m_audioOutDevice->setEnabled(getAudioInDevice() != NULL ? getAudioInDevice().compare("None") : false);
+	m_audioOutDevice->setEnabled(getAudioInDevice() != nullptr ? getAudioInDevice().compare("None") : false);
 	emit audioDeviceChanged();
 }
 

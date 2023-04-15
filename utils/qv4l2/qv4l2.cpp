@@ -1258,7 +1258,7 @@ void ApplicationWindow::startAudio()
 	QString audIn = m_genTab->getAudioInDevice();
 	QString audOut = m_genTab->getAudioOutDevice();
 
-	if (audIn != NULL && audOut != NULL && audIn.compare("None") && audIn.compare(audOut) != 0) {
+	if (audIn != nullptr && audOut != nullptr && audIn.compare("None") && audIn.compare(audOut) != 0) {
 		alsa_thread_startup(audOut.toLatin1().data(), audIn.toLatin1().data(),
 				    m_genTab->getAudioDeviceBufferSize(), NULL, 0);
 
@@ -1909,13 +1909,13 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (video_device != NULL)
+	if (video_device != nullptr)
 		device = getDeviceName("/dev/video", video_device);
-	else if (vbi_device != NULL)
+	else if (vbi_device != nullptr)
 		device = getDeviceName("/dev/vbi", vbi_device);
-	else if (radio_device != NULL)
+	else if (radio_device != nullptr)
 		device = getDeviceName("/dev/radio", radio_device);
-	else if (sdr_device != NULL)
+	else if (sdr_device != nullptr)
 		device = getDeviceName("/dev/swradio", sdr_device);
 	else
 		device = "/dev/video0";
