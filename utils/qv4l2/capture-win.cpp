@@ -27,7 +27,9 @@
 #include <QImage>
 #include <QVBoxLayout>
 #include <QApplication>
+#if QT_VERSION < 0x050a00
 #include <QDesktopWidget>
+#endif
 #include <QScreen>
 #include <QWindow>
 
