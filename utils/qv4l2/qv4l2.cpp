@@ -17,12 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#ifdef ENABLE_ALSA
-extern "C" {
-#include "alsa_stream.h"
-}
-#endif
-
 #include <QToolBar>
 #include <QToolButton>
 #include <QMenuBar>
