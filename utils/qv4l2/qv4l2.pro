@@ -8,9 +8,15 @@ CONFIG += debug
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+# adjust to your local meson build path
+MESON_BUILD_PATH = $$PWD/build-meson
+
 # opengl: to disable opengl suppport comment out the following
 # line and the line '#define HAVE_QTGL 1' from ../../config.h
 QT += opengl
+
+QMAKE_CFLAGS += -include $$MESON_BUILD_PATH/config.h
+QMAKE_CXXFLAGS += -include $$MESON_BUILD_PATH/config.h
 
 INCLUDEPATH += $$PWD/../..
 INCLUDEPATH += $$PWD/../common
@@ -28,8 +34,9 @@ HEADERS += raw2sliced.h
 HEADERS += vbi-tab.h
 HEADERS += ../common/v4l2-tpg.h
 HEADERS += ../common/v4l2-tpg-colors.h
-HEADERS += ../../config.h
+HEADERS += $$MESON_BUILD_PATH/config.h
 
+SOURCES += alsa_stream.c
 SOURCES += capture-win.cpp
 SOURCES += capture-win-gl.cpp
 SOURCES += capture-win-qt.cpp
@@ -42,9 +49,11 @@ SOURCES += vbi-tab.cpp
 SOURCES += ../v4l2-ctl/v4l2-tpg-core.c
 SOURCES += ../v4l2-ctl/v4l2-tpg-colors.c
 
-LIBS += -L$$PWD/../../lib/libv4l2/.libs -lv4l2
-LIBS += -L$$PWD/../../lib/libv4lconvert/.libs -lv4lconvert
-LIBS += -L$$PWD/../libv4l2util/.libs -lv4l2util 
+LIBS += -L$$MESON_BUILD_PATH/lib/libv4l2 -lv4l2
+LIBS += -L$$MESON_BUILD_PATH/lib/libv4lconvert -lv4lconvert
+LIBS += -L$$MESON_BUILD_PATH/utils/libv4l2util -lv4l2util
+LIBS += -L$$MESON_BUILD_PATH/utils/libmedia_dev -lmedia_dev
+LIBS += -lasound  # comment out in case alsa sound support is disabled/not available
 LIBS += -lrt -ldl -ljpeg
 
 RESOURCES += qv4l2.qrc
