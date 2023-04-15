@@ -39,6 +39,7 @@
 #include <QThread>
 #include <QCloseEvent>
 #include <QInputDialog>
+#include <QActionGroup>
 
 #include <assert.h>
 #include <sys/mman.h>
