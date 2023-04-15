@@ -46,7 +46,7 @@ CaptureWin::CaptureWin(ApplicationWindow *aw) :
 	m_appWin(aw)
 {
 	setWindowTitle("V4L2 Capture");
-	m_hotkeyScaleReset = new QShortcut(Qt::CTRL+Qt::Key_F, this);
+	m_hotkeyScaleReset = new QShortcut(Qt::CTRL|Qt::Key_F, this);
 	connect(m_hotkeyScaleReset, SIGNAL(activated()), this, SLOT(resetSize()));
 	connect(aw->m_resetScalingAct, SIGNAL(triggered()), this, SLOT(resetSize()));
 	m_hotkeyExitFullscreen = new QShortcut(Qt::Key_Escape, this);
@@ -66,7 +66,7 @@ CaptureWin::CaptureWin(ApplicationWindow *aw) :
 	m_closeWindowAct->setStatusTip("Close");
 	QList<QKeySequence> shortcuts;
 	// More standard close window shortcut
-	shortcuts << Qt::CTRL+Qt::Key_W;
+	shortcuts << (Qt::CTRL|Qt::Key_W);
 	// Historic qv4l2 shortcut
 	shortcuts << Qt::Key_Q;
 	m_closeWindowAct->setShortcuts(shortcuts);

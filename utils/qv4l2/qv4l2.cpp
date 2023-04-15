@@ -132,19 +132,19 @@ ApplicationWindow::ApplicationWindow() :
 
 	QAction *openAct = new QAction(QIcon(":/fileopen.png"), "&Open Device", this);
 	openAct->setStatusTip("Open a v4l device, use libv4l2 wrapper if possible");
-	openAct->setShortcut(Qt::CTRL+Qt::Key_O);
+	openAct->setShortcut(Qt::CTRL|Qt::Key_O);
 	connect(openAct, SIGNAL(triggered()), this, SLOT(opendev()));
 
 	QAction *openRawAct = new QAction(QIcon(":/fileopen.png"), "Open &Raw Device", this);
 	openRawAct->setStatusTip("Open a v4l device without using the libv4l2 wrapper");
-	openRawAct->setShortcut(Qt::CTRL+Qt::Key_R);
+	openRawAct->setShortcut(Qt::CTRL|Qt::Key_R);
 	connect(openRawAct, SIGNAL(triggered()), this, SLOT(openrawdev()));
 
 	m_capStartAct = new QAction(QIcon(":/start.png"), "Start &Capturing", this);
 	m_capStartAct->setStatusTip("Start capturing");
 	m_capStartAct->setCheckable(true);
 	m_capStartAct->setDisabled(true);
-	m_capStartAct->setShortcut(Qt::CTRL+Qt::Key_V);
+	m_capStartAct->setShortcut(Qt::CTRL|Qt::Key_V);
 	connect(m_capStartAct, SIGNAL(toggled(bool)), this, SLOT(capStart(bool)));
 
 	m_capStepAct = new QAction(QIcon(":/step.png"), "Single Step", this);
@@ -169,7 +169,7 @@ ApplicationWindow::ApplicationWindow() :
 
 	QAction *closeAct = new QAction(QIcon(":/fileclose.png"), "&Close Device", this);
 	closeAct->setStatusTip("Close");
-	closeAct->setShortcut(Qt::CTRL+Qt::Key_W);
+	closeAct->setShortcut(Qt::CTRL|Qt::Key_W);
 	connect(closeAct, SIGNAL(triggered()), this, SLOT(closeDevice()));
 
 	QAction *traceAct = new QAction("&Trace IOCTLs", this);
@@ -179,7 +179,7 @@ ApplicationWindow::ApplicationWindow() :
 
 	QAction *quitAct = new QAction(QIcon(":/exit.png"), "&Quit", this);
 	quitAct->setStatusTip("Exit the application");
-	quitAct->setShortcut(Qt::CTRL+Qt::Key_Q);
+	quitAct->setShortcut(Qt::CTRL|Qt::Key_Q);
 	connect(quitAct, SIGNAL(triggered()), this, SLOT(close()));
 
 	QMenu *fileMenu = menuBar()->addMenu("&File");
@@ -209,7 +209,7 @@ ApplicationWindow::ApplicationWindow() :
 
 	m_resetScalingAct = new QAction("Resize to &Frame Size", this);
 	m_resetScalingAct->setStatusTip("Resizes the capture window to match frame size");
-	m_resetScalingAct->setShortcut(Qt::CTRL+Qt::Key_F);
+	m_resetScalingAct->setShortcut(Qt::CTRL|Qt::Key_F);
 
 	m_overrideColorspace = -1;
 	QMenu *menu = new QMenu("Override Colorspace");
