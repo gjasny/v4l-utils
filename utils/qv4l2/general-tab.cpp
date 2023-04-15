@@ -2393,8 +2393,14 @@ int GeneralTab::checkMatchAudioDevice(void *md, const char *vid, enum device_typ
 
 	while ((devname = get_associated_device(md, devname, type, vid, dtype)) != NULL) {
 		if (type == MEDIA_SND_CAP) {
+#if QT_VERSION < 0x060000
 			QStringList devAddr = QString(devname).split(QRegExp("[:,]"));
 			return devAddr.value(1).toInt();
+#else
+			QRegExp rx("[:,]");
+			rx.indexIn(devname);
+			return rx.cap(1).toInt();
+#endif
 		}
 	}
 	return -1;
