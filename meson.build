@@ -70,8 +70,7 @@ if dep_alsa.found()
     conf.set('HAVE_ALSA', 1)
 endif
 
-dep_gl = dependency('gl', required : get_option('qvidcap').enabled() or
-                                     get_option('qv4l2').enabled())
+dep_gl = dependency('gl', required : get_option('qvidcap').enabled())
 dep_glu = dependency('glu', required : false)
 
 dep_jsonc = dependency('json-c', required : get_option('v4l2-tracer'), version : '>=0.15')
@@ -80,8 +79,11 @@ dep_libdl = cc.find_library('dl')
 dep_libelf = cc.find_library('elf', required : get_option('bpf'))
 dep_libm = cc.find_library('m')
 dep_librt = cc.find_library('rt')
-dep_qt5 = dependency('qt5', modules: ['Core', 'Gui', 'Widgets', 'OpenGL'],
+dep_qt5 = dependency('qt5', modules: ['Core', 'Gui', 'Widgets'],
                      required : get_option('qvidcap').enabled() or get_option('qv4l2').enabled())
+
+dep_qt5_opengl = dependency('qt5', modules: ['OpenGL'],
+                     required : get_option('qvidcap').enabled())
 
 dep_libbpf = dependency('libbpf', required : get_option('bpf'), version : '>=0.7')
 
@@ -291,7 +293,7 @@ qt5_opengl_test = '''
 #endif
 '''
 have_qt5_opengl = cpp.compiles(qt5_opengl_test,
-                               dependencies : [dep_gl, dep_qt5],
+                               dependencies : [dep_gl, dep_qt5, dep_qt5_opengl],
                                args : '-fPIC')
 if have_qt5_opengl
     conf.set('HAVE_QTGL', 1)

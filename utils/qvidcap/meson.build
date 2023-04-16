@@ -4,7 +4,7 @@ if qvidcap_option.enabled() and not have_qt5_opengl
     error('qvidcap enabled but Qt5 is missing OpenGL support')
 endif
 
-if qvidcap_option.disabled() or not dep_gl.found() or not dep_qt5.found() or not have_qt5_opengl
+if qvidcap_option.disabled() or not dep_gl.found() or not dep_qt5_opengl.found() or not have_qt5_opengl
     subdir_done()
 endif
 
@@ -30,6 +30,7 @@ qvidcap_deps = [
     dep_libv4l2util,
     dep_libv4lconvert,
     dep_qt5,
+    dep_qt5_opengl,
     dep_threads,
 ]
 

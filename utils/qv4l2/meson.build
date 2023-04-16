@@ -1,4 +1,4 @@
-if get_option('qv4l2').disabled() or not dep_gl.found() or not dep_qt5.found()
+if get_option('qv4l2').disabled() or not dep_qt5.found()
     subdir_done()
 endif
 
@@ -33,6 +33,7 @@ qv4l2_deps = [
     dep_libv4l2util,
     dep_libv4lconvert,
     dep_qt5,
+    dep_qt5_opengl,
     dep_threads,
 ]
 
