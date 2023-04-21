@@ -121,9 +121,9 @@ enum Option {
 	OptFeatSetAudioRate,
 	OptFeatSinkHasARCTx,
 	OptFeatSourceHasARCRx,
-	OptStressTestPowerCycle,
-	OptTestPowerCycle,
-	OptTestRandomPowerStates,
+	OptTestStandbyWakeupCycle,
+	OptStressTestStandbyWakeupCycle,
+	OptStressTestRandomStandbyWakeupCycle,
 	OptVendorCommand = 508,
 	OptVendorCommandWithID,
 	OptVendorRemoteButtonDown,
@@ -223,9 +223,14 @@ static struct option long_options[] = {
 	{ "vendor-command", required_argument, nullptr, OptVendorCommand }, \
 	{ "custom-command", required_argument, nullptr, OptCustomCommand }, \
 
-	{ "test-power-cycle", optional_argument, nullptr, OptTestPowerCycle }, \
-	{ "stress-test-power-cycle", required_argument, nullptr, OptStressTestPowerCycle }, \
-	{ "test-random-power-states", required_argument, nullptr, OptTestRandomPowerStates }, \
+	// Keep old option names for backwards compatibility
+	{ "test-power-cycle", optional_argument, nullptr, OptTestStandbyWakeupCycle }, \
+	{ "stress-test-power-cycle", required_argument, nullptr, OptStressTestStandbyWakeupCycle }, \
+	{ "test-random-power-states", required_argument, nullptr, OptStressTestRandomStandbyWakeupCycle }, \
+
+	{ "test-standby-wakeup-cycle", optional_argument, nullptr, OptTestStandbyWakeupCycle }, \
+	{ "stress-test-standby-wakeup-cycle", required_argument, nullptr, OptStressTestStandbyWakeupCycle }, \
+	{ "stress-test-random-standby-wakeup-cycle", required_argument, nullptr, OptStressTestRandomStandbyWakeupCycle }, \
 
 	{ nullptr, 0, nullptr, 0 }
 };
@@ -321,14 +326,14 @@ static void usage()
 	       "                           Use - for stdout.\n"
 	       "  --analyze-pin <from>     Analyze the low-level CEC pin changes from the file <from>.\n"
 	       "                           Use - for stdin.\n"
-	       "  --test-power-cycle [polls=<n>][,sleep=<secs>]\n"
-	       "                           Test power cycle behavior of the display. It polls up to\n"
+	       "  --test-standby-wakeup-cycle [polls=<n>][,sleep=<secs>]\n"
+	       "                           Test standby-wakeup cycle behavior of the display. It polls up to\n"
 	       "                           <n> times (default 15), waiting for a state change. If\n"
 	       "                           that fails it waits <secs> seconds (default 10) before\n"
 	       "                           retrying this.\n"
-	       "  --stress-test-power-cycle cnt=<count>[,polls=<n>][,max-sleep=<maxsecs>][,min-sleep=<minsecs>][,seed=<seed>][,repeats=<reps>]\n"
+	       "  --stress-test-standby-wakeup-cycle cnt=<count>[,polls=<n>][,max-sleep=<maxsecs>][,min-sleep=<minsecs>][,seed=<seed>][,repeats=<reps>]\n"
 	       "                            [,sleep-before-on=<secs1>][,sleep-before-off=<secs2>]\n"
-	       "                           Power cycle display <count> times. If 0, then never stop.\n"
+	       "                           Standby-Wakeup cycle display <count> times. If 0, then never stop.\n"
 	       "                           It polls up to <n> times (default 30), waiting for a state change.\n"
 	       "                           If <maxsecs> is non-zero (0 is the default), then sleep for\n"
 	       "                           a random number of seconds between <minsecs> (0 is the default) and <maxsecs>\n"
@@ -341,7 +346,7 @@ static void usage()
 	       "                           before transmitting <Image View On>.\n"
 	       "                           If <secs2> is specified, then sleep for <secs2> seconds\n"
 	       "                           before transmitting <Standby>.\n"
-	       "  --test-random-power-states cnt=<count>[,max-sleep=<maxsecs>][,min-sleep=<minsecs>][,seed=<seed>]\n"
+	       "  --stress-test-random-standby-wakeup-cycle cnt=<count>[,max-sleep=<maxsecs>][,min-sleep=<minsecs>][,seed=<seed>]\n"
 	       "                           Randomly transmit <Standby> or <Image View On> up to <count> times.\n"
 	       "			   If <count> is 0, then never stop. After each transmit wait between\n"
 	       "                           <min-sleep> (default 0) and <max-sleep> (default 10) seconds.\n"
@@ -1290,7 +1295,7 @@ static int transmit_msg_retry(const struct node &node, struct cec_msg &msg)
 	return ret;
 }
 
-static int init_power_cycle_test(const struct node &node, unsigned repeats, unsigned max_tries)
+static int init_standby_wakeup_cycle_test(const struct node &node, unsigned repeats, unsigned max_tries)
 {
 	struct cec_msg msg;
 	unsigned from;
@@ -1319,7 +1324,7 @@ static int init_power_cycle_test(const struct node &node, unsigned repeats, unsi
 	} else {
 		switch (laddrs.log_addr_type[0]) {
 		case CEC_LOG_ADDR_TYPE_TV:
-			fprintf(stderr, "A TV can't run the power cycle test.\n");
+			fprintf(stderr, "A TV can't run the standby-wakeup cycle test.\n");
 			std::exit(EXIT_FAILURE);
 		case CEC_LOG_ADDR_TYPE_RECORD:
 			from = CEC_LOG_ADDR_RECORD_1;
@@ -1429,8 +1434,8 @@ static int init_power_cycle_test(const struct node &node, unsigned repeats, unsi
 	return from;
 }
 
-static void test_power_cycle(const struct node &node, unsigned int max_tries,
-			     unsigned int retry_sleep)
+static void test_standby_wakeup_cycle(const struct node &node, unsigned int max_tries,
+				      unsigned int retry_sleep)
 {
 	struct cec_log_addrs laddrs = { };
 	struct cec_msg msg;
@@ -1443,7 +1448,7 @@ static void test_power_cycle(const struct node &node, unsigned int max_tries,
 	__u8 wakeup_la;
 	int ret;
 
-	from = init_power_cycle_test(node, 2, max_tries);
+	from = init_standby_wakeup_cycle_test(node, 2, max_tries);
 
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 	if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
@@ -1641,10 +1646,10 @@ static void test_power_cycle(const struct node &node, unsigned int max_tries,
 		printf("Test had %u failure%s\n", failures, failures == 1 ? "" : "s");
 }
 
-static void stress_test_power_cycle(const struct node &node, unsigned cnt,
-				    double min_sleep, double max_sleep, unsigned max_tries,
-				    bool has_seed, unsigned seed, unsigned repeats,
-				    double sleep_before_on, double sleep_before_off)
+static void stress_test_standby_wakeup_cycle(const struct node &node, unsigned cnt,
+					     double min_sleep, double max_sleep, unsigned max_tries,
+					     bool has_seed, unsigned seed, unsigned repeats,
+					     double sleep_before_on, double sleep_before_off)
 {
 	struct cec_log_addrs laddrs = { };
 	struct cec_msg msg;
@@ -1666,7 +1671,7 @@ static void stress_test_power_cycle(const struct node &node, unsigned cnt,
 	if (mod_usleep)
 		printf("Randomizer seed: %u\n\n", seed);
 
-	unsigned from = init_power_cycle_test(node, repeats, max_tries);
+	unsigned from = init_standby_wakeup_cycle_test(node, repeats, max_tries);
 
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 	if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
@@ -1876,9 +1881,9 @@ static void stress_test_power_cycle(const struct node &node, unsigned cnt,
 	}
 }
 
-static void test_random_pwr_states(const struct node &node, unsigned cnt,
-				   double min_sleep, double max_sleep,
-				   bool has_seed, unsigned seed)
+static void stress_test_random_standby_wakeup_cycle(const struct node &node, unsigned cnt,
+						    double min_sleep, double max_sleep,
+						    bool has_seed, unsigned seed)
 {
 	struct cec_log_addrs laddrs = { };
 	struct cec_msg msg;
@@ -1923,7 +1928,7 @@ static void test_random_pwr_states(const struct node &node, unsigned cnt,
 	}
 	from = laddrs.log_addr[0];
 
-	init_power_cycle_test(node, 2, 30);
+	init_standby_wakeup_cycle_test(node, 2, 30);
 
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 	if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
@@ -2278,22 +2283,22 @@ int main(int argc, char **argv)
 	__u32 timeout = 1000;
 	__u32 monitor_time = 0;
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
-	unsigned int stress_test_pwr_cycle_cnt = 0;
-	double stress_test_pwr_cycle_min_sleep = 0;
-	double stress_test_pwr_cycle_max_sleep = 0;
-	unsigned int stress_test_pwr_cycle_polls = 30;
-	bool stress_test_pwr_cycle_has_seed = false;
-	unsigned int stress_test_pwr_cycle_seed = 0;
-	unsigned int stress_test_pwr_cycle_repeats = 0;
-	double stress_test_pwr_cycle_sleep_before_on = 0;
-	double stress_test_pwr_cycle_sleep_before_off = 0;
-	unsigned int test_pwr_cycle_polls = 15;
-	unsigned int test_pwr_cycle_sleep = 10;
-	unsigned int test_random_pwr_states_cnt = 0;
-	double test_random_pwr_states_min_sleep = 0;
-	double test_random_pwr_states_max_sleep = 10;
-	bool test_random_pwr_states_has_seed = false;
-	unsigned int test_random_pwr_states_seed = 0;
+	unsigned int stress_test_standby_wakeup_cycle_cnt = 0;
+	double stress_test_standby_wakeup_cycle_min_sleep = 0;
+	double stress_test_standby_wakeup_cycle_max_sleep = 0;
+	unsigned int stress_test_standby_wakeup_cycle_polls = 30;
+	bool stress_test_standby_wakeup_cycle_has_seed = false;
+	unsigned int stress_test_standby_wakeup_cycle_seed = 0;
+	unsigned int stress_test_standby_wakeup_cycle_repeats = 0;
+	double stress_test_standby_wakeup_cycle_sleep_before_on = 0;
+	double stress_test_standby_wakeup_cycle_sleep_before_off = 0;
+	unsigned int test_standby_wakeup_cycle_polls = 15;
+	unsigned int test_standby_wakeup_cycle_sleep = 10;
+	unsigned int stress_test_random_standby_wakeup_cnt = 0;
+	double stress_test_random_standby_wakeup_min_sleep = 0;
+	double stress_test_random_standby_wakeup_max_sleep = 10;
+	bool stress_test_random_standby_wakeup_has_seed = false;
+	unsigned int stress_test_random_standby_wakeup_seed = 0;
 	bool warn_if_unconfigured = false;
 	__u16 phys_addr;
 	__u8 from = 0, to = 0, first_to = 0xff;
@@ -2669,7 +2674,7 @@ int main(int argc, char **argv)
 			list_devices();
 			break;
 
-		case OptTestPowerCycle: {
+		case OptTestStandbyWakeupCycle: {
 			static constexpr const char *arg_names[] = {
 				"polls",
 				"sleep",
@@ -2684,10 +2689,10 @@ int main(int argc, char **argv)
 			while (*subs != '\0') {
 				switch (cec_parse_subopt(&subs, arg_names, &value)) {
 				case 0:
-					test_pwr_cycle_polls = strtoul(value, nullptr, 0);
+					test_standby_wakeup_cycle_polls = strtoul(value, nullptr, 0);
 					break;
 				case 1:
-					test_pwr_cycle_sleep = strtoul(value, nullptr, 0);
+					test_standby_wakeup_cycle_sleep = strtoul(value, nullptr, 0);
 					break;
 				default:
 					std::exit(EXIT_FAILURE);
@@ -2696,7 +2701,7 @@ int main(int argc, char **argv)
 			break;
 		}
 
-		case OptStressTestPowerCycle: {
+		case OptStressTestStandbyWakeupCycle: {
 			static constexpr const char *arg_names[] = {
 				"cnt",
 				"min-sleep",
@@ -2713,35 +2718,35 @@ int main(int argc, char **argv)
 			while (*subs != '\0') {
 				switch (cec_parse_subopt(&subs, arg_names, &value)) {
 				case 0:
-					stress_test_pwr_cycle_cnt = strtoul(value, nullptr, 0);
+					stress_test_standby_wakeup_cycle_cnt = strtoul(value, nullptr, 0);
 					break;
 				case 1:
-					stress_test_pwr_cycle_min_sleep = strtod(value, nullptr);
+					stress_test_standby_wakeup_cycle_min_sleep = strtod(value, nullptr);
 					break;
 				case 2:
-					stress_test_pwr_cycle_max_sleep = strtod(value, nullptr);
+					stress_test_standby_wakeup_cycle_max_sleep = strtod(value, nullptr);
 					break;
 				case 3:
-					stress_test_pwr_cycle_has_seed = true;
-					stress_test_pwr_cycle_seed = strtoul(value, nullptr, 0);
+					stress_test_standby_wakeup_cycle_has_seed = true;
+					stress_test_standby_wakeup_cycle_seed = strtoul(value, nullptr, 0);
 					break;
 				case 4:
-					stress_test_pwr_cycle_repeats = strtoul(value, nullptr, 0);
+					stress_test_standby_wakeup_cycle_repeats = strtoul(value, nullptr, 0);
 					break;
 				case 5:
-					stress_test_pwr_cycle_sleep_before_on = strtod(value, nullptr);
+					stress_test_standby_wakeup_cycle_sleep_before_on = strtod(value, nullptr);
 					break;
 				case 6:
-					stress_test_pwr_cycle_sleep_before_off = strtod(value, nullptr);
+					stress_test_standby_wakeup_cycle_sleep_before_off = strtod(value, nullptr);
 					break;
 				case 7:
-					stress_test_pwr_cycle_polls = strtoul(value, nullptr, 0);
+					stress_test_standby_wakeup_cycle_polls = strtoul(value, nullptr, 0);
 					break;
 				default:
 					std::exit(EXIT_FAILURE);
 				}
 			}
-			if (stress_test_pwr_cycle_min_sleep > stress_test_pwr_cycle_max_sleep) {
+			if (stress_test_standby_wakeup_cycle_min_sleep > stress_test_standby_wakeup_cycle_max_sleep) {
 				fprintf(stderr, "min-sleep > max-sleep\n");
 				std::exit(EXIT_FAILURE);
 			}
@@ -2749,7 +2754,7 @@ int main(int argc, char **argv)
 			break;
 		}
 
-		case OptTestRandomPowerStates: {
+		case OptStressTestRandomStandbyWakeupCycle: {
 			static constexpr const char *arg_names[] = {
 				"cnt",
 				"min-sleep",
@@ -2762,23 +2767,23 @@ int main(int argc, char **argv)
 			while (*subs != '\0') {
 				switch (cec_parse_subopt(&subs, arg_names, &value)) {
 				case 0:
-					test_random_pwr_states_cnt = strtoul(value, nullptr, 0);
+					stress_test_random_standby_wakeup_cnt = strtoul(value, nullptr, 0);
 					break;
 				case 1:
-					test_random_pwr_states_min_sleep = strtod(value, nullptr);
+					stress_test_random_standby_wakeup_min_sleep = strtod(value, nullptr);
 					break;
 				case 2:
-					test_random_pwr_states_max_sleep = strtod(value, nullptr);
+					stress_test_random_standby_wakeup_max_sleep = strtod(value, nullptr);
 					break;
 				case 3:
-					test_random_pwr_states_has_seed = true;
-					test_random_pwr_states_seed = strtoul(value, nullptr, 0);
+					stress_test_random_standby_wakeup_has_seed = true;
+					stress_test_random_standby_wakeup_seed = strtoul(value, nullptr, 0);
 					break;
 				default:
 					std::exit(EXIT_FAILURE);
 				}
 			}
-			if (test_random_pwr_states_min_sleep > test_random_pwr_states_max_sleep) {
+			if (stress_test_random_standby_wakeup_min_sleep > stress_test_random_standby_wakeup_max_sleep) {
 				fprintf(stderr, "min-sleep > max-sleep\n");
 				std::exit(EXIT_FAILURE);
 			}
@@ -3053,8 +3058,9 @@ int main(int argc, char **argv)
 			phys_addrs[la] = (phys_addr << 8) | la;
 	}
 
-	if (options[OptTestPowerCycle] || options[OptStressTestPowerCycle] ||
-	    options[OptTestRandomPowerStates]) {
+	if (options[OptTestStandbyWakeupCycle] ||
+	    options[OptStressTestStandbyWakeupCycle] ||
+	    options[OptStressTestRandomStandbyWakeupCycle]) {
 		print_version();
 		printf("\n");
 	}
@@ -3154,24 +3160,28 @@ int main(int argc, char **argv)
 	if (options[OptNonBlocking])
 		fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
 
-	if (options[OptTestPowerCycle])
-		test_power_cycle(node, test_pwr_cycle_polls, test_pwr_cycle_sleep);
-	if (options[OptStressTestPowerCycle])
-		stress_test_power_cycle(node, stress_test_pwr_cycle_cnt,
-					stress_test_pwr_cycle_min_sleep,
-					stress_test_pwr_cycle_max_sleep,
-					stress_test_pwr_cycle_polls,
-					stress_test_pwr_cycle_has_seed,
-					stress_test_pwr_cycle_seed,
-					stress_test_pwr_cycle_repeats,
-					stress_test_pwr_cycle_sleep_before_on,
-					stress_test_pwr_cycle_sleep_before_off);
-	if (options[OptTestRandomPowerStates])
-		test_random_pwr_states(node, test_random_pwr_states_cnt,
-				       test_random_pwr_states_min_sleep,
-				       test_random_pwr_states_max_sleep,
-				       test_random_pwr_states_has_seed,
-				       test_random_pwr_states_seed);
+	if (options[OptTestStandbyWakeupCycle])
+		test_standby_wakeup_cycle(node,
+					  test_standby_wakeup_cycle_polls,
+					  test_standby_wakeup_cycle_sleep);
+	if (options[OptStressTestStandbyWakeupCycle])
+		stress_test_standby_wakeup_cycle(node,
+						 stress_test_standby_wakeup_cycle_cnt,
+						 stress_test_standby_wakeup_cycle_min_sleep,
+						 stress_test_standby_wakeup_cycle_max_sleep,
+						 stress_test_standby_wakeup_cycle_polls,
+						 stress_test_standby_wakeup_cycle_has_seed,
+						 stress_test_standby_wakeup_cycle_seed,
+						 stress_test_standby_wakeup_cycle_repeats,
+						 stress_test_standby_wakeup_cycle_sleep_before_on,
+						 stress_test_standby_wakeup_cycle_sleep_before_off);
+	if (options[OptStressTestRandomStandbyWakeupCycle])
+		stress_test_random_standby_wakeup_cycle(node,
+							stress_test_random_standby_wakeup_cnt,
+							stress_test_random_standby_wakeup_min_sleep,
+							stress_test_random_standby_wakeup_max_sleep,
+							stress_test_random_standby_wakeup_has_seed,
+							stress_test_random_standby_wakeup_seed);
 
 skip_la:
 	if (options[OptMonitor] || options[OptMonitorAll] ||
