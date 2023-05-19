@@ -192,10 +192,6 @@ sub get_val_def_name {
 		}
 		return "nullptr"; # will print as hex string
 	}
-	# special treatment for struct v4l2_input which has members named both "tuner" and "type"
-	if (($member eq "tuner") && ($struct_name eq "v4l2_input")) {
-		return "v4l2_tuner_type_val_def";
-	}
 	if ($member =~ /pixelformat/) {
 		return "v4l2_pix_fmt_val_def";
 	}
