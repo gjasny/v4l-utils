@@ -623,6 +623,28 @@ void retrace_vidioc_s_control(int fd_retrace, json_object *ioctl_args)
 	free(ptr);
 }
 
+void retrace_vidioc_g_tuner(int fd_retrace, json_object *ioctl_args)
+{
+	struct v4l2_tuner *ptr = retrace_v4l2_tuner_gen(ioctl_args);
+	ioctl(fd_retrace, VIDIOC_G_TUNER, ptr);
+
+	if (is_verbose() || (errno != 0))
+		perror("VIDIOC_G_TUNER");
+
+	free(ptr);
+}
+
+void retrace_vidioc_s_tuner(int fd_retrace, json_object *ioctl_args)
+{
+	struct v4l2_tuner *ptr = retrace_v4l2_tuner_gen(ioctl_args);
+	ioctl(fd_retrace, VIDIOC_S_TUNER, ptr);
+
+	if (is_verbose() || (errno != 0))
+		perror("VIDIOC_S_TUNER");
+
+	free(ptr);
+}
+
 void retrace_vidioc_g_input(int fd_retrace, json_object *ioctl_args)
 {
 	int input = 0;
@@ -1210,6 +1232,12 @@ void retrace_ioctl(json_object *syscall_obj)
 		break;
 	case VIDIOC_S_CTRL:
 		retrace_vidioc_s_control(fd_retrace, ioctl_args_user);
+		break;
+	case VIDIOC_G_TUNER:
+		retrace_vidioc_g_tuner(fd_retrace, ioctl_args_user);
+		break;
+	case VIDIOC_S_TUNER:
+		retrace_vidioc_s_tuner(fd_retrace, ioctl_args_user);
 		break;
 	case VIDIOC_QUERYCTRL:
 		retrace_vidioc_queryctrl(fd_retrace, ioctl_args_user);

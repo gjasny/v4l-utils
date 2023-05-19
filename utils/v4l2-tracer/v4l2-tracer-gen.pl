@@ -162,6 +162,7 @@ sub get_val_def_name {
 	                                     v4l2_exportbuffer v4l2_cropcap v4l2_selection
 	                                     v4l2_sliced_vbi_cap v4l2_format v4l2_streamparm);
 	@structs_that_use_v4l2_ctrl_type = qw(v4l2_queryctrl v4l2_query_ext_ctrl);
+	@structs_that_use_v4l2_tuner_type = qw(v4l2_tuner v4l2_frequency);
 	if ($member eq "type") {
 		foreach (@structs_that_use_v4l2_buf_type) {
 			if ($struct_name eq $_) {
@@ -242,6 +243,9 @@ sub get_val_def_name {
 	if (($member eq "status") && ($struct_name eq "v4l2_input")) {
 		$val_def_name = "input_field_val_def";
 	}
+	if ($member eq "audmode") {
+		return "tuner_audmode_val_def";
+	}
 	return "";
 }
 
@@ -276,6 +280,12 @@ sub get_flag_def_name {
 		if ($struct_name =~ /capability$/) {
 			return "v4l2_cap_flag_def";
 		}
+		if ($struct_name eq "v4l2_tuner") {
+			return "tuner_cap_flag_def";
+		}
+	}
+	if ($member eq "rxsubchans") {
+		return "tuner_rxsub_flag_def";
 	}
 	return "";
 }
@@ -908,6 +918,22 @@ while (<>) {
 		flag_def_gen("V4L2_OUT_CAP_NATIVE_SIZE");
 		next
 	}
+	if (grep {/^#define V4L2_TUNER_CAP_LOW\s+/} $_) {
+		printf $fh_common_info_h "constexpr flag_def tuner_cap_flag_def[] = {\n";
+		flag_def_gen("V4L2_TUNER_CAP_1HZ");
+		next
+	}
+	if (grep {/^#define V4L2_TUNER_SUB_MONO\s+/} $_) {
+		printf $fh_common_info_h "constexpr flag_def tuner_rxsub_flag_def[] = {\n";
+		flag_def_gen("V4L2_TUNER_SUB_RDS");
+		next
+	}
+	if (grep {/^#define V4L2_TUNER_MODE_MONO\s+/} $_) {
+		printf $fh_common_info_h "constexpr val_def tuner_audmode_val_def[] = {\n";
+		val_def_gen("V4L2_TUNER_MODE_LANG1_LANG2");
+		next
+	}
+
 	if (grep {/^#define V4L2_ENC_CMD_START\s+/} $_) {
 		printf $fh_common_info_h "constexpr val_def encoder_cmd_val_def[] = {\n";
 		val_def_gen("V4L2_ENC_CMD_RESUME");

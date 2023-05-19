@@ -558,6 +558,10 @@ json_object *trace_ioctl_args(unsigned long cmd, void *arg)
 	case VIDIOC_S_CTRL:
 		trace_v4l2_control_gen(arg, ioctl_args);
 		break;
+	case VIDIOC_G_TUNER:
+	case VIDIOC_S_TUNER:
+		trace_v4l2_tuner_gen(arg, ioctl_args);
+		break;
 	case VIDIOC_QUERYCTRL:
 		trace_v4l2_queryctrl_gen(arg, ioctl_args);
 		break;
