@@ -472,6 +472,26 @@ static void print_array(const v4l2_query_ext_ctrl &qc, const v4l2_ext_control &c
 			}
 			printf("\n");
 			break;
+		case V4L2_CTRL_TYPE_INTEGER:
+			for (i = from; i <= to; i++) {
+				printf("%10i", ctrl.p_s32[idx + i]);
+				if (i < to)
+					printf(", ");
+			}
+			printf("\n");
+			break;
+		case V4L2_CTRL_TYPE_INTEGER64:
+			for (i = from; i <= to; i++) {
+				printf("%12lli", ctrl.p_s64[idx + i]);
+				if (i < to)
+					printf(", ");
+			}
+			printf("\n");
+			break;
+		default:
+			fprintf(stderr, "%s: unsupported array type\n",
+					qc.name);
+			break;
 		}
 	}
 }
@@ -1148,6 +1168,18 @@ void common_set(cv4l_fd &_fd)
 					for (i = 0; i < qc.elems; i++)
 						if (idx_in_subset(qc, subset, divide, i))
 							ctrl.p_u32[i] = v;
+					break;
+				case V4L2_CTRL_TYPE_INTEGER:
+					v = strtol(set_ctrl.second.c_str(), nullptr, 0);
+					for (i = 0; i < qc.elems; i++)
+						if (idx_in_subset(qc, subset, divide, i))
+							ctrl.p_s32[i] = v;
+					break;
+				case V4L2_CTRL_TYPE_INTEGER64:
+					v = strtol(set_ctrl.second.c_str(), nullptr, 0);
+					for (i = 0; i < qc.elems; i++)
+						if (idx_in_subset(qc, subset, divide, i))
+							ctrl.p_s64[i] = v;
 					break;
 				case V4L2_CTRL_TYPE_STRING:
 					strncpy(ctrl.string, set_ctrl.second.c_str(), qc.maximum);
