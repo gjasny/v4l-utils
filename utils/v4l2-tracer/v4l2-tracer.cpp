@@ -5,6 +5,7 @@
 
 #include "retrace.h"
 #include <climits>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <time.h>
 
@@ -288,24 +289,26 @@ int tracer(int argc, char *argv[], bool retrace)
 	fclose(trace_file);
 
 	/*
-	 * Preload the libv4l2tracer library. If the program is installed, load the library
-	 * from its installed location, otherwise load it locally. If it's loaded locally,
-	 * use ./configure --disable-dyn-libv4l.
+	 * Preload the libv4l2tracer library. The libv4l2tracer is looked up next to
+	 * the executable first in order to support uninstalled build.
 	 */
 	std::string libv4l2tracer_path;
 	std::string program = argv[0];
-	std::size_t idx = program.rfind("/v4l2-tracer");
-	if (idx != std::string::npos) {
-		libv4l2tracer_path = program.replace(program.begin() + idx + 1, program.end(), ".libs");
-		DIR *directory_pointer = opendir(libv4l2tracer_path.c_str());
-		if (directory_pointer == nullptr)
-			libv4l2tracer_path = program.replace(program.begin() + idx, program.end(), "./.libs");
-		else
-			closedir(directory_pointer);
-	} else {
-		libv4l2tracer_path = LIBTRACER_PATH;
-	}
-	libv4l2tracer_path += "/libv4l2tracer.so";
+	std::size_t idx = program.rfind("/");
+	struct stat sb;
+
+	if (idx == std::string::npos)
+		idx = 0;
+	else
+		idx++;
+
+	/* look for libv4l2tracer next to the executable */
+	libv4l2tracer_path = program.replace(program.begin() + idx, program.end(), "libv4l2tracer.so");
+
+	/* otherwise, use the installation path */
+	if (stat(libv4l2tracer_path.c_str(), &sb) == -1)
+		libv4l2tracer_path = std::string(LIBTRACER_PATH) + "/libv4l2tracer.so";
+
 	if (is_verbose())
 		fprintf(stderr, "Loading libv4l2tracer: %s\n", libv4l2tracer_path.c_str());
 	setenv("LD_PRELOAD", libv4l2tracer_path.c_str(), 0);
