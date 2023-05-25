@@ -753,7 +753,7 @@ extern const unsigned fe_bandwidth_name[8];
 extern const char *dvb_v5_name[72];
 extern const void *dvb_v5_attr_names[];
 extern const char *delivery_system_name[21];
-extern const char *fe_code_rate_name[30];
+extern const char *fe_code_rate_name[34];
 extern const char *fe_modulation_name[22];
 extern const char *fe_transmission_mode_name[10];
 extern const unsigned fe_bandwidth_name[8];

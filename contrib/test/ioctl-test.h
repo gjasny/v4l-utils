@@ -69,6 +69,7 @@ union v4l_parms {
 	struct v4l2_standard			p_v4l2_standard;
 	struct v4l2_streamparm			p_v4l2_streamparm;
 	struct v4l2_subdev_capability		p_v4l2_subdev_capability;
+	struct v4l2_subdev_client_capability	p_v4l2_subdev_client_capability;
 	struct v4l2_subdev_crop			p_v4l2_subdev_crop;
 	struct v4l2_subdev_format		p_v4l2_subdev_format;
 	struct v4l2_subdev_frame_interval	p_v4l2_subdev_frame_interval;
@@ -186,6 +187,7 @@ static const struct {
 	ioc(subdev, VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL),					/*  struct v4l2_subdev_frame_interval_enum */
 	ioc(subdev, VIDIOC_SUBDEV_ENUM_FRAME_SIZE),					/*  struct v4l2_subdev_frame_size_enum */
 	ioc(subdev, VIDIOC_SUBDEV_ENUM_MBUS_CODE),					/*  struct v4l2_subdev_mbus_code_enum */
+	ioc(subdev, VIDIOC_SUBDEV_G_CLIENT_CAP),					/*  struct v4l2_subdev_client_capability */
 	ioc(subdev, VIDIOC_SUBDEV_G_CROP),						/*  struct v4l2_subdev_crop */
 	ioc(subdev, VIDIOC_SUBDEV_G_DV_TIMINGS),					/*  struct v4l2_dv_timings */
 	ioc(subdev, VIDIOC_SUBDEV_G_EDID),						/*  struct v4l2_edid */
@@ -197,6 +199,7 @@ static const struct {
 	ioc(subdev, VIDIOC_SUBDEV_QUERYCAP),						/*  struct v4l2_subdev_capability */
 	ioc(subdev, VIDIOC_SUBDEV_QUERYSTD),						/*  v4l2_std_id */
 	ioc(subdev, VIDIOC_SUBDEV_QUERY_DV_TIMINGS),					/*  struct v4l2_dv_timings */
+	ioc(subdev, VIDIOC_SUBDEV_S_CLIENT_CAP),					/*  struct v4l2_subdev_client_capability */
 	ioc(subdev, VIDIOC_SUBDEV_S_CROP),						/*  struct v4l2_subdev_crop */
 	ioc(subdev, VIDIOC_SUBDEV_S_DV_TIMINGS),					/*  struct v4l2_dv_timings */
 	ioc(subdev, VIDIOC_SUBDEV_S_EDID),						/*  struct v4l2_edid */

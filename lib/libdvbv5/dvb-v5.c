@@ -50,7 +50,7 @@ struct fe_status_name fe_status_name[8] = {
 	{ FE_TIMEDOUT,    "TIMEDOUT" },
 };
 
-const char *fe_code_rate_name[30] = {
+const char *fe_code_rate_name[34] = {
 	[FEC_1_2] =   "1/2",
 	[FEC_1_3] =   "1/3",
 	[FEC_1_4] =   "1/4",
@@ -59,19 +59,23 @@ const char *fe_code_rate_name[30] = {
 	[FEC_3_4] =   "3/4",
 	[FEC_3_5] =   "3/5",
 	[FEC_4_5] =   "4/5",
+	[FEC_4_15] =  "4/15",
 	[FEC_5_6] =   "5/6",
 	[FEC_5_9] =   "5/9",
 	[FEC_6_7] =   "6/7",
 	[FEC_7_8] =   "7/8",
 	[FEC_7_9] =   "7/9",
+	[FEC_7_15] =  "7/15",
 	[FEC_8_9] =   "8/9",
 	[FEC_8_15] =  "8/15",
 	[FEC_9_10] =  "9/10",
 	[FEC_9_20] =  "9/20",
 	[FEC_11_15] = "11/15",
 	[FEC_11_20] = "11/20",
+	[FEC_11_45] = "11/45",
 	[FEC_13_18] = "13/18",
 	[FEC_13_45] = "13/45",
+	[FEC_14_45] = "14/45",
 	[FEC_23_36] = "23/36",
 	[FEC_25_36] = "25/36",
 	[FEC_26_45] = "26/45",
@@ -80,7 +84,7 @@ const char *fe_code_rate_name[30] = {
 	[FEC_77_90] = "77/90",
 	[FEC_AUTO] =  "AUTO",
 	[FEC_NONE] =  "NONE",
-	[29] = NULL,
+	[33] = NULL,
 };
 
 const char *fe_modulation_name[22] = {

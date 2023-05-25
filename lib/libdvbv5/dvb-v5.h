@@ -14,7 +14,7 @@ struct fe_status_name {
 	char *name;
 };
 extern struct fe_status_name fe_status_name[8];
-extern const char *fe_code_rate_name[30];
+extern const char *fe_code_rate_name[34];
 extern const char *fe_modulation_name[22];
 extern const char *fe_transmission_mode_name[10];
 extern const unsigned fe_bandwidth_name[8];

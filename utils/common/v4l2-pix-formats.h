@@ -38,11 +38,14 @@
 	case V4L2_PIX_FMT_RGBX1010102: return "32-bit RGBX 10-10-10-2";
 	case V4L2_PIX_FMT_RGBA1010102: return "32-bit RGBA 10-10-10-2";
 	case V4L2_PIX_FMT_ARGB2101010: return "32-bit ARGB 2-10-10-10";
+	case V4L2_PIX_FMT_BGR48_12: return "12-bit Depth BGR";
+	case V4L2_PIX_FMT_ABGR64_12: return "12-bit Depth BGRA";
 	case V4L2_PIX_FMT_GREY: return "8-bit Greyscale";
 	case V4L2_PIX_FMT_Y4: return "4-bit Greyscale";
 	case V4L2_PIX_FMT_Y6: return "6-bit Greyscale";
 	case V4L2_PIX_FMT_Y10: return "10-bit Greyscale";
 	case V4L2_PIX_FMT_Y12: return "12-bit Greyscale";
+	case V4L2_PIX_FMT_Y012: return "12-bit Greyscale (bits 15-4)";
 	case V4L2_PIX_FMT_Y14: return "14-bit Greyscale";
 	case V4L2_PIX_FMT_Y16: return "16-bit Greyscale";
 	case V4L2_PIX_FMT_Y16_BE: return "16-bit Greyscale BE";
@@ -81,6 +84,7 @@
 	case V4L2_PIX_FMT_YUV420: return "Planar YUV 4:2:0";
 	case V4L2_PIX_FMT_HI240: return "8-bit Dithered RGB (BTTV)";
 	case V4L2_PIX_FMT_M420: return "YUV 4:2:0 (M420)";
+	case V4L2_PIX_FMT_YUV48_12: return "12-bit YUV 4:4:4 Packed";
 	case V4L2_PIX_FMT_NV12: return "Y/UV 4:2:0";
 	case V4L2_PIX_FMT_NV21: return "Y/VU 4:2:0";
 	case V4L2_PIX_FMT_NV16: return "Y/UV 4:2:2";
@@ -88,6 +92,7 @@
 	case V4L2_PIX_FMT_NV24: return "Y/UV 4:4:4";
 	case V4L2_PIX_FMT_NV42: return "Y/VU 4:4:4";
 	case V4L2_PIX_FMT_P010: return "10-bit Y/UV 4:2:0";
+	case V4L2_PIX_FMT_P012: return "12-bit Y/UV 4:2:0";
 	case V4L2_PIX_FMT_NV12_4L4: return "Y/UV 4:2:0 (4x4 Linear)";
 	case V4L2_PIX_FMT_NV12_16L16: return "Y/UV 4:2:0 (16x16 Linear)";
 	case V4L2_PIX_FMT_NV12_32L32: return "Y/UV 4:2:0 (32x32 Linear)";
@@ -98,6 +103,7 @@
 	case V4L2_PIX_FMT_NV61M: return "Y/VU 4:2:2 (N-C)";
 	case V4L2_PIX_FMT_NV12MT: return "Y/UV 4:2:0 (64x32 MB, N-C)";
 	case V4L2_PIX_FMT_NV12MT_16X16: return "Y/UV 4:2:0 (16x16 MB, N-C)";
+	case V4L2_PIX_FMT_P012M: return "12-bit Y/UV 4:2:0 (N-C)";
 	case V4L2_PIX_FMT_YUV420M: return "Planar YUV 4:2:0 (N-C)";
 	case V4L2_PIX_FMT_YVU420M: return "Planar YVU 4:2:0 (N-C)";
 	case V4L2_PIX_FMT_YUV422M: return "Planar YUV 4:2:2 (N-C)";
@@ -208,6 +214,9 @@
 	case V4L2_PIX_FMT_HEVC: return "HEVC";
 	case V4L2_PIX_FMT_FWHT: return "FWHT";
 	case V4L2_PIX_FMT_FWHT_STATELESS: return "FWHT Stateless";
+	case V4L2_PIX_FMT_SPK: return "Sorenson Spark";
+	case V4L2_PIX_FMT_RV30: return "RealVideo 8";
+	case V4L2_PIX_FMT_RV40: return "RealVideo 9 & 10";
 	case V4L2_PIX_FMT_CPIA1: return "GSPCA CPiA YUV";
 	case V4L2_PIX_FMT_WNVA: return "WNVA";
 	case V4L2_PIX_FMT_SN9C10X: return "GSPCA SN9C10X";
