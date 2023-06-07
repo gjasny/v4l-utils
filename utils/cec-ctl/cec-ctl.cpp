@@ -827,8 +827,11 @@ static void show_msg(const cec_msg &msg)
 		log_raw_msg(&msg);
 	std::string status;
 	if ((msg.tx_status & ~CEC_TX_STATUS_OK) ||
-	    (msg.rx_status & ~CEC_RX_STATUS_OK))
+	    (msg.rx_status & ~CEC_RX_STATUS_OK)) {
 		status = std::string(" ") + cec_status2s(msg);
+		if (verbose)
+			printf("\tTimestamp: %s\n", ts2s(current_ts()).c_str());
+	}
 	if (verbose && transmitted)
 		printf("\tSequence: %u Tx Timestamp: %s%s\n",
 		       msg.sequence, ts2s(msg.tx_ts).c_str(),
