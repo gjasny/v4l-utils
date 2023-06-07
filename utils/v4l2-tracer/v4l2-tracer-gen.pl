@@ -161,7 +161,7 @@ sub get_val_def_name {
 	@structs_that_use_v4l2_buf_type = qw(v4l2_fmtdesc v4l2_requestbuffers v4l2_buffer v4l2_crop
 	                                     v4l2_exportbuffer v4l2_cropcap v4l2_selection
 	                                     v4l2_sliced_vbi_cap v4l2_format v4l2_streamparm);
-	@structs_that_use_v4l2_ctrl_type = qw(v4l2_queryctrl v4l2_query_ext_ctrl);
+	@structs_that_use_v4l2_ctrl_type = qw(v4l2_queryctrl v4l2_query_ext_ctrl v4l2_event_ctrl);
 	@structs_that_use_v4l2_tuner_type = qw(v4l2_tuner v4l2_frequency);
 	if ($member eq "type") {
 		foreach (@structs_that_use_v4l2_buf_type) {
@@ -190,6 +190,9 @@ sub get_val_def_name {
 		}
 		if ($struct_name eq "v4l2_output") {
 			return $val_def_name = "output_type_val_def";
+		}
+		if ($struct_name eq "v4l2_event" || $struct_name eq "v4l2_event_subscription") {
+			return $val_def_name = "event_val_def";
 		}
 		return "nullptr"; # will print as hex string
 	}
@@ -270,7 +273,10 @@ sub get_flag_def_name {
 		if ($struct_name =~ /.*selection$/) {
 			return "v4l2_sel_flag_def";
 		}
-			return "nullptr";
+		if ($struct_name eq "v4l2_event_subscription") {
+			return "v4l2_event_sub_flag_def";
+		}
+		return "nullptr";
 	}
 
 	if ($member =~ /.*cap.*/) {
@@ -288,6 +294,11 @@ sub get_flag_def_name {
 	}
 	if ($member eq "rxsubchans") {
 		return "tuner_rxsub_flag_def";
+	}
+	if ($member eq "changes") {
+		if ($struct_name eq "v4l2_event_ctrl") {
+			return "v4l2_event_ctrl_ch_flag_def";
+		}
 	}
 	return "";
 }
@@ -380,6 +391,21 @@ sub handle_union {
 		printf $fh_trace_cpp "\t\ttrace_v4l2_fract_gen(&p->discrete, %s_obj);\n\t\tbreak;\n", $struct_name;
 		printf $fh_trace_cpp "\tcase V4L2_FRMIVAL_TYPE_STEPWISE:\n\tcase V4L2_FRMIVAL_TYPE_CONTINUOUS:\n";
 		printf $fh_trace_cpp "\t\ttrace_v4l2_frmival_stepwise_gen(&p->stepwise, %s_obj);\n\t\tbreak;\n", $struct_name;
+		printf $fh_trace_cpp "\tdefault:\n\t\tbreak;\n\t}\n";
+	}
+
+	if ($struct_name eq "v4l2_event") {
+		printf $fh_trace_cpp "\tswitch (p->type) {\n";
+		printf $fh_trace_cpp "\tcase V4L2_EVENT_VSYNC:\n";
+		printf $fh_trace_cpp "\t\ttrace_v4l2_event_vsync_gen(&p->u, %s_obj);\n\t\tbreak;\n", $struct_name;
+		printf $fh_trace_cpp "\tcase V4L2_EVENT_CTRL:\n";
+		printf $fh_trace_cpp "\t\ttrace_v4l2_event_ctrl_gen(&p->u, %s_obj);\n\t\tbreak;\n", $struct_name;
+		printf $fh_trace_cpp "\tcase V4L2_EVENT_FRAME_SYNC:\n";
+		printf $fh_trace_cpp "\t\ttrace_v4l2_event_frame_sync_gen(&p->u, %s_obj);\n\t\tbreak;\n", $struct_name;
+		printf $fh_trace_cpp "\tcase V4L2_EVENT_SOURCE_CHANGE:\n";
+		printf $fh_trace_cpp "\t\ttrace_v4l2_event_src_change_gen(&p->u, %s_obj);\n\t\tbreak;\n", $struct_name;
+		printf $fh_trace_cpp "\tcase V4L2_EVENT_MOTION_DET:\n";
+		printf $fh_trace_cpp "\t\ttrace_v4l2_event_motion_det_gen(&p->u, %s_obj);\n\t\tbreak;\n", $struct_name;
 		printf $fh_trace_cpp "\tdefault:\n\t\tbreak;\n\t}\n";
 	}
 
@@ -854,17 +880,15 @@ while (<>) {
 	if (grep {/#define __LINUX_VIDEODEV2_H/} $_) {
 		$in_v4l2_controls = false;
 	}
-
 	if (grep {/^#define.+FWHT_FL_.+/} $_) {
 		flag_gen("fwht");
 	} elsif (grep {/^#define V4L2_VP8_LF.*/} $_) {
 		flag_gen("vp8_loop_filter");
-	} elsif (grep {/^#define.+_FL_.+/} $_) {  #use to get media flags
+	} elsif (grep {/^#define.+_FL_.+/} $_) {
 		flag_gen();
 	} elsif (grep {/^#define.+_FLAG_.+/} $_) {
 		flag_gen();
 	}
-
 	if ($in_v4l2_controls eq true) {
 		if (grep {/^struct/} $_) {
 			struct_gen_ctrl();
@@ -964,7 +988,16 @@ while (<>) {
 		val_def_gen("V4L2_DEC_CMD_FLUSH");
 		next;
 	}
-
+	if (grep {/^#define V4L2_EVENT_ALL\s+/} $_) {
+		printf $fh_common_info_h "constexpr val_def event_val_def[] = {\n";
+		val_def_gen("V4L2_EVENT_PRIVATE_START");
+		next;
+	}
+	if (grep {/^#define V4L2_EVENT_CTRL_CH_VALUE\s+/} $_) {
+		printf $fh_common_info_h "constexpr flag_def v4l2_event_ctrl_ch_flag_def[] = {\n";
+		flag_def_gen("V4L2_EVENT_CTRL_CH_DIMENSIONS");
+		next
+	}
 	if (grep {/^#define\s+(VIDIOC_\w*)\s*.*/} $_) {
 		push (@ioctls, $_);
 	}

@@ -599,6 +599,13 @@ json_object *trace_ioctl_args(unsigned long cmd, void *arg)
 	case VIDIOC_ENCODER_CMD:
 		trace_v4l2_encoder_cmd_gen(arg, ioctl_args);
 		break;
+	case VIDIOC_DQEVENT:
+		trace_v4l2_event_gen(arg, ioctl_args);
+		break;
+	case VIDIOC_SUBSCRIBE_EVENT:
+	case VIDIOC_UNSUBSCRIBE_EVENT:
+		trace_v4l2_event_subscription_gen(arg, ioctl_args);
+		break;
 	case VIDIOC_CREATE_BUFS:
 		trace_v4l2_create_buffers_gen(arg, ioctl_args);
 		break;

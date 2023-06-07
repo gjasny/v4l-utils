@@ -1120,6 +1120,61 @@ void retrace_vidioc_try_decoder_cmd(int fd_retrace, json_object *ioctl_args)
 	free (ptr);
 }
 
+void retrace_vidioc_dqevent(int fd_retrace)
+{
+	const int poll_timeout_ms = 200;
+	struct pollfd *pfds = (struct pollfd *) calloc(1, sizeof(struct pollfd));
+	if (pfds == nullptr)
+		exit(EXIT_FAILURE);
+	pfds[0].fd = fd_retrace;
+	pfds[0].events = POLLIN | POLLPRI;
+	int ret = poll(pfds, 1, poll_timeout_ms);
+
+	if (ret == -1) {
+		line_info("\n\tPoll error.");
+		perror("");
+		free(pfds);
+		exit(EXIT_FAILURE);
+	}
+	if (ret == 0) {
+		line_info("\n\tPoll timed out.");
+		free(pfds);
+		exit(EXIT_FAILURE);
+	}
+
+	struct v4l2_event event = {};
+	ioctl(fd_retrace, VIDIOC_DQEVENT, &event);
+
+	if (is_verbose() || (errno != 0))
+		perror("VIDIOC_DQEVENT");
+
+	free(pfds);
+}
+
+void retrace_vidioc_subscribe_event(int fd_retrace, json_object *ioctl_args)
+{
+	struct v4l2_event_subscription *ptr = retrace_v4l2_event_subscription_gen(ioctl_args);
+
+	ioctl(fd_retrace, VIDIOC_SUBSCRIBE_EVENT, ptr);
+
+	if (is_verbose() || (errno != 0))
+		perror("VIDIOC_SUBSCRIBE_EVENT");
+
+	free (ptr);
+}
+
+void retrace_vidioc_unsubscribe(int fd_retrace, json_object *ioctl_args)
+{
+	struct v4l2_event_subscription *ptr = retrace_v4l2_event_subscription_gen(ioctl_args);
+
+	ioctl(fd_retrace, VIDIOC_UNSUBSCRIBE_EVENT, ptr);
+
+	if (is_verbose() || (errno != 0))
+		perror("VIDIOC_UNSUBSCRIBE_EVENT");
+
+	free (ptr);
+}
+
 void retrace_vidioc_decoder_cmd(int fd_retrace, json_object *ioctl_args)
 {
 	struct v4l2_decoder_cmd *ptr = retrace_v4l2_decoder_cmd(ioctl_args);
@@ -1187,18 +1242,24 @@ void retrace_ioctl(json_object *syscall_obj)
 {
 	__s64 cmd = 0;
 	int fd_retrace = 0;
+	bool ioctl_error = false;
 
 	json_object *fd_trace_obj;
 	json_object_object_get_ex(syscall_obj, "fd", &fd_trace_obj);
 	fd_retrace = get_fd_retrace_from_fd_trace(json_object_get_int(fd_trace_obj));
-	if (fd_retrace < 0) {
-		line_info("\n\tBad file descriptor.");
-		return;
-	}
 
 	json_object *cmd_obj;
 	json_object_object_get_ex(syscall_obj, "ioctl", &cmd_obj);
 	cmd = s2val(json_object_get_string(cmd_obj), ioctl_val_def);
+
+	json_object *errno_obj;
+	if (json_object_object_get_ex(syscall_obj, "errno", &errno_obj))
+		ioctl_error = true;
+
+	if (fd_retrace < 0) {
+		line_info("\n\tBad file descriptor on %s\n", json_object_get_string(cmd_obj));
+		return;
+	}
 
 	json_object *ioctl_args_user;
 	json_object_object_get_ex(syscall_obj, "from_userspace", &ioctl_args_user);
@@ -1323,6 +1384,18 @@ void retrace_ioctl(json_object *syscall_obj)
 		break;
 	case VIDIOC_TRY_DECODER_CMD:
 		retrace_vidioc_try_decoder_cmd(fd_retrace, ioctl_args_user);
+		break;
+	case VIDIOC_DQEVENT:
+		/* Don't retrace a timed-out DQEVENT */
+		if (ioctl_error)
+			break;
+		retrace_vidioc_dqevent(fd_retrace);
+		break;
+	case VIDIOC_SUBSCRIBE_EVENT:
+		retrace_vidioc_subscribe_event(fd_retrace, ioctl_args_user);
+		break;
+	case VIDIOC_UNSUBSCRIBE_EVENT:
+		retrace_vidioc_unsubscribe(fd_retrace, ioctl_args_user);
 		break;
 	case VIDIOC_DECODER_CMD:
 		retrace_vidioc_decoder_cmd(fd_retrace, ioctl_args_user);
