@@ -592,6 +592,9 @@ json_object *trace_ioctl_args(unsigned long cmd, void *arg)
 	case VIDIOC_ENUM_FRAMESIZES:
 		trace_v4l2_frmsizeenum_gen(arg, ioctl_args);
 		break;
+	case VIDIOC_ENUM_FRAMEINTERVALS:
+		trace_v4l2_frmivalenum_gen(arg, ioctl_args);
+		break;
 	case VIDIOC_TRY_ENCODER_CMD:
 	case VIDIOC_ENCODER_CMD:
 		trace_v4l2_encoder_cmd_gen(arg, ioctl_args);

@@ -978,6 +978,19 @@ void retrace_vidioc_enum_framesizes(int fd_retrace, json_object *ioctl_args)
 	free(ptr);
 }
 
+void retrace_vidioc_enum_frameintervals(int fd_retrace, json_object *ioctl_args)
+{
+	struct v4l2_frmivalenum *ptr = retrace_v4l2_frmivalenum_gen(ioctl_args);
+
+	ioctl(fd_retrace, VIDIOC_ENUM_FRAMEINTERVALS, ptr);
+
+	if (is_verbose() || (errno != 0))
+		perror("VIDIOC_ENUM_FRAMEINTERVALS");
+
+	free(ptr);
+}
+
+
 void retrace_vidioc_try_encoder_cmd(int fd_retrace, json_object *ioctl_args)
 {
 	struct v4l2_encoder_cmd *ptr = retrace_v4l2_encoder_cmd_gen(ioctl_args);
@@ -1286,6 +1299,9 @@ void retrace_ioctl(json_object *syscall_obj)
 		break;
 	case VIDIOC_ENUM_FRAMESIZES:
 		retrace_vidioc_enum_framesizes(fd_retrace, ioctl_args_user);
+		break;
+	case VIDIOC_ENUM_FRAMEINTERVALS:
+		retrace_vidioc_enum_frameintervals(fd_retrace, ioctl_args_user);
 		break;
 	case VIDIOC_TRY_ENCODER_CMD:
 		retrace_vidioc_try_encoder_cmd(fd_retrace, ioctl_args_user);

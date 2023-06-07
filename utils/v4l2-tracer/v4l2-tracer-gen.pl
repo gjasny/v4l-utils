@@ -372,6 +372,15 @@ sub handle_union {
 		printf $fh_trace_cpp "\tdefault:\n\t\tbreak;\n\t}\n";
 	}
 
+	if ($struct_name eq "v4l2_frmivalenum") {
+		printf $fh_trace_cpp "\tswitch (p->type) {\n";
+		printf $fh_trace_cpp "\tcase V4L2_FRMIVAL_TYPE_DISCRETE:\n";
+		printf $fh_trace_cpp "\t\ttrace_v4l2_fract_gen(&p->discrete, %s_obj);\n\t\tbreak;\n", $struct_name;
+		printf $fh_trace_cpp "\tcase V4L2_FRMIVAL_TYPE_STEPWISE:\n\tcase V4L2_FRMIVAL_TYPE_CONTINUOUS:\n";
+		printf $fh_trace_cpp "\t\ttrace_v4l2_frmival_stepwise_gen(&p->stepwise, %s_obj);\n\t\tbreak;\n", $struct_name;
+		printf $fh_trace_cpp "\tdefault:\n\t\tbreak;\n\t}\n";
+	}
+
 	return $suppress_union;
 }
 
