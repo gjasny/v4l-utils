@@ -193,7 +193,7 @@ sub get_val_def_name {
 		}
 		return "nullptr"; # will print as hex string
 	}
-	if ($member =~ /pixelformat/) {
+	if ($member eq "pixelformat" || $member eq "pixel_format") {
 		return "v4l2_pix_fmt_val_def";
 	}
 	if ($member =~ /cmd/) {
@@ -361,6 +361,15 @@ sub handle_union {
 		printf $fh_retrace_cpp "\t\tfree(pix_mp_ptr);\n\t\tbreak;\n\t}\n";
 
 		printf $fh_retrace_cpp "\tdefault:\n\t\tbreak;\n\t}\n";
+	}
+
+	if ($struct_name eq "v4l2_frmsizeenum") {
+		printf $fh_trace_cpp "\tswitch (p->type) {\n";
+		printf $fh_trace_cpp "\tcase V4L2_FRMSIZE_TYPE_DISCRETE:\n";
+		printf $fh_trace_cpp "\t\ttrace_v4l2_frmsize_discrete_gen(&p->discrete, %s_obj);\n\t\tbreak;\n", $struct_name;
+		printf $fh_trace_cpp "\tcase V4L2_FRMSIZE_TYPE_STEPWISE:\n\tcase V4L2_FRMSIZE_TYPE_CONTINUOUS:\n";
+		printf $fh_trace_cpp "\t\ttrace_v4l2_frmsize_stepwise_gen(&p->stepwise, %s_obj);\n\t\tbreak;\n", $struct_name;
+		printf $fh_trace_cpp "\tdefault:\n\t\tbreak;\n\t}\n";
 	}
 
 	return $suppress_union;
