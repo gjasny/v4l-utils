@@ -246,7 +246,9 @@ sub get_val_def_name {
 	if ($member eq "audmode") {
 		return "tuner_audmode_val_def";
 	}
-	return "";
+	if ($member eq "target" && $struct_name eq "v4l2_selection") {
+		return "selection_target_val_def";
+	}
 }
 
 sub get_flag_def_name {
@@ -973,6 +975,11 @@ while (<>) {
 
 	if (grep {/^#define\s+(MEDIA_REQUEST_IOC\w*)\s*.*/} $_) {
 		push (@ioctls, $_);
+	}
+	if (grep {/^#define V4L2_SEL_TGT_CROP\s+/} $_) {
+		printf $fh_common_info_h "constexpr val_def selection_target_val_def[] = {\n";
+		val_def_gen("V4L2_SEL_TGT_COMPOSE_PADDED");
+		next;
 	}
 }
 
