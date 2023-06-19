@@ -1,7 +1,7 @@
 /*
     V4L2 API subdev ioctl tests.
 
-    Copyright (C) 2018  Hans Verkuil <hans.verkuil@cisco.com>
+    Copyright (C) 2018  Hans Verkuil <hverkuil-cisco@xs4all.nl>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

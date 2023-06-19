@@ -7,7 +7,7 @@
  *
  * The vbi_prepare/vbi_parse functions are:
  *
- * Copyright (C) 2012 Hans Verkuil <hans.verkuil@cisco.com>
+ * Copyright (C) 2012 Hans Verkuil <hverkuil-cisco@xs4all.nl>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
