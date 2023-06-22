@@ -26,7 +26,8 @@ static bool get_power_status(struct node *node, unsigned me, unsigned la, __u8 &
 		power_status = CEC_OP_POWER_STATUS_STANDBY;
 		return true;
 	}
-	if (res || !(msg.tx_status & CEC_TX_STATUS_OK) || !(msg.rx_status & CEC_RX_STATUS_OK))
+	if (res || !(msg.tx_status & CEC_TX_STATUS_OK) || !(msg.rx_status & CEC_RX_STATUS_OK) ||
+	    cec_msg_status_is_abort(&msg))
 		return false;
 	cec_ops_report_power_status(&msg, &power_status);
 	return true;
