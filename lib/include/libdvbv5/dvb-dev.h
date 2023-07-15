@@ -114,7 +114,7 @@ enum dvb_dev_change_type {
  *
  * sysname:	Kernel's system name for the device (dvb?.frontend?,
  *			for example)
- * @type:	type of change, as defined by enum dvb_dev_change_type
+ * type:	type of change, as defined by enum dvb_dev_change_type
  *
  * @note: the returned string should be freed with free().
  */
@@ -171,7 +171,8 @@ void dvb_dev_free(struct dvb_device *dvb);
  * @ingroup dvb_device
  *
  * @param dvb			pointer to struct dvb_device to be filled
- * @param enable_monitor	if different than zero put the routine into
+ * @param handler		if not NULL, then this is called whenever
+ *				something changed
  *				monitor mode
  * @param user_priv		pointer to user private data
  *
@@ -181,12 +182,8 @@ void dvb_dev_free(struct dvb_device *dvb);
  * at the struct dvb_device and return.
  *
  * In monitor mode, it will not only enumerate all devices, but it will also
- * keep waiting for device changes. The device seek loop will only be
- * interrupted after calling dvb_dev_stop_monitor().
- *
- * Please notice that, in such mode, the function will wait forever. So, it
- * is up to the application to put start a separate thread to handle it in
- * monitor mode, and add the needed mutexes to make it thread safe.
+ * keep waiting for device changes. The handler callback is called for the
+ * changed device.
  *
  * @return returns 0 on success, a negative value otherwise.
  */

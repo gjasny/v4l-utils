@@ -56,8 +56,6 @@
  * @brief Add support for MPEG-TS Stream types
  * @ingroup dvb_table
  *
- * @var stream_reserved0
- *	@brief	ITU-T | ISO/IEC Reserved
  * @var stream_video
  *	@brief	ISO/IEC 11172 Video
  * @var stream_video_h262
@@ -98,10 +96,6 @@
  *	@brief	ISO/IEC 14496-1 SL-packetized stream or FlexMux stream carried in ISO/IEC14496_sections.
  * @var stream_download
  *	@brief	ISO/IEC 13818-6 Synchronized Download Protocol
- * @var stream_reserved
- *	@brief	ITU-T Rec. H.222.0 | ISO/IEC 13818-1 Reserved (from 0x15 to 0x7f)
- * @var stream_private
- *	@brief	User Private (from 0x80 to 0xff)
  */
 enum dvb_streams {
 	stream_video		= 0x01,

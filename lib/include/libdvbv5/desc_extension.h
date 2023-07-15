@@ -141,7 +141,6 @@ typedef int  (*dvb_desc_ext_init_func) (struct dvb_v5_fe_parms *parms,
  * @ingroup dvb_table
  *
  * @param parms		Struct dvb_v5_fe_parms pointer
- * @param buf		buffer with the content of the descriptor
  * @param ext		struct dvb_extension_descriptor pointer
  * @param desc		struct dvb_desc pointer
  */
