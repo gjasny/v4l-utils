@@ -1491,7 +1491,7 @@ void ApplicationWindow::capStart(bool start)
 		cv4l_fmt fmt;
 
 		if (g_fmt(fmt)) {
-			error("could not obtain an VBI format\n");
+			error("could not obtain an SDR format\n");
 			return;
 		}
 		if (fmt.fmt.sdr.pixelformat != V4L2_SDR_FMT_CU8) {
