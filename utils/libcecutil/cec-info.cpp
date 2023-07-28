@@ -20,7 +20,7 @@
 
 const char *cec_opcode2s(unsigned opcode)
 {
-	for (auto i : msgtable)
+	for (const auto &i : msgtable)
 		if (i.opcode == opcode)
 			return i.name;
 	return nullptr;
@@ -28,7 +28,7 @@ const char *cec_opcode2s(unsigned opcode)
 
 const char *cec_cdc_opcode2s(unsigned cdc_opcode)
 {
-	for (auto i : cdcmsgtable)
+	for (const auto &i : cdcmsgtable)
 		if (i.opcode == cdc_opcode)
 			return i.name;
 	return nullptr;
@@ -36,7 +36,7 @@ const char *cec_cdc_opcode2s(unsigned cdc_opcode)
 
 const char *cec_htng_opcode2s(unsigned htng_opcode)
 {
-	for (auto i : htngmsgtable)
+	for (const auto &i : htngmsgtable)
 		if (i.opcode == htng_opcode)
 			return i.name;
 	return nullptr;
