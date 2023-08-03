@@ -1197,7 +1197,7 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 				 char *vchannel,
 				 int get_detected, int get_nit)
 {
-	struct dvb_entry *entry;
+	struct dvb_entry *entry = NULL;
 	int i, j, r, found = 0;
 	uint32_t freq = 0;
 
@@ -1232,7 +1232,7 @@ static int get_program_and_store(struct dvb_v5_fe_parms_priv *parms,
 	if (!dvb_file->first_entry) {
 		dvb_file->first_entry = calloc(sizeof(*entry), 1);
 		entry = dvb_file->first_entry;
-	} else {
+	} else if (entry) {
 		entry->next = calloc(sizeof(*entry), 1);
 		entry = entry->next;
 	}
