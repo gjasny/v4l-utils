@@ -395,6 +395,22 @@ struct media_pad *media_parse_pad(struct media_device *media,
 				  const char *p, char **endp);
 
 /**
+ * @brief Parse string to a pad and stream on the media device.
+ * @param media - media device.
+ * @param p - input string
+ * @param stream - pointer to uint where the stream number is stored
+ * @param endp - pointer to string where parsing ended
+ *
+ * Parse NULL terminated string describing a pad and stream and return its struct
+ * media_pad instance and the stream number.
+ *
+ * @return Pointer to struct media_pad on success, NULL on failure.
+ */
+struct media_pad *media_parse_pad_stream(struct media_device *media,
+					 const char *p, unsigned int *stream,
+					 char **endp);
+
+/**
  * @brief Parse string to a link on the media device.
  * @param media - media device.
  * @param p - input string

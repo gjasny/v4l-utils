@@ -52,6 +52,7 @@ void v4l2_subdev_close(struct media_entity *entity);
  * @param entity - subdev-device media entity.
  * @param format - format to be filled.
  * @param pad - pad number.
+ * @param stream - stream number.
  * @param which - identifier of the format to get.
  *
  * Retrieve the current format on the @a entity @a pad and store it in the
@@ -64,7 +65,7 @@ void v4l2_subdev_close(struct media_entity *entity);
  * @return 0 on success, or a negative error code on failure.
  */
 int v4l2_subdev_get_format(struct media_entity *entity,
-	struct v4l2_mbus_framefmt *format, unsigned int pad,
+	struct v4l2_mbus_framefmt *format, unsigned int pad, unsigned int stream,
 	enum v4l2_subdev_format_whence which);
 
 /**
@@ -72,6 +73,7 @@ int v4l2_subdev_get_format(struct media_entity *entity,
  * @param entity - subdev-device media entity.
  * @param format - format.
  * @param pad - pad number.
+ * @param stream - stream number.
  * @param which - identifier of the format to set.
  *
  * Set the format on the @a entity @a pad to @a format. The driver is allowed to
@@ -86,6 +88,7 @@ int v4l2_subdev_get_format(struct media_entity *entity,
  */
 int v4l2_subdev_set_format(struct media_entity *entity,
 	struct v4l2_mbus_framefmt *format, unsigned int pad,
+	unsigned int stream,
 	enum v4l2_subdev_format_whence which);
 
 /**
@@ -93,6 +96,7 @@ int v4l2_subdev_set_format(struct media_entity *entity,
  * @param entity - subdev-device media entity.
  * @param r - rectangle to be filled.
  * @param pad - pad number.
+ * @param stream - stream number.
  * @param target - selection target
  * @param which - identifier of the format to get.
  *
@@ -107,14 +111,15 @@ int v4l2_subdev_set_format(struct media_entity *entity,
  * @return 0 on success, or a negative error code on failure.
  */
 int v4l2_subdev_get_selection(struct media_entity *entity,
-	struct v4l2_rect *rect, unsigned int pad, unsigned int target,
-	enum v4l2_subdev_format_whence which);
+	struct v4l2_rect *rect, unsigned int pad, unsigned int stream,
+	unsigned int target, enum v4l2_subdev_format_whence which);
 
 /**
  * @brief Set a selection rectangle on a pad.
  * @param entity - subdev-device media entity.
  * @param rect - crop rectangle.
  * @param pad - pad number.
+ * @param stream - stream number.
  * @param target - selection target
  * @param which - identifier of the format to set.
  *
@@ -129,8 +134,40 @@ int v4l2_subdev_get_selection(struct media_entity *entity,
  * @return 0 on success, or a negative error code on failure.
  */
 int v4l2_subdev_set_selection(struct media_entity *entity,
-	struct v4l2_rect *rect, unsigned int pad, unsigned int target,
-	enum v4l2_subdev_format_whence which);
+	struct v4l2_rect *rect, unsigned int pad, unsigned int stream,
+	unsigned int target, enum v4l2_subdev_format_whence which);
+
+/**
+ * @brief Get the routing table of a subdev media entity.
+ * @param entity - subdev-device media entity.
+ * @param routes - routes of the subdev.
+ * @param num_routes - number of routes.
+ *
+ * Get the routes of @a entity and return them in an allocated array in @a routes
+ * and the number of routes in @a num_routes.
+ *
+ * The caller is responsible for freeing the routes array after use.
+ *
+ * @return 0 on success, or a negative error code on failure.
+ */
+int v4l2_subdev_get_routing(struct media_entity *entity,
+			    struct v4l2_subdev_route **routes,
+			    unsigned int *num_routes);
+
+/**
+ * @brief Set the routing table of a subdev media entity.
+ * @param entity - subdev-device media entity.
+ * @param routes - routes of the subdev.
+ * @param num_routes - number of routes.
+ *
+ * Set the routes of @a entity. The routes are given in @a routes with the
+ * length of @a num_routes.
+ *
+ * @return 0 on success, or a negative error code on failure.
+ */
+int v4l2_subdev_set_routing(struct media_entity *entity,
+			    struct v4l2_subdev_route *route,
+			    unsigned int num_routes);
 
 /**
  * @brief Query the digital video capabilities of a pad.
@@ -189,6 +226,8 @@ int v4l2_subdev_set_dv_timings(struct media_entity *entity,
  * @brief Retrieve the frame interval on a sub-device.
  * @param entity - subdev-device media entity.
  * @param interval - frame interval to be filled.
+ * @param pad - pad number.
+ * @param stream - stream number.
  *
  * Retrieve the current frame interval on subdev @a entity and store it in the
  * @a interval structure.
@@ -200,12 +239,14 @@ int v4l2_subdev_set_dv_timings(struct media_entity *entity,
  */
 
 int v4l2_subdev_get_frame_interval(struct media_entity *entity,
-	struct v4l2_fract *interval, unsigned int pad);
+	struct v4l2_fract *interval, unsigned int pad, unsigned int stream);
 
 /**
  * @brief Set the frame interval on a sub-device.
  * @param entity - subdev-device media entity.
  * @param interval - frame interval.
+ * @param pad - pad number.
+ * @param stream - stream number.
  *
  * Set the frame interval on subdev @a entity to @a interval. The driver is
  * allowed to modify the requested frame interval, in which case @a interval is
@@ -217,7 +258,7 @@ int v4l2_subdev_get_frame_interval(struct media_entity *entity,
  * @return 0 on success, or a negative error code on failure.
  */
 int v4l2_subdev_set_frame_interval(struct media_entity *entity,
-	struct v4l2_fract *interval, unsigned int pad);
+	struct v4l2_fract *interval, unsigned int pad, unsigned int stream);
 
 /**
  * @brief Parse a string and apply format, crop and frame interval settings.
@@ -234,6 +275,17 @@ int v4l2_subdev_set_frame_interval(struct media_entity *entity,
  * @return 0 on success, or a negative error code on failure.
  */
 int v4l2_subdev_parse_setup_formats(struct media_device *media, const char *p);
+
+/**
+ * @brief Parse a string and apply route settings.
+ * @param media - media device.
+ * @param p - input string
+ *
+ * Parse string @a p and apply route settings to a subdev.
+ *
+ * @return 0 on success, or a negative error code on failure.
+ */
+int v4l2_subdev_parse_setup_routes(struct media_device *media, const char *p);
 
 /**
  * @brief Convert media bus pixel code to string.

@@ -63,6 +63,7 @@ static void usage(const char *argv0)
 	printf("    --get-v4l2 pad	Print the active format on a given pad\n");
 	printf("    --get-dv pad        Print detected and current DV timings on a given pad\n");
 	printf("    --set-dv pad	Configure DV timings on a given pad\n");
+	printf("-R, --set-routes routes Configure routes on a given subdev entity\n");
 	printf("-h, --help		Show verbose help and exit\n");
 	printf("-i, --interactive	Modify links interactively\n");
 	printf("-l, --links links	Comma-separated list of link descriptors to setup\n");
@@ -78,7 +79,7 @@ static void usage(const char *argv0)
 	printf("Links and formats are defined as\n");
 	printf("\tlinks           = link { ',' link } ;\n");
 	printf("\tlink            = pad '->' pad '[' flags ']' ;\n");
-	printf("\tpad             = entity ':' pad-number ;\n");
+	printf("\tpad             = entity ':' pad-number { '/' stream-number } ;\n");
 	printf("\tentity          = entity-number | ( '\"' entity-name '\"' ) ;\n");
 	printf("\n");
 	printf("\tv4l2            = pad '[' v4l2-properties ']' ;\n");
@@ -95,11 +96,16 @@ static void usage(const char *argv0)
 	printf("\trectangle       = '(' left ',' top, ')' '/' size ;\n");
 	printf("\tsize            = width 'x' height ;\n");
 	printf("\n");
+	printf("\troutes          = entity '[' route { ',' route } ']' ;\n");
+	printf("\troute           = pad-number '/' stream-number '->' pad-number '/' stream-number '[' route-flags ']' ;\n");
+	printf("\n");
 	printf("where the fields are\n");
 	printf("\tentity-number   Entity numeric identifier\n");
 	printf("\tentity-name     Entity name (string) \n");
 	printf("\tpad-number      Pad numeric identifier\n");
+	printf("\tstream-number   Stream numeric identifier\n");
 	printf("\tflags           Link flags (0: inactive, 1: active)\n");
+	printf("\troute-flags     Route flags (bitmask of route flags: active - 0x1)\n");
 	printf("\tfcc             Format FourCC\n");
 	printf("\twidth           Image width in pixels\n");
 	printf("\theight          Image height in pixels\n");
@@ -152,6 +158,7 @@ static struct option opts[] = {
 	{"get-v4l2", 1, 0, OPT_GET_FORMAT},
 	{"get-dv", 1, 0, OPT_GET_DV},
 	{"set-dv", 1, 0, OPT_SET_DV},
+	{"set-routes", 1, 0, 'R'},
 	{"help", 0, 0, 'h'},
 	{"interactive", 0, 0, 'i'},
 	{"links", 1, 0, 'l'},
@@ -237,7 +244,7 @@ int parse_cmdline(int argc, char **argv)
 	}
 
 	/* parse options */
-	while ((opt = getopt_long(argc, argv, "d:e:f:hil:prvV:",
+	while ((opt = getopt_long(argc, argv, "d:e:f:hil:prvV:R:",
 				  opts, NULL)) != -1) {
 		switch (opt) {
 		case 'd':
@@ -281,6 +288,10 @@ int parse_cmdline(int argc, char **argv)
 
 		case 'v':
 			media_opts.verbose = 1;
+			break;
+
+		case 'R':
+			media_opts.routes = optarg;
 			break;
 
 		case OPT_PRINT_DOT:
