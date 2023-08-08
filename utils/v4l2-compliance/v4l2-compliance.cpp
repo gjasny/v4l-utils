@@ -1233,6 +1233,10 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 	if (node.is_subdev()) {
 		bool has_source = false;
 		bool has_sink = false;
+		struct v4l2_subdev_routing sd_routing[2] = {};
+		struct v4l2_subdev_route sd_routes[2][NUM_ROUTES_MAX] = {};
+		bool has_routes = !!(subdevcap.capabilities & V4L2_SUBDEV_CAP_STREAMS);
+		int ret;
 
 		node.frame_interval_pad = -1;
 		node.enum_frame_interval_pad = -1;
@@ -1244,6 +1248,22 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		}
 		node.is_passthrough_subdev = has_source && has_sink;
 
+		if (has_routes) {
+			for (unsigned which = V4L2_SUBDEV_FORMAT_TRY;
+				which <= V4L2_SUBDEV_FORMAT_ACTIVE; which++) {
+
+				sd_routing[which].which = which;
+				sd_routing[which].routes = (__u64)sd_routes[which];
+				sd_routing[which].num_routes = NUM_ROUTES_MAX;
+
+				ret = doioctl(&node, VIDIOC_SUBDEV_G_ROUTING, &sd_routing[which]);
+				if (ret) {
+					fail("VIDIOC_SUBDEV_G_ROUTING: failed to get routing\n");
+					sd_routing[which].num_routes = 0;
+				}
+			}
+		}
+
 		for (unsigned pad = 0; pad < node.entity.pads; pad++) {
 			printf("Sub-Device ioctls (%s Pad %u):\n",
 			       (node.pads[pad].flags & MEDIA_PAD_FL_SINK) ?
@@ -1253,32 +1273,82 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 			node.has_subdev_enum_fival = 0;
 			for (unsigned which = V4L2_SUBDEV_FORMAT_TRY;
 			     which <= V4L2_SUBDEV_FORMAT_ACTIVE; which++) {
-				printf("\ttest %s VIDIOC_SUBDEV_ENUM_MBUS_CODE/FRAME_SIZE/FRAME_INTERVAL: %s\n",
-				       which ? "Active" : "Try",
-				       ok(testSubDevEnum(&node, which, pad)));
-				printf("\ttest %s VIDIOC_SUBDEV_G/S_FMT: %s\n",
-				       which ? "Active" : "Try",
-				       ok(testSubDevFormat(&node, which, pad)));
-				printf("\ttest %s VIDIOC_SUBDEV_G/S_SELECTION/CROP: %s\n",
-				       which ? "Active" : "Try",
-				       ok(testSubDevSelection(&node, which, pad)));
-				if (which)
-					printf("\ttest VIDIOC_SUBDEV_G/S_FRAME_INTERVAL: %s\n",
-					       ok(testSubDevFrameInterval(&node, pad)));
+				struct v4l2_subdev_routing dummy_routing;
+				struct v4l2_subdev_route dummy_routes[1];
+
+				const struct v4l2_subdev_routing *routing;
+				const struct v4l2_subdev_route *routes;
+
+				if (has_routes) {
+					routing = &sd_routing[which];
+					routes = sd_routes[which];
+				} else {
+					dummy_routing.num_routes = 1;
+					dummy_routing.routes = (__u64)&dummy_routes;
+					dummy_routes[0].source_pad = pad;
+					dummy_routes[0].source_stream = 0;
+					dummy_routes[0].sink_pad = pad;
+					dummy_routes[0].sink_stream = 0;
+					dummy_routes[0].flags = V4L2_SUBDEV_ROUTE_FL_ACTIVE;
+
+					routing = &dummy_routing;
+					routes = dummy_routes;
+				}
+
+				for (unsigned i = 0; i < routing->num_routes; ++i) {
+					const struct v4l2_subdev_route *r = &routes[i];
+					unsigned stream;
+
+					if (!(r->flags & V4L2_SUBDEV_ROUTE_FL_ACTIVE))
+						continue;
+
+					if ((node.pads[pad].flags & MEDIA_PAD_FL_SINK) &&
+					    (r->sink_pad == pad))
+						stream = r->sink_stream;
+					else if ((node.pads[pad].flags & MEDIA_PAD_FL_SOURCE) &&
+					    (r->source_pad == pad))
+						stream = r->source_stream;
+					else
+						continue;
+
+					printf("\t%s Stream %u\n",which ? "Active" : "Try",
+					       stream);
+
+					printf("\ttest %s VIDIOC_SUBDEV_ENUM_MBUS_CODE/FRAME_SIZE/FRAME_INTERVAL: %s\n",
+					       which ? "Active" : "Try",
+					       ok(testSubDevEnum(&node, which, pad, stream)));
+					printf("\ttest %s VIDIOC_SUBDEV_G/S_FMT: %s\n",
+					       which ? "Active" : "Try",
+					       ok(testSubDevFormat(&node, which, pad, stream)));
+					printf("\ttest %s VIDIOC_SUBDEV_G/S_SELECTION/CROP: %s\n",
+					       which ? "Active" : "Try",
+					       ok(testSubDevSelection(&node, which, pad, stream)));
+					if (which)
+						printf("\ttest VIDIOC_SUBDEV_G/S_FRAME_INTERVAL: %s\n",
+						       ok(testSubDevFrameInterval(&node, pad, stream)));
+				}
 			}
-			if (node.has_subdev_enum_code && node.has_subdev_enum_code < 3)
-				fail("VIDIOC_SUBDEV_ENUM_MBUS_CODE: try/active mismatch\n");
-			if (node.has_subdev_enum_fsize && node.has_subdev_enum_fsize < 3)
-				fail("VIDIOC_SUBDEV_ENUM_FRAME_SIZE: try/active mismatch\n");
-			if (node.has_subdev_enum_fival && node.has_subdev_enum_fival < 3)
-				fail("VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL: try/active mismatch\n");
-			if (node.has_subdev_fmt && node.has_subdev_fmt < 3)
-				fail("VIDIOC_SUBDEV_G/S_FMT: try/active mismatch\n");
-			if (node.has_subdev_selection && node.has_subdev_selection < 3)
-				fail("VIDIOC_SUBDEV_G/S_SELECTION: try/active mismatch\n");
-			if (node.has_subdev_selection &&
-			    node.has_subdev_selection != node.has_subdev_fmt)
-				fail("VIDIOC_SUBDEV_G/S_SELECTION: fmt/selection mismatch\n");
+
+			/*
+			 * These tests do not make sense for subdevs with multiplexed streams,
+			 * as the try & active cases may have different routing and thus different
+			 * behavior.
+			 */
+			if (!has_routes) {
+				if (node.has_subdev_enum_code && node.has_subdev_enum_code < 3)
+					fail("VIDIOC_SUBDEV_ENUM_MBUS_CODE: try/active mismatch\n");
+				if (node.has_subdev_enum_fsize && node.has_subdev_enum_fsize < 3)
+					fail("VIDIOC_SUBDEV_ENUM_FRAME_SIZE: try/active mismatch\n");
+				if (node.has_subdev_enum_fival && node.has_subdev_enum_fival < 3)
+					fail("VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL: try/active mismatch\n");
+				if (node.has_subdev_fmt && node.has_subdev_fmt < 3)
+					fail("VIDIOC_SUBDEV_G/S_FMT: try/active mismatch\n");
+				if (node.has_subdev_selection && node.has_subdev_selection < 3)
+					fail("VIDIOC_SUBDEV_G/S_SELECTION: try/active mismatch\n");
+				if (node.has_subdev_selection &&
+				    node.has_subdev_selection != node.has_subdev_fmt)
+					fail("VIDIOC_SUBDEV_G/S_SELECTION: fmt/selection mismatch\n");
+			}
 			printf("\n");
 		}
 	}
