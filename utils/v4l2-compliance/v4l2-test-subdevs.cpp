@@ -551,3 +551,81 @@ int testSubDevSelection(struct node *node, unsigned which, unsigned pad, unsigne
 
 	return have_sel ? 0 : ENOTTY;
 }
+
+int testSubDevRouting(struct node *node, unsigned which)
+{
+	const uint32_t all_route_flags_mask = V4L2_SUBDEV_ROUTE_FL_ACTIVE;
+	struct v4l2_subdev_routing routing = {};
+	struct v4l2_subdev_route routes[NUM_ROUTES_MAX] = {};
+	unsigned int i;
+	int ret;
+
+	routing.which = which;
+	routing.routes = (__u64)&routes;
+	routing.num_routes = 0;
+	memset(routing.reserved, 0xff, sizeof(routing.reserved));
+
+	/*
+	 * First test that G_ROUTING either returns success, or ENOSPC and
+	 * updates num_routes.
+	 */
+
+	ret = doioctl(node, VIDIOC_SUBDEV_G_ROUTING, &routing);
+	fail_on_test(ret && ret != ENOSPC);
+	fail_on_test(ret == ENOSPC && routing.num_routes == 0);
+	fail_on_test(check_0(routing.reserved, sizeof(routing.reserved)));
+
+	if (!routing.num_routes)
+		return 0;
+
+	/*
+	 * Then get the actual routes, and verify that the num_routes gets
+	 * updated to the correct number.
+	 */
+
+	uint32_t num_routes = routing.num_routes;
+	routing.num_routes = num_routes + 1;
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_ROUTING, &routing));
+	fail_on_test(routing.num_routes != num_routes);
+
+	/* Check the validity of route pads and flags */
+
+	if (node->pads) {
+		for (i = 0; i < routing.num_routes; ++i) {
+			const struct v4l2_subdev_route *route = &routes[i];
+			const struct media_pad_desc *sink;
+			const struct media_pad_desc *source;
+
+			fail_on_test(route->sink_pad >= node->entity.pads);
+			fail_on_test(route->source_pad >= node->entity.pads);
+
+			sink = &node->pads[route->sink_pad];
+			source = &node->pads[route->source_pad];
+
+			fail_on_test(!(sink->flags & MEDIA_PAD_FL_SINK));
+			fail_on_test(!(source->flags & MEDIA_PAD_FL_SOURCE));
+			fail_on_test(route->flags & ~all_route_flags_mask);
+		}
+	}
+
+	/* Set the same routes back, which should always succeed. */
+
+	memset(routing.reserved, 0xff, sizeof(routing.reserved));
+	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_ROUTING, &routing));
+	fail_on_test(check_0(routing.reserved, sizeof(routing.reserved)));
+
+	/* Test setting invalid pads */
+
+	if (node->pads) {
+		for (i = 0; i < routing.num_routes; ++i) {
+			struct v4l2_subdev_route *route = &routes[i];
+
+			route->sink_pad = node->entity.pads + 1;
+		}
+
+		memset(routing.reserved, 0xff, sizeof(routing.reserved));
+		fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_ROUTING, &routing) != EINVAL);
+	}
+
+	return 0;
+}
