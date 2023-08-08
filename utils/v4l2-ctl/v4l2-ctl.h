@@ -191,6 +191,8 @@ enum Option {
 	OptInfoEdid,
 	OptShowEdid,
 	OptFixEdidChecksums,
+	OptGetRouting,
+	OptSetRouting,
 	OptFreqSeek,
 	OptEncoderCmd,
 	OptTryEncoderCmd,

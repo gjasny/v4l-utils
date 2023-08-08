@@ -11,6 +11,12 @@
 #include <linux/videodev2.h>
 #include <linux/v4l2-subdev.h>
 
+/*
+ * The max value comes from a check in the kernel source code
+ * drivers/media/v4l2-core/v4l2-ioctl.c check_array_args()
+ */
+#define NUM_ROUTES_MAX 256
+
 struct flag_def {
 	unsigned flag;
 	const char *str;
