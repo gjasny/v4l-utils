@@ -36,8 +36,9 @@ static double set_fps;
 void subdev_usage()
 {
 	printf("\nSub-Device options:\n"
+	       "Note: all parameters below (pad, code, etc.) are optional unless otherwise noted and default to 0\n"
 	       "  --list-subdev-mbus-codes <pad>\n"
-	       "                      display supported mediabus codes for this pad (0 is default)\n"
+	       "                      display supported mediabus codes for this pad\n"
 	       "                      [VIDIOC_SUBDEV_ENUM_MBUS_CODE]\n"
 	       "  --list-subdev-framesizes pad=<pad>,code=<code>\n"
 	       "                     list supported framesizes for this pad and code\n"
