@@ -509,13 +509,13 @@ static void media_print_pad_text(struct media_entity *entity,
 				stream = route->source_stream;
 			}
 
-			if (printed_streams_mask & (1 << stream))
+			if (printed_streams_mask & (1ULL << stream))
 				continue;
 
 			v4l2_subdev_print_format(entity, pad->index, stream,
 						 V4L2_SUBDEV_FORMAT_ACTIVE);
 
-			printed_streams_mask |= (1 << stream);
+			printed_streams_mask |= (1ULL << stream);
 		}
 	}
 
