@@ -271,12 +271,13 @@ via the \fB\-\-analyze\-pin\fR option. Use \- to write to stdout instead of to a
 Read and analyze the CEC pin events from the given file. Use \- to read from stdin
 instead of from a file.
 .TP
-\fB\-\-test\-standby\-wakeup\-cycle\fR [\fIpolls\fR=\fI<n>\fR][,\fIsleep\fR=\fI<secs>\fR]
+\fB\-\-test\-standby\-wakeup\-cycle\fR [\fIpolls\fR=\fI<n>\fR][,\fIsleep\fR=\fI<secs>\fR][,\fIhpd\-may\-be\-low\fR=\fI<0,1>\fR]
 This option tests the standby-wakeup cycle behavior of the display. It polls up to
 \fI<n>\fR times (default 15), waiting for a state change. If that fails then it
 waits \fI<secs>\fR seconds (default 10) before retrying this.
+If \fI<hpd\-may\-be\-low>\fR is 1, then the HPD is allowed to be low when in standby.
 .TP
-\fB\-\-stress\-test\-standby\-wakeup\-cycle\fR \fIcnt\fR=\fI<count>\fR[,\fIpolls\fR=\fI<n>\fR][,\fImax-sleep\fR=\fI<maxsecs>\fR][,\fImin-sleep\fR=\fI<minsecs>\fR][,\fIseed\fR=\fI<seed>\fR][,\fIrepeats\fR=\fI<reps>\fR][,\fIsleep-before-on\fR=\fI<secs1>\fR][,\fIsleep-before-off\fR=\fI<secs2>\fR]
+\fB\-\-stress\-test\-standby\-wakeup\-cycle\fR \fIcnt\fR=\fI<count>\fR[,\fIpolls\fR=\fI<n>\fR][,\fImax-sleep\fR=\fI<maxsecs>\fR][,\fImin-sleep\fR=\fI<minsecs>\fR][,\fIseed\fR=\fI<seed>\fR][,\fIrepeats\fR=\fI<reps>\fR][,\fIsleep-before-on\fR=\fI<secs1>\fR][,\fIsleep-before-off\fR=\fI<secs2>\fR][,\fIhpd\-may\-be\-low\fR=\fI<0,1>\fR]
 This option performs a stress test for a display: it cycles the display \fI<count>\fR
 times in and out of standby using the CEC Standby and Image View On commands.
 If \fI<count>\fR is 0, then never stop.
@@ -292,8 +293,9 @@ non-zero \fI<reps>\fR value is needed in order to pass this test, then that indi
 a problem.
 If \fI<secs1>\fR is specified, then sleep for <secs1> seconds before transmitting <Image View On>.
 If \fI<secs2>\fR is specified, then sleep for <secs2> seconds before transmitting <Standby>.
+If \fI<hpd\-may\-be\-low>\fR is 1, then the HPD is allowed to be low when in standby.
 .TP
-\fB\-\-stress\-test\-random\-standby\-wakeup\-cycle\fR \fIcnt\fR=\fI<count>\fR[,\fImax-sleep\fR=\fI<maxsecs>\fR][,\fImin-sleep\fR=\fI<minsecs>\fR][,\fIseed\fR=\fI<seed>\fR]
+\fB\-\-stress\-test\-random\-standby\-wakeup\-cycle\fR \fIcnt\fR=\fI<count>\fR[,\fImax-sleep\fR=\fI<maxsecs>\fR][,\fImin-sleep\fR=\fI<minsecs>\fR][,\fIseed\fR=\fI<seed>\fR][,\fIhpd\-may\-be\-low\fR=\fI<0,1>\fR]
 This option performs a stress test for a display: it cycles the display \fI<count>\fR
 times in and out of standby using the CEC Standby and Image View On commands.
 After each command wait between \fI<minsecs>\fR (default is 0) and \fI<maxsecs>\fR (default is 10)
@@ -305,6 +307,7 @@ wake up the display and check if that works. If not, this test fails.
 If \fI<count>\fR is 0, then never stop.
 If \fI<seed>\fR is specified, then set the randomizer seed to that value instead of
 using the current time as seed.
+If \fI<hpd\-may\-be\-low>\fR is 1, then the HPD is allowed to be low when in standby.
 .TP
 \fB\-\-help\-all\fR
 Prints the help message for all options.

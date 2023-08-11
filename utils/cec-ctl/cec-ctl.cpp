@@ -326,13 +326,14 @@ static void usage()
 	       "                           Use - for stdout.\n"
 	       "  --analyze-pin <from>     Analyze the low-level CEC pin changes from the file <from>.\n"
 	       "                           Use - for stdin.\n"
-	       "  --test-standby-wakeup-cycle [polls=<n>][,sleep=<secs>]\n"
+	       "  --test-standby-wakeup-cycle [polls=<n>][,sleep=<secs>][,hpd-may-be-low=<0/1>]\n"
 	       "                           Test standby-wakeup cycle behavior of the display. It polls up to\n"
 	       "                           <n> times (default 15), waiting for a state change. If\n"
 	       "                           that fails it waits <secs> seconds (default 10) before\n"
 	       "                           retrying this.\n"
+	       "                           If <hpd-may-be-low> is 1, then the HPD is allowed to be low when in standby.\n"
 	       "  --stress-test-standby-wakeup-cycle cnt=<count>[,polls=<n>][,max-sleep=<maxsecs>][,min-sleep=<minsecs>][,seed=<seed>][,repeats=<reps>]\n"
-	       "                            [,sleep-before-on=<secs1>][,sleep-before-off=<secs2>]\n"
+	       "                            [,sleep-before-on=<secs1>][,sleep-before-off=<secs2>][,hpd-may-be-low=<0/1>]\n"
 	       "                           Standby-Wakeup cycle display <count> times. If 0, then never stop.\n"
 	       "                           It polls up to <n> times (default 30), waiting for a state change.\n"
 	       "                           If <maxsecs> is non-zero (0 is the default), then sleep for\n"
@@ -346,12 +347,14 @@ static void usage()
 	       "                           before transmitting <Image View On>.\n"
 	       "                           If <secs2> is specified, then sleep for <secs2> seconds\n"
 	       "                           before transmitting <Standby>.\n"
-	       "  --stress-test-random-standby-wakeup-cycle cnt=<count>[,max-sleep=<maxsecs>][,min-sleep=<minsecs>][,seed=<seed>]\n"
+	       "                           If <hpd-may-be-low> is 1, then the HPD is allowed to be low when in standby.\n"
+	       "  --stress-test-random-standby-wakeup-cycle cnt=<count>[,max-sleep=<maxsecs>][,min-sleep=<minsecs>][,seed=<seed>][,hpd-may-be-low=<0/1>]\n"
 	       "                           Randomly transmit <Standby> or <Image View On> up to <count> times.\n"
 	       "			   If <count> is 0, then never stop. After each transmit wait between\n"
 	       "                           <min-sleep> (default 0) and <max-sleep> (default 10) seconds.\n"
 	       "                           If <seed> is specified, then set the randomizer seed to\n"
 	       "                           that value instead of using the current time as seed.\n"
+	       "                           If <hpd-may-be-low> is 1, then the HPD is allowed to be low when in standby.\n"
 	       "                           This test does not check if the display reached the new state,\n"
 	       "                           it checks if the display can handle this situation without\n"
 	       "                           locking up. After every 10 cycles it attempts to properly\n"
@@ -1438,7 +1441,7 @@ static int init_standby_wakeup_cycle_test(const struct node &node, unsigned repe
 }
 
 static void test_standby_wakeup_cycle(const struct node &node, unsigned int max_tries,
-				      unsigned int retry_sleep)
+				      unsigned int retry_sleep, bool hpd_may_be_low)
 {
 	struct cec_log_addrs laddrs = { };
 	struct cec_msg msg;
@@ -1459,10 +1462,11 @@ static void test_standby_wakeup_cycle(const struct node &node, unsigned int max_
 	else
 		wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
 
-	bool hpd_is_low = wakeup_la == CEC_LOG_ADDR_UNREGISTERED;
+	bool hpd_is_low = (wakeup_la == CEC_LOG_ADDR_UNREGISTERED) || hpd_may_be_low;
 
 	printf("The Hotplug Detect pin %s when in Standby\n\n",
-	       hpd_is_low ? "is pulled low" : "remains high");
+	       hpd_may_be_low ? "may be pulled low" :
+	       (hpd_is_low ? "is pulled low" : "remains high"));
 
 	for (unsigned iter = 0; iter <= 2 * 12; iter++) {
 		unsigned i = iter / 2;
@@ -1652,7 +1656,8 @@ static void test_standby_wakeup_cycle(const struct node &node, unsigned int max_
 static void stress_test_standby_wakeup_cycle(const struct node &node, unsigned cnt,
 					     double min_sleep, double max_sleep, unsigned max_tries,
 					     bool has_seed, unsigned seed, unsigned repeats,
-					     double sleep_before_on, double sleep_before_off)
+					     double sleep_before_on, double sleep_before_off,
+					     bool hpd_may_be_low)
 {
 	struct cec_log_addrs laddrs = { };
 	struct cec_msg msg;
@@ -1682,10 +1687,11 @@ static void stress_test_standby_wakeup_cycle(const struct node &node, unsigned c
 	else
 		wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
 
-	bool hpd_is_low = wakeup_la == CEC_LOG_ADDR_UNREGISTERED;
+	bool hpd_is_low = (wakeup_la == CEC_LOG_ADDR_UNREGISTERED) || hpd_may_be_low;
 
 	printf("The Hotplug Detect pin %s when in Standby\n\n",
-	       hpd_is_low ? "is pulled low" : "remains high");
+	       hpd_may_be_low ? "may be pulled low" :
+	       (hpd_is_low ? "is pulled low" : "remains high"));
 
 	srandom(seed);
 
@@ -1886,7 +1892,8 @@ static void stress_test_standby_wakeup_cycle(const struct node &node, unsigned c
 
 static void stress_test_random_standby_wakeup_cycle(const struct node &node, unsigned cnt,
 						    double min_sleep, double max_sleep,
-						    bool has_seed, unsigned seed)
+						    bool has_seed, unsigned seed,
+						    bool hpd_may_be_low)
 {
 	struct cec_log_addrs laddrs = { };
 	struct cec_msg msg;
@@ -1939,10 +1946,11 @@ static void stress_test_random_standby_wakeup_cycle(const struct node &node, uns
 	else
 		wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
 
-	bool hpd_is_low = wakeup_la == CEC_LOG_ADDR_UNREGISTERED;
+	bool hpd_is_low = (wakeup_la == CEC_LOG_ADDR_UNREGISTERED) || hpd_may_be_low;
 
 	printf("The Hotplug Detect pin %s when in Standby\n\n",
-	       hpd_is_low ? "is pulled low" : "remains high");
+	       hpd_may_be_low ? "may be pulled low" :
+	       (hpd_is_low ? "is pulled low" : "remains high"));
 
 	srandom(seed);
 
@@ -2295,13 +2303,16 @@ int main(int argc, char **argv)
 	unsigned int stress_test_standby_wakeup_cycle_repeats = 0;
 	double stress_test_standby_wakeup_cycle_sleep_before_on = 0;
 	double stress_test_standby_wakeup_cycle_sleep_before_off = 0;
+	bool stress_test_standby_wakeup_cycle_hpd_may_be_low = false;
 	unsigned int test_standby_wakeup_cycle_polls = 15;
 	unsigned int test_standby_wakeup_cycle_sleep = 10;
+	bool test_standby_wakeup_cycle_hpd_may_be_low = false;
 	unsigned int stress_test_random_standby_wakeup_cnt = 0;
 	double stress_test_random_standby_wakeup_min_sleep = 0;
 	double stress_test_random_standby_wakeup_max_sleep = 10;
 	bool stress_test_random_standby_wakeup_has_seed = false;
 	unsigned int stress_test_random_standby_wakeup_seed = 0;
+	bool stress_test_random_standby_wakeup_hpd_may_be_low = false;
 	bool warn_if_unconfigured = false;
 	__u16 phys_addr;
 	__u8 from = 0, to = 0, first_to = 0xff;
@@ -2681,6 +2692,7 @@ int main(int argc, char **argv)
 			static constexpr const char *arg_names[] = {
 				"polls",
 				"sleep",
+				"hpd-may-be-low",
 				nullptr
 			};
 			char *value, *subs = optarg;
@@ -2696,6 +2708,9 @@ int main(int argc, char **argv)
 					break;
 				case 1:
 					test_standby_wakeup_cycle_sleep = strtoul(value, nullptr, 0);
+					break;
+				case 2:
+					test_standby_wakeup_cycle_hpd_may_be_low = true;
 					break;
 				default:
 					std::exit(EXIT_FAILURE);
@@ -2714,6 +2729,7 @@ int main(int argc, char **argv)
 				"sleep-before-on",
 				"sleep-before-off",
 				"polls",
+				"hpd-may-be-low",
 				nullptr
 			};
 			char *value, *subs = optarg;
@@ -2745,6 +2761,9 @@ int main(int argc, char **argv)
 				case 7:
 					stress_test_standby_wakeup_cycle_polls = strtoul(value, nullptr, 0);
 					break;
+				case 8:
+					stress_test_standby_wakeup_cycle_hpd_may_be_low = true;
+					break;
 				default:
 					std::exit(EXIT_FAILURE);
 				}
@@ -2763,6 +2782,7 @@ int main(int argc, char **argv)
 				"min-sleep",
 				"max-sleep",
 				"seed",
+				"hpd-may-be-low",
 				nullptr
 			};
 			char *value, *subs = optarg;
@@ -2781,6 +2801,9 @@ int main(int argc, char **argv)
 				case 3:
 					stress_test_random_standby_wakeup_has_seed = true;
 					stress_test_random_standby_wakeup_seed = strtoul(value, nullptr, 0);
+					break;
+				case 4:
+					stress_test_random_standby_wakeup_hpd_may_be_low = true;
 					break;
 				default:
 					std::exit(EXIT_FAILURE);
@@ -3166,7 +3189,8 @@ int main(int argc, char **argv)
 	if (options[OptTestStandbyWakeupCycle])
 		test_standby_wakeup_cycle(node,
 					  test_standby_wakeup_cycle_polls,
-					  test_standby_wakeup_cycle_sleep);
+					  test_standby_wakeup_cycle_sleep,
+					  test_standby_wakeup_cycle_hpd_may_be_low);
 	if (options[OptStressTestStandbyWakeupCycle])
 		stress_test_standby_wakeup_cycle(node,
 						 stress_test_standby_wakeup_cycle_cnt,
@@ -3177,14 +3201,16 @@ int main(int argc, char **argv)
 						 stress_test_standby_wakeup_cycle_seed,
 						 stress_test_standby_wakeup_cycle_repeats,
 						 stress_test_standby_wakeup_cycle_sleep_before_on,
-						 stress_test_standby_wakeup_cycle_sleep_before_off);
+						 stress_test_standby_wakeup_cycle_sleep_before_off,
+						 stress_test_standby_wakeup_cycle_hpd_may_be_low);
 	if (options[OptStressTestRandomStandbyWakeupCycle])
 		stress_test_random_standby_wakeup_cycle(node,
 							stress_test_random_standby_wakeup_cnt,
 							stress_test_random_standby_wakeup_min_sleep,
 							stress_test_random_standby_wakeup_max_sleep,
 							stress_test_random_standby_wakeup_has_seed,
-							stress_test_random_standby_wakeup_seed);
+							stress_test_random_standby_wakeup_seed,
+							stress_test_random_standby_wakeup_hpd_may_be_low);
 
 skip_la:
 	if (options[OptMonitor] || options[OptMonitorAll] ||
