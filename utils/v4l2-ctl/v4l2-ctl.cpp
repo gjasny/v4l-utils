@@ -839,7 +839,10 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 			fmts |= FmtBytesPerLine;
 			break;
 		case 8:
-			flags |= V4L2_PIX_FMT_FLAG_PREMUL_ALPHA;
+			if (strtoul(value, nullptr, 0))
+				flags |= V4L2_PIX_FMT_FLAG_PREMUL_ALPHA;
+			else
+				flags &= ~V4L2_PIX_FMT_FLAG_PREMUL_ALPHA;
 			fmts |= FmtFlags;
 			break;
 		case 9:
