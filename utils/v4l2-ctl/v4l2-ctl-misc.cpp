@@ -310,10 +310,10 @@ void misc_set(cv4l_fd &_fd)
 			struct v4l2_fract *tf = &parm.parm.capture.timeperframe;
 
 			if (!tf->denominator || !tf->numerator)
-				printf("Invalid frame rate\n");
+				info("Invalid frame rate\n");
 			else
-				printf("Frame rate set to %.3f fps\n",
-					1.0 * tf->denominator / tf->numerator);
+				info("Frame rate set to %.3f fps\n",
+				     1.0 * tf->denominator / tf->numerator);
 		}
 	}
 
@@ -328,10 +328,10 @@ void misc_set(cv4l_fd &_fd)
 			struct v4l2_fract *tf = &parm.parm.output.timeperframe;
 
 			if (!tf->denominator || !tf->numerator)
-				printf("Invalid frame rate\n");
+				info("Invalid frame rate\n");
 			else
-				printf("Frame rate set to %.3f fps\n",
-					1.0 * tf->denominator / tf->numerator);
+				info("Frame rate set to %.3f fps\n",
+				     1.0 * tf->denominator / tf->numerator);
 		}
 	}
 

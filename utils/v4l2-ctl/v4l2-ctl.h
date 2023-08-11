@@ -329,6 +329,18 @@ static inline bool subscribe_event(cv4l_fd &fd, __u32 type)
 
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)
 
+#define info(fmt, args...) 			\
+	do {					\
+		if (!options[OptSilent])	\
+			printf(fmt, ##args);	\
+	} while (0)
+
+#define stderr_info(fmt, args...) 			\
+	do {						\
+		if (!options[OptSilent])		\
+			fprintf(stderr, fmt, ##args);	\
+	} while (0)
+
 // v4l2-ctl-common.cpp
 void common_usage(void);
 void common_cmd(const std::string &media_bus_info, int ch, char *optarg);

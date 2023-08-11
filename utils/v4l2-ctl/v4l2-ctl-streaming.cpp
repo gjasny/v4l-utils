@@ -151,11 +151,11 @@ static void do_sleep()
 	if (!ms) {
 		// For modes 2 and 3 just don't sleep in this case
 		if (stream_sleep_mode >= 2) {
-			fprintf(stderr, "streamoff, streamon\n");
+			stderr_info("streamoff, streamon\n");
 			return;
 		}
 
-		fprintf(stderr, "sleeping forever...\n");
+		stderr_info("sleeping forever...\n");
 		while (1)
 			sleep(100);
 	}
@@ -164,11 +164,11 @@ static void do_sleep()
 		ms = ((__u64)-ms * rand()) / RAND_MAX + 1;
 
 	if (stream_sleep_mode >= 2)
-		fprintf(stderr, "streamoff, sleep %d ms, streamon\n", ms);
+		stderr_info("streamoff, sleep %d ms, streamon\n", ms);
 	else if (stream_sleep_ms < 0 || verbose)
-		fprintf(stderr, "sleep %d ms\n", ms);
+		stderr_info("sleep %d ms\n", ms);
 	else
-		fprintf(stderr, "\n");
+		stderr_info("\n");
 	fflush(stderr);
 
 	struct timespec t;
@@ -1371,7 +1371,7 @@ static int do_setup_out_buffers(cv4l_fd &fd, cv4l_queue &q, FILE *fin, bool qbuf
 				return QUEUE_ERROR;
 			tpg_update_mv_count(&tpg, V4L2_FIELD_HAS_T_OR_B(field));
 			if (!verbose)
-				fprintf(stderr, ">");
+				stderr_info(">");
 			fflush(stderr);
 			if (!ignore_count_skip && stream_count)
 				if (!--stream_count)
@@ -1535,19 +1535,19 @@ static int do_handle_cap(cv4l_fd &fd, cv4l_queue &q, FILE *fout, int *index,
 		*index = buf.g_index();
 
 	if (!verbose) {
-		fprintf(stderr, "%c", ch);
+		stderr_info("%c", ch);
 		fflush(stderr);
 
 		if (fps_ts.has_fps()) {
 			unsigned dropped = fps_ts.dropped();
 
-			fprintf(stderr, " %.02f fps", fps_ts.fps());
+			stderr_info(" %.02f fps", fps_ts.fps());
 			if (dropped)
-				fprintf(stderr, ", dropped buffers: %u", dropped);
+				stderr_info(", dropped buffers: %u", dropped);
 			if (host_fd_to >= 0)
-				fprintf(stderr, " %d%% compression", 100 - comp_perc / comp_perc_count);
+				stderr_info(" %d%% compression", 100 - comp_perc / comp_perc_count);
 			comp_perc_count = comp_perc = 0;
-			fprintf(stderr, "\n");
+			stderr_info("\n");
 		}
 	}
 	count++;
@@ -1635,10 +1635,10 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 	if (fps_ts.has_fps()) {
 		unsigned dropped = fps_ts.dropped();
 
-		fprintf(stderr, " %.02f fps", fps_ts.fps());
+		stderr_info(" %.02f fps", fps_ts.fps());
 		if (dropped)
-			fprintf(stderr, ", dropped buffers: %u", dropped);
-		fprintf(stderr, "\n");
+			stderr_info(", dropped buffers: %u", dropped);
+		stderr_info("\n");
 	}
 	if (stopped)
 		return 0;
@@ -1703,7 +1703,7 @@ static int do_handle_out(cv4l_fd &fd, cv4l_queue &q, FILE *fin, cv4l_buffer *cap
 	tpg_update_mv_count(&tpg, V4L2_FIELD_HAS_T_OR_B(output_field));
 
 	if (!verbose)
-		fprintf(stderr, ">");
+		stderr_info(">");
 	fflush(stderr);
 
 	count++;
@@ -1897,7 +1897,7 @@ recover:
 				while (fd.query_dv_timings(new_dv_timings))
 					sleep(1);
 				fd.s_dv_timings(new_dv_timings);
-				fprintf(stderr, "New timings found\n");
+				stderr_info("New timings found\n");
 			} else if (in.capabilities & V4L2_IN_CAP_STD) {
 				if (!fd.query_std(new_std))
 					fd.s_std(new_std);
@@ -1962,12 +1962,12 @@ restart:
 		if (r == -1) {
 			if (EINTR == errno)
 				continue;
-			fprintf(stderr, "select error: %s\n",
+			stderr_info("select error: %s\n",
 					strerror(errno));
 			goto done;
 		}
 		if (use_poll && r == 0) {
-			fprintf(stderr, "select timeout\n");
+			stderr_info("select timeout\n");
 			goto done;
 		}
 
@@ -1979,14 +1979,14 @@ restart:
 				case V4L2_EVENT_SOURCE_CHANGE:
 					source_change = true;
 					if (!verbose)
-						fprintf(stderr, "\n");
-					fprintf(stderr, "SOURCE CHANGE EVENT\n");
+						stderr_info("\n");
+					stderr_info("SOURCE CHANGE EVENT\n");
 					break;
 				case V4L2_EVENT_EOS:
 					eos = true;
 					if (!verbose)
-						fprintf(stderr, "\n");
-					fprintf(stderr, "EOS EVENT\n");
+						stderr_info("\n");
+					stderr_info("EOS EVENT\n");
 					fflush(stderr);
 					break;
 				}
@@ -2010,7 +2010,7 @@ restart:
 	}
 	fd.streamoff();
 	fcntl(fd.g_fd(), F_SETFL, fd_flags);
-	fprintf(stderr, "\n");
+	stderr_info("\n");
 
 	q.free(&fd);
 	tpg_free(&tpg);
@@ -2250,13 +2250,13 @@ restart:
 			if (r == -1) {
 				if (EINTR == errno)
 					continue;
-				fprintf(stderr, "select error: %s\n",
+				stderr_info("select error: %s\n",
 					strerror(errno));
 				goto done;
 			}
 
 			if (r == 0) {
-				fprintf(stderr, "select timeout\n");
+				stderr_info("select timeout\n");
 				goto done;
 			}
 		}
@@ -2281,7 +2281,7 @@ restart:
 	}
 	fd.streamoff();
 	fcntl(fd.g_fd(), F_SETFL, fd_flags);
-	fprintf(stderr, "\n");
+	stderr_info("\n");
 
 	q.free(&fd);
 	tpg_free(&tpg);
@@ -2414,8 +2414,8 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 
 	if (have_eos && stopped) {
 		if (!verbose)
-			fprintf(stderr, "\n");
-		fprintf(stderr, "STOP %sCODER\n", is_encoder ? "EN" : "DE");
+			stderr_info("\n");
+		stderr_info("STOP %sCODER\n", is_encoder ? "EN" : "DE");
 		if (is_encoder)
 			fd.encoder_cmd(enc_stop);
 		else
@@ -2448,14 +2448,14 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		if (r == -1) {
 			if (EINTR == errno)
 				continue;
-			fprintf(stderr, "select error: %s\n",
+			stderr_info("select error: %s\n",
 					strerror(errno));
 			return;
 		}
 		if (r == 0) {
 			if (!stopped)
-				fprintf(stderr, "select timeout");
-			fprintf(stderr, "\n");
+				stderr_info("select timeout");
+			stderr_info("\n");
 			return;
 		}
 
@@ -2482,8 +2482,8 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 				stopped = true;
 				if (have_eos) {
 					if (!verbose)
-						fprintf(stderr, "\n");
-					fprintf(stderr, "STOP %sCODER\n", is_encoder ? "EN" : "DE");
+						stderr_info("\n");
+					stderr_info("STOP %sCODER\n", is_encoder ? "EN" : "DE");
 					if (is_encoder)
 						fd.encoder_cmd(enc_stop);
 					else
@@ -2501,13 +2501,13 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 				if (ev.type == V4L2_EVENT_EOS) {
 					wr_fds = nullptr;
 					if (!verbose)
-						fprintf(stderr, "\n");
-					fprintf(stderr, "EOS EVENT\n");
+						stderr_info("\n");
+					stderr_info("EOS EVENT\n");
 					fflush(stderr);
 				} else if (ev.type == V4L2_EVENT_SOURCE_CHANGE) {
 					if (!verbose)
-						fprintf(stderr, "\n");
-					fprintf(stderr, "SOURCE CHANGE EVENT\n");
+						stderr_info("\n");
+					stderr_info("SOURCE CHANGE EVENT\n");
 					in_source_change_event = true;
 
 					/*
@@ -2537,7 +2537,7 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 	}
 
 	fcntl(fd.g_fd(), F_SETFL, fd_flags);
-	fprintf(stderr, "\n");
+	stderr_info("\n");
 
 	fd.streamoff(in.g_type());
 	fd.streamoff(out.g_type());
@@ -2627,7 +2627,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		 */
 		if (queue_lst_buf) {
 			if (fd.qbuf(last_in_buf)) {
-				fprintf(stderr, "%s: qbuf failed\n", __func__);
+				stderr_info("%s: qbuf failed\n", __func__);
 				return;
 			}
 		}
@@ -2639,7 +2639,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		rc = do_handle_cap(fd, in, nullptr, &buf_idx, count[CAP],
 				   fps_ts[CAP], fmt_in, false);
 		if (rc && rc != QUEUE_STOPPED) {
-			fprintf(stderr, "%s: do_handle_cap err\n", __func__);
+			stderr_info("%s: do_handle_cap err\n", __func__);
 			return;
 		}
 		/*
@@ -2649,7 +2649,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 		 * all the future capture buffers.
 		 */
 		if (buf_idx == -1) {
-			fprintf(stderr, "%s: frame returned with error\n", __func__);
+			stderr_info("%s: frame returned with error\n", __func__);
 			last_fwht_bf_ts	= 0;
 		} else {
 			cv4l_buffer cap_buf(in, index);
@@ -2681,7 +2681,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 			if (rc) {
 				stopped = true;
 				if (rc != QUEUE_STOPPED)
-					fprintf(stderr, "%s: output stream ended\n", __func__);
+					stderr_info("%s: output stream ended\n", __func__);
 				close(req_fd);
 				fwht_reqs[index].fd = -1;
 			}
@@ -2690,7 +2690,7 @@ static void stateless_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 	}
 
 	fcntl(fd.g_fd(), F_SETFL, fd_flags);
-	fprintf(stderr, "\n");
+	stderr_info("\n");
 
 	fd.streamoff(in.g_type());
 	fd.streamoff(out.g_type());
@@ -2889,12 +2889,12 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 		if (r == -1) {
 			if (EINTR == errno)
 				continue;
-			fprintf(stderr, "select error: %s\n",
+			stderr_info("select error: %s\n",
 					strerror(errno));
 			goto done;
 		}
 		if (use_poll && r == 0) {
-			fprintf(stderr, "select timeout\n");
+			stderr_info("select timeout\n");
 			goto done;
 		}
 
@@ -2904,7 +2904,7 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 			r = do_handle_cap(fd, in, file[CAP], &index,
 					  count[CAP], fps_ts[CAP], fmt[CAP], true);
 			if (r)
-				fprintf(stderr, "handle cap %d\n", r);
+				stderr_info("handle cap %d\n", r);
 			if (!r) {
 				cv4l_buffer buf(in, index);
 
@@ -2915,11 +2915,11 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 						  false, false);
 			}
 			if (r)
-				fprintf(stderr, "handle out %d\n", r);
+				stderr_info("handle out %d\n", r);
 			if (!r && cnt++ > 1)
 				r = do_handle_out_to_in(out_fd, fd, out, in);
 			if (r)
-				fprintf(stderr, "handle out2in %d\n", r);
+				stderr_info("handle out2in %d\n", r);
 			if (r < 0) {
 				fd.streamoff();
 				out_fd.streamoff();
@@ -2930,7 +2930,7 @@ static void streaming_set_cap2out(cv4l_fd &fd, cv4l_fd &out_fd)
 
 done:
 	fcntl(fd.g_fd(), F_SETFL, fd_flags);
-	fprintf(stderr, "\n");
+	stderr_info("\n");
 
 	if (options[OptStreamDmaBuf])
 		out.close_exported_fds();
