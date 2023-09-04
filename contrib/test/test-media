@@ -70,9 +70,7 @@ fi
 
 dmesg -n notice
 
-date
-uname -a
-v4l2-compliance --version
+echo
 echo test-media $*
 echo
 echo
@@ -113,8 +111,6 @@ while [ ! -z "$1" ]; do
 			echo v4l2-compliance-32 is not installed.
 			exit 0
 		fi
-		$v4l2_compliance --version
-		echo
 		;;
 	all)
 		vidtv=1
@@ -158,6 +154,13 @@ while [ ! -z "$1" ]; do
 	esac
 	shift
 done
+
+date
+uname -a
+echo
+$v4l2_ctl --version
+$v4l2_compliance --version
+echo
 
 if [ $vidtv -eq 1 ]; then
 	if [ ! -f /proc/config.gz ]; then
@@ -238,6 +241,10 @@ fi
 
 if [ $cec -eq 1 ]; then
 	dmesg -n notice
+	cec-ctl --version
+	cec-compliance --version
+	cec-follower --version
+	echo
 	if ! cec-ctl -D vivid -a vivid-000-vid-cap0 >/dev/null ; then
 		echo "FAIL: the vivid module had no cec support" | tee -a $tmp
 		echo "Grand Total for vivid cec: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
