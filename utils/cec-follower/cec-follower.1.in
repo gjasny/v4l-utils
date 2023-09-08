@@ -76,6 +76,9 @@ Prints the help message.
 \fB\-n\fR, \fB\-\-no\-warnings\fR
 Turn off warning messages.
 .TP
+\fB\-e\fR, \fB\-\-exclusive\fR
+If specified, then the follower uses exclusive mode (CEC_MODE_EXCL_FOLLOWER).
+.TP
 \fB\-m\fR, \fB\-\-show\-msgs\fR
 Show received messages.
 .TP

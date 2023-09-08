@@ -278,7 +278,7 @@ void process_timer_msgs(struct node *node, struct cec_msg &msg, unsigned me, __u
 // CEC processing
 void reply_feature_abort(struct node *node, struct cec_msg *msg,
 			 __u8 reason = CEC_OP_ABORT_UNRECOGNIZED_OP);
-void testProcessing(struct node *node, bool wallclock);
+void testProcessing(struct node *node, bool exclusive, bool wallclock);
 bool enter_standby(struct node *node);
 
 #endif

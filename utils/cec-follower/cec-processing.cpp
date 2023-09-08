@@ -1078,13 +1078,14 @@ static void update_programmed_timers(struct node *node)
 	}
 }
 
-void testProcessing(struct node *node, bool wallclock)
+void testProcessing(struct node *node, bool exclusive, bool wallclock)
 {
 	struct cec_log_addrs laddrs;
 	fd_set rd_fds;
 	fd_set ex_fds;
 	int fd = node->fd;
-	__u32 mode = CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER;
+	__u32 mode = CEC_MODE_INITIATOR |
+		(exclusive ? CEC_MODE_EXCL_FOLLOWER : CEC_MODE_FOLLOWER);
 	unsigned me;
 	unsigned last_poll_la = 15;
 	__u8 last_pwr_state = current_power_state(node);

@@ -25,6 +25,7 @@ enum Option {
 	OptSetAdapter = 'a',
 	OptSetDevice = 'd',
 	OptSetDriver = 'D',
+	OptExclusive = 'e',
 	OptHelp = 'h',
 	OptIgnore = 'i',
 	OptNoWarnings = 'n',
@@ -55,6 +56,7 @@ static struct option long_options[] = {
 	{ "device", required_argument, nullptr, OptSetDevice },
 	{ "adapter", required_argument, nullptr, OptSetAdapter },
 	{ "driver", required_argument, nullptr, OptSetDriver },
+	{ "exclusive", no_argument, 0, OptExclusive },
 	{ "help", no_argument, nullptr, OptHelp },
 	{ "no-warnings", no_argument, nullptr, OptNoWarnings },
 	{ "trace", no_argument, nullptr, OptTrace },
@@ -88,6 +90,7 @@ static void usage()
 	       "  -T, --trace         Trace all called ioctls\n"
 	       "  -v, --verbose       Turn on verbose reporting\n"
 	       "  -w, --wall-clock    Show timestamps as wall-clock time (implies -v)\n"
+	       "  -e, --exclusive     If specified, then the follower uses exclusive mode (CEC_MODE_EXCL_FOLLOWER)\n"
 	       "  -m, --show-msgs     Show received messages\n"
 	       "  -s, --show-state    Show state changes from the emulated device\n"
 	       "  --service-by-dig-id Report digital services by digital ID instead of by channel\n"
@@ -619,5 +622,5 @@ int main(int argc, char **argv)
 		std::exit(EXIT_FAILURE);
 	}
 
-	testProcessing(&node, options[OptWallClock]);
+	testProcessing(&node, options[OptExclusive], options[OptWallClock]);
 }
