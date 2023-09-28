@@ -334,6 +334,7 @@ static constexpr flag_def entity_functions_def[] = {
 	{ MEDIA_ENT_F_PROC_VIDEO_STATISTICS, "Video Statistics" },
 	{ MEDIA_ENT_F_PROC_VIDEO_DECODER, "Video Decoder" },
 	{ MEDIA_ENT_F_PROC_VIDEO_ENCODER, "Video Encoder" },
+	{ MEDIA_ENT_F_PROC_VIDEO_ISP, "Image Signal Processor" },
 	{ MEDIA_ENT_F_VID_MUX, "Video Muxer" },
 	{ MEDIA_ENT_F_VID_IF_BRIDGE, "Video Interface Bridge" },
 	{ 0, nullptr }
