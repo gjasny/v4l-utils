@@ -367,15 +367,17 @@ std::string mi_entfunction2s(__u32 function, bool *is_invalid)
 		if (function == entity_functions_def[i].flag) {
 			bool fail = !memcmp(entity_functions_def[i].str, "FAIL: ", 6);
 
-			if (is_invalid) {
+			if (is_invalid && fail) {
 				*is_invalid = fail;
 				return entity_functions_def[i].str;
 			}
 			return fail ? entity_functions_def[i].str + 6 : entity_functions_def[i].str;
 		}
 	}
-	if (is_invalid)
-		return "WARNING: Unknown Function (" + num2s(function) + "), is v4l2-compliance out-of-date?";
+	if (is_invalid) {
+		*is_invalid = true;
+		return "FAIL: Unknown Function (" + num2s(function) + "), is v4l2-compliance out-of-date?";
+	}
 	return "Unknown Function (" + num2s(function) + ")";
 }
 
@@ -572,7 +574,7 @@ static __u32 read_topology(int media_fd, __u32 major, __u32 minor,
 			}
 			printf("\t  Link 0x%08x: %s remote pad 0x%x of entity '%s' (%s): %s\n",
 			       link.id, is_sink ? "from" : "to", remote_pad,
-			       remote_ent->name, mi_entfunction2s(remote_ent->function).c_str(),
+			       remote_ent->name, mi_entfunction2s(remote_ent->function, is_invalid).c_str(),
 			       mi_linkflags2s(link.flags).c_str());
 			if (function && !*function)
 				*function = remote_ent->function;
