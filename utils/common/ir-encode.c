@@ -144,9 +144,9 @@ static void sharp_add_bits(unsigned **buf, int bits, int count)
 		*(*buf)++ = NS_TO_US(sharp_unit * 8);
 
 		if (bits & (1 << i))
-			*(*buf)++ = NS_TO_US(sharp_unit * 50);
+			*(*buf)++ = NS_TO_US(sharp_unit * 42);
 		else
-			*(*buf)++ = NS_TO_US(sharp_unit * 25);
+			*(*buf)++ = NS_TO_US(sharp_unit * 17);
 	}
 }
 
