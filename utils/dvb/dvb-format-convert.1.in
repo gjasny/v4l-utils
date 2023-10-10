@@ -38,7 +38,7 @@ The following options are valid:
 .TP
 \fB-I\fR, \fB--input-format\fR=\fIformat\fR
 Format of the input file.
-Supported input formats: \fBchannel\f, \fBzap\fR and \fBdvbv5\fR.
+Supported input formats: \fBchannel\fR, \fBzap\fR and \fBdvbv5\fR.
 .TP
 \fB-O\fR, \fB--output-format\fR=\fIformat\fR
 Format of the output file.

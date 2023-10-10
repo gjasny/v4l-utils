@@ -35,7 +35,7 @@ other protocols are disabled.
 \fB\-e\fR, \fB\-\-parameter\fR=\fIPARAMETER\fR
 Comma separated list of parameters for the BPF protocol.
 .TP
-\fB\-P\fR, \fB\-\-period\fR\=\fiPERIOD\fR
+\fB\-P\fR, \fB\-\-period\fR\=\fIPERIOD\fR
 Sets the period to repeat a keystroke.
 .TP
 \fB\-r\fR, \fB\-\-read\fR
