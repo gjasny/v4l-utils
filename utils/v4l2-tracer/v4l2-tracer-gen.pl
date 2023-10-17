@@ -32,7 +32,9 @@ EOF
 
 sub convert_type_to_json_type {
 	my $type = shift;
-	if ($type eq __u8 || $type eq char || $type eq __u16 || $type eq __s8 || $type eq __s16 || $type eq __s32 || $type eq 'int') {
+	if ($type eq __u8 || $type eq char || $type eq __u16 || $type eq __s8 || $type eq __s16 || $type eq __s32 || $type eq 'int' ||
+		$type eq 'v4l2_av1_warp_model' || $type eq 'v4l2_av1_frame_restoration_type' || $type eq 'v4l2_av1_frame_type' ||
+		$type eq 'v4l2_av1_interpolation_filter' || $type eq 'v4l2_av1_tx_mode') {
 		return "int";
 	}
 	if ($type eq __u32 || $type eq __le32 || $type eq __s64) {
@@ -658,19 +660,29 @@ sub struct_gen_ctrl {
 		@words = grep  {!/\]/} @words; # remove values with brackets e.g. V4L2_H264_REF_LIST_LEN]
 
 		($type) = $words[0];
+		if ($type eq 'enum') {
+			$type = $words[1];
+		}
 		$json_type = convert_type_to_json_type($type);
 
 		($member) = $words[scalar @words - 1];
 
 		# generate members that are arrays
 		if ($line =~ /.*\[.*/) {
+
+			# e.g. two dimensional array [x][y]
+			my @dimensions = ($line) =~ /\[(.*?)\]/g;
+
+			#for struct v4l2_av1_tile_info [V4L2_AV1_MAX_TILE_ROWS + 1]
+			if (grep {$_ =~ /\+/} @dimensions) {
+				$member = $words[scalar @words - 3];
+			}
+
 			printf $fh_trace_cpp "\t\/\* %s \*\/\n", $line; # add comment
 			printf $fh_trace_cpp "\tjson_object *%s_obj = json_object_new_array();\n", $member;
 			printf $fh_retrace_cpp "\n\t\/\* %s \*\/\n", $line; # add comment
 
-			my @dimensions = ($line) =~ /\[(\w+)\]/g;
 			$dimensions_count = scalar @dimensions;
-
 			if ($dimensions_count > 1) {
 				printf $fh_retrace_cpp "\tint count_%s = 0;\n", $member;
 			}
