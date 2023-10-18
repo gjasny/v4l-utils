@@ -681,6 +681,18 @@ static void print_qctrl(int fd, const v4l2_query_ext_ctrl &qc,
 	case V4L2_CTRL_TYPE_FWHT_PARAMS:
 		printf("%31s %#8.8x (fwht-params):", s.c_str(), qc.id);
 		break;
+	case V4L2_CTRL_TYPE_AV1_SEQUENCE:
+		printf("%31s %#8.8x (av1-sequence):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_AV1_TILE_GROUP_ENTRY:
+		printf("%31s %#8.8x (av1-tile-group-entry):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_AV1_FRAME:
+		printf("%31s %#8.8x (av1-frame):", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_AV1_FILM_GRAIN:
+		printf("%31s %#8.8x (av1-film-grain):", s.c_str(), qc.id);
+		break;
 	default:
 		printf("%31s %#8.8x (unknown): type=%x",
 				s.c_str(), qc.id, qc.type);
