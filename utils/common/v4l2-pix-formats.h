@@ -96,6 +96,7 @@
 	case V4L2_PIX_FMT_NV12_4L4: return "Y/UV 4:2:0 (4x4 Linear)";
 	case V4L2_PIX_FMT_NV12_16L16: return "Y/UV 4:2:0 (16x16 Linear)";
 	case V4L2_PIX_FMT_NV12_32L32: return "Y/UV 4:2:0 (32x32 Linear)";
+	case V4L2_PIX_FMT_NV15_4L4: return "10-bit Y/UV 4:2:0 (4x4 Linear)";
 	case V4L2_PIX_FMT_P010_4L4: return "10-bit Y/UV 4:2:0 (4x4 Linear)";
 	case V4L2_PIX_FMT_NV12M: return "Y/UV 4:2:0 (N-C)";
 	case V4L2_PIX_FMT_NV21M: return "Y/VU 4:2:0 (N-C)";
@@ -212,6 +213,7 @@
 	case V4L2_PIX_FMT_VP9: return "VP9";
 	case V4L2_PIX_FMT_VP9_FRAME: return "VP9 Frame";
 	case V4L2_PIX_FMT_HEVC: return "HEVC";
+	case V4L2_PIX_FMT_HEVC_SLICE: return "HEVC Parsed Slice Data";
 	case V4L2_PIX_FMT_FWHT: return "FWHT";
 	case V4L2_PIX_FMT_FWHT_STATELESS: return "FWHT Stateless";
 	case V4L2_PIX_FMT_SPK: return "Sorenson Spark";
@@ -239,3 +241,7 @@
 	case V4L2_PIX_FMT_QC08C: return "QCOM Compressed 8-bit Format";
 	case V4L2_PIX_FMT_QC10C: return "QCOM Compressed 10-bit Format";
 	case V4L2_PIX_FMT_AJPG: return "Aspeed JPEG";
+	case V4L2_PIX_FMT_AV1_FRAME: return "AV1 Frame";
+	case V4L2_PIX_FMT_MT2110T: return "Mediatek 10bit Tile Mode";
+	case V4L2_PIX_FMT_MT2110R: return "Mediatek 10bit Raster Mode";
+	case V4L2_PIX_FMT_HEXTILE: return "Hextile Compressed Format";
