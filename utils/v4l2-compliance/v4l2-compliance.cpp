@@ -597,6 +597,7 @@ static void determine_codec_mask(struct node &node)
 			case V4L2_PIX_FMT_HEVC_SLICE:
 			case V4L2_PIX_FMT_VP8_FRAME:
 			case V4L2_PIX_FMT_VP9_FRAME:
+			case V4L2_PIX_FMT_AV1_FRAME:
 			case V4L2_PIX_FMT_FWHT_STATELESS:
 				mask |= STATELESS_DECODER;
 				break;
