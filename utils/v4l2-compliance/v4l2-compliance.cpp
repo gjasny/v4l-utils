@@ -968,7 +968,7 @@ err:
 }
 
 void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_node, media_type type,
-	      unsigned frame_count, unsigned all_fmt_frame_count)
+	      unsigned frame_count, unsigned all_fmt_frame_count, int parent_media_fd)
 {
 	struct node node2;
 	struct v4l2_capability vcap = {};
@@ -997,8 +997,12 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		memset(&vcap, 0, sizeof(vcap));
 	}
 
-	if (!node.is_media())
-		media_fd = mi_get_media_fd(node.g_fd(), node.bus_info);
+	if (!node.is_media()) {
+		if (parent_media_fd >= 0)
+			media_fd = parent_media_fd;
+		else
+			media_fd = mi_get_media_fd(node.g_fd(), node.bus_info);
+	}
 
 	int fd = node.is_media() ? node.g_fd() : media_fd;
 	if (fd >= 0) {

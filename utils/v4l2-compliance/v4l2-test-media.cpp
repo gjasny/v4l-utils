@@ -612,7 +612,7 @@ void walkTopology(struct node &node, struct node &expbuf_node,
 		}
 
 		testNode(test_node, test_node, expbuf_node, type,
-			 frame_count, all_fmt_frame_count);
+			 frame_count, all_fmt_frame_count, node.g_fd());
 		test_node.close();
 	}
 }
