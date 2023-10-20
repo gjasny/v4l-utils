@@ -126,7 +126,7 @@ while [ ! -z "$1" ]; do
 		vim2m=1
 		vimc=1
 		vicodec=1
-		vidtv=0
+		vidtv=1
 		;;
 	vidtv)
 		vidtv=1
