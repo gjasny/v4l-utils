@@ -572,7 +572,7 @@ if [ $vicodec -eq 1 -a $setup -eq 0 ]; then
 	echo vicodec media controller compliance tests | tee /dev/kmsg
 	echo
 	date
-	stdbuf -oL $v4l2_compliance -M platform:vicodec 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance -m platform:vicodec 2>&1 | tee -a $tmp
 
 	echo
 	echo vicodec encoder compliance tests | tee /dev/kmsg
@@ -719,7 +719,7 @@ if [ $vidtv -eq 1 -a $setup -eq 0 ]; then
 	echo vidtv media controller compliance tests | tee /dev/kmsg
 	echo
 	date
-	stdbuf -oL $v4l2_compliance -M platform:vidtv 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance -m platform:vidtv 2>&1 | tee -a $tmp
 
 	echo
 	echo
