@@ -517,6 +517,7 @@ static void media_print_topology_text_entity(struct media_device *media,
 		{ MEDIA_PAD_FL_SINK, "SINK" },
 		{ MEDIA_PAD_FL_SOURCE, "SOURCE" },
 		{ MEDIA_PAD_FL_MUST_CONNECT, "MUST_CONNECT" },
+		{ MEDIA_PAD_FL_INTERNAL, "INTERNAL" },
 	};
 	const struct media_entity_desc *info = media_entity_get_info(entity);
 	const char *devname = media_entity_get_devname(entity);
