@@ -368,26 +368,6 @@ static const char *media_entity_subtype_to_string(unsigned type)
 	}
 }
 
-static const char *media_pad_type_to_string(unsigned flag)
-{
-	static const struct {
-		__u32 flag;
-		const char *name;
-	} flags[] = {
-		{ MEDIA_PAD_FL_SINK, "Sink" },
-		{ MEDIA_PAD_FL_SOURCE, "Source" },
-	};
-
-	unsigned int i;
-
-	for (i = 0; i < ARRAY_SIZE(flags); i++) {
-		if (flags[i].flag & flag)
-			return flags[i].name;
-	}
-
-	return "Unknown";
-}
-
 static void media_print_topology_dot(struct media_device *media)
 {
 	unsigned int nents = media_get_entities_count(media);
@@ -533,6 +513,11 @@ static void media_print_topology_text_entity(struct media_device *media,
 		{ MEDIA_LNK_FL_IMMUTABLE, "IMMUTABLE" },
 		{ MEDIA_LNK_FL_DYNAMIC, "DYNAMIC" },
 	};
+	static const struct flag_name pad_flags[] = {
+		{ MEDIA_PAD_FL_SINK, "SINK" },
+		{ MEDIA_PAD_FL_SOURCE, "SOURCE" },
+		{ MEDIA_PAD_FL_MUST_CONNECT, "MUST_CONNECT" },
+	};
 	const struct media_entity_desc *info = media_entity_get_info(entity);
 	const char *devname = media_entity_get_devname(entity);
 	unsigned int num_links = media_entity_get_links_count(entity);
@@ -567,8 +552,9 @@ static void media_print_topology_text_entity(struct media_device *media,
 	for (j = 0; j < info->pads; j++) {
 		const struct media_pad *pad = media_entity_get_pad(entity, j);
 
-		printf("\tpad%u: %s\n", j, media_pad_type_to_string(pad->flags));
-
+		printf("\tpad%u: ", j);
+		print_flags(pad_flags, ARRAY_SIZE(pad_flags), pad->flags);
+		printf("\n");
 		media_print_pad_text(entity, pad, routes, num_routes);
 
 		for (k = 0; k < num_links; k++) {
