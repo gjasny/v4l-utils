@@ -506,7 +506,7 @@ msgstr ""
 
 #: utils/keytable/keytable.c:1706
 #, c-format
-msgid "Repeat delay = %d ms, repeat period = %d ms\n"
+msgid "Repeat delay: %d ms, repeat period: %d ms\n"
 msgstr ""
 
 #: utils/keytable/keytable.c:1725

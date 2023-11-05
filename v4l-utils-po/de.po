@@ -563,8 +563,8 @@ msgstr ""
 
 #: utils/keytable/keytable.c:1706
 #, c-format
-msgid "Repeat delay = %d ms, repeat period = %d ms\n"
-msgstr "Wiederholungsverzögerung = %d ms, Wiederholungsperiode = %d ms\n"
+msgid "Repeat delay: %d ms, repeat period: %d ms\n"
+msgstr "Wiederholungsverzögerung: %d ms, Wiederholungsperiode: %d ms\n"
 
 #: utils/keytable/keytable.c:1725
 #, c-format
