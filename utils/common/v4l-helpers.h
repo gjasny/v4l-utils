@@ -1429,6 +1429,7 @@ struct v4l_queue {
 	unsigned mappings;
 	unsigned num_planes;
 	unsigned capabilities;
+	unsigned max_num_buffers;
 
 	__u32 lengths[VIDEO_MAX_PLANES];
 	__u32 mem_offsets[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
@@ -1453,6 +1454,7 @@ static inline void v4l_queue_init(struct v4l_queue *q,
 static inline unsigned v4l_queue_g_type(const struct v4l_queue *q) { return q->type; }
 static inline unsigned v4l_queue_g_memory(const struct v4l_queue *q) { return q->memory; }
 static inline unsigned v4l_queue_g_buffers(const struct v4l_queue *q) { return q->buffers; }
+static inline unsigned v4l_queue_g_max_num_buffers(const struct v4l_queue *q) { return q->max_num_buffers; }
 static inline unsigned v4l_queue_g_mappings(const struct v4l_queue *q) { return q->mappings; }
 static inline unsigned v4l_queue_g_num_planes(const struct v4l_queue *q) { return q->num_planes; }
 static inline unsigned v4l_queue_g_capabilities(const struct v4l_queue *q) { return q->capabilities; }
@@ -1587,6 +1589,9 @@ static inline int v4l_queue_create_bufs(struct v4l_fd *f,
 	if (ret)
 		return ret;
 	q->capabilities = createbufs.capabilities;
+	q->max_num_buffers = 32;
+	if (q->capabilities & V4L2_BUF_CAP_SUPPORTS_MAX_NUM_BUFFERS)
+		q->max_num_buffers = createbufs.max_num_buffers;
 	q->buffers += createbufs.count;
 	return v4l_queue_querybufs(f, q, q->buffers - createbufs.count);
 }

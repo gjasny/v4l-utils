@@ -743,6 +743,7 @@ public:
 	unsigned g_type() const { return v4l_queue_g_type(this); }
 	unsigned g_memory() const { return v4l_queue_g_memory(this); }
 	unsigned g_buffers() const { return v4l_queue_g_buffers(this); }
+	unsigned g_max_num_buffers() const { return v4l_queue_g_max_num_buffers(this); }
 	unsigned g_num_planes() const { return v4l_queue_g_num_planes(this); }
 	unsigned g_capabilities() const { return v4l_queue_g_capabilities(this); }
 	unsigned g_length(unsigned plane) const { return v4l_queue_g_length(this, plane); }

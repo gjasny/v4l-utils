@@ -761,6 +761,37 @@ int testReqBufs(struct node *node)
 	return 0;
 }
 
+int testCreateBufsMax(struct node *node)
+{
+	unsigned int i;
+	int ret;
+
+	node->reopen();
+
+	cv4l_queue q(0, 0);
+
+	for (i = 1; i <= V4L2_BUF_TYPE_LAST; i++) {
+		if (!(node->valid_buftypes & (1 << i)))
+			continue;
+
+		q.init(i, V4L2_MEMORY_MMAP);
+		ret = q.create_bufs(node, 0);
+		if (!ret && (q.g_capabilities() & V4L2_BUF_CAP_SUPPORTS_MAX_NUM_BUFFERS)) {
+			fail_on_test(q.create_bufs(node, q.g_max_num_buffers()));
+			/* Some drivers may not have allocated all the requested buffers
+			 * because of memory limitation, that is OK but make the next test
+			 * failed so skip it
+			 */
+			if (q.g_max_num_buffers() != q.g_buffers())
+				continue;
+			ret = q.create_bufs(node, 1);
+			fail_on_test(ret != ENOBUFS);
+		}
+	}
+
+	return 0;
+}
+
 int testExpBuf(struct node *node)
 {
 	bool have_expbuf = false;
