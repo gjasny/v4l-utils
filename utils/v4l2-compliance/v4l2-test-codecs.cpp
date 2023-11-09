@@ -99,6 +99,7 @@ int testDecoder(struct node *node)
 {
 	struct v4l2_decoder_cmd cmd;
 	bool is_decoder = node->codec_mask & (STATEFUL_DECODER | JPEG_DECODER);
+	bool is_stateless = node->codec_mask & STATELESS_DECODER;
 	int ret;
 
 	fail_on_test((node->codec_mask & STATELESS_DECODER) && !node->has_media);
@@ -118,42 +119,80 @@ int testDecoder(struct node *node)
 	fail_on_test(ret == ENOTTY);
 	fail_on_test(ret != EINVAL);
 
-	cmd.cmd = V4L2_DEC_CMD_STOP;
-	cmd.flags = ~0;
-	ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
-	fail_on_test(ret != 0);
-	fail_on_test(cmd.flags & ~(V4L2_DEC_CMD_STOP_TO_BLACK | V4L2_DEC_CMD_STOP_IMMEDIATELY));
-	fail_on_test(is_decoder && cmd.flags);
-	ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
-	fail_on_test(ret != 0);
+	if (is_stateless) {
+		cmd.cmd = V4L2_DEC_CMD_FLUSH;
+		cmd.flags = 0;
+		ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
+		fail_on_test(ret);
+		ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
+		fail_on_test(ret);
 
-	cmd.cmd = V4L2_DEC_CMD_START;
-	cmd.flags = ~0;
-	ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
-	fail_on_test(ret);
-	fail_on_test(cmd.flags & ~V4L2_DEC_CMD_START_MUTE_AUDIO);
-	fail_on_test(is_decoder && cmd.flags);
+		cmd.cmd = V4L2_DEC_CMD_STOP;
+		cmd.flags = 0;
+		ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
+		fail_on_test(!ret);
+		ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
+		fail_on_test(!ret);
 
-	cmd.cmd = V4L2_DEC_CMD_START;
-	cmd.flags = 0;
-	cmd.start.speed = ~0;
-	cmd.start.format = ~0U;
-	ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
-	fail_on_test(ret);
-	fail_on_test(cmd.start.format == ~0U);
-	fail_on_test(cmd.start.speed == ~0);
-	fail_on_test(is_decoder && cmd.start.format);
-	fail_on_test(is_decoder && cmd.start.speed);
+		cmd.cmd = V4L2_DEC_CMD_START;
+		cmd.flags = 0;
+		ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
+		fail_on_test(!ret);
+		ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
+		fail_on_test(!ret);
 
-	cmd.cmd = V4L2_DEC_CMD_PAUSE;
-	cmd.flags = 0;
-	ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
-	fail_on_test(ret != EPERM && ret != EINVAL);
-	fail_on_test(is_decoder && ret != EINVAL);
+		cmd.cmd = V4L2_DEC_CMD_PAUSE;
+		cmd.flags = 0;
+		ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
+		fail_on_test(!ret);
+		ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
+		fail_on_test(!ret);
 
-	cmd.cmd = V4L2_DEC_CMD_RESUME;
-	ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
-	fail_on_test(ret != EPERM && ret != EINVAL);
-	fail_on_test(is_decoder && ret != EINVAL);
+		cmd.cmd = V4L2_DEC_CMD_RESUME;
+		cmd.flags = 0;
+		ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
+		fail_on_test(!ret);
+		ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
+		fail_on_test(!ret);
+	} else {
+		cmd.cmd = V4L2_DEC_CMD_STOP;
+		cmd.flags = ~0;
+		ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
+		fail_on_test(ret);
+		fail_on_test(cmd.flags & ~(V4L2_DEC_CMD_STOP_TO_BLACK | V4L2_DEC_CMD_STOP_IMMEDIATELY));
+		fail_on_test(is_decoder && cmd.flags);
+		ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
+		fail_on_test(ret);
+
+		cmd.cmd = V4L2_DEC_CMD_START;
+		cmd.flags = ~0;
+		ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
+		fail_on_test(ret);
+		fail_on_test(cmd.flags & ~V4L2_DEC_CMD_START_MUTE_AUDIO);
+		fail_on_test(is_decoder && cmd.flags);
+
+		cmd.cmd = V4L2_DEC_CMD_START;
+		cmd.flags = 0;
+		cmd.start.speed = ~0;
+		cmd.start.format = ~0U;
+		ret = doioctl(node, VIDIOC_TRY_DECODER_CMD, &cmd);
+		fail_on_test(ret);
+		fail_on_test(cmd.start.format == ~0U);
+		fail_on_test(cmd.start.speed == ~0);
+		fail_on_test(is_decoder && cmd.start.format);
+		fail_on_test(is_decoder && cmd.start.speed);
+
+		cmd.cmd = V4L2_DEC_CMD_PAUSE;
+		cmd.flags = 0;
+		ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
+		fail_on_test(ret != EPERM && ret != EINVAL);
+		fail_on_test(is_decoder && ret != EINVAL);
+
+		cmd.cmd = V4L2_DEC_CMD_RESUME;
+		ret = doioctl(node, VIDIOC_DECODER_CMD, &cmd);
+		fail_on_test(ret != EPERM && ret != EINVAL);
+		fail_on_test(is_decoder && ret != EINVAL);
+	}
+
 	return 0;
 }
