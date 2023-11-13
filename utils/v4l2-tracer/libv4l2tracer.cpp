@@ -88,6 +88,27 @@ int open(const char *path, int oflag, ...)
 	return fd;
 }
 
+ssize_t write(int fd, const void *buf, size_t count)
+{
+	ssize_t (*original_write)(int fd, const void *buf, size_t count) = nullptr;
+	original_write = (ssize_t (*)(int, const void *, size_t)) dlsym(RTLD_NEXT, "write");
+	ssize_t ret = (*original_write)(fd, buf, count);
+
+	/*
+	 * If the write message starts with "v4l2-tracer", then assume it came from the
+	 * v4l2_tracer_info macro and trace it.
+	 */
+	std::string buf_string(static_cast<const char*>(buf), count);
+	if (buf_string.find("v4l2-tracer") == 0) {
+		json_object *write_obj = json_object_new_object();
+		json_object_object_add(write_obj, "write", json_object_new_string((const char*)buf));
+		write_json_object_to_json_file(write_obj);
+		json_object_put(write_obj);
+	}
+
+	return ret;
+}
+
 #if defined(linux) && defined(__GLIBC__)
 int open64(const char *path, int oflag, ...)
 {

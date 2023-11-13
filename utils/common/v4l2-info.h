@@ -11,6 +11,13 @@
 #include <linux/videodev2.h>
 #include <linux/v4l2-subdev.h>
 
+#define v4l2_tracer_info(fmt, args...)					\
+	do {								\
+		char msg[256];						\
+		snprintf(msg, sizeof(msg), "v4l2-tracer: " fmt, ##args);\
+		write(open("/dev/null", O_WRONLY), msg, strlen(msg));	\
+	} while (0)
+
 /*
  * The max value comes from a check in the kernel source code
  * drivers/media/v4l2-core/v4l2-ioctl.c check_array_args()

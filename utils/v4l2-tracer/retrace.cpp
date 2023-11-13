@@ -1507,6 +1507,9 @@ void retrace_object(json_object *jobj)
 	if (json_object_object_get_ex(jobj, "Trace", &temp_obj)) {
 		return;
 	}
+	if (json_object_object_get_ex(jobj, "write", &temp_obj)) {
+		return;
+	}
 	line_info("\n\tWarning: unexpected JSON object in trace file.");
 }
 
