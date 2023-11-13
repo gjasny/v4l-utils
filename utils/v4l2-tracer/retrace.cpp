@@ -460,7 +460,7 @@ void retrace_vidioc_expbuf(int fd_retrace, json_object *ioctl_args_user, json_ob
 	 */
 	int fd_found_in_retrace_context = get_buffer_fd_retrace(ptr->type, ptr->index);
 	if (fd_found_in_retrace_context != -1)
-		remove_buffer_retrace(fd_found_in_retrace_context);
+		remove_buffer_retrace(ptr->type, ptr->index);
 
 	add_buffer_retrace(buf_fd_retrace, ptr->type, ptr->index);
 

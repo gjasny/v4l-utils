@@ -30,7 +30,7 @@ int retrace(std::string trace_filename);
 bool buffer_in_retrace_context(int fd, __u32 offset = 0);
 int get_buffer_fd_retrace(__u32 type, __u32 index);
 void add_buffer_retrace(int fd, __u32 type, __u32 index, __u32 offset = 0);
-void remove_buffer_retrace(int fd);
+void remove_buffer_retrace(__u32 type, __u32 index);
 void set_buffer_address_retrace(int fd, __u32 offset, long address_trace, long address_retrace);
 long get_retrace_address_from_trace_address(long address_trace);
 void add_fd(int fd_trace, int fd_retrace);

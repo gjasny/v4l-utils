@@ -41,10 +41,10 @@ void add_buffer_retrace(int fd, __u32 type, __u32 index, __u32 offset)
 	ctx_retrace.buffers.push_front(buf);
 }
 
-void remove_buffer_retrace(int fd)
+void remove_buffer_retrace(__u32 type, __u32 index)
 {
 	for (auto it = ctx_retrace.buffers.begin(); it != ctx_retrace.buffers.end(); ++it) {
-		if (it->fd == fd) {
+		if ((it->type == type) && (it->index == index)) {
 			ctx_retrace.buffers.erase(it);
 			break;
 		}

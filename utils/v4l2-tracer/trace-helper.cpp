@@ -85,10 +85,10 @@ void add_buffer_trace(int fd, __u32 type, __u32 index, __u32 offset = 0)
 	ctx_trace.buffers.push_front(buf);
 }
 
-void remove_buffer_trace(int fd)
+void remove_buffer_trace(__u32 type, __u32 index)
 {
 	for (auto it = ctx_trace.buffers.begin(); it != ctx_trace.buffers.end(); ++it) {
-		if (it->fd == fd) {
+		if ((it->type == type) && (it->index == index)) {
 			ctx_trace.buffers.erase(it);
 			break;
 		}
@@ -420,7 +420,7 @@ void expbuf_setup(struct v4l2_exportbuffer *export_buffer)
 	 * file descriptor, replace the video fd with the more specific buffer fd from EXPBUF.
 	 */
 	if (fd_found_in_trace_context != 0)
-		remove_buffer_trace(fd_found_in_trace_context);
+		remove_buffer_trace(type, index);
 
 	add_buffer_trace(export_buffer->fd, type, index);
 }
