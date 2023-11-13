@@ -28,6 +28,7 @@ enum Options {
 	V4l2TracerOptHelp = 'h',
 	V4l2TracerOptSetMediaDevice = 'm',
 	V4l2TracerOptWriteDecodedToJson = 'r',
+	V4l2TracerOptTraceUserspaceArg = 'u',
 	V4l2TracerOptVerbose = 'v',
 	V4l2TracerOptWriteDecodedToYUVFile = 'y',
 };
@@ -39,6 +40,7 @@ const static struct option long_options[] = {
 	{ "help", no_argument, nullptr, V4l2TracerOptHelp },
 	{ "media_device", required_argument, nullptr, V4l2TracerOptSetMediaDevice },
 	{ "raw", no_argument, nullptr, V4l2TracerOptWriteDecodedToJson },
+	{ "userspace", no_argument, nullptr, V4l2TracerOptTraceUserspaceArg},
 	{ "verbose", no_argument, nullptr, V4l2TracerOptVerbose },
 	{ "yuv", no_argument, nullptr, V4l2TracerOptWriteDecodedToYUVFile },
 	{ nullptr, 0, nullptr, 0 }
@@ -51,6 +53,7 @@ const char short_options[] = {
 	V4l2TracerOptHelp,
 	V4l2TracerOptSetMediaDevice, ':',
 	V4l2TracerOptWriteDecodedToJson,
+	V4l2TracerOptTraceUserspaceArg,
 	V4l2TracerOptVerbose,
 	V4l2TracerOptWriteDecodedToYUVFile
 };
@@ -121,6 +124,9 @@ int get_options(int argc, char *argv[])
 		}
 		case V4l2TracerOptWriteDecodedToJson:
 			setenv("V4L2_TRACER_OPTION_WRITE_DECODED_TO_JSON_FILE", "true", 0);
+			break;
+		case V4l2TracerOptTraceUserspaceArg:
+			setenv("V4L2_TRACER_OPTION_TRACE_USERSPACE_ARG", "true", 0);
 			break;
 		case V4l2TracerOptVerbose:
 			setenv("V4L2_TRACER_OPTION_VERBOSE", "true", 0);

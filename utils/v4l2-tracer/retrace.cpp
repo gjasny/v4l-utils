@@ -309,9 +309,9 @@ struct v4l2_buffer *retrace_v4l2_buffer(json_object *ioctl_args)
 	return buf;
 }
 
-void retrace_vidioc_querybuf(int fd_retrace, json_object *ioctl_args_user)
+void retrace_vidioc_querybuf(int fd_retrace, json_object *ioctl_args)
 {
-	struct v4l2_buffer *buf = retrace_v4l2_buffer(ioctl_args_user);
+	struct v4l2_buffer *buf = retrace_v4l2_buffer(ioctl_args);
 
 	ioctl(fd_retrace, VIDIOC_QUERYBUF, buf);
 
@@ -346,9 +346,9 @@ void retrace_vidioc_querybuf(int fd_retrace, json_object *ioctl_args_user)
 	free(buf);
 }
 
-void retrace_vidioc_qbuf(int fd_retrace, json_object *ioctl_args_user)
+void retrace_vidioc_qbuf(int fd_retrace, json_object *ioctl_args)
 {
-	struct v4l2_buffer *ptr = retrace_v4l2_buffer(ioctl_args_user);
+	struct v4l2_buffer *ptr = retrace_v4l2_buffer(ioctl_args);
 
 	ioctl(fd_retrace, VIDIOC_QBUF, ptr);
 
@@ -371,9 +371,9 @@ void retrace_vidioc_qbuf(int fd_retrace, json_object *ioctl_args_user)
 	free(ptr);
 }
 
-void retrace_vidioc_dqbuf(int fd_retrace, json_object *ioctl_args_user)
+void retrace_vidioc_dqbuf(int fd_retrace, json_object *ioctl_args)
 {
-	struct v4l2_buffer *buf = retrace_v4l2_buffer(ioctl_args_user);
+	struct v4l2_buffer *buf = retrace_v4l2_buffer(ioctl_args);
 
 	const int poll_timeout_ms = 5000;
 	struct pollfd *pfds = (struct pollfd *) calloc(1, sizeof(struct pollfd));
@@ -411,9 +411,9 @@ void retrace_vidioc_dqbuf(int fd_retrace, json_object *ioctl_args_user)
 	free(buf);
 }
 
-void retrace_vidioc_prepare_buf(int fd_retrace, json_object *ioctl_args_user)
+void retrace_vidioc_prepare_buf(int fd_retrace, json_object *ioctl_args)
 {
-	struct v4l2_buffer *buf = retrace_v4l2_buffer(ioctl_args_user);
+	struct v4l2_buffer *buf = retrace_v4l2_buffer(ioctl_args);
 
 	ioctl(fd_retrace, VIDIOC_PREPARE_BUF, buf);
 
@@ -447,9 +447,9 @@ void retrace_vidioc_create_bufs(int fd_retrace, json_object *ioctl_args)
 	free(ptr);
 }
 
-void retrace_vidioc_expbuf(int fd_retrace, json_object *ioctl_args_user, json_object *ioctl_args_driver)
+void retrace_vidioc_expbuf(int fd_retrace, json_object *ioctl_args)
 {
-	struct v4l2_exportbuffer *ptr = retrace_v4l2_exportbuffer_gen(ioctl_args_user);
+	struct v4l2_exportbuffer *ptr = retrace_v4l2_exportbuffer_gen(ioctl_args);
 	ioctl(fd_retrace, VIDIOC_EXPBUF, ptr);
 
 	int buf_fd_retrace = ptr->fd;
@@ -466,7 +466,7 @@ void retrace_vidioc_expbuf(int fd_retrace, json_object *ioctl_args_user, json_ob
 
 	/* Retrace again to associate the original fd with the current buffer fd. */
 	memset(ptr, 0, sizeof(v4l2_exportbuffer));
-	ptr = retrace_v4l2_exportbuffer_gen(ioctl_args_driver);
+	ptr = retrace_v4l2_exportbuffer_gen(ioctl_args);
 	int buf_fd_trace = ptr->fd;
 	add_fd(buf_fd_trace, buf_fd_retrace);
 
@@ -528,9 +528,9 @@ void retrace_vidioc_g_fmt(int fd_retrace, json_object *ioctl_args)
 	free(ptr);
 }
 
-void retrace_vidioc_s_fmt(int fd_retrace, json_object *ioctl_args_user)
+void retrace_vidioc_s_fmt(int fd_retrace, json_object *ioctl_args)
 {
-	struct v4l2_format *ptr = retrace_v4l2_format_gen(ioctl_args_user);
+	struct v4l2_format *ptr = retrace_v4l2_format_gen(ioctl_args);
 
 	ioctl(fd_retrace, VIDIOC_S_FMT, ptr);
 
@@ -1265,129 +1265,128 @@ void retrace_ioctl(json_object *syscall_obj)
 		return;
 	}
 
-	json_object *ioctl_args_user;
-	json_object_object_get_ex(syscall_obj, "from_userspace", &ioctl_args_user);
-
-	json_object *ioctl_args_driver;
-	json_object_object_get_ex(syscall_obj, "from_driver", &ioctl_args_driver);
+	/* If available, use the ioctl arguments from userspace, otherwise use the driver arguments. */
+	json_object *ioctl_args;
+	if (json_object_object_get_ex(syscall_obj, "from_userspace", &ioctl_args) == false)
+		json_object_object_get_ex(syscall_obj, "from_driver", &ioctl_args);
 
 	switch (cmd) {
 	case VIDIOC_QUERYCAP:
-		retrace_vidioc_querycap(fd_retrace, ioctl_args_user);
+		retrace_vidioc_querycap(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_ENUM_FMT:
-		retrace_vidioc_enum_fmt(fd_retrace, ioctl_args_user);
+		retrace_vidioc_enum_fmt(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_TRY_FMT:
-		retrace_vidioc_try_fmt(fd_retrace, ioctl_args_user);
+		retrace_vidioc_try_fmt(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_G_FMT:
-		retrace_vidioc_g_fmt(fd_retrace, ioctl_args_user);
+		retrace_vidioc_g_fmt(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_S_FMT:
-		retrace_vidioc_s_fmt(fd_retrace, ioctl_args_user);
+		retrace_vidioc_s_fmt(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_REQBUFS:
-		retrace_vidioc_reqbufs(fd_retrace, ioctl_args_user);
+		retrace_vidioc_reqbufs(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_QUERYBUF:
-		retrace_vidioc_querybuf(fd_retrace, ioctl_args_user);
+		retrace_vidioc_querybuf(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_QBUF:
-		retrace_vidioc_qbuf(fd_retrace, ioctl_args_user);
+		retrace_vidioc_qbuf(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_EXPBUF:
-		retrace_vidioc_expbuf(fd_retrace, ioctl_args_user, ioctl_args_driver);
+		retrace_vidioc_expbuf(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_DQBUF:
-		retrace_vidioc_dqbuf(fd_retrace, ioctl_args_user);
+		retrace_vidioc_dqbuf(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_STREAMON:
-		retrace_vidioc_streamon(fd_retrace, ioctl_args_user);
+		retrace_vidioc_streamon(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_STREAMOFF:
-		retrace_vidioc_streamoff(fd_retrace, ioctl_args_user);
+		retrace_vidioc_streamoff(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_G_PARM:
-		retrace_vidioc_g_parm(fd_retrace, ioctl_args_user);
+		retrace_vidioc_g_parm(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_S_PARM:
-		retrace_vidioc_s_parm(fd_retrace, ioctl_args_user);
+		retrace_vidioc_s_parm(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_ENUMINPUT:
-		retrace_vidioc_enuminput(fd_retrace, ioctl_args_user);
+		retrace_vidioc_enuminput(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_G_CTRL:
-		retrace_vidioc_g_control(fd_retrace, ioctl_args_user);
+		retrace_vidioc_g_control(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_S_CTRL:
-		retrace_vidioc_s_control(fd_retrace, ioctl_args_user);
+		retrace_vidioc_s_control(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_G_TUNER:
-		retrace_vidioc_g_tuner(fd_retrace, ioctl_args_user);
+		retrace_vidioc_g_tuner(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_S_TUNER:
-		retrace_vidioc_s_tuner(fd_retrace, ioctl_args_user);
+		retrace_vidioc_s_tuner(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_QUERYCTRL:
-		retrace_vidioc_queryctrl(fd_retrace, ioctl_args_user);
+		retrace_vidioc_queryctrl(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_G_INPUT:
-		retrace_vidioc_g_input(fd_retrace, ioctl_args_user);
+		retrace_vidioc_g_input(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_S_INPUT:
-		retrace_vidioc_s_input(fd_retrace, ioctl_args_user);
+		retrace_vidioc_s_input(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_G_OUTPUT:
-		retrace_vidioc_g_output(fd_retrace, ioctl_args_user);
+		retrace_vidioc_g_output(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_S_OUTPUT:
-		retrace_vidioc_s_output(fd_retrace, ioctl_args_user);
+		retrace_vidioc_s_output(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_ENUMOUTPUT:
-		retrace_vidioc_enumoutput(fd_retrace, ioctl_args_user);
+		retrace_vidioc_enumoutput(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_G_CROP:
-		retrace_vidioc_g_crop(fd_retrace, ioctl_args_user);
+		retrace_vidioc_g_crop(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_S_CROP:
-		retrace_vidioc_s_crop(fd_retrace, ioctl_args_user);
+		retrace_vidioc_s_crop(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_G_EXT_CTRLS:
-		retrace_vidioc_g_ext_ctrls(fd_retrace, ioctl_args_user);
+		retrace_vidioc_g_ext_ctrls(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_TRY_EXT_CTRLS:
-		retrace_vidioc_try_ext_ctrls(fd_retrace, ioctl_args_user);
+		retrace_vidioc_try_ext_ctrls(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_S_EXT_CTRLS:
-		retrace_vidioc_s_ext_ctrls(fd_retrace, ioctl_args_user);
+		retrace_vidioc_s_ext_ctrls(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_ENUM_FRAMESIZES:
-		retrace_vidioc_enum_framesizes(fd_retrace, ioctl_args_user);
+		retrace_vidioc_enum_framesizes(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_ENUM_FRAMEINTERVALS:
-		retrace_vidioc_enum_frameintervals(fd_retrace, ioctl_args_user);
+		retrace_vidioc_enum_frameintervals(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_TRY_ENCODER_CMD:
-		retrace_vidioc_try_encoder_cmd(fd_retrace, ioctl_args_user);
+		retrace_vidioc_try_encoder_cmd(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_ENCODER_CMD:
-		retrace_vidioc_encoder_cmd(fd_retrace, ioctl_args_user);
+		retrace_vidioc_encoder_cmd(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_CREATE_BUFS:
-		retrace_vidioc_create_bufs(fd_retrace, ioctl_args_user);
+		retrace_vidioc_create_bufs(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_G_SELECTION:
-		retrace_vidioc_g_selection(fd_retrace, ioctl_args_user);
+		retrace_vidioc_g_selection(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_S_SELECTION:
-		retrace_vidioc_s_selection(fd_retrace, ioctl_args_user);
+		retrace_vidioc_s_selection(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_PREPARE_BUF:
-		retrace_vidioc_prepare_buf(fd_retrace, ioctl_args_user);
+		retrace_vidioc_prepare_buf(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_TRY_DECODER_CMD:
-		retrace_vidioc_try_decoder_cmd(fd_retrace, ioctl_args_user);
+		retrace_vidioc_try_decoder_cmd(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_DQEVENT:
 		/* Don't retrace a timed-out DQEVENT */
@@ -1396,19 +1395,19 @@ void retrace_ioctl(json_object *syscall_obj)
 		retrace_vidioc_dqevent(fd_retrace);
 		break;
 	case VIDIOC_SUBSCRIBE_EVENT:
-		retrace_vidioc_subscribe_event(fd_retrace, ioctl_args_user);
+		retrace_vidioc_subscribe_event(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_UNSUBSCRIBE_EVENT:
-		retrace_vidioc_unsubscribe(fd_retrace, ioctl_args_user);
+		retrace_vidioc_unsubscribe(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_DECODER_CMD:
-		retrace_vidioc_decoder_cmd(fd_retrace, ioctl_args_user);
+		retrace_vidioc_decoder_cmd(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_QUERY_EXT_CTRL:
-		retrace_vidioc_query_ext_ctrl(fd_retrace, ioctl_args_user);
+		retrace_vidioc_query_ext_ctrl(fd_retrace, ioctl_args);
 		break;
 	case MEDIA_IOC_REQUEST_ALLOC:
-		retrace_media_ioc_request_alloc(fd_retrace, ioctl_args_driver);
+		retrace_media_ioc_request_alloc(fd_retrace, ioctl_args);
 		break;
 	case MEDIA_REQUEST_IOC_QUEUE:
 		ioctl(fd_retrace, MEDIA_REQUEST_IOC_QUEUE);

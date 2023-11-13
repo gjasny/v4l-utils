@@ -37,6 +37,7 @@ void print_usage(void)
 	        "\t\t-g, --debug       Turn on verbose reporting plus additional debug info.\n"
 	        "\t\t-h, --help        Display this message.\n"
 	        "\t\t-r  --raw         Write decoded video frame data to JSON file.\n"
+	        "\t\t-u  --userspace   Trace userspace arguments.\n"
 	        "\t\t-v, --verbose     Turn on verbose reporting.\n"
 	        "\t\t-y, --yuv         Write decoded video frame data to yuv file.\n\n"
 

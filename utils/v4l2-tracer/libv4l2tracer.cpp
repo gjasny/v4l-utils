@@ -270,8 +270,13 @@ int ioctl(int fd, unsigned long cmd, ...)
 	if (cmd == VIDIOC_STREAMOFF)
 		streamoff_cleanup(*(static_cast<v4l2_buf_type*>(arg)));
 
-	/* Trace userspace arguments if driver will be reading them i.e. _IOW or _IOWR ioctls */
-	if ((cmd & IOC_IN) != 0U) {
+	/*
+	 * To avoid cluttering the trace file, only trace userspace arguments when necessary
+	 * or if the option to trace them is selected.
+	 */
+	if (((cmd & IOC_INOUT) == IOC_IN) ||
+		(getenv("V4L2_TRACER_OPTION_TRACE_USERSPACE_ARG") != nullptr) ||
+		(cmd == VIDIOC_QBUF)) {
 		json_object *ioctl_args_userspace = trace_ioctl_args(cmd, arg);
 		/* Some ioctls won't have arguments to trace e.g. MEDIA_REQUEST_IOC_QUEUE. */
 		if (json_object_object_length(ioctl_args_userspace))
