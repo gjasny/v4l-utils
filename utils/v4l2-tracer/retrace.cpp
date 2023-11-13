@@ -336,7 +336,8 @@ void retrace_vidioc_querybuf(int fd_retrace, json_object *ioctl_args_user)
 
 	if (is_verbose() || (errno != 0)) {
 		fprintf(stderr, "%s, index: %d, fd: %d, ",
-		        buftype2s((int) buf->type).c_str(), buf->index, fd_retrace);
+			val2s(buf->type, v4l2_buf_type_val_def).c_str(),
+			buf->index, fd_retrace);
 		perror("VIDIOC_QUERYBUF");
 		debug_line_info();
 		print_context();
@@ -360,7 +361,8 @@ void retrace_vidioc_qbuf(int fd_retrace, json_object *ioctl_args_user)
 
 	if (is_verbose() || (errno != 0)) {
 		fprintf(stderr, "%s, index: %d, fd: %d, ",
-		        buftype2s((int) ptr->type).c_str(), ptr->index, fd_retrace);
+		        val2s(ptr->type, v4l2_buf_type_val_def).c_str(),
+		        ptr->index, fd_retrace);
 		perror("VIDIOC_QBUF");
 		debug_line_info();
 		print_context();
@@ -395,7 +397,8 @@ void retrace_vidioc_dqbuf(int fd_retrace, json_object *ioctl_args_user)
 
 	if (is_verbose() || (errno != 0)) {
 		fprintf(stderr, "%s, index: %d, fd: %d, ",
-		        buftype2s((int) buf->type).c_str(), buf->index, fd_retrace);
+		        val2s(buf->type, v4l2_buf_type_val_def).c_str(),
+		        buf->index, fd_retrace);
 		perror("VIDIOC_DQBUF");
 		debug_line_info();
 		print_context();
@@ -416,7 +419,8 @@ void retrace_vidioc_prepare_buf(int fd_retrace, json_object *ioctl_args_user)
 
 	if (is_verbose() || (errno != 0)) {
 		fprintf(stderr, "%s, index: %d, fd: %d, ",
-		        buftype2s((int) buf->type).c_str(), buf->index, fd_retrace);
+		        val2s(buf->type, v4l2_buf_type_val_def).c_str(),
+		        buf->index, fd_retrace);
 		perror("VIDIOC_PREPARE_BUF");
 		debug_line_info();
 		print_context();
@@ -482,7 +486,7 @@ void retrace_vidioc_streamon(int fd_retrace, json_object *ioctl_args)
 	ioctl(fd_retrace, VIDIOC_STREAMON, &buf_type);
 
 	if (is_verbose() || (errno != 0)) {
-		fprintf(stderr, "%s, ", buftype2s(buf_type).c_str());
+		fprintf(stderr, "%s, ", val2s(buf_type, v4l2_buf_type_val_def).c_str());
 		perror("VIDIOC_STREAMON");
 	}
 }
@@ -497,7 +501,7 @@ void retrace_vidioc_streamoff(int fd_retrace, json_object *ioctl_args)
 	ioctl(fd_retrace, VIDIOC_STREAMOFF, &buf_type);
 
 	if (is_verbose() || (errno != 0)) {
-		fprintf(stderr, "%s, ", buftype2s(buf_type).c_str());
+		fprintf(stderr, "%s, ", val2s(buf_type, v4l2_buf_type_val_def).c_str());
 		perror("VIDIOC_STREAMOFF");
 	}
 }
@@ -1451,7 +1455,8 @@ void retrace_mem(json_object *mem_obj)
 		write_to_output_buffer(buffer_pointer, bytesused, mem_obj);
 
 	debug_line_info("\n\t%s, bytesused: %d, offset: %d, addr: %ld",
-	                buftype2s(type).c_str(), bytesused, offset, buffer_address_retrace);
+			val2s(type, v4l2_buf_type_val_def).c_str(),
+			bytesused, offset, buffer_address_retrace);
 	print_context();
 }
 

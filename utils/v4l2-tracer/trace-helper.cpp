@@ -228,7 +228,7 @@ void print_buffers_trace(void)
 		return;
 	for (auto &b : ctx_trace.buffers) {
 		fprintf(stderr, "fd: %d, %s, index: %d, display_order: %ld, bytesused: %d, ",
-		        b.fd, buftype2s(b.type).c_str(), b.index, b.display_order, b.bytesused);
+		        b.fd, val2s(b.type, v4l2_buf_type_val_def).c_str(), b.index, b.display_order, b.bytesused);
 		fprintf(stderr, "address: %lu, offset: %u \n",  b.address, b.offset);
 	}
 }
@@ -320,7 +320,7 @@ void s_ext_ctrls_setup(struct v4l2_ext_controls *ext_controls)
 
 void qbuf_setup(struct v4l2_buffer *buf)
 {
-	debug_line_info("\n\t%s, index: %d", buftype2s((int) buf->type).c_str(), buf->index);
+	debug_line_info("\n\t%s, index: %d", val2s(buf->type, v4l2_buf_type_val_def).c_str(), buf->index);
 
 	int buf_fd = get_buffer_fd_trace(buf->type, buf->index);
 	__u32 buf_offset = get_buffer_offset_trace(buf->type, buf->index);
@@ -361,7 +361,7 @@ void streamoff_cleanup(v4l2_buf_type buf_type)
 {
 	debug_line_info();
 	if (is_verbose() || (getenv("V4L2_TRACER_OPTION_WRITE_DECODED_TO_YUV_FILE") != nullptr)) {
-		fprintf(stderr, "VIDIOC_STREAMOFF: %s\n", buftype2s(buf_type).c_str());
+		fprintf(stderr, "VIDIOC_STREAMOFF: %s\n", val2s(buf_type, v4l2_buf_type_val_def).c_str());
 		fprintf(stderr, "%s, %s %s, width: %d, height: %d\n",
 		        val2s(ctx_trace.compression_format, v4l2_pix_fmt_val_def).c_str(),
 		        val2s(ctx_trace.pixelformat, v4l2_pix_fmt_val_def).c_str(),

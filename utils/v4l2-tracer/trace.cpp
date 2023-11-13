@@ -181,8 +181,8 @@ void trace_mem_decoded(void)
 			 */
 			if (it->bytesused < expected_length)
 				break;
-			debug_line_info("\n\tDisplaying: %ld, %s, index: %d",
-			                it->display_order, buftype2s(it->type).c_str(), it->index);
+			debug_line_info("\n\tDisplaying: %ld, %s, index: %d", it->display_order,
+					val2s(it->type, v4l2_buf_type_val_def).c_str(), it->index);
 			displayed_count++;
 
 			if (getenv("V4L2_TRACER_OPTION_WRITE_DECODED_TO_YUV_FILE") != nullptr) {
