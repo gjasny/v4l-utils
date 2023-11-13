@@ -324,12 +324,13 @@ void qbuf_setup(struct v4l2_buffer *buf)
 	__u32 buf_offset = get_buffer_offset_trace(buf->type, buf->index);
 
 	__u32 bytesused = 0;
-	if (buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE ||
-	    buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
+	if (buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE)
 		bytesused = buf->m.planes[0].bytesused;
-	if (buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT || buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+	else if (buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT)
 		bytesused = buf->bytesused;
-	set_buffer_bytesused_trace(buf_fd, buf_offset, bytesused);
+	if (buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE ||
+	    buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT)
+		set_buffer_bytesused_trace(buf_fd, buf_offset, bytesused);
 
 	/* The output buffer should have compressed data just before it is queued, so trace it. */
 	if (buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE ||
@@ -354,6 +355,24 @@ void qbuf_setup(struct v4l2_buffer *buf)
 		print_decode_order();
 		print_buffers_trace();
 	}
+}
+
+void dqbuf_setup(struct v4l2_buffer *buf)
+{
+	debug_line_info("\n\t%s, index: %d", val2s(buf->type, v4l2_buf_type_val_def).c_str(), buf->index);
+
+	int buf_fd = get_buffer_fd_trace(buf->type, buf->index);
+	__u32 buf_offset = get_buffer_offset_trace(buf->type, buf->index);
+
+	__u32 bytesused = 0;
+	if (buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
+		bytesused = buf->m.planes[0].bytesused;
+	else if (buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		bytesused = buf->bytesused;
+
+	if (buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
+	    buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		set_buffer_bytesused_trace(buf_fd, buf_offset, bytesused);
 }
 
 void streamoff_cleanup(v4l2_buf_type buf_type)

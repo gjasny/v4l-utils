@@ -62,6 +62,7 @@ bool buffer_is_mapped(unsigned long buffer_address);
 unsigned get_expected_length_trace(void);
 void s_ext_ctrls_setup(struct v4l2_ext_controls *ext_controls);
 void qbuf_setup(struct v4l2_buffer *buf);
+void dqbuf_setup(struct v4l2_buffer *buf);
 void streamoff_cleanup(v4l2_buf_type buf_type);
 void g_fmt_setup_trace(struct v4l2_format *format);
 void s_fmt_setup(struct v4l2_format *format);

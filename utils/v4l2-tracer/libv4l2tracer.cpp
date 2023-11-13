@@ -308,6 +308,8 @@ int ioctl(int fd, unsigned long cmd, ...)
 		expbuf_setup(static_cast<struct v4l2_exportbuffer*>(arg));
 	if (cmd == VIDIOC_QUERYBUF)
 		querybuf_setup(fd, static_cast<struct v4l2_buffer*>(arg));
+	if (cmd == VIDIOC_DQBUF)
+		dqbuf_setup(static_cast<struct v4l2_buffer*>(arg));
 
 	/* Get info needed for tracing dynamic arrays */
 	if (cmd == VIDIOC_QUERY_EXT_CTRL)
