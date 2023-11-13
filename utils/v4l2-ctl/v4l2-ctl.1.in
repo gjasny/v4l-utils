@@ -36,6 +36,9 @@ Prints the help message.
 Prints the help message for all options that get/set/list inputs and outputs, both
 video and audio.
 .TP
+\fB\-\-help\-meta\fR
+Prints the help message for all options that get/set/list metadata formats.
+.TP
 \fB\-\-help\-misc\fR
 Prints the help message for miscellaneous options.
 .TP
