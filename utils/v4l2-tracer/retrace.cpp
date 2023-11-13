@@ -1064,8 +1064,7 @@ struct v4l2_decoder_cmd *retrace_v4l2_decoder_cmd(json_object *parent_obj)
 
 	switch (ptr->cmd) {
 	case V4L2_DEC_CMD_START: {
-		if (flags == "V4L2_DEC_CMD_START_MUTE_AUDIO")
-			ptr->flags = V4L2_DEC_CMD_START_MUTE_AUDIO;
+		ptr->flags = s2flags(flags.c_str(), v4l2_decoder_cmd_start_flag_def);
 
 		json_object *start_obj;
 		json_object_object_get_ex(v4l2_decoder_cmd_obj, "start", &start_obj);
@@ -1087,10 +1086,7 @@ struct v4l2_decoder_cmd *retrace_v4l2_decoder_cmd(json_object *parent_obj)
 		break;
 	}
 	case V4L2_DEC_CMD_STOP: {
-		if (flags == "V4L2_DEC_CMD_STOP_TO_BLACK")
-			ptr->flags = V4L2_DEC_CMD_STOP_TO_BLACK;
-		else if (flags == "V4L2_DEC_CMD_STOP_IMMEDIATELY")
-			ptr->flags = V4L2_DEC_CMD_STOP_IMMEDIATELY;
+		ptr->flags = s2flags(flags.c_str(), v4l2_decoder_cmd_stop_flag_def);
 
 		json_object *stop_obj;
 		json_object_object_get_ex(v4l2_decoder_cmd_obj, "stop", &stop_obj);
@@ -1101,8 +1097,7 @@ struct v4l2_decoder_cmd *retrace_v4l2_decoder_cmd(json_object *parent_obj)
 		break;
 	}
 	case V4L2_DEC_CMD_PAUSE: {
-		if (flags == "V4L2_DEC_CMD_PAUSE_TO_BLACK")
-			ptr->flags = V4L2_DEC_CMD_PAUSE_TO_BLACK;
+		ptr->flags = s2flags(flags.c_str(), v4l2_decoder_cmd_pause_flag_def);
 		break;
 	}
 	default:
@@ -1542,7 +1537,9 @@ int retrace(std::string trace_filename)
 	json_object *root_array_obj = json_object_from_file(trace_filename.c_str());
 
 	if (root_array_obj == nullptr) {
-		line_info("\n\tCan't get JSON-object from file: %s", trace_filename.c_str());
+		line_info("\n\t%s\tCan't get JSON-object from file: %s",
+			  json_util_get_last_err(),
+			  trace_filename.c_str());
 		return 1;
 	}
 

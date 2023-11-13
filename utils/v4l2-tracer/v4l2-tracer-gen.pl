@@ -123,6 +123,12 @@ sub val_def_gen {
 	}
 	($val) = ($_) =~ /^#define\s*(\w+)\s*/;
 	printf $fh_common_info_h "\t{ %s,\t\"%s\" },\n", $val, $val;
+
+	# in case there is only one value e.g. flags for V4L2_DEC_CMD_START
+	if ($val eq $last_val) {
+		printf $fh_common_info_h "\t{ $sentinel, \"\" }\n};\n\n";
+		return;
+	}
 	while (<>) {
 		next if ($_ =~ /^\s*\/?\s?\*.*/); # skip comments
 		next if ($_ =~ /^\s*$/);  # skip blank lines
@@ -998,6 +1004,21 @@ while (<>) {
 	if (grep {/^#define V4L2_DEC_CMD_START\s+/} $_) {
 		printf $fh_common_info_h "constexpr val_def decoder_cmd_val_def[] = {\n";
 		val_def_gen("V4L2_DEC_CMD_FLUSH");
+		next;
+	}
+	if (grep {/^#define V4L2_DEC_CMD_START_MUTE_AUDIO\s+/} $_) {
+		printf $fh_common_info_h "constexpr flag_def v4l2_decoder_cmd_start_flag_def[] = {\n";
+		flag_def_gen("V4L2_DEC_CMD_START_MUTE_AUDIO");
+		next;
+	}
+	if (grep {/^#define V4L2_DEC_CMD_PAUSE_TO_BLACK\s+/} $_) {
+		printf $fh_common_info_h "constexpr flag_def v4l2_decoder_cmd_pause_flag_def[] = {\n";
+		flag_def_gen("V4L2_DEC_CMD_PAUSE_TO_BLACK");
+		next;
+	}
+	if (grep {/^#define V4L2_DEC_CMD_STOP_TO_BLACK\s+/} $_) {
+		printf $fh_common_info_h "constexpr flag_def v4l2_decoder_cmd_stop_flag_def[] = {\n";
+		flag_def_gen("V4L2_DEC_CMD_STOP_IMMEDIATELY");
 		next;
 	}
 	if (grep {/^#define V4L2_EVENT_ALL\s+/} $_) {

@@ -466,10 +466,7 @@ void trace_v4l2_decoder_cmd(void *arg, json_object *ioctl_args)
 
 	switch (ptr->cmd) {
 	case V4L2_DEC_CMD_START: {
-		/*  This command has one flag: V4L2_DEC_CMD_START_MUTE_AUDIO. */
-		if (ptr->flags == V4L2_DEC_CMD_START_MUTE_AUDIO)
-			flags = "V4L2_DEC_CMD_START_MUTE_AUDIO";
-
+		flags = fl2s(ptr->flags, v4l2_decoder_cmd_start_flag_def);
 		/* struct start */
 		json_object *start_obj = json_object_new_object();
 		json_object_object_add(start_obj, "speed", json_object_new_int(ptr->start.speed));
@@ -486,12 +483,7 @@ void trace_v4l2_decoder_cmd(void *arg, json_object *ioctl_args)
 		break;
 	}
 	case V4L2_DEC_CMD_STOP: {
-		/*  This command has two flags */
-		if (ptr->flags == V4L2_DEC_CMD_STOP_TO_BLACK)
-			flags = "V4L2_DEC_CMD_STOP_TO_BLACK";
-		else if (ptr->flags == V4L2_DEC_CMD_STOP_IMMEDIATELY)
-			flags = "V4L2_DEC_CMD_STOP_IMMEDIATELY";
-
+		flags = fl2s(ptr->flags, v4l2_decoder_cmd_stop_flag_def);
 		json_object *stop_obj = json_object_new_object();
 		json_object_object_add(stop_obj, "pts", json_object_new_uint64(ptr->stop.pts));
 
@@ -500,8 +492,7 @@ void trace_v4l2_decoder_cmd(void *arg, json_object *ioctl_args)
 	}
 
 	case V4L2_DEC_CMD_PAUSE: {
-		if (ptr->flags == V4L2_DEC_CMD_PAUSE_TO_BLACK)
-			flags = "V4L2_DEC_CMD_PAUSE_TO_BLACK";
+		flags = fl2s(ptr->flags, v4l2_decoder_cmd_pause_flag_def);
 		break;
 	}
 	case V4L2_DEC_CMD_RESUME:
