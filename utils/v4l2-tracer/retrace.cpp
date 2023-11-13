@@ -1246,7 +1246,6 @@ void retrace_ioctl(json_object *syscall_obj)
 {
 	__s64 cmd = 0;
 	int fd_retrace = 0;
-	bool ioctl_error = false;
 
 	json_object *fd_trace_obj;
 	json_object_object_get_ex(syscall_obj, "fd", &fd_trace_obj);
@@ -1258,7 +1257,7 @@ void retrace_ioctl(json_object *syscall_obj)
 
 	json_object *errno_obj;
 	if (json_object_object_get_ex(syscall_obj, "errno", &errno_obj))
-		ioctl_error = true;
+		return;
 
 	if (fd_retrace < 0) {
 		line_info("\n\tBad file descriptor on %s\n", json_object_get_string(cmd_obj));
@@ -1389,9 +1388,6 @@ void retrace_ioctl(json_object *syscall_obj)
 		retrace_vidioc_try_decoder_cmd(fd_retrace, ioctl_args);
 		break;
 	case VIDIOC_DQEVENT:
-		/* Don't retrace a timed-out DQEVENT */
-		if (ioctl_error)
-			break;
 		retrace_vidioc_dqevent(fd_retrace);
 		break;
 	case VIDIOC_SUBSCRIBE_EVENT:
