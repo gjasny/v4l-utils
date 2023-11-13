@@ -36,7 +36,6 @@ struct trace_context {
 		struct h264_info h264;
 	} fmt;
 	std::string trace_filename;
-	int compressed_frame_count;
 	std::list<long> decode_order;
 	std::list<struct buffer_trace> buffers;
 	std::unordered_map<int, std::string> devices; /* key:fd, value: path of the device */

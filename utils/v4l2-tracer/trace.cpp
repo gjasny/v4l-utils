@@ -204,7 +204,6 @@ void trace_mem_decoded(void)
 		if (!it->address || it == ctx_trace.buffers.end() || it->bytesused < expected_length)
 			break;
 	}
-	ctx_trace.compressed_frame_count = ctx_trace.compressed_frame_count - displayed_count;
 }
 
 json_object *trace_v4l2_plane(struct v4l2_plane *ptr, __u32 memory)

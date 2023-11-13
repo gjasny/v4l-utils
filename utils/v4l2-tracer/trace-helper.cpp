@@ -288,10 +288,8 @@ void s_ext_ctrls_setup(struct v4l2_ext_controls *ext_controls)
 			 * received to avoid losing frames although this will still sometimes result
 			 * in frames out of order.
 			 */
-			if ((ctrl.p_h264_decode_params->flags & V4L2_H264_DECODE_PARAM_FLAG_IDR_PIC) != 0U) {
-				if (ctx_trace.compressed_frame_count != 0)
-					trace_mem_decoded();
-			}
+			if ((ctrl.p_h264_decode_params->flags & V4L2_H264_DECODE_PARAM_FLAG_IDR_PIC) != 0U)
+				trace_mem_decoded();
 
 			/*
 			 * When pic_order_cnt_lsb wraps around to zero, adjust the total count using
@@ -337,15 +335,16 @@ void qbuf_setup(struct v4l2_buffer *buf)
 	if (buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE ||
 	    buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
 		trace_mem_encoded(buf_fd, buf_offset);
-		ctx_trace.compressed_frame_count = ctx_trace.compressed_frame_count + 1;
 	}
 
 	if (buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
 	    buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
-
-		/* If the capture buffer is queued for reuse, trace it before it is reused. */
-		if (ctx_trace.compressed_frame_count != 0)
-			trace_mem_decoded();
+		/*
+		 * If the capture buffer is queued for reuse, trace it before it is reused.
+		 * Capture buffers can't be traced using dqbuf because the buffer is mmapped
+		 * after the call to dqbuf.
+		 */
+		trace_mem_decoded();
 
 		/* H264 sets display order in controls, otherwise display just in the order queued. */
 		if (ctx_trace.compression_format != V4L2_PIX_FMT_H264_SLICE)
@@ -373,10 +372,8 @@ void streamoff_cleanup(v4l2_buf_type buf_type)
 	 * because they were not queued for reuse.
 	 */
 	if (buf_type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
-	    buf_type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
-		if (ctx_trace.compressed_frame_count != 0)
-			trace_mem_decoded();
-	}
+	    buf_type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		trace_mem_decoded();
 }
 
 void g_fmt_setup_trace(struct v4l2_format *format)
