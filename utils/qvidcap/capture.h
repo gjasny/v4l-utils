@@ -16,7 +16,11 @@
 #include <QAction>
 #include <QActionGroup>
 #include <QScrollArea>
+#if QT_VERSION < 0x060000
 #include <QtGui/QOpenGLShaderProgram>
+#else
+#include <QOpenGLShaderProgram>
+#endif
 
 #include "qvidcap.h"
 

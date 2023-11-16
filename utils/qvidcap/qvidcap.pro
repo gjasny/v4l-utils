@@ -7,6 +7,7 @@ INCLUDEPATH += . ../libv4l2util ../../lib/include ../../include
 CONFIG += debug
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 5): QT += openglwidgets
 
 # adjust to your local meson build path
 MESON_BUILD_PATH = $$PWD/build-meson

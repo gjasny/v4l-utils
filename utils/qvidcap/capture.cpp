@@ -13,7 +13,11 @@
 #include <QtCore/QTextStream>
 #include <QtCore/QCoreApplication>
 #include <QtGui/QOpenGLContext>
+#if QT_VERSION < 0x060000
 #include <QtGui/QOpenGLPaintDevice>
+#else
+#include <QOpenGLPaintDevice>
+#endif
 #include <QtGui/QContextMenuEvent>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QPainter>
