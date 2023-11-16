@@ -401,7 +401,11 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 {
 	closeDevice();
 	m_sigMapper = new QSignalMapper(this);
+#if QT_VERSION < 0x060000
 	connect(m_sigMapper, SIGNAL(mapped(int)), this, SLOT(ctrlAction(int)));
+#else
+	connect(m_sigMapper, &QSignalMapper::mappedInt, this, &ApplicationWindow::ctrlAction);
+#endif
 
 	s_direct(rawOpen);
 

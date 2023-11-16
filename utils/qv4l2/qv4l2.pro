@@ -8,6 +8,9 @@ CONFIG += debug
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 greaterThan(QT_MAJOR_VERSION, 5): QT += core5compat
+# opengl: to disable opengl suppport on Qt6 comment out the
+# following line
+greaterThan(QT_MAJOR_VERSION, 5): QT += openglwidgets
 
 # adjust to your local meson build path
 MESON_BUILD_PATH = $$PWD/build-meson

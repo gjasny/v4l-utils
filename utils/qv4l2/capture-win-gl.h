@@ -10,10 +10,17 @@
 #define GL_GLEXT_PROTOTYPES
 #define QT_NO_OPENGL_ES_2
 
+#include <QtCore>
+#if QT_VERSION < 0x060000
 #include <QGLWidget>
 #include <QGLShader>
 #include <QGLShaderProgram>
 #include <QGLFunctions>
+#else
+#include <QOpenGLWidget>
+#include <QOpenGLFunctions>
+#include <QOpenGLShaderProgram>
+#endif
 #endif
 
 #include "qv4l2.h"
@@ -26,7 +33,11 @@
 // This must be equal to the max number of textures that any shader uses
 #define MAX_TEXTURES_NEEDED 3
 
+#if QT_VERSION < 0x060000
 class CaptureWinGLEngine : public QGLWidget
+#else
+class CaptureWinGLEngine : public QOpenGLWidget, protected QOpenGLFunctions
+#endif
 {
 public:
 	CaptureWinGLEngine();
@@ -102,11 +113,17 @@ private:
 	bool m_formatChange;
 	__u32 m_frameFormat;
 	GLuint m_screenTexture[MAX_TEXTURES_NEEDED];
+#if QT_VERSION < 0x060000
 	QGLFunctions m_glfunction;
+#endif
 	unsigned char *m_frameData;
 	unsigned char *m_frameData2;
 	unsigned char *m_frameData3;
+#if QT_VERSION < 0x060000
 	QGLShaderProgram m_shaderProgram;
+#else
+	QOpenGLShaderProgram m_shaderProgram;
+#endif
 	bool m_haveFramebufferSRGB;
 	bool m_hasGLRed;
 	unsigned m_glRed;
