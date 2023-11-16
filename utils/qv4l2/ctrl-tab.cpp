@@ -704,7 +704,6 @@ void ApplicationWindow::refresh()
 void ApplicationWindow::setWhat(QWidget *w, unsigned id, const QString &v)
 {
 	const v4l2_query_ext_ctrl &qec = m_ctrlMap[id];
-	QString what;
 	QString flags = getCtrlFlags(qec.flags);
 
 	switch (qec.type) {
@@ -725,7 +724,6 @@ void ApplicationWindow::setWhat(QWidget *w, unsigned id, const QString &v)
 void ApplicationWindow::setWhat(QWidget *w, unsigned id, long long v)
 {
 	const v4l2_query_ext_ctrl &qec = m_ctrlMap[id];
-	QString what;
 	QString flags = getCtrlFlags(qec.flags);
 
 	switch (qec.type) {
