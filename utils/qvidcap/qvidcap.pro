@@ -25,6 +25,7 @@ INCLUDEPATH += $$PWD/../v4l2-compliance
 v4l2_convert_hook.depends = $$PWD/v4l2-convert.pl $$PWD/v4l2-convert.glsl
 v4l2_convert_hook.commands = perl $$PWD/v4l2-convert.pl < $$PWD/v4l2-convert.glsl > v4l2-convert.h
 QMAKE_EXTRA_TARGETS += v4l2_convert_hook
+PRE_TARGETDEPS += v4l2_convert_hook
 
 # Input
 HEADERS += capture.h
