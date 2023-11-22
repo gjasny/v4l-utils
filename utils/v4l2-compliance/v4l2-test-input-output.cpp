@@ -439,8 +439,11 @@ static int checkInput(struct node *node, const struct v4l2_input &descr, unsigne
 		return fail("non-zero reserved fields\n");
 	if (descr.status & ~0x07070337)
 		return fail("invalid status\n");
-	if (descr.status & 0x02060000)
-		return fail("use of deprecated digital video status\n");
+	// These bits were for Digital TV, but Digital TV uses the
+	// DVB API and no longer V4L2.
+	if (descr.status & (V4L2_IN_ST_NO_EQU | V4L2_IN_ST_NO_CARRIER |
+			    V4L2_IN_ST_NO_ACCESS))
+		return fail("use of deprecated Digital TV status bits\n");
 	if (descr.audioset & ~mask)
 		return fail("invalid audioset\n");
 	if (descr.tuner && descr.tuner >= node->tuners)
