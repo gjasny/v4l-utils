@@ -1786,6 +1786,8 @@ struct v4l2_ext_control {
 		struct v4l2_ctrl_av1_tile_group_entry *p_av1_tile_group_entry;
 		struct v4l2_ctrl_av1_frame *p_av1_frame;
 		struct v4l2_ctrl_av1_film_grain *p_av1_film_grain;
+		struct v4l2_ctrl_hdr10_cll_info *p_hdr10_cll_info;
+		struct v4l2_ctrl_hdr10_mastering_display *p_hdr10_mastering_display;
 		void *ptr;
 	};
 } __attribute__ ((packed));
