@@ -1,3 +1,167 @@
+v4l-utils-1.26.0
+----------------
+
+Ariel D'Alessandro (3):
+      Add support for meson building
+      Copy Doxygen configuration file to doc/
+      meson: Add support for doxygen documentation
+
+Benjamin Gaignard (1):
+      v4l2-compliance: Test queue maximum buffers allocation
+
+Daniel Lundberg Pedersen (1):
+      v4l2-ctl: Add --get/--set-ctrl support for INTEGER and INTEGER64 arrays
+
+Deborah Brouwer (18):
+      v4l2-tracer: print only if debugging option is set
+      v4l2-tracer: add macros to print debug info
+      v4l2-tracer: stop stringifying v4l2_input "tuner"
+      v4l2-tracer: add G/S TUNER ioctls
+      v4l2-tracer: add VIDIOC_ENUM_FRAMESIZES
+      v4l2-tracer: add VIDIOC_ENUM_FRAMEINTERVALS
+      v4l2-tracer: stringify target in v4l2_selection
+      v4l2-tracer: add event tracing/retracing
+      v4l2-compliance: call select before dequeuing event
+      v4l2-tracer: fix autogen script for AV1
+      v4l2-info/v4l2-tracer: add macro to mark the trace
+      v4l2-tracer: replace buftype2s with val2s
+      v4l2-tracer: remove buffers by type and index
+      v4l2-tracer: remove compress_frame_count
+      v4l2-tracer: get decoded bytesused from DQBUF
+      v4l2-tracer: create an option to trace userspace args
+      v4l2-tracer: stop retracing failed ioctls
+      v4l2-tracer: auto generate flags for DECODER_CMD
+
+Dikshita Agarwal (1):
+      v4l2-compliance: Add handling for QC08C and QC10C format
+
+Gregor Jasny (4):
+      buildsystem: Start v4l-utils 1.25.0 development cycle
+      build: conditionally retrieve Git repo information
+      build: do not fall back to libbpf header lookup
+      manpages: fix groff warnings
+
+Hans Verkuil (53):
+      v4l2-tracer: use __s64 instead of long
+      v4l2-ctl: improve --stream-sleep functionality
+      v4l2-ctl: reset fps counter when using --stream-sleep with streamoff/on
+      v4l2-ctl: support random sleep times
+      cec-ctl: store state changes in pin file
+      configure.ac: fix gconv directory search
+      v4l2-ctl: improve --stream-sleep
+      sync-with-kernel.sh: regenerate utils/keytable/rc_keymaps/meson.build
+      .gitignore: add back '*.pc' pattern
+      v4l-utils: sync with upstream media staging kernel.
+      gen_dvb_structs.pl: drop copy of dvb-frontend.h
+      cec-ctl.1.in: clarify that you configure *your* device
+      utils/libcecutil: drop spurious dep_libv4lconvert
+      cec-ctl: add --test-random-power-states stress test
+      cec/v4l2-compliance, cec-follower: use __FILE_NAME__ if available
+      v4l2-tracer: add quotes to -DLIBTRACER_PATH="@0@"
+      v4l2-ctl: show field value in print_concise_buffer()
+      cec-ctl: rename power-cycle to standby-wakeup-cycle
+      v4l-utils: sync with latest media staging tree
+      cec-ctl: always log timestamp in show_msg if not-OK
+      Update old email address
+      cec-compliance: get_power_status(): fix valid RX test
+      cec-compliance: get_power_status(): check cec_msg_status_is_abort
+      v4l-utils: libdvbv5: fix doxygen warnings
+      libcecutil: fix performance inefficiencies
+      lib/libdvbv5/dvb-file.c: check for valid entry pointer
+      media-ctl: 1 -> 1ULL
+      v4l2-ctl: add missing > in aspect option usage message
+      v4l2-ctl: fix handling the premul-alpha sub-option
+      v4l2-ctl: improve --silent support
+      cec-ctl: add hpd-may-be-low suboption for the CEC tests
+      cec-ctl.1.in: for hpd-may-be-low option: <0,1> -> <0/1>
+      test-media: cec-pwr enables cec variable as well
+      v4l2-ctl/compliance: add include cstdint
+      test-media: log utils versions
+      cec-follower: add --exclusive option
+      common/media-info: add MEDIA_ENT_F_PROC_VIDEO_ISP
+      common/media-info: fail for unknown entity function values
+      sync-with-kernel.sh: don't filter V4L2_PIX_FMT_HEVC_SLICE
+      v4l-utils: sync with latest kernel headers
+      v4l2-ctl: add support for AV1 stateless control types
+      v4l2-compliance: support V4L2_PIX_FMT_AV1_FRAME
+      v4l2-compliance: pass media_fd when walking topology
+      test-media: 'mc' argument didn't select vidtv
+      test-media: use -m instead of -M for vicodec and vidtv
+      README.md: drop qt5-default, add libsdl2-dev libbpf-dev llvm clang
+      v4l2-ctl: fix alignment meta formats usage message
+      v4l2-ctl.1.in: add missing --help-meta
+      v4l2-compliance: improve error message
+      v4l-utils: sync with latest kernel headers
+      v4l-utils: sync with latest kernel headers
+      v4l2-info.cpp: fix _SUPPORTS_MAX_NUM_BUFFERS description
+      v4l-utils: sync with latest kernel headers
+
+Jorge Maidana (1):
+      qv4l2: fix SDR format error message
+
+Laurent Pinchart (3):
+      Drop autoconf/automake support
+      meson: Fix libbpf detection
+      meson: Fix install location of doxygen's man pages
+
+Mauro Carvalho Chehab (4):
+      libdvbv5: dvb-scan: fix DVB-S2 checks for DVB-S tuning
+      meson.build: backport it to version 0.56
+      v4l-utils.spec.in: update it to work with meson
+      meson: make it backward-compatible with version 0.54
+
+Michael Tretter (1):
+      v4l2-compliance: Add gadget. as bus_info prefix
+
+Nicolas Dufresne (1):
+      v4l2-tracer: Fix libv4l2tracer.so loader
+
+Paul Kocialkowski (1):
+      v4l2-compliance: codecs: Add stateless (TRY_)DECODER_CMD tests
+
+Peter Seiderer (19):
+      meson: re-enable qv4l2 without Qt OpenGL support
+      qv4l2: remove leagcy alsa_stream.h include (ENABLE_ALSA protected)
+      qv4l2: fix qmake project file
+      qv4l2: update qmake project file for Qt6 (core5compat module)
+      qv4l2: fix Qt6 compile (QDesktopWidget: No such file or directory)
+      qv4l2: fix Qt6 compile (QHBoxLayout/QVBoxLayout has no member setMargin)
+      qv4l2: fix Qt6 compile (ambiguous overload for operator!=)
+      qv4l2: fix Qt6 compile (missing QActionGroup header)
+      qv4l2: fix Qt6 compile (no matching function for call to QString::split(QRegExp))
+      qv4l2: fix Qt6 warnings (QKeyCombination operator+ is deprecated)
+      qv4l2: fix Qt6 warning (QMenu::addAction() is deprecated)
+      qvidcap: fix qmake project file
+      v4l2-tracer: fix trace path name creation
+      v4l2-tracer: wrap open64/mmap64 functions only if linux && __GLIBC__
+      libv4l1/libv4l2/v4l2-tracer: use common meson c_args/cpp_args to disable transparent large file support
+      qv4l2: remove unused local variables 'QString what'
+      qv4l2: enable Qt6 compile with Qt OpenGL support
+      qvidcap: fix v4l2_convert_hook (add PRE_TARGETDEPS)
+      qvidcap: enable Qt6 compile with Qt OpenGL support
+
+Sakari Ailus (1):
+      utils: libv4l2subdev: Set stream for g_selection
+
+Sean Young (2):
+      keytable: open lirc for read/write for attaching/detaching bpf programs
+      ir-ctl: fix sharp encoding
+
+Tomi Valkeinen (9):
+      meson: Use -include to include config.h instead of -I.
+      v4l2-ctl: Improve sub-device options help text
+      v4l2-ctl: Add routing and streams support
+      media-ctl: Add support for routes and streams
+      v4l2-ctl/compliance: Add routing and streams multiplexed streams
+      v4l2-ctl/compliance: Add simple routing test
+      media-ctl: Check for Streams API support
+      utils/common: Set V4L2_SUBDEV_CLIENT_CAP_STREAMS for subdevs
+      v4l2-ctl: Check for Streams API support
+
+Vince Ricosti (1):
+      keytable: fix repeat formatting
+
+
 v4l-utils-1.24.0
 ----------------
 
