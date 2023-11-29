@@ -452,7 +452,7 @@ static uint32_t rds_decode_tmc_single_group(struct rds_private_state *priv_state
 	/* bits 0-10 of block 3 contain the event */
 	msg.event = ((grp->data_c_msb & 0x07) << 8) | grp->data_c_lsb;
 	/* bits 0-15 of block 4 contain the location */
-	msg.location = (grp->data_d_msb << 8) | grp->data_c_lsb;
+	msg.location = (grp->data_d_msb << 8) | grp->data_d_lsb;
 	/* there is no service ID in a single group TMC message, so
 	 * just set it to 0. */
 	msg.sid = 0;
@@ -496,7 +496,7 @@ static uint32_t rds_decode_tmc_multi_group(struct rds_private_state *priv_state)
 		/* bits 0-10 of block 3 contain the event */
 		msg->event = ((grp->data_c_msb & 0x07) << 8) | grp->data_c_lsb;
 		/* bits 0-15 of block 4 contain the location */
-		msg->location = (grp->data_d_msb << 8) | grp->data_c_lsb;
+		msg->location = (grp->data_d_msb << 8) | grp->data_d_lsb;
 	}
 	/* second group of multigroup ? */
 	/* bit 14 of block 3 ist the second group indicator, and the
