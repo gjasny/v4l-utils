@@ -2000,12 +2000,16 @@ static void stress_test_random_standby_wakeup_cycle(const struct node &node, uns
 			printf("Transmit Give Device Power Status from LA %s: ", cec_la2s(from));
 			ret = transmit_msg_retry(node, msg);
 			if (!ret) {
-				__u8 pwr;
+				if (cec_msg_status_is_ok(&msg)) {
+					__u8 pwr;
 
-				cec_ops_report_power_status(&msg, &pwr);
-				printf("%s\n", power_status2s(pwr));
-				if (pwr == CEC_OP_POWER_STATUS_ON)
-					goto done;
+					cec_ops_report_power_status(&msg, &pwr);
+					printf("%s\n", power_status2s(pwr));
+					if (pwr == CEC_OP_POWER_STATUS_ON)
+						goto done;
+				} else {
+					printf("%s\n", cec_status2s(msg).c_str());
+				}
 			} else {
 				printf("%s\n", strerror(ret));
 			}
@@ -2032,6 +2036,8 @@ static void stress_test_random_standby_wakeup_cycle(const struct node &node, uns
 			ret = transmit_msg_retry(node, msg);
 			if (ret) {
 				printf("%s\n", strerror(ret));
+			} else if (!cec_msg_status_is_ok(&msg)) {
+				printf("%s\n", cec_status2s(msg).c_str());
 			} else {
 				__u8 pwr;
 
