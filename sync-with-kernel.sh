@@ -115,8 +115,35 @@ function freebsd {
 	quilt push -a
 }
 
+function v4l2-tracer {
+	V4L2TRACERDIR="${TOPSRCDIR}/utils/v4l2-tracer"
+	V4L2TRACERSOURCES="${TOPSRCDIR}/include/linux/v4l2-controls.h "
+	V4L2TRACERSOURCES+="${TOPSRCDIR}/include/linux/videodev2.h "
+	V4L2TRACERSOURCES+="${TOPSRCDIR}/include/linux/media.h "
+	V4L2TRACERSOURCES+="${TOPSRCDIR}/include/linux/v4l2-common.h "
+
+	V4L2TRACERTMPDIR=$(mktemp --tmpdir -d "v4l2-tracer-gen.XXXXXXXXXX")
+
+	perl "${V4L2TRACERDIR}/v4l2-tracer-gen.pl" -o $V4L2TRACERTMPDIR $V4L2TRACERSOURCES
+
+	diff -Naur "${V4L2TRACERDIR}/trace-gen.cpp" "${V4L2TRACERTMPDIR}/trace-gen.cpp" > "${V4L2TRACERTMPDIR}/trace-gen.patch"
+	diff -Naur "${V4L2TRACERDIR}/trace-gen.h" "${V4L2TRACERTMPDIR}/trace-gen.h" > "${V4L2TRACERTMPDIR}/trace-gen-h.patch"
+	diff -Naur "${V4L2TRACERDIR}/retrace-gen.cpp" "${V4L2TRACERTMPDIR}/retrace-gen.cpp" > "${V4L2TRACERTMPDIR}/retrace-gen.patch"
+	diff -Naur "${V4L2TRACERDIR}/retrace-gen.h" "${V4L2TRACERTMPDIR}/retrace-gen.h" > "${V4L2TRACERTMPDIR}/retrace-gen-h.patch"
+	diff -Naur "${V4L2TRACERDIR}/v4l2-tracer-info-gen.h" "${V4L2TRACERTMPDIR}/v4l2-tracer-info-gen.h" > "${V4L2TRACERTMPDIR}/v4l2-tracer-info-gen-h.patch"
+
+	patch -d ${V4L2TRACERDIR} --no-backup-if-mismatch <${V4L2TRACERTMPDIR}/trace-gen.patch
+	patch -d ${V4L2TRACERDIR} --no-backup-if-mismatch <${V4L2TRACERTMPDIR}/trace-gen-h.patch
+	patch -d ${V4L2TRACERDIR} --no-backup-if-mismatch <${V4L2TRACERTMPDIR}/retrace-gen.patch
+	patch -d ${V4L2TRACERDIR} --no-backup-if-mismatch <${V4L2TRACERTMPDIR}/retrace-gen-h.patch
+	patch -d ${V4L2TRACERDIR} --no-backup-if-mismatch <${V4L2TRACERTMPDIR}/v4l2-tracer-info-gen-h.patch
+
+	rm -r "$V4L2TRACERTMPDIR"
+}
+
 keytable
 libdvbv5
 freebsd
 ioctl-test
 xc3028-firmware
+v4l2-tracer
