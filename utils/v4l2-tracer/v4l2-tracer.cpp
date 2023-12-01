@@ -16,9 +16,12 @@ pid_t tracee_pid = 0;
 void v4l2_tracer_sig_handler(int signum)
 {
 	line_info("\n\tReceived signum: %d", signum);
-	kill(tracee_pid, signum);
-	/* Wait for tracee to handle the signal first before v4l2-tracer exits. */
-	wait(nullptr);
+
+	/* If there is a tracee, wait for it to handle the signal first before exiting. */
+	if (tracee_pid) {
+		kill(tracee_pid, signum);
+		wait(nullptr);
+	}
 }
 
 enum Options {
