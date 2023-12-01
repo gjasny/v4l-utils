@@ -943,7 +943,7 @@ while (<>) {
 	}
 	if (grep {/^#define V4L2_BUF_CAP_SUPPORTS_MMAP\s+/} $_) {
 		printf $fh_common_info_h "constexpr flag_def v4l2_buf_cap_flag_def[] = {\n";
-		flag_def_gen("V4L2_BUF_CAP_SUPPORTS_MMAP_CACHE_HINTS");
+		flag_def_gen("V4L2_BUF_CAP_SUPPORTS_MAX_NUM_BUFFERS");
 		next;
 	}
 	if (grep {/^#define V4L2_STD_PAL_B\s+/} $_) {
