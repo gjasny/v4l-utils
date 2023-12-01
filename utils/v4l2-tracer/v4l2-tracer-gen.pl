@@ -151,7 +151,8 @@ sub clean_up_line {
 	$line =~ s/^\s+//; # remove leading whitespace
 	$line =~ s/.*\# define.*//; # zero out line if it has defines inside a structure (e.g. v4l2_jpegcompression)
 	$line =~ s/^\s*\/?\s?\*.*//; # zero out line if it has comments where the line starts with start with /* / * or just *
-	$line =~ s/\s*\/\*.*//; # remove comments at the end of a line following a member
+	$line =~ s/\s*\/\*.*//; # remove comments /* */ at the end of a line following a member
+	$line =~ s/\s*\/\/.*//; # remove comments // at the end of a line following a member
 	$line =~ s/\*\/$//; # zero out line if it has comments that begin without any slashs or asterisks but end with */
 	# zero out lines that don't have a ; or { because they are comments but without any identifying slashes or asteriks
 	if ($line !~ /.*[\;|\{].*/) {
