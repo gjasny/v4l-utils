@@ -876,6 +876,18 @@ struct v4l2_ext_control *retrace_v4l2_ext_control(json_object *parent_obj, int c
 	case V4L2_CID_STATELESS_MPEG2_QUANTISATION:
 		p->ptr = retrace_v4l2_ctrl_mpeg2_quantisation_gen(v4l2_ext_control_obj);
 		break;
+	case V4L2_CID_STATELESS_AV1_SEQUENCE:
+		p->ptr = retrace_v4l2_ctrl_av1_sequence_gen(v4l2_ext_control_obj);
+		break;
+	case V4L2_CID_STATELESS_AV1_TILE_GROUP_ENTRY:
+		p->ptr = retrace_v4l2_ctrl_av1_tile_group_entry_gen(v4l2_ext_control_obj);
+		break;
+	case V4L2_CID_STATELESS_AV1_FRAME:
+		p->ptr = retrace_v4l2_ctrl_av1_frame_gen(v4l2_ext_control_obj);
+		break;
+	case V4L2_CID_STATELESS_AV1_FILM_GRAIN:
+		p->ptr = retrace_v4l2_ctrl_av1_film_grain_gen(v4l2_ext_control_obj);
+		break;
 	default:
 		line_info("\n\tWarning: cannot retrace control: %s",
 		          val2s(p->id, control_val_def).c_str());

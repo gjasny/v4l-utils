@@ -412,6 +412,18 @@ void trace_v4l2_ext_control(void *arg, json_object *parent_obj, std::string key_
 	case V4L2_CID_PIXEL_RATE:
 		json_object_object_add(v4l2_ext_control_obj, "value64", json_object_new_int64(p->value64));
 		break;
+	case V4L2_CID_STATELESS_AV1_SEQUENCE:
+		trace_v4l2_ctrl_av1_sequence_gen(p->p_av1_sequence, v4l2_ext_control_obj);
+		break;
+	case V4L2_CID_STATELESS_AV1_TILE_GROUP_ENTRY:
+		trace_v4l2_ctrl_av1_tile_group_entry_gen(p->p_av1_tile_group_entry, v4l2_ext_control_obj);
+		break;
+	case V4L2_CID_STATELESS_AV1_FRAME:
+		trace_v4l2_ctrl_av1_frame_gen(p->p_av1_frame, v4l2_ext_control_obj);
+		break;
+	case V4L2_CID_STATELESS_AV1_FILM_GRAIN:
+		trace_v4l2_ctrl_av1_film_grain_gen(p->p_av1_film_grain, v4l2_ext_control_obj);
+		break;
 	default:
 		if (p->size)
 			line_info("\n\tWarning: cannot trace control: %s", val2s(p->id, control_val_def).c_str());
