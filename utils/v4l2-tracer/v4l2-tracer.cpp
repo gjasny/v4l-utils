@@ -306,12 +306,30 @@ int tracer(int argc, char *argv[], bool retrace)
 	else
 		idx++;
 
-	/* look for libv4l2tracer next to the executable */
 	libv4l2tracer_path = program.replace(program.begin() + idx, program.end(), "libv4l2tracer.so");
 
-	/* otherwise, use the installation path */
-	if (stat(libv4l2tracer_path.c_str(), &sb) == -1)
+	if (stat(libv4l2tracer_path.c_str(), &sb) == -1) {
+		/* If not found, get the libv4l2tracer library from the meson install path 'prefix' */
 		libv4l2tracer_path = std::string(LIBTRACER_PATH) + "/libv4l2tracer.so";
+
+		/* Otherwise, guess where the library might be for a cross-build. */
+		if (stat(libv4l2tracer_path.c_str(), &sb) == -1) {
+			std::size_t idx =  libv4l2tracer_path.find("/home");
+			libv4l2tracer_path = libv4l2tracer_path.substr(idx);
+
+			/* Finally, check if the user set a custom path using LD_PRELOAD. */
+			if (stat(libv4l2tracer_path.c_str(), &sb) == -1) {
+				if (getenv("LD_PRELOAD"))
+					libv4l2tracer_path = std::string(getenv("LD_PRELOAD"));
+
+				if (stat(libv4l2tracer_path.c_str(), &sb) == -1) {
+					fprintf(stderr, "Exiting: can't find libv4l2tracer library\n");
+					fprintf(stderr, "Set a custom libv4l2tracer library path using: LD_PRELOAD\n");
+					exit(EXIT_FAILURE);
+				}
+			}
+		}
+	}
 
 	if (is_verbose())
 		fprintf(stderr, "Loading libv4l2tracer: %s\n", libv4l2tracer_path.c_str());
@@ -355,6 +373,7 @@ int tracer(int argc, char *argv[], bool retrace)
 	fprintf(stderr, "%s", trace_filename.c_str());
 	fprintf(stderr, "\n");
 
+	unsetenv("LD_PRELOAD");
 	return exec_result;
 }
 
