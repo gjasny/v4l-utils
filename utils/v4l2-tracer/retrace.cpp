@@ -1537,12 +1537,11 @@ void retrace_array(json_object *root_array_obj)
 
 int retrace(std::string trace_filename)
 {
-	FILE *trace_file = fopen(trace_filename.c_str(), "r");
-	if (trace_file == nullptr) {
+	struct stat sb;
+	if (stat(trace_filename.c_str(), &sb) == -1) {
 		line_info("\n\tTrace file error: \'%s\'", trace_filename.c_str());
-		return 1;
+		return -EINVAL;
 	}
-	fclose(trace_file);
 
 	fprintf(stderr, "Retracing: %s\n", trace_filename.c_str());
 
