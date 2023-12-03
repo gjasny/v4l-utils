@@ -1,10 +1,10 @@
 qvidcap_option = get_option('qvidcap')
 
-if qvidcap_option.enabled() and not have_qt5_opengl
-    error('qvidcap enabled but Qt5 is missing OpenGL support')
+if qvidcap_option.enabled() and not have_qt_opengl
+    error('qvidcap enabled but Qt5/Qt6 is missing OpenGL support')
 endif
 
-if qvidcap_option.disabled() or not dep_gl.found() or not dep_qt5_opengl.found() or not have_qt5_opengl
+if qvidcap_option.disabled() or not dep_gl.found() or not dep_qt_opengl.found() or not have_qt_opengl
     subdir_done()
 endif
 
@@ -29,8 +29,8 @@ qvidcap_deps = [
     dep_libv4l2,
     dep_libv4l2util,
     dep_libv4lconvert,
-    dep_qt5,
-    dep_qt5_opengl,
+    dep_qt,
+    dep_qt_opengl,
     dep_threads,
 ]
 
@@ -39,11 +39,18 @@ qvidcap_incdir = [
     v4l2_utils_incdir,
 ]
 
-qt5_files = qt5.preprocess(
+if dep_qt6.found()
+qt_files = qt6.preprocess(
     moc_headers : 'capture.h',
     qresources : 'qvidcap.qrc',
 )
-qvidcap_sources += qt5_files
+else
+qt_files = qt5.preprocess(
+    moc_headers : 'capture.h',
+    qresources : 'qvidcap.qrc',
+)
+endif
+qvidcap_sources += qt_files
 
 v4l2_convert_sources = files(
     'v4l2-convert.glsl',
@@ -60,6 +67,7 @@ qvidcap = executable('qvidcap',
                      sources : qvidcap_sources,
                      install : true,
                      dependencies : qvidcap_deps,
+                     override_options : dep_qt_options,
                      include_directories : qvidcap_incdir)
 
 man_pages += [[ meson.current_source_dir(), 'qvidcap', 1 ]]

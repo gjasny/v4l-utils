@@ -1,4 +1,4 @@
-if get_option('qv4l2').disabled() or not dep_qt5.found()
+if get_option('qv4l2').disabled() or not dep_qt.found()
     subdir_done()
 endif
 
@@ -32,8 +32,8 @@ qv4l2_deps = [
     dep_libv4l2,
     dep_libv4l2util,
     dep_libv4lconvert,
-    dep_qt5,
-    dep_qt5_opengl,
+    dep_qt,
+    dep_qt_opengl,
     dep_threads,
 ]
 
@@ -42,16 +42,24 @@ qv4l2_incdir = [
     v4l2_utils_incdir,
 ]
 
-qt5_files = qt5.preprocess(
-    moc_headers : ['qv4l2.h', 'general-tab.h', 'vbi-tab.h', 'capture-win.h'],
-    qresources : 'qv4l2.qrc',
-)
-qv4l2_sources += qt5_files
+if dep_qt6.found()
+  qt_files = qt6.preprocess(
+      moc_headers : ['qv4l2.h', 'general-tab.h', 'vbi-tab.h', 'capture-win.h'],
+      qresources : 'qv4l2.qrc',
+  )
+else
+  qt_files = qt5.preprocess(
+      moc_headers : ['qv4l2.h', 'general-tab.h', 'vbi-tab.h', 'capture-win.h'],
+      qresources : 'qv4l2.qrc',
+  )
+endif
+qv4l2_sources += qt_files
 
 qv4l2 = executable('qv4l2',
                    sources : qv4l2_sources,
                    install : true,
                    dependencies : qv4l2_deps,
+                   override_options : dep_qt_options,
                    include_directories : qv4l2_incdir)
 
 man_pages += [[ meson.current_source_dir(), 'qv4l2', 1 ]]

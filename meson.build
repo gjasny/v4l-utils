@@ -1,6 +1,6 @@
 project('v4l-utils', 'c', 'cpp',
     version: '1.27.0',
-    meson_version : '>= 0.54',
+    meson_version : '>= 0.57',
     default_options : [
         'buildtype=debugoptimized',
         'warning_level=1',
@@ -23,6 +23,7 @@ sys_root = meson.get_external_property('sys_root', '/')
 fs = import('fs')
 i18n = import('i18n')
 pkg = import('pkgconfig')
+qt6 = import('qt6')
 qt5 = import('qt5')
 
 as_version = meson.project_version()
@@ -89,11 +90,27 @@ dep_libdl = cc.find_library('dl')
 dep_libelf = cc.find_library('elf', required : get_option('bpf'))
 dep_libm = cc.find_library('m')
 dep_librt = cc.find_library('rt')
-dep_qt5 = dependency('qt5', modules: ['Core', 'Gui', 'Widgets'],
-                     required : get_option('qvidcap').enabled() or get_option('qv4l2').enabled())
-
-dep_qt5_opengl = dependency('qt5', modules: ['OpenGL'],
-                     required : get_option('qvidcap').enabled())
+dep_qt6 = dependency('qt6', modules: ['Core', 'Gui', 'Widgets', 'Core5Compat'], required: false)
+if dep_qt6.found()
+  dep_qt_opengl = dependency('qt6', modules: ['OpenGL', 'OpenGLWidgets'],
+                             required : get_option('qvidcap').enabled())
+  dep_qt = dep_qt6
+  dep_qt_version = 'Qt6'
+  dep_qt_options = ['cpp_std=gnu++17']
+  dep_qt_args = ['-std=gnu++17']
+else
+  dep_qt = dependency('qt5', modules: ['Core', 'Gui', 'Widgets'],
+                      required : get_option('qvidcap').enabled() or get_option('qv4l2').enabled())
+  if dep_qt.found()
+    dep_qt_version = 'Qt5'
+  else
+    dep_qt_version = ''
+  endif
+  dep_qt_opengl = dependency('qt5', modules: ['OpenGL'],
+                             required : get_option('qvidcap').enabled())
+  dep_qt_options = []
+  dep_qt_args = []
+endif
 
 dep_libbpf = dependency('libbpf', required : get_option('bpf'), version : '>=0.7')
 
@@ -289,23 +306,30 @@ if udevdir == ''
     udevdir = '/lib/udev'
 endif
 
-qt5_opengl_test = '''
+qt_opengl_test = '''
 #define GL_GLEXT_PROTOTYPES
 #define QT_NO_OPENGL_ES_2
 
+#include <QtCore>
+#if QT_VERSION < 0x060000
 #include <QGLWidget>
 #include <QGLShader>
 #include <QGLShaderProgram>
 #include <QGLFunctions>
+#else
+#include <QOpenGLWidget>
+#include <QOpenGLFunctions>
+#include <QOpenGLShaderProgram>
+#endif
 
 #ifndef GL_UNSIGNED_INT_8_8_8_8
 #error Missing OpenGL Extensions
 #endif
 '''
-have_qt5_opengl = cpp.compiles(qt5_opengl_test,
-                               dependencies : [dep_gl, dep_qt5, dep_qt5_opengl],
-                               args : '-fPIC')
-if have_qt5_opengl
+have_qt_opengl = cpp.compiles(qt_opengl_test,
+                               dependencies : [dep_gl, dep_qt, dep_qt_opengl],
+                               args : ['-fPIC'] + dep_qt_args)
+if have_qt_opengl
     conf.set('HAVE_QTGL', 1)
 endif
 
@@ -379,9 +403,9 @@ summary({
             'GL' : dep_gl.found(),
             'GLU' : dep_glu.found(),
             'JSON-C' : dep_jsonc.found(),
-            'Qt5' : [
-                dep_qt5.found(),
-                have_qt5_opengl ? 'with QtGL' : 'without QtGL',
+            'Qt5/Qt6' : [
+                dep_qt.found(),
+                dep_qt_version + (have_qt_opengl ? ' with QtGL' : ' without QtGL'),
             ],
             'SDL' : dep_sdl.found(),
             'X11' : dep_x11.found(),
