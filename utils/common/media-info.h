@@ -6,6 +6,8 @@
 #ifndef _MEDIA_INFO_H
 #define _MEDIA_INFO_H
 
+#include <sys/stat.h>
+
 enum media_type {
 	MEDIA_TYPE_CANT_STAT,
 	MEDIA_TYPE_UNKNOWN,
