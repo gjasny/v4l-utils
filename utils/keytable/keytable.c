@@ -459,9 +459,9 @@ static int add_keymap(struct keymap *map, const char *fname)
 static error_t parse_cfgfile(char *fname)
 {
 	FILE *fin;
-	int line = 0;
-	char s[2048];
-	char *driver, *table, *filename;
+	int line_no = 0;
+	char *driver, *table, *filename, *line = NULL;
+	size_t line_size;
 	struct cfgfile *nextcfg = &cfg;
 
 	if (debug)
@@ -473,10 +473,10 @@ static error_t parse_cfgfile(char *fname)
 		return errno;
 	}
 
-	while (fgets(s, sizeof(s), fin)) {
-		char *p = s;
+	while (getline(&line, &line_size, fin) > 0) {
+		char *p = line;
 
-		line++;
+		line_no++;
 		while (*p == ' ' || *p == '\t')
 			p++;
 
@@ -511,17 +511,22 @@ static error_t parse_cfgfile(char *fname)
 		nextcfg->next = calloc(1, sizeof(*nextcfg));
 		if (!nextcfg->next) {
 			perror("parse_cfgfile");
+			fclose(fin);
+			free(line);
 			return ENOMEM;
 		}
 		nextcfg = nextcfg->next;
 	}
 	fclose(fin);
+	free(line);
 
 	return 0;
 
 err_einval:
+	free(line);
+	fclose(fin);
 	fprintf(stderr, _("Invalid parameter on line %d of %s\n"),
-		line, fname);
+		line_no, fname);
 	return EINVAL;
 
 }
@@ -825,7 +830,8 @@ static struct uevents *read_sysfs_uevents(char *dname)
 {
 	FILE		*fp;
 	struct uevents	*next, *uevent;
-	char		*event = "uevent", *file, s[4096];
+	char		*event = "uevent", *file, *line = NULL;
+	size_t		line_size;
 
 	next = uevent = calloc(1, sizeof(*uevent));
 
@@ -843,13 +849,15 @@ static struct uevents *read_sysfs_uevents(char *dname)
 		free(file);
 		return NULL;
 	}
-	while (fgets(s, sizeof(s), fp)) {
-		char *p = strtok(s, "=");
+	while (getline(&line, &line_size, fp) > 0) {
+		char *p = strtok(line, "=");
 		if (!p)
 			continue;
 		next->key = malloc(strlen(p) + 1);
 		if (!next->key) {
 			perror("next->key");
+			fclose(fp);
+			free(line);
 			free(file);
 			free_uevent(uevent);
 			return NULL;
@@ -860,6 +868,7 @@ static struct uevents *read_sysfs_uevents(char *dname)
 		if (!p) {
 			fprintf(stderr, _("Error on uevent information\n"));
 			fclose(fp);
+			free(line);
 			free(file);
 			free_uevent(uevent);
 			return NULL;
@@ -867,6 +876,8 @@ static struct uevents *read_sysfs_uevents(char *dname)
 		next->value = malloc(strlen(p) + 1);
 		if (!next->value) {
 			perror("next->value");
+			fclose(fp);
+			free(line);
 			free(file);
 			free_uevent(uevent);
 			return NULL;
@@ -879,13 +890,16 @@ static struct uevents *read_sysfs_uevents(char *dname)
 		next->next = calloc(1, sizeof(*next));
 		if (!next->next) {
 			perror("next->next");
+			fclose(fp);
 			free(file);
+			free(line);
 			free_uevent(uevent);
 			return NULL;
 		}
 		next = next->next;
 	}
 	fclose(fp);
+	free(line);
 	free(file);
 
 	return uevent;
@@ -979,7 +993,8 @@ static enum sysfs_protocols load_bpf_for_unsupported(enum sysfs_protocols protoc
 static enum sysfs_protocols v1_get_hw_protocols(char *name)
 {
 	FILE *fp;
-	char *p, buf[4096];
+	char *p, *buf = NULL;
+	size_t buf_size;
 	enum sysfs_protocols protocols = 0;
 
 	fp = fopen(name, "r");
@@ -988,8 +1003,9 @@ static enum sysfs_protocols v1_get_hw_protocols(char *name)
 		return 0;
 	}
 
-	if (!fgets(buf, sizeof(buf), fp)) {
+	if (getline(&buf, &buf_size, fp) <= 0) {
 		perror(name);
+		free(buf);
 		fclose(fp);
 		return 0;
 	}
@@ -1007,6 +1023,7 @@ static enum sysfs_protocols v1_get_hw_protocols(char *name)
 		protocols |= protocol;
 	}
 
+	free(buf);
 	fclose(fp);
 
 	return protocols;
@@ -1038,7 +1055,8 @@ static int v1_set_hw_protocols(struct rc_device *rc_dev)
 static int v1_get_sw_enabled_protocol(char *dirname)
 {
 	FILE *fp;
-	char *p, buf[4096], name[512];
+	char *p, *buf = NULL, name[512];
+	size_t buf_size;
 	int rc;
 
 	strcpy(name, dirname);
@@ -1050,14 +1068,16 @@ static int v1_get_sw_enabled_protocol(char *dirname)
 		return 0;
 	}
 
-	if (!fgets(buf, sizeof(buf), fp)) {
+	if (getline(&buf, &buf_size, fp) <= 0) {
 		perror(name);
+		free(buf);
 		fclose(fp);
 		return 0;
 	}
 
 	if (fclose(fp)) {
 		perror(name);
+		free(buf);
 		return errno;
 	}
 
@@ -1073,9 +1093,12 @@ static int v1_get_sw_enabled_protocol(char *dirname)
 		fprintf(stderr, _("protocol %s is %s\n"),
 			name, rc? _("enabled") : _("disabled"));
 
-	if (atoi(p) == 1)
+	if (atoi(p) == 1) {
+		free(buf);
 		return 1;
+	}
 
+	free(buf);
 	return 0;
 }
 
@@ -1111,7 +1134,8 @@ static int v1_set_sw_enabled_protocol(struct rc_device *rc_dev,
 static enum sysfs_protocols v2_get_protocols(struct rc_device *rc_dev, char *name)
 {
 	FILE *fp;
-	char *p, buf[4096];
+	char *p, *buf = NULL;
+	size_t buf_size;
 	int enabled;
 
 	fp = fopen(name, "r");
@@ -1120,7 +1144,8 @@ static enum sysfs_protocols v2_get_protocols(struct rc_device *rc_dev, char *nam
 		return 0;
 	}
 
-	if (!fgets(buf, sizeof(buf), fp)) {
+	if (getline(&buf, &buf_size, fp) <= 0) {
+		free(buf);
 		perror(name);
 		fclose(fp);
 		return 0;
@@ -1151,6 +1176,7 @@ static enum sysfs_protocols v2_get_protocols(struct rc_device *rc_dev, char *nam
 	}
 
 	fclose(fp);
+	free(buf);
 
 	return 0;
 }
