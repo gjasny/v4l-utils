@@ -58,8 +58,6 @@
 #define LIRCBUF_SIZE 1024
 #define IR_DEFAULT_TIMEOUT 125000
 #define UNSET UINT32_MAX
-/* Maximum number of columns per line */
-#define LINE_SIZE 8192
 
 const char *argp_program_version = "IR ctl version " V4L_UTILS_VERSION;
 const char *argp_program_bug_address = "Sean Young <sean@mess.org>";
@@ -218,7 +216,8 @@ static struct send *read_file_pulse_space(struct arguments *args, const char *fn
 {
 	bool expect_pulse = true;
 	int lineno = 0, lastspace = 0;
-	char line[LINE_SIZE];
+	char *line = NULL;
+	size_t line_size;
 	int len = 0;
 	static const char whitespace[] = " \n\r\t";
 	struct send *f;
@@ -232,7 +231,7 @@ static struct send *read_file_pulse_space(struct arguments *args, const char *fn
 	f->carrier = UNSET;
 	f->fname = fname;
 
-	while (fgets(line, sizeof(line), input)) {
+	while (getline(&line, &line_size, input) > 0) {
 		char *p, *saveptr;
 		lineno++;
 		char *keyword = strtok_r(line, whitespace, &saveptr);
@@ -364,6 +363,7 @@ static struct send *read_file_pulse_space(struct arguments *args, const char *fn
 		}
 	}
 
+	free(line);
 	fclose(input);
 
 	if (len == 0) {
@@ -386,7 +386,8 @@ static struct send *read_file_pulse_space(struct arguments *args, const char *fn
 static struct send *read_file_raw(struct arguments *args, const char *fname, FILE *input)
 {
 	int lineno = 0, lastspace = 0;
-	char line[LINE_SIZE];
+	char *line = NULL;
+	size_t line_size;
 	int len = 0;
 	static const char whitespace[] = " \n\r\t,";
 	struct send *f;
@@ -401,7 +402,7 @@ static struct send *read_file_raw(struct arguments *args, const char *fname, FIL
 	f->carrier = UNSET;
 	f->fname = fname;
 
-	while (fgets(line, sizeof(line), input)) {
+	while (getline(&line, &line_size, input) > 0) {
 		long int value;
 		char *p, *saveptr;
 		lineno++;
@@ -457,6 +458,7 @@ static struct send *read_file_raw(struct arguments *args, const char *fname, FIL
 		}
 	}
 
+	free(line);
 	fclose(input);
 
 	if (len == 0) {
@@ -479,14 +481,15 @@ static struct send *read_file_raw(struct arguments *args, const char *fname, FIL
 static struct send *read_file(struct arguments *args, const char *fname)
 {
 	FILE *input = fopen(fname, "r");
-	char line[LINE_SIZE];
+	char *line = NULL;
+	size_t line_size;
 
 	if (!input) {
 		fprintf(stderr, _("%s: could not open: %m\n"), fname);
 		return NULL;
 	}
 
-	while (fgets(line, sizeof(line), input)) {
+	while (getline(&line, &line_size, input) > 0) {
 		int start = 0;
 
 		while (isspace(line[start]))
@@ -510,6 +513,7 @@ static struct send *read_file(struct arguments *args, const char *fname)
 		}
 	}
 
+	free(line);
 	fclose(input);
 
 	fprintf(stderr, _("%s: file is empty\n"), fname);
