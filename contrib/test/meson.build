@@ -25,6 +25,7 @@ sliced_vbi_detect = executable('sliced-vbi-detect',
                                sliced_vbi_detect_sources,
                                include_directories : v4l2_utils_incdir)
 
+if have_fork
 v4l2grab_sources = files(
     'v4l2grab.c',
 
@@ -41,6 +42,7 @@ v4l2grab = executable('v4l2grab',
                       v4l2grab_sources,
                       dependencies : v4l2grab_deps,
                       include_directories : v4l2_utils_incdir)
+endif
 
 driver_test_sources = files(
     'driver-test.c',
