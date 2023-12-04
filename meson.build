@@ -111,7 +111,7 @@ dep_threads = dependency('threads')
 dep_x11 = dependency('x11', required : false)
 dep_xmlrpc = dependency('xmlrpc', required : false)
 
-have_fork = cc.has_function('fork')
+have_fork = cc.has_function('fork', prefix: '#include <unistd.h>')
 have_i2c_dev = cc.has_header('linux/i2c-dev.h')
 
 if have_visibility
