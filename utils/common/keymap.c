@@ -74,8 +74,9 @@ void free_keymap(struct keymap *map)
 static error_t parse_plain_keymap(char *fname, struct keymap **keymap, bool verbose)
 {
 	FILE *fin;
-	int line = 0;
-	char *scancode, *keycode, s[2048];
+	int line_no = 0;
+	char *scancode, *keycode, *line;
+	size_t line_size;
 	struct scancode_entry *se;
 	struct keymap *map;
 
@@ -94,13 +95,13 @@ static error_t parse_plain_keymap(char *fname, struct keymap **keymap, bool verb
 		return EINVAL;
 	}
 
-	while (fgets(s, sizeof(s), fin)) {
-		char *p = s;
+	while (getline(&line, &line_size, fin) >= 0) {
+		char *p = line;
 
-		line++;
+		line_no++;
 		while (*p == ' ' || *p == '\t')
 			p++;
-		if (line==1 && p[0] == '#') {
+		if (line_no==1 && p[0] == '#') {
 			p++;
 			p = strtok(p, "\n\t =:");
 			do {
@@ -168,6 +169,7 @@ static error_t parse_plain_keymap(char *fname, struct keymap **keymap, bool verb
 		map->scancode = se;
 	}
 	fclose(fin);
+	free(line);
 
 	if (!map->protocol) {
 		fprintf(stderr, _("Missing protocol in %s\n"), fname);
@@ -181,7 +183,7 @@ static error_t parse_plain_keymap(char *fname, struct keymap **keymap, bool verb
 err_einval:
 	free_keymap(map);
 	fprintf(stderr, _("Invalid parameter on line %d of %s\n"),
-		line, fname);
+		line_no, fname);
 	return EINVAL;
 }
 
