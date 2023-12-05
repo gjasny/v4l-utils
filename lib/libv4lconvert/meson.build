@@ -91,7 +91,7 @@ if have_fork
                               include_directories : v4l2_utils_incdir)
 endif
 
-if have_visibility
+if have_visibility and have_fork
     libv4lconvert_c_args += [
       '-fvisibility=hidden',
       '-DHAVE_LIBV4LCONVERT_HELPERS',
