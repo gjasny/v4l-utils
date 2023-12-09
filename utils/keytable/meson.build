@@ -17,7 +17,7 @@ ir_keytable_system_dir = udevdir
 ir_keytable_user_dir = get_option('sysconfdir') / 'rc_keymaps'
 
 ir_keytable_c_args = [
-    '-DIR_KEYTABLE_SYSTEM_DIR="@0@"'.format(ir_keytable_system_dir),
+    '-DIR_KEYTABLE_SYSTEM_DIR="@0@"'.format(ir_keytable_system_dir / 'rc_keymaps'),
     '-DIR_KEYTABLE_USER_DIR="@0@"'.format(ir_keytable_user_dir),
 ]
 
