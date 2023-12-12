@@ -307,6 +307,11 @@ if udevdir == ''
     udevdir = '/lib/udev'
 endif
 
+docdir = get_option('docdir')
+if docdir == ''
+    docdir = get_option('datadir') / 'doc' / '@0@'.format(meson.project_name())
+endif
+
 qt_opengl_test = '''
 #define GL_GLEXT_PROTOTYPES
 #define QT_NO_OPENGL_ES_2

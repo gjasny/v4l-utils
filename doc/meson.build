@@ -20,7 +20,7 @@ doxygen_install_dirs = []
 doxygen_output = []
 if get_option('doxygen-html')
     doxygen_output += 'html'
-    doxygen_install_dirs += get_option('datadir') / 'doc' / '@0@'.format(meson.project_name())
+    doxygen_install_dirs += docdir
 endif
 if get_option('doxygen-man')
     doxygen_output += 'man'

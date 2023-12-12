@@ -32,6 +32,8 @@ option('v4l2-ctl-stream-to', type : 'boolean',
        description : 'Enable use of --stream-to in v4l2-ctl')
 
 # Directories
+option('docdir', type : 'string',
+       description : 'Set documentation directory')
 option('gconvsysdir', type : 'string',
        description : 'Set system gconv directory (default is to autodetect)')
 option('libv4l1subdir', type : 'string', value : 'libv4l',
