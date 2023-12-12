@@ -383,6 +383,8 @@ subdir('lib')
 if get_option('v4l-utils')
     subdir('utils')
     subdir('contrib')
+else
+    ir_bpf_enabled = false
 endif
 
 subdir('doc')
