@@ -1,3 +1,23 @@
+v4l-utils-1.26.1
+----------------
+
+Hans Verkuil (2):
+      cec-ctl: fix random cec stress test: check if msg status is OK
+      libv4l2rds: fix TMC location parsing
+
+Peter Seiderer (3):
+      media-info: add missing sys/stat.h include (for dev_t)
+      meson: fix has_function fork detection (needs suitable include)
+      meson: libv4lconvert helpers need fork support
+
+Rudi Heitbaum (1):
+      keytable: meson not passing rc_keymaps system directory
+
+Sean Young (2):
+      ir-ctl: remove line length limits
+      keytable: remove line length limits
+
+
 v4l-utils-1.26.0
 ----------------
 
