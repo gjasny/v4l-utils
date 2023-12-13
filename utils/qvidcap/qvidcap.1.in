@@ -1,4 +1,4 @@
-.TH "QVIDCAP" "1" "June 2016" "v4l-utils @PACKAGE_VERSION@" "User Commands"
+.TH "QVIDCAP" "1" "June 2016" "v4l-utils @MAN_PACKAGE_VERSION@" "User Commands"
 .SH NAME
 qvidcap - A v4l2 video capture viewer
 .SH SYNOPSIS

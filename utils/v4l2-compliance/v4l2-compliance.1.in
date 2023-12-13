@@ -1,4 +1,4 @@
-.TH "V4L2-COMPLIANCE" "1" "March 2015" "v4l-utils @PACKAGE_VERSION@" "User Commands"
+.TH "V4L2-COMPLIANCE" "1" "March 2015" "v4l-utils @MAN_PACKAGE_VERSION@" "User Commands"
 .SH NAME
 v4l2-compliance - An application to test video4linux drivers
 .SH SYNOPSIS

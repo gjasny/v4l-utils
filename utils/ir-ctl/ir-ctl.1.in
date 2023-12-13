@@ -1,4 +1,4 @@
-.TH "IR\-CTL" "1" "Tue Jul 5 2016" "v4l-utils @PACKAGE_VERSION@" "User Commands"
+.TH "IR\-CTL" "1" "Tue Jul 5 2016" "v4l-utils @MAN_PACKAGE_VERSION@" "User Commands"
 .SH NAME
 ir\-ctl \- a swiss\-knife tool to handle raw IR and to set lirc options
 .SH SYNOPSIS

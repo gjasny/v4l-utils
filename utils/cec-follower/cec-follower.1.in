@@ -1,4 +1,4 @@
-.TH "CEC-FOLLOWER" "1" "August 2016" "v4l-utils @PACKAGE_VERSION@" "User Commands"
+.TH "CEC-FOLLOWER" "1" "August 2016" "v4l-utils @MAN_PACKAGE_VERSION@" "User Commands"
 .SH NAME
 cec-follower - An application to emulate CEC followers
 .SH SYNOPSIS

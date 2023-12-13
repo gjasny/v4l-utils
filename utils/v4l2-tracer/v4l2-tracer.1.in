@@ -1,4 +1,4 @@
-.TH "V4L2-TRACER" "1" "November 2022" "v4l-utils @PACKAGE_VERSION@" "User Commands"
+.TH "V4L2-TRACER" "1" "November 2022" "v4l-utils @MAN_PACKAGE_VERSION@" "User Commands"
 .SH NAME
 v4l2-tracer - An application to trace and replay stateless video decoding.
 .SH SYNOPSIS

@@ -1,4 +1,4 @@
-.TH "RC_KEYMAP" "5" "Thu Mar 7 2019" "v4l-utils @PACKAGE_VERSION@" "File Formats"
+.TH "RC_KEYMAP" "5" "Thu Mar 7 2019" "v4l-utils @MAN_PACKAGE_VERSION@" "File Formats"
 .SH NAME
 rc_keymap \- toml file describing remote control keymap
 .SH DESCRIPTION
