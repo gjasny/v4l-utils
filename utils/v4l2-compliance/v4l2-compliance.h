@@ -149,6 +149,7 @@ struct base_node {
 	__u8 has_subdev_enum_fival;
 	__u8 has_subdev_fmt;
 	__u8 has_subdev_selection;
+	__u8 has_subdev_frame_interval;
 	int frame_interval_pad;
 	int enum_frame_interval_pad;
 	__u32 fbuf_caps;
@@ -375,7 +376,7 @@ int testSubDevCap(struct node *node);
 int testSubDevEnum(struct node *node, unsigned which, unsigned pad, unsigned stream);
 int testSubDevFormat(struct node *node, unsigned which, unsigned pad, unsigned stream);
 int testSubDevSelection(struct node *node, unsigned which, unsigned pad, unsigned stream);
-int testSubDevFrameInterval(struct node *node, unsigned pad, unsigned stream);
+int testSubDevFrameInterval(struct node *node, unsigned which, unsigned pad, unsigned stream);
 int testSubDevRouting(struct node *node, unsigned which);
 
 // Buffer ioctl tests

@@ -1341,8 +1341,9 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 					       which ? "Active" : "Try",
 					       ok(testSubDevSelection(&node, which, pad, stream)));
 					if (which)
-						printf("\ttest VIDIOC_SUBDEV_G/S_FRAME_INTERVAL: %s\n",
-						       ok(testSubDevFrameInterval(&node, pad, stream)));
+						printf("\ttest %s VIDIOC_SUBDEV_G/S_FRAME_INTERVAL: %s\n",
+						       which ? "Active" : "Try",
+						       ok(testSubDevFrameInterval(&node, which, pad, stream)));
 				}
 			}
 
@@ -1365,6 +1366,13 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 				if (node.has_subdev_selection &&
 				    node.has_subdev_selection != node.has_subdev_fmt)
 					fail("VIDIOC_SUBDEV_G/S_SELECTION: fmt/selection mismatch\n");
+				if (node.has_ival_uses_which()) {
+					if (node.has_subdev_frame_interval && node.has_subdev_frame_interval < 3)
+						fail("VIDIOC_SUBDEV_G/S_FRAME_INTERVAL: try/active mismatch\n");
+					if (node.has_subdev_frame_interval &&
+					    node.has_subdev_frame_interval != node.has_subdev_fmt)
+						fail("VIDIOC_SUBDEV_G/S_FRAME_INTERVAL: fmt/frame_interval mismatch\n");
+				}
 			}
 			printf("\n");
 		}

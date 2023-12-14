@@ -272,25 +272,38 @@ int testSubDevEnum(struct node *node, unsigned which, unsigned pad, unsigned str
 	return 0;
 }
 
-int testSubDevFrameInterval(struct node *node, unsigned pad, unsigned stream)
+int testSubDevFrameInterval(struct node *node, unsigned which, unsigned pad, unsigned stream)
 {
 	struct v4l2_subdev_frame_interval fival;
 	struct v4l2_fract ival;
+	bool has_which = node->has_ival_uses_which();
 	int ret;
 
+	if (!has_which)
+		which = V4L2_SUBDEV_FORMAT_ACTIVE;
 	memset(&fival, 0xff, sizeof(fival));
 	fival.pad = pad;
 	fival.stream = stream;
+	if (has_which)
+		fival.which = which;
 	ret = doioctl(node, VIDIOC_SUBDEV_G_FRAME_INTERVAL, &fival);
+	if (has_which)
+		node->has_subdev_frame_interval |= (ret != ENOTTY) << which;
 	if (ret == ENOTTY) {
 		fail_on_test(node->enum_frame_interval_pad >= 0);
 		fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival) != ENOTTY);
 		return ret;
 	}
+
+	if (!has_which)
+		warn_once("V4L2_SUBDEV_CLIENT_CAP_INTERVAL_USES_WHICH is not supported\n");
+
 	fail_on_test(node->frame_interval_pad >= 0);
 	fail_on_test(node->enum_frame_interval_pad != (int)pad);
 	node->frame_interval_pad = pad;
 	fail_on_test(check_0(fival.reserved, sizeof(fival.reserved)));
+	if (has_which)
+		fail_on_test(fival.which != which);
 	fail_on_test(fival.pad != pad);
 	fail_on_test(fival.stream != stream);
 	fail_on_test(!fival.interval.numerator);
@@ -303,6 +316,8 @@ int testSubDevFrameInterval(struct node *node, unsigned pad, unsigned stream)
 		return 0;
 	}
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival));
+	if (has_which)
+		fail_on_test(fival.which != which);
 	fail_on_test(fival.pad != pad);
 	fail_on_test(fival.stream != stream);
 	fail_on_test(ival.numerator != fival.interval.numerator);
@@ -311,12 +326,22 @@ int testSubDevFrameInterval(struct node *node, unsigned pad, unsigned stream)
 	memset(&fival, 0, sizeof(fival));
 	fival.pad = pad;
 	fival.stream = stream;
+	if (has_which)
+		fival.which = which;
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_FRAME_INTERVAL, &fival));
+	if (has_which)
+		fail_on_test(fival.which != which);
 	fail_on_test(fival.pad != pad);
 	fail_on_test(fival.stream != stream);
 	fail_on_test(ival.numerator != fival.interval.numerator);
 	fail_on_test(ival.denominator != fival.interval.denominator);
 
+	if (has_which) {
+		fival.which = ~0;
+		fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_FRAME_INTERVAL, &fival) != EINVAL);
+		fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_FRAME_INTERVAL, &fival) != EINVAL);
+		fival.which = which;
+	}
 	fival.pad = node->entity.pads;
 	fival.stream = stream;
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_FRAME_INTERVAL, &fival) != EINVAL);
