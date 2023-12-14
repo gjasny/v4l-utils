@@ -41,6 +41,7 @@ struct v4l_fd {
 	bool is_subdev;
 	bool is_media;
 	bool have_streams;
+	bool ival_uses_which;
 
 	int (*open)(struct v4l_fd *f, const char *file, int oflag, ...);
 	int (*close)(struct v4l_fd *f);
@@ -539,10 +540,12 @@ static inline int v4l_subdev_s_fd(struct v4l_fd *f, int fd, const char *devname)
 	ret = ioctl(f->fd, VIDIOC_SUBDEV_QUERYCAP, &subdevcap);
 	subdev_streams = !ret && (subdevcap.capabilities & V4L2_SUBDEV_CAP_STREAMS);
 
-	clientcap.capabilities = V4L2_SUBDEV_CLIENT_CAP_STREAMS;
+	clientcap.capabilities = V4L2_SUBDEV_CLIENT_CAP_STREAMS |
+				 V4L2_SUBDEV_CLIENT_CAP_INTERVAL_USES_WHICH;
 
 	ret = ioctl(f->fd, VIDIOC_SUBDEV_S_CLIENT_CAP, &clientcap);
 	client_streams = !ret && (clientcap.capabilities & V4L2_SUBDEV_CLIENT_CAP_STREAMS);
+	f->ival_uses_which = !ret && (clientcap.capabilities & V4L2_SUBDEV_CLIENT_CAP_INTERVAL_USES_WHICH);
 
 	f->have_streams = subdev_streams && client_streams;
 

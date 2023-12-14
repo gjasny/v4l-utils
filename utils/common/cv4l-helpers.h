@@ -83,6 +83,7 @@ public:
 	bool has_streaming() const { return v4l_has_streaming(this); }
 	bool has_ext_pix_format() const { return v4l_has_ext_pix_format(this); }
 	bool has_streams() const { return have_streams; }
+	bool has_ival_uses_which() const { return ival_uses_which; }
 
 	int querycap(v4l2_capability &cap, bool force = false)
 	{
