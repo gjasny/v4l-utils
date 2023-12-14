@@ -660,6 +660,8 @@ void subdev_set(cv4l_fd &_fd)
 		memset(&fival, 0, sizeof(fival));
 		fival.pad = set_fps_pad;
 		fival.stream = set_fps_stream;
+		if (_fd.has_ival_uses_which())
+			fival.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 
 		if (set_fps <= 0) {
 			fprintf(stderr, "invalid fps %f\n", set_fps);
@@ -798,6 +800,8 @@ void subdev_get(cv4l_fd &_fd)
 		memset(&fival, 0, sizeof(fival));
 		fival.pad = get_fps_pad;
 		fival.stream = get_fps_stream;
+		if (_fd.has_ival_uses_which())
+			fival.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 
 		printf("ioctl: VIDIOC_SUBDEV_G_FRAME_INTERVAL (pad=%u,stream=%u)\n", fival.pad, fival.stream);
 		if (doioctl(fd, VIDIOC_SUBDEV_G_FRAME_INTERVAL, &fival) == 0) {
