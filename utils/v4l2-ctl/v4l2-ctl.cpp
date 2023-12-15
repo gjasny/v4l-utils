@@ -1138,6 +1138,7 @@ int main(int argc, char **argv)
 	const char *export_device = nullptr;
 	struct v4l2_capability vcap = {};
 	struct v4l2_subdev_capability subdevcap = {};
+	struct v4l2_subdev_client_capability subdevclientcap = {};
 	std::vector<event> events;
 	unsigned secs = 0;
 	char short_options[26 * 2 * 3 + 1];
@@ -1354,6 +1355,9 @@ int main(int argc, char **argv)
 		// This ioctl was introduced in kernel 5.10, so don't
 		// exit if this ioctl returns an error.
 		doioctl(fd, VIDIOC_SUBDEV_QUERYCAP, &subdevcap);
+		subdevclientcap.capabilities = ~0ULL;
+		if (doioctl(fd, VIDIOC_SUBDEV_S_CLIENT_CAP, &subdevclientcap))
+			subdevclientcap.capabilities = 0ULL;
 	}
 	if (!is_subdev) {
 		capabilities = vcap.capabilities;
@@ -1460,10 +1464,11 @@ int main(int argc, char **argv)
 	if (options[OptGetDriverInfo]) {
 		printf("Driver Info%s:\n",
 				options[OptUseWrapper] ? " (using libv4l2)" : "");
-		if (is_subdev)
-			v4l2_info_subdev_capability(subdevcap);
-		else
+		if (is_subdev) {
+			v4l2_info_subdev_capability(subdevcap, subdevclientcap);
+		} else {
 			v4l2_info_capability(vcap);
+		}
 	}
 	if (options[OptGetDriverInfo] && media_fd >= 0)
 		mi_media_info_for_fd(media_fd, fd);

@@ -128,7 +128,8 @@ void v4l2_info_capability(const v4l2_capability &vcap)
 	}
 }
 
-void v4l2_info_subdev_capability(const v4l2_subdev_capability &subdevcap)
+void v4l2_info_subdev_capability(const v4l2_subdev_capability &subdevcap,
+				 const v4l2_subdev_client_capability &subdevclientcap)
 {
 	printf("\tDriver version   : %d.%d.%d\n",
 	       subdevcap.version >> 16,
@@ -136,6 +137,8 @@ void v4l2_info_subdev_capability(const v4l2_subdev_capability &subdevcap)
 	       subdevcap.version & 0xff);
 	printf("\tCapabilities     : 0x%08x\n", subdevcap.capabilities);
 	printf("%s", subdevcap2s(subdevcap.capabilities).c_str());
+	printf("\tClient Capabilities: 0x%016llx\n", subdevclientcap.capabilities);
+	printf("%s", subdevclientcap2s(subdevclientcap.capabilities).c_str());
 }
 
 std::string fcc2s(__u32 val)
@@ -872,4 +875,15 @@ std::string modulation2s(unsigned modulation)
 		return "AM";
 	}
 	return "Unknown";
+}
+
+std::string subdevclientcap2s(__u64 cap)
+{
+	std::string s;
+
+	if (cap & V4L2_SUBDEV_CLIENT_CAP_STREAMS)
+		s += "streams ";
+	if (cap & V4L2_SUBDEV_CLIENT_CAP_INTERVAL_USES_WHICH)
+		s += "interval-uses-which ";
+	return s;
 }

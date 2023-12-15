@@ -973,6 +973,7 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 	struct node node2;
 	struct v4l2_capability vcap = {};
 	struct v4l2_subdev_capability subdevcap = {};
+	struct v4l2_subdev_client_capability subdevclientcap = {};
 	std::string driver;
 
 	tests_total = tests_ok = warnings = 0;
@@ -993,6 +994,9 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		determine_codec_mask(node);
 	} else if (node.is_subdev()) {
 		doioctl(&node, VIDIOC_SUBDEV_QUERYCAP, &subdevcap);
+		subdevclientcap.capabilities = ~0ULL;
+		if (doioctl(&node, VIDIOC_SUBDEV_S_CLIENT_CAP, &subdevclientcap))
+			subdevclientcap.capabilities = 0ULL;
 	} else {
 		memset(&vcap, 0, sizeof(vcap));
 	}
@@ -1079,7 +1083,7 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		}
 	} else if (node.is_subdev()) {
 		printf("Driver Info:\n");
-		v4l2_info_subdev_capability(subdevcap);
+		v4l2_info_subdev_capability(subdevcap, subdevclientcap);
 	}
 
 	__u32 ent_id = 0;

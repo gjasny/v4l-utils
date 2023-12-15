@@ -34,7 +34,8 @@ std::string flags2s(unsigned val, const flag_def *def);
 
 /* Print capability information */
 void v4l2_info_capability(const v4l2_capability &cap);
-void v4l2_info_subdev_capability(const v4l2_subdev_capability &subdevcap);
+void v4l2_info_subdev_capability(const v4l2_subdev_capability &subdevcap,
+				 const v4l2_subdev_client_capability &subdevclientcap);
 
 /* Return fourcc pixelformat string */
 std::string fcc2s(__u32 val);
@@ -156,5 +157,8 @@ std::string tcap2s(unsigned cap);
 
 /* Return band modulation description */
 std::string modulation2s(unsigned modulation);
+
+/* Return subdev client capabilities description */
+std::string subdevclientcap2s(__u64 cap);
 
 #endif
