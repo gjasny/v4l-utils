@@ -75,7 +75,7 @@ static error_t parse_plain_keymap(char *fname, struct keymap **keymap, bool verb
 {
 	FILE *fin;
 	int line_no = 0;
-	char *scancode, *keycode, *line;
+	char *scancode, *keycode, *line = NULL;
 	size_t line_size;
 	struct scancode_entry *se;
 	struct keymap *map;
