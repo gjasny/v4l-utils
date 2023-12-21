@@ -107,6 +107,7 @@ if dep_gl.found() and dep_glu.found() and dep_x11.found()
     )
 
     v4l2gl_deps = [
+        dep_argp,
         dep_gl,
         dep_glu,
         dep_libv4l2,
