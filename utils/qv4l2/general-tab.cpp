@@ -2165,13 +2165,16 @@ void GeneralTab::updateFrameSize()
 
 	ok = !enum_framesizes(frmsize, m_pixelformat);
 	if (ok && frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
-		do {
-			m_frameSize->addItem(QString("%1x%2")
-				.arg(frmsize.discrete.width).arg(frmsize.discrete.height));
-			if (frmsize.discrete.width == m_width &&
-			    frmsize.discrete.height == m_height)
-				m_frameSize->setCurrentIndex(frmsize.index);
-		} while (!enum_framesizes(frmsize));
+		if (m_frameSize) {
+			do {
+				m_frameSize->addItem(QString("%1x%2")
+					.arg(frmsize.discrete.width)
+					.arg(frmsize.discrete.height));
+				if (frmsize.discrete.width == m_width &&
+				    frmsize.discrete.height == m_height)
+					m_frameSize->setCurrentIndex(frmsize.index);
+			} while (!enum_framesizes(frmsize));
+		}
 
 		m_discreteSizes = true;
 		m_frameWidth->setEnabled(false);
@@ -2187,7 +2190,8 @@ void GeneralTab::updateFrameSize()
 		m_frameHeight->setMaximum(m_height);
 		m_frameHeight->setValue(m_height);
 		m_frameHeight->blockSignals(false);
-		m_frameSize->setEnabled(!m_haveBuffers);
+		if (m_frameSize)
+			m_frameSize->setEnabled(!m_haveBuffers);
 		updateFrameInterval();
 		return;
 	}
