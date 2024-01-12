@@ -69,12 +69,16 @@ ir_keytable_udev_rules = files(
 install_data(ir_keytable_udev_rules,
              install_dir : ir_keytable_system_dir / 'rules.d')
 
+if ir_bpf_enabled
+if dep_systemd.found()
 if have_udevdsyscallfilter
     ir_keytable_systemd_files = files(
         '50-rc_keymap.conf',
     )
     install_data(ir_keytable_systemd_files,
                  install_dir : systemd_systemdir / 'systemd-udevd.service.d')
+endif
+endif
 endif
 
 # Install non-existing directory to create empty directory structure
