@@ -585,6 +585,8 @@ void ApplicationWindow::updateCtrl(unsigned id)
 void ApplicationWindow::updateCtrlRange(unsigned id, __s32 new_val)
 {
 	const v4l2_query_ext_ctrl &qec = m_ctrlMap[id];
+	struct v4l2_querymenu qmenu;
+	QComboBox *combo;
 	QLineEdit *edit;
 	QIntValidator *val;
 	unsigned dif;
@@ -613,9 +615,25 @@ void ApplicationWindow::updateCtrlRange(unsigned id, __s32 new_val)
 		break;
 
 	case V4L2_CTRL_TYPE_STRING:
-		QLineEdit *edit = static_cast<QLineEdit *>(m_widgetMap[id]);
+		edit = static_cast<QLineEdit *>(m_widgetMap[id]);
 		edit->setMaxLength(qec.maximum);
 		break;
+
+	case V4L2_CTRL_TYPE_MENU:
+	case V4L2_CTRL_TYPE_INTEGER_MENU:
+		combo = static_cast<QComboBox *>(m_widgetMap[id]);
+		combo->clear();
+
+		for (int i = (int)qec.minimum; i <= (int)qec.maximum; i++) {
+			qmenu.id = qec.id;
+			qmenu.index = i;
+			if (querymenu(qmenu))
+				continue;
+			if (qec.type == V4L2_CTRL_TYPE_MENU)
+				combo->addItem((char *)qmenu.name);
+			else
+				combo->addItem(QString("%1").arg(qmenu.value));
+		}
 	}
 }
 
