@@ -667,9 +667,16 @@ static void stream_buf_caps(cv4l_fd &fd, unsigned buftype)
 	cbufs.format.type = buftype;
 	cbufs.memory = V4L2_MEMORY_MMAP;
 	if (!v4l_ioctl(fd.g_v4l_fd(), VIDIOC_CREATE_BUFS, &cbufs)) {
-		printf("Streaming I/O Capabilities for %s: %s\n",
+		bool has_max_num_buffers =
+			cbufs.capabilities & V4L2_BUF_CAP_SUPPORTS_MAX_NUM_BUFFERS;
+
+		cbufs.capabilities &= ~V4L2_BUF_CAP_SUPPORTS_MAX_NUM_BUFFERS;
+		printf("Streaming I/O Capabilities for %s: %s",
 		       buftype2s(buftype).c_str(),
 		       bufcap2s(cbufs.capabilities).c_str());
+		if (has_max_num_buffers)
+			printf(", max-num-buffers=%u", cbufs.max_num_buffers);
+		printf("\n");
 		return;
 	}
 	v4l2_requestbuffers rbufs;
