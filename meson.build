@@ -273,9 +273,9 @@ if dep_jpeg.found()
     dep_jpeg_priv_libs = '-ljpeg'
 endif
 
+dep_systemd = dependency('systemd', required : false)
 systemd_systemdir = get_option('systemdsystemunitdir')
 if systemd_systemdir == ''
-    dep_systemd = dependency('systemd', required : false)
     if dep_systemd.found()
         systemd_systemdir = dep_systemd.get_variable(pkgconfig : 'systemdsystemunitdir')
     endif
