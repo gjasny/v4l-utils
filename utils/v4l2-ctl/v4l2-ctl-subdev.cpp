@@ -96,7 +96,8 @@ void subdev_usage()
 	       "  --set-subdev-fps pad=<pad>,stream=<stream>,fps=<fps> (for testing only, otherwise use media-ctl)\n"
 	       "                     set the frame rate [VIDIOC_SUBDEV_S_FRAME_INTERVAL]\n"
 	       "  --get-routing      Print the route topology\n"
-	       "  --set-routing <routes>\n"
+	       "  --set-routing      (for testing only, otherwise use media-ctl)\n"
+	       "  --try-routing <routes>\n"
 	       "                     Comma-separated list of route descriptors to setup\n"
 	       "\n"
 	       "Routes are defined as\n"
@@ -458,14 +459,16 @@ void subdev_cmd(int ch, char *optarg)
 			}
 		}
 		break;
-	case OptSetRouting: {
+	case OptSetRouting:
+	case OptTryRouting: {
 		struct v4l2_subdev_route *r;
 		char *end, *ref, *tok;
 		unsigned int flags;
 
 		memset(&routing, 0, sizeof(routing));
 		memset(routes, 0, sizeof(routes[0]) * NUM_ROUTES_MAX);
-		routing.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+		routing.which = ch == OptSetRouting ? V4L2_SUBDEV_FORMAT_ACTIVE :
+				      V4L2_SUBDEV_FORMAT_TRY;
 		routing.num_routes = 0;
 		routing.routes = (__u64)routes;
 
@@ -683,7 +686,7 @@ void subdev_set(cv4l_fd &_fd)
 					fival.interval.denominator, fival.interval.numerator);
 		}
 	}
-	if (options[OptSetRouting]) {
+	if (options[OptSetRouting] || options[OptTryRouting]) {
 		if (!_fd.has_streams()) {
 			printf("Streams API not supported.\n");
 			return;
