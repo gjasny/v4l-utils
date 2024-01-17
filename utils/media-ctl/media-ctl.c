@@ -751,20 +751,20 @@ int main(int argc, char **argv)
 		}
 	}
 
-	if (media_opts.formats) {
-		ret = v4l2_subdev_parse_setup_formats(media,
-						      media_opts.formats);
+	if (media_opts.routes) {
+		ret = v4l2_subdev_parse_setup_routes(media, media_opts.routes);
 		if (ret) {
-			printf("Unable to setup formats: %s (%d)\n",
+			printf("Unable to setup routes: %s (%d)\n",
 			       strerror(-ret), -ret);
 			goto out;
 		}
 	}
 
-	if (media_opts.routes) {
-		ret = v4l2_subdev_parse_setup_routes(media, media_opts.routes);
+	if (media_opts.formats) {
+		ret = v4l2_subdev_parse_setup_formats(media,
+						      media_opts.formats);
 		if (ret) {
-			printf("Unable to setup routes: %s (%d)\n",
+			printf("Unable to setup formats: %s (%d)\n",
 			       strerror(-ret), -ret);
 			goto out;
 		}
