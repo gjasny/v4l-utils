@@ -1,17 +1,14 @@
-#ifdef _LIBCPP_VERSION
-#define fallthrough _LIBCPP_FALLTHROUGH()
+#if !defined(__cplusplus) || __cplusplus < 201103L
+	#define fallthrough ((void)0)
 #else
-
-#if __cplusplus >= 201103L
-
-#ifdef __clang__
-#define fallthrough [[clang::fallthrough]]
-#else
-#define fallthrough [[gnu::fallthrough]]
-#endif // __clang__
-
-#else
-#define fallthrough ((void)0)
-
+	#include <ciso646>
+	#ifdef _LIBCPP_VERSION
+		#define fallthrough _LIBCPP_FALLTHROUGH()
+	#else
+		#ifdef __clang__
+			#define fallthrough [[clang::fallthrough]]
+		#else
+			#define fallthrough [[gnu::fallthrough]]
+		#endif // __clang__
+	#endif // _LIBCPP_VERSION
 #endif // __cplusplus
-#endif // _LIBCPP_VERSION
