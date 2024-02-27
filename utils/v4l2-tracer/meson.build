@@ -71,3 +71,8 @@ v4l2_tracer = executable('v4l2-tracer',
                          include_directories : v4l2_tracer_incdir)
 
 man_pages += [[ meson.current_source_dir(), 'v4l2-tracer', 1 ]]
+
+# devenv support
+env = environment()
+env.set('V4L2_TRACER', libv4l2tracer.full_path())
+meson.add_devenv(env)

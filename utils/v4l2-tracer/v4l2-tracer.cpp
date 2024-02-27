@@ -296,41 +296,25 @@ int tracer(int argc, char *argv[], bool retrace)
 	fclose(trace_file);
 
 	/*
-	 * Preload the libv4l2tracer library. The libv4l2tracer is looked up next to
-	 * the executable first in order to support uninstalled build.
+	 * Preload the libv4l2tracer library. The tracer is looked up using following order:
+	 * 1. Check if LD_PRELOAD is already set, in which case just honor it
+	 * 2. Check V4L2_TRACER_PATH env is set (meson devenv / uninstalled)
+	 * 3. Check in the prefix/libdir path for an installed tracer.
 	 */
 	std::string libv4l2tracer_path;
-	std::string program = argv[0];
-	std::size_t idx = program.rfind("/");
-	struct stat sb;
-
-	if (idx == std::string::npos)
-		idx = 0;
+	if (getenv("LD_PRELOAD"))
+		libv4l2tracer_path = std::string(getenv("LD_PRELOAD"));
+	else if (getenv("V4L2_TRACER"))
+		libv4l2tracer_path = std::string(getenv("V4L2_TRACER"));
 	else
-		idx++;
-
-	libv4l2tracer_path = program.replace(program.begin() + idx, program.end(), "libv4l2tracer.so");
-
-	if (stat(libv4l2tracer_path.c_str(), &sb) == -1) {
-		/* If not found, get the libv4l2tracer library from the meson install path 'prefix' */
 		libv4l2tracer_path = std::string(LIBTRACER_PATH) + "/libv4l2tracer.so";
 
-		/* Otherwise, guess where the library might be for a cross-build. */
+	struct stat sb;
+	if (stat(libv4l2tracer_path.c_str(), &sb) == -1) {
 		if (stat(libv4l2tracer_path.c_str(), &sb) == -1) {
-			std::size_t idx =  libv4l2tracer_path.find("/home");
-			libv4l2tracer_path = libv4l2tracer_path.substr(idx);
-
-			/* Finally, check if the user set a custom path using LD_PRELOAD. */
-			if (stat(libv4l2tracer_path.c_str(), &sb) == -1) {
-				if (getenv("LD_PRELOAD"))
-					libv4l2tracer_path = std::string(getenv("LD_PRELOAD"));
-
-				if (stat(libv4l2tracer_path.c_str(), &sb) == -1) {
-					fprintf(stderr, "Exiting: can't find libv4l2tracer library\n");
-					fprintf(stderr, "Set a custom libv4l2tracer library path using: LD_PRELOAD\n");
-					exit(EXIT_FAILURE);
-				}
-			}
+			fprintf(stderr, "Exiting: can't find libv4l2tracer library in %s\n", libv4l2tracer_path.c_str());
+			fprintf(stderr, "If you are using a different location, try setting the env 'V4L2_TRACER'\n");
+			exit(EXIT_FAILURE);
 		}
 	}
 
