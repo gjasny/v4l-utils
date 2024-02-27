@@ -227,8 +227,8 @@ void edid_usage()
 	       "                     carray: c-program struct\n"
 	       "                     If <file> is '-' or not the 'file' argument is not supplied, then the data\n"
 	       "                     is written to stdout.\n"
-	       "  --fix-edid-checksums\n"
-	       "                     If specified then any checksum errors will be fixed silently.\n"
+	       "  --keep-edid-checksums\n"
+	       "                     If specified then any checksum errors will be kept.\n"
 	       );
 }
 
@@ -321,22 +321,6 @@ static void fix_edid(struct v4l2_edid *e)
 	}
 }
 
-static bool verify_edid(struct v4l2_edid *e)
-{
-	bool valid = true;
-
-	for (unsigned b = 0; b < e->blocks; b++) {
-		const unsigned char *buf = e->edid + 128 * b;
-
-		if (!crc_ok(buf)) {
-			fprintf(stderr, "Block %u has a checksum error (should be 0x%02x)\n",
-					b, crc_calc(buf));
-			valid = false;
-		}
-	}
-	return valid;
-}
-
 static void hexdumpedid(FILE *f, struct v4l2_edid *e)
 {
 	for (unsigned b = 0; b < e->blocks; b++) {
@@ -352,8 +336,8 @@ static void hexdumpedid(FILE *f, struct v4l2_edid *e)
 			fprintf(f, "\n");
 		}
 		if (!crc_ok(buf))
-			fprintf(f, "Block %u has a checksum error (should be 0x%02x)\n",
-					b, crc_calc(buf));
+			fprintf(stderr, "Block %u has a checksum error (should be 0x%02x)\n",
+				b, crc_calc(buf));
 	}
 }
 
@@ -366,7 +350,7 @@ static void rawdumpedid(FILE *f, struct v4l2_edid *e)
 			fprintf(f, "%c", buf[i]);
 		if (!crc_ok(buf))
 			fprintf(stderr, "Block %u has a checksum error (should be %02x)\n",
-					b, crc_calc(buf));
+				b, crc_calc(buf));
 	}
 }
 
@@ -386,8 +370,8 @@ static void carraydumpedid(FILE *f, struct v4l2_edid *e)
 			fprintf(f, "\n");
 		}
 		if (!crc_ok(buf))
-			fprintf(f, "\t/* Block %u has a checksum error (should be 0x%02x) */\n",
-					b, crc_calc(buf));
+			fprintf(stderr, "Block %u has a checksum error (should be 0x%02x)\n",
+				b, crc_calc(buf));
 	}
 	fprintf(f, "};\n");
 }
@@ -1411,7 +1395,6 @@ void edid_set(cv4l_fd &_fd)
 
 	if (options[OptSetEdid] || options[OptShowEdid]) {
 		FILE *fin = nullptr;
-		bool must_fix_edid = options[OptFixEdidChecksums];
 
 		if (file_in) {
 			if (!strcmp(file_in, "-"))
@@ -1438,7 +1421,6 @@ void edid_set(cv4l_fd &_fd)
 				sedid.edid[loc] ^= toggle_cta861_hdr_flags;
 				if (phys_addr >= 0)
 					set_edid_phys_addr(sedid.edid, sedid.blocks * 128, phys_addr);
-				must_fix_edid = true;
 			}
 		}
 		if (toggle_speaker1_flags || toggle_speaker2_flags || toggle_speaker3_flags) {
@@ -1447,7 +1429,6 @@ void edid_set(cv4l_fd &_fd)
 				sedid.edid[loc] ^= toggle_speaker1_flags;
 				sedid.edid[loc + 1] ^= toggle_speaker2_flags;
 				sedid.edid[loc + 2] ^= toggle_speaker3_flags;
-				must_fix_edid = true;
 			}
 		}
 		if (toggle_hdmi_vsdb_dc_flags || toggle_hdmi_vsdb_cnc_flags) {
@@ -1456,22 +1437,16 @@ void edid_set(cv4l_fd &_fd)
 			if (loc >= 0) {
 				__u8 len = sedid.edid[loc] & 0x1f;
 
-				if (len >= 6) {
+				if (len >= 6)
 					sedid.edid[loc + 6] ^= toggle_hdmi_vsdb_dc_flags;
-					must_fix_edid = true;
-				}
-				if (len >= 8) {
+				if (len >= 8)
 					sedid.edid[loc + 8] ^= toggle_hdmi_vsdb_cnc_flags;
-					must_fix_edid = true;
-				}
 			}
 		}
 		if (toggle_hf_vsdb_flags) {
 			loc = get_edid_hf_vsdb_location(sedid.edid, sedid.blocks * 128);
-			if (loc >= 0) {
+			if (loc >= 0)
 				sedid.edid[loc + 1] ^= toggle_hf_vsdb_flags;
-				must_fix_edid = true;
-			}
 		}
 		if (toggle_vid_cap_flags || mod_s_pt >= 0 ||
 		    mod_s_ce >= 0 || mod_s_it >= 0) {
@@ -1490,7 +1465,6 @@ void edid_set(cv4l_fd &_fd)
 					sedid.edid[loc] &= 0xcf;
 					sedid.edid[loc] |= mod_s_pt << 4;
 				}
-				must_fix_edid = true;
 			}
 		}
 		if (toggle_colorimetry_flags1 || toggle_colorimetry_flags2) {
@@ -1498,17 +1472,14 @@ void edid_set(cv4l_fd &_fd)
 			if (loc >= 0) {
 				sedid.edid[loc] ^= toggle_colorimetry_flags1;
 				sedid.edid[loc + 1] ^= toggle_colorimetry_flags2;
-				must_fix_edid = true;
 			}
 		}
 		if (toggle_hdr_md_flags) {
 			loc = get_edid_hdr_md_location(sedid.edid, sedid.blocks * 128);
-			if (loc >= 0) {
+			if (loc >= 0)
 				sedid.edid[loc] ^= toggle_hdr_md_flags;
-				must_fix_edid = true;
-			}
 		}
-		if (must_fix_edid)
+		if (!options[OptKeepEdidChecksums])
 			fix_edid(&sedid);
 		if (verbose && options[OptSetEdid])
 			print_edid_mods(&sedid);
@@ -1525,10 +1496,8 @@ void edid_set(cv4l_fd &_fd)
 					printf("\n");
 				}
 			}
-		} else if (verify_edid(&sedid)) {
-			doioctl(fd, VIDIOC_S_EDID, &sedid);
 		} else {
-			fprintf(stderr, "EDID not set due to checksum errors\n");
+			doioctl(fd, VIDIOC_S_EDID, &sedid);
 		}
 		if (fin) {
 			if (sedid.edid) {
@@ -1560,11 +1529,8 @@ void edid_get(cv4l_fd &_fd)
 			}
 		}
 		gedid.edid = static_cast<unsigned char *>(malloc(gedid.blocks * 128));
-		if (doioctl(fd, VIDIOC_G_EDID, &gedid) == 0) {
-			if (options[OptFixEdidChecksums])
-				fix_edid(&gedid);
+		if (doioctl(fd, VIDIOC_G_EDID, &gedid) == 0)
 			printedid(fout, &gedid, gformat);
-		}
 		if (file_out && fout != stdout)
 			fclose(fout);
 		free(gedid.edid);

@@ -191,7 +191,7 @@ enum Option {
 	OptGetEdid,
 	OptInfoEdid,
 	OptShowEdid,
-	OptFixEdidChecksums,
+	OptKeepEdidChecksums,
 	OptGetRouting,
 	OptSetRouting,
 	OptTryRouting,
