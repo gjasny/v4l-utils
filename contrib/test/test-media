@@ -9,6 +9,7 @@ vivid=0
 vim2m=0
 vimc=0
 vicodec=0
+visl=0
 cec=0
 cecpwr=--skip-test-standby-resume
 kmemleak=0
@@ -56,10 +57,11 @@ if [ -z "$1" ]; then
 	echo "vimc: test the vimc driver"
 	echo "vicodec: test the vicodec driver"
 	echo "vidtv: test the vidtv driver"
+	echo "visl: test the visl driver"
 	echo "cec: adds the vivid CEC compliance tests, except for the CEC standby/wakeup tests."
 	echo "cec-pwr: adds the vivid CEC compliance tests, including the CEC standby/wakeup tests."
-	echo "all: equals 'vivid vim2m vimc vicodec vidtv cec cec-pwr'"
-	echo "mc: equals 'vivid vim2m vimc vicodec vidtv'"
+	echo "all: equals 'vivid vim2m vimc vicodec vidtv visl cec cec-pwr'"
+	echo "mc: equals 'vivid vim2m vimc vicodec vidtv visl'"
 	exit 0
 fi
 
@@ -118,6 +120,7 @@ while [ ! -z "$1" ]; do
 		vim2m=1
 		vimc=1
 		vicodec=1
+		visl=1
 		cec=1
 		cecpwr=
 		;;
@@ -127,6 +130,7 @@ while [ ! -z "$1" ]; do
 		vimc=1
 		vicodec=1
 		vidtv=1
+		visl=1
 		;;
 	vidtv)
 		vidtv=1
@@ -142,6 +146,9 @@ while [ ! -z "$1" ]; do
 		;;
 	vicodec)
 		vicodec=1
+		;;
+	visl)
+		visl=1
 		;;
 	cec)
 		cec=1
@@ -238,6 +245,75 @@ if [ $vivid -eq 1 -a $setup -eq 0 ]; then
 	echo
 	echo
 fi
+
+if [ $visl -eq 1 -a $setup -eq 0 ]; then
+	dmesg -n notice
+	echo
+	echo loading visl module | tee /dev/kmsg
+	modprobe visl
+	sleep $modprobe_time
+	echo
+	echo visl compliance tests | tee /dev/kmsg
+	echo
+	date
+	stdbuf -oL $v4l2_compliance -m platform:visl -P -s10 -a 2>&1 | tee -a $tmp
+	echo
+	echo unbind visl | tee /dev/kmsg
+	echo
+	echo -n visl.0 >/sys/bus/platform/drivers/visl/unbind
+	sleep $unbind_time
+	echo
+	echo rebind visl | tee /dev/kmsg
+	echo
+	echo -n visl.0 >/sys/bus/platform/drivers/visl/bind
+	sleep 1
+	echo
+	echo second unbind visl | tee /dev/kmsg
+	echo
+	for i in `$v4l2_ctl -z platform:visl --list-devices`; do
+		let "t = 1 + $RANDOM / 4096"
+		echo $i: sleep ${t}s
+		sleep $t <$i &
+	done
+	sleep 1
+	echo
+	echo -n visl.0 >/sys/bus/platform/drivers/visl/unbind
+	sleep $reunbind_time
+	echo
+	echo rmmod visl | tee /dev/kmsg
+	echo
+	rmmod visl
+	sleep $rmmod_time
+
+	if [ $kmemleak -eq 1 ]; then
+		echo
+		echo kmemleak results for visl:
+		echo
+		echo scan >/sys/kernel/debug/kmemleak
+		cat /sys/kernel/debug/kmemleak
+		echo
+		echo end of kmemleak results
+		echo
+	fi
+
+	modprobe visl
+	sleep $modprobe_time
+
+	$v4l2_ctl -z platform:visl --all
+
+	if [ $kmemleak -eq 1 ]; then
+		echo clear >/sys/kernel/debug/kmemleak
+	fi
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+fi
+
 
 if [ $cec -eq 1 ]; then
 	dmesg -n notice
