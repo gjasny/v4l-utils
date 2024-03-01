@@ -123,7 +123,10 @@ Turn on verbose reporting.
 Show version information.
 .TP
 \fB\-w\fR, \fB\-\-wall\-clock\fR
-Show timestamps as wall-clock time. This also turns on verbose reporting.
+Show timestamps as wall-clock time.
+.TP
+\fB\-S\fR, \fB\-\-show\-timestamp\fR
+For each test, show the timestamp of when the test started.
 .TP
 \fB\-T\fR, \fB\-\-trace\fR
 Trace all called ioctls. Useful for debugging.

@@ -38,6 +38,7 @@ enum Option {
 	OptRemote = 'r',
 	OptReplyThreshold = 'R',
 	OptSkipInfo = 's',
+	OptShowTimestamp = 'S',
 	OptTimeout = 't',
 	OptTrace = 'T',
 	OptVerbose = 'v',
@@ -122,6 +123,7 @@ static struct option long_options[] = {
 	{"color", required_argument, nullptr, OptColor},
 	{"skip-info", no_argument, nullptr, OptSkipInfo},
 	{"wall-clock", no_argument, nullptr, OptWallClock},
+	{"show-timestamp", no_argument, nullptr, OptShowTimestamp},
 	{"interactive", no_argument, nullptr, OptInteractive},
 	{"reply-threshold", required_argument, nullptr, OptReplyThreshold},
 
@@ -229,7 +231,8 @@ static void usage()
 	       "  -T, --trace        Trace all called ioctls\n"
 	       "  -v, --verbose      Turn on verbose reporting\n"
 	       "  --version          Show version information\n"
-	       "  -w, --wall-clock   Show timestamps as wall-clock time (implies -v)\n"
+	       "  -w, --wall-clock   Show timestamps as wall-clock time\n"
+	       "  -S, --show-timestamp Show timestamp of the start of each test\n"
 	       "  -W, --exit-on-warn Exit on the first warning.\n"
 	       );
 }
@@ -278,6 +281,14 @@ static std::string ts2s(__u64 ts)
 	s = s.substr(0, s.length() - 6);
 	sprintf(buf, "%03lu", res.tv_usec / 1000);
 	return s + "." + buf;
+}
+
+std::string current_ts()
+{
+	struct timespec ts;
+
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ts2s(ts.tv_sec * 1000000000ULL + ts.tv_nsec);
 }
 
 const char *power_status2s(__u8 power_status)
@@ -1004,6 +1015,7 @@ int main(int argc, char **argv)
 			test_remote = true;
 			break;
 		case OptWallClock:
+			break;
 		case OptVerbose:
 			show_info = true;
 			break;
@@ -1274,7 +1286,8 @@ int main(int argc, char **argv)
 			for (unsigned to = 0; to <= 15; to++)
 				if (!(node.adap_la_mask & (1 << to)) &&
 				    (remote_la_mask & (1 << to)))
-					testRemote(&node, from, to, test_tags, options[OptInteractive]);
+					testRemote(&node, from, to, test_tags,
+						   options[OptInteractive], options[OptShowTimestamp]);
 		}
 	}
 

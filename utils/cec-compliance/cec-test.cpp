@@ -1150,7 +1150,7 @@ int setExpectedResult(char *optarg, bool no_warnings)
 }
 
 void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
-		bool interactive)
+		bool interactive, bool show_ts)
 {
 	printf("testing CEC local LA %d (%s) to remote LA %d (%s):\n",
 	       me, cec_la2s(me), la, cec_la2s(la));
@@ -1197,6 +1197,7 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 				if (!laddrs.log_addr_mask)
 					continue;
 			}
+			std::string start_ts = current_ts();
 			node->in_standby = subtest.in_standby;
 			mode_set_initiator(node);
 			unsigned old_warnings = warnings;
@@ -1206,20 +1207,28 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 				ret = OK_UNEXPECTED;
 
 			if (mapTests[safename(name)] != DONT_CARE) {
+				if (show_ts)
+					printf("\t    %s: %s: ", start_ts.c_str(), name);
+				else
+					printf("\t    %s: ", name);
 				if (ret != mapTests[safename(name)])
-					printf("\t    %s: %s (Expected '%s', got '%s')\n",
-					       name, ok(FAIL),
+					printf("%s (Expected '%s', got '%s')\n",
+					       ok(FAIL),
 					       result_name(mapTests[safename(name)], false),
 					       result_name(ret, false));
 				else if (has_warnings && mapTestsNoWarnings[safename(name)])
-					printf("\t    %s: %s (Expected no warnings, but got %d)\n",
-					       name, ok(FAIL), warnings - old_warnings);
+					printf("%s (Expected no warnings, but got %d)\n",
+					       ok(FAIL), warnings - old_warnings);
 				else if (ret == FAIL)
-					printf("\t    %s: %s\n", name, ok(OK_EXPECTED_FAIL));
+					printf("%s\n", ok(OK_EXPECTED_FAIL));
+				else
+					printf("%s\n", ok(ret));
+			} else if (ret != NOTAPPLICABLE) {
+				if (show_ts)
+					printf("\t    %s: %s: %s\n", start_ts.c_str(), name, ok(ret));
 				else
 					printf("\t    %s: %s\n", name, ok(ret));
-			} else if (ret != NOTAPPLICABLE)
-				printf("\t    %s: %s\n", name, ok(ret));
+			}
 			if (ret == FAIL_CRITICAL)
 				return;
 		}

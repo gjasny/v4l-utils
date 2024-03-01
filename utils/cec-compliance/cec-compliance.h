@@ -426,6 +426,7 @@ int util_receive(struct node *node, unsigned la, unsigned timeout,
 		 struct cec_msg *msg, __u8 sent_msg,
 		 __u8 reply1, __u8 reply2 = 0);
 std::string safename(const char *name);
+std::string current_ts();
 
 // CEC adapter tests
 void testAdapter(struct node &node, struct cec_log_addrs &laddrs,
@@ -454,7 +455,7 @@ void collectTests(void);
 void listTests(void);
 int setExpectedResult(char *optarg, bool no_warnings);
 void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
-			     bool interactive);
+			     bool interactive, bool show_ts);
 
 // cec-test-tuner-record-timer.cpp
 extern const vec_remote_subtests tuner_ctl_subtests;
