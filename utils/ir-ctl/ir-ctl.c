@@ -413,6 +413,7 @@ static struct send *read_file_raw(struct arguments *args, const char *fname, FIL
 			    (keyword[0] == '/' && keyword[1] == '/'))
 				break;
 
+			errno = 0;
 			value = strtol(keyword, &p, 10);
 			if (errno || *p) {
 				fprintf(stderr, _("%s:%d: error: expected integer, got `%s'\n"),
