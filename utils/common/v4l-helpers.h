@@ -1425,6 +1425,13 @@ static inline int v4l_buffer_querybuf(struct v4l_fd *f, struct v4l_buffer *buf, 
 	return v4l_ioctl(f, VIDIOC_QUERYBUF, &buf->buf);
 }
 
+struct v4l_queue_buf_info {
+	__u32 mem_offsets[VIDEO_MAX_PLANES];
+	void *mmappings[VIDEO_MAX_PLANES];
+	unsigned long userptrs[VIDEO_MAX_PLANES];
+	int fds[VIDEO_MAX_PLANES];
+};
+
 struct v4l_queue {
 	unsigned type;
 	unsigned memory;
@@ -1435,10 +1442,8 @@ struct v4l_queue {
 	unsigned max_num_buffers;
 
 	__u32 lengths[VIDEO_MAX_PLANES];
-	__u32 mem_offsets[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
-	void *mmappings[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
-	unsigned long userptrs[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
-	int fds[VIDEO_MAX_FRAME][VIDEO_MAX_PLANES];
+	struct v4l_queue_buf_info _bufs_info[VIDEO_MAX_FRAME];
+	struct v4l_queue_buf_info *bufs_info;
 };
 
 static inline void v4l_queue_init(struct v4l_queue *q,
@@ -1449,9 +1454,38 @@ static inline void v4l_queue_init(struct v4l_queue *q,
 	memset(q, 0, sizeof(*q));
 	q->type = type;
 	q->memory = memory;
+	q->max_num_buffers = VIDEO_MAX_FRAME;
+	q->bufs_info = q->_bufs_info;
+
 	for (i = 0; i < VIDEO_MAX_FRAME; i++)
 		for (p = 0; p < VIDEO_MAX_PLANES; p++)
-			q->fds[i][p] = -1;
+			q->bufs_info[i].fds[p] = -1;
+}
+
+static inline int v4l_queue_alloc_bufs_info(struct v4l_queue *q)
+{
+	struct v4l_queue_buf_info *bi;
+	unsigned i, p;
+
+	if (q->max_num_buffers <= VIDEO_MAX_FRAME)
+		return 0;
+	bi = (struct v4l_queue_buf_info *)calloc(q->max_num_buffers, sizeof(*bi));
+	if (!bi)
+		return -ENOMEM;
+	for (i = 0; i < VIDEO_MAX_FRAME; i++)
+		bi[i] = q->bufs_info[i];
+	for (i = VIDEO_MAX_FRAME; i < q->max_num_buffers; i++)
+		for (p = 0; p < VIDEO_MAX_PLANES; p++)
+			bi[i].fds[p] = -1;
+	q->bufs_info = bi;
+	return 0;
+}
+
+static inline void v4l_queue_free_bufs_info(struct v4l_queue *q)
+{
+	if (q->bufs_info != q->_bufs_info)
+		free(q->bufs_info);
+	q->bufs_info = q->_bufs_info;
 }
 
 static inline unsigned v4l_queue_g_type(const struct v4l_queue *q) { return q->type; }
@@ -1469,41 +1503,41 @@ static inline __u32 v4l_queue_g_length(const struct v4l_queue *q, unsigned plane
 
 static inline __u32 v4l_queue_g_mem_offset(const struct v4l_queue *q, unsigned index, unsigned plane)
 {
-	return q->mem_offsets[index][plane];
+	return q->bufs_info[index].mem_offsets[plane];
 }
 
 static inline void v4l_queue_s_mmapping(struct v4l_queue *q, unsigned index, unsigned plane, void *m)
 {
-	q->mmappings[index][plane] = m;
+	q->bufs_info[index].mmappings[plane] = m;
 }
 
 static inline void *v4l_queue_g_mmapping(const struct v4l_queue *q, unsigned index, unsigned plane)
 {
 	if (index >= v4l_queue_g_mappings(q) || plane >= v4l_queue_g_num_planes(q))
 		return NULL;
-	return q->mmappings[index][plane];
+	return q->bufs_info[index].mmappings[plane];
 }
 
 static inline void v4l_queue_s_userptr(struct v4l_queue *q, unsigned index, unsigned plane, void *m)
 {
-	q->userptrs[index][plane] = (unsigned long)m;
+	q->bufs_info[index].userptrs[plane] = (unsigned long)m;
 }
 
 static inline void *v4l_queue_g_userptr(const struct v4l_queue *q, unsigned index, unsigned plane)
 {
 	if (index >= v4l_queue_g_buffers(q) || plane >= v4l_queue_g_num_planes(q))
 		return NULL;
-	return (void *)q->userptrs[index][plane];
+	return (void *)q->bufs_info[index].userptrs[plane];
 }
 
 static inline void v4l_queue_s_fd(struct v4l_queue *q, unsigned index, unsigned plane, int fd)
 {
-	q->fds[index][plane] = fd;
+	q->bufs_info[index].fds[plane] = fd;
 }
 
 static inline int v4l_queue_g_fd(const struct v4l_queue *q, unsigned index, unsigned plane)
 {
-	return q->fds[index][plane];
+	return q->bufs_info[index].fds[plane];
 }
 
 static inline void *v4l_queue_g_dataptr(const struct v4l_queue *q, unsigned index, unsigned plane)
@@ -1532,7 +1566,7 @@ static inline int v4l_queue_querybufs(struct v4l_fd *f, struct v4l_queue *q, uns
 		}
 		if (q->memory == V4L2_MEMORY_MMAP)
 			for (p = 0; p < q->num_planes; p++)
-				q->mem_offsets[b][p] = v4l_buffer_g_mem_offset(&buf, p);
+				q->bufs_info[b].mem_offsets[p] = v4l_buffer_g_mem_offset(&buf, p);
 	}
 	return 0;
 }
@@ -1540,6 +1574,7 @@ static inline int v4l_queue_querybufs(struct v4l_fd *f, struct v4l_queue *q, uns
 static inline int v4l_queue_reqbufs(struct v4l_fd *f,
 		struct v4l_queue *q, unsigned count, unsigned int flags = 0)
 {
+	struct v4l2_create_buffers createbufs;
 	struct v4l2_requestbuffers reqbufs;
 	int ret;
 
@@ -1556,6 +1591,20 @@ static inline int v4l_queue_reqbufs(struct v4l_fd *f,
 		return ret;
 	q->buffers = reqbufs.count;
 	q->capabilities = reqbufs.capabilities;
+
+	if (q->buffers) {
+		memset(&createbufs, 0, sizeof(createbufs));
+		createbufs.format.type = q->type;
+		createbufs.memory = q->memory;
+		if (!v4l_ioctl(f, VIDIOC_CREATE_BUFS, &createbufs)) {
+			q->capabilities = createbufs.capabilities;
+			if (q->bufs_info == q->_bufs_info &&
+			    (q->capabilities & V4L2_BUF_CAP_SUPPORTS_MAX_NUM_BUFFERS)) {
+				q->max_num_buffers = createbufs.max_num_buffers;
+				v4l_queue_alloc_bufs_info(q);
+			}
+		}
+	}
 	return v4l_queue_querybufs(f, q, 0);
 }
 
@@ -1591,10 +1640,14 @@ static inline int v4l_queue_create_bufs(struct v4l_fd *f,
 	ret = v4l_ioctl(f, VIDIOC_CREATE_BUFS, &createbufs);
 	if (ret)
 		return ret;
-	q->capabilities = createbufs.capabilities;
-	q->max_num_buffers = 32;
-	if (q->capabilities & V4L2_BUF_CAP_SUPPORTS_MAX_NUM_BUFFERS)
-		q->max_num_buffers = createbufs.max_num_buffers;
+	if (q->buffers == 0) {
+		q->capabilities = createbufs.capabilities;
+		if (q->bufs_info == q->_bufs_info &&
+		    (q->capabilities & V4L2_BUF_CAP_SUPPORTS_MAX_NUM_BUFFERS)) {
+			q->max_num_buffers = createbufs.max_num_buffers;
+			v4l_queue_alloc_bufs_info(q);
+		}
+	}
 	q->buffers += createbufs.count;
 	return v4l_queue_querybufs(f, q, q->buffers - createbufs.count);
 }
@@ -1762,6 +1815,7 @@ static inline void v4l_queue_free(struct v4l_fd *f, struct v4l_queue *q)
 	v4l_queue_release_bufs(f, q, 0);
 	v4l_queue_close_exported_fds(q);
 	v4l_queue_reqbufs(f, q, 0, 0);
+	v4l_queue_free_bufs_info(q);
 }
 
 static inline void v4l_queue_buffer_update(const struct v4l_queue *q,

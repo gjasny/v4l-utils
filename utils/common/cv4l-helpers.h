@@ -740,6 +740,7 @@ public:
 	{
 		v4l_queue_init(this, type, memory);
 	}
+	~cv4l_queue() { v4l_queue_free_bufs_info(this); }
 	void init(unsigned type, unsigned memory)
 	{
 		v4l_queue_init(this, type, memory);
