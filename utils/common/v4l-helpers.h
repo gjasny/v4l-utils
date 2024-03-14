@@ -1547,12 +1547,29 @@ static inline void *v4l_queue_g_dataptr(const struct v4l_queue *q, unsigned inde
 	return v4l_queue_g_mmapping(q, index, plane);
 }
 
-static inline int v4l_queue_querybufs(struct v4l_fd *f, struct v4l_queue *q, unsigned from)
+static inline int v4l_queue_remove_bufs(struct v4l_fd *f, struct v4l_queue *q, unsigned index, unsigned count)
 {
-	unsigned b, p;
+	struct v4l2_remove_buffers removebufs;
 	int ret;
 
-	for (b = from; b < v4l_queue_g_buffers(q); b++) {
+	memset(&removebufs, 0, sizeof(removebufs));
+	removebufs.type = q->type;
+	removebufs.index = index;
+	removebufs.count = count;
+
+	ret = v4l_ioctl(f, VIDIOC_REMOVE_BUFS, &removebufs);
+	if (!ret)
+		q->buffers -= removebufs.count;
+
+	return ret;
+}
+
+static inline int v4l_queue_querybufs(struct v4l_fd *f, struct v4l_queue *q, unsigned from, unsigned count)
+{
+	unsigned b, p, max = from + count;
+	int ret;
+
+	for (b = from; b < max; b++) {
 		struct v4l_buffer buf;
 
 		v4l_buffer_init(&buf, v4l_queue_g_type(q), v4l_queue_g_memory(q), b);
@@ -1605,7 +1622,7 @@ static inline int v4l_queue_reqbufs(struct v4l_fd *f,
 			}
 		}
 	}
-	return v4l_queue_querybufs(f, q, 0);
+	return v4l_queue_querybufs(f, q, 0, reqbufs.count);
 }
 
 static inline bool v4l_queue_has_create_bufs(struct v4l_fd *f, const struct v4l_queue *q)
@@ -1649,7 +1666,7 @@ static inline int v4l_queue_create_bufs(struct v4l_fd *f,
 		}
 	}
 	q->buffers += createbufs.count;
-	return v4l_queue_querybufs(f, q, q->buffers - createbufs.count);
+	return v4l_queue_querybufs(f, q, createbufs.index, createbufs.count);
 }
 
 static inline int v4l_queue_mmap_bufs(struct v4l_fd *f,

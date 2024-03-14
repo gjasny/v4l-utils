@@ -529,6 +529,124 @@ static int testCanSetSameTimings(struct node *node)
 	return 0;
 }
 
+int testRemoveBufs(struct node *node)
+{
+	int ret;
+	unsigned i;
+
+	node->reopen();
+
+	for (i = 1; i <= V4L2_BUF_TYPE_LAST; i++) {
+		struct v4l2_remove_buffers removebufs = { };
+		unsigned buffers;
+
+		if (!(node->valid_buftypes & (1 << i)))
+			continue;
+
+		cv4l_queue q(i, V4L2_MEMORY_MMAP);
+
+		if (testSetupVbi(node, i))
+			continue;
+		ret = q.remove_bufs(node, 0, 0);
+		if (ret == ENOTTY)
+			continue;
+
+		q.init(i, V4L2_MEMORY_MMAP);
+		ret = q.create_bufs(node, 0);
+
+		memset(&removebufs, 0xff, sizeof(removebufs));
+		removebufs.index = 0;
+		removebufs.count = 0;
+		removebufs.type = q.g_type();
+		fail_on_test(doioctl(node, VIDIOC_REMOVE_BUFS, &removebufs));
+		fail_on_test(check_0(removebufs.reserved, sizeof(removebufs.reserved)));
+
+		buffer buf(i);
+
+		/* Create only 1 buffer */
+		fail_on_test(q.create_bufs(node, 1));
+		buffers = q.g_buffers();
+		fail_on_test(buffers != 1);
+		/* Removing buffer index 1 must fail */
+		fail_on_test(q.remove_bufs(node, 1, buffers) != EINVAL);
+		/* Removing buffer index 0 is valid */
+		fail_on_test(q.remove_bufs(node, 0, buffers));
+		/* Removing buffer index 0 again must fail */
+		fail_on_test(q.remove_bufs(node, 0, 1) != EINVAL);
+		/* Create 3 buffers indexes 0 to 2 */
+		fail_on_test(q.create_bufs(node, 3));
+		/* Remove them one by one */
+		fail_on_test(q.remove_bufs(node, 2, 1));
+		fail_on_test(q.remove_bufs(node, 0, 1));
+		fail_on_test(q.remove_bufs(node, 1, 1));
+		/* Removing buffer index 0 again must fail */
+		fail_on_test(q.remove_bufs(node, 0, 1) != EINVAL);
+
+		/* Create 4 buffers indexes 0 to 3 */
+		fail_on_test(q.create_bufs(node, 4));
+		/* Remove buffers index 1 and 2 */
+		fail_on_test(q.remove_bufs(node, 1, 2));
+		/* Add 3 more buffers should be indexes 4 to 6 */
+		fail_on_test(q.create_bufs(node, 3));
+		/* Query buffers:
+		 * 1 and 2 have been removed they must fail
+		 * 0 and 3 to 6 must exist*/
+		fail_on_test(buf.querybuf(node, 0));
+		fail_on_test(buf.querybuf(node, 1) != EINVAL);
+		fail_on_test(buf.querybuf(node, 2) != EINVAL);
+		fail_on_test(buf.querybuf(node, 3));
+		fail_on_test(buf.querybuf(node, 4));
+		fail_on_test(buf.querybuf(node, 5));
+		fail_on_test(buf.querybuf(node, 6));
+
+		/* Remove existing buffer index 6 with bad type must fail */
+		memset(&removebufs, 0xff, sizeof(removebufs));
+		removebufs.index = 6;
+		removebufs.count = 1;
+		removebufs.type = 0;
+		fail_on_test(doioctl(node, VIDIOC_REMOVE_BUFS, &removebufs) != EINVAL);
+
+		/* Remove existing buffer index 6 with bad type and count == 0
+		 * must fail */
+		memset(&removebufs, 0xff, sizeof(removebufs));
+		removebufs.index = 6;
+		removebufs.count = 0;
+		removebufs.type = 0;
+		fail_on_test(doioctl(node, VIDIOC_REMOVE_BUFS, &removebufs) != EINVAL);
+
+		/* Remove with count == 0 must always return 0 */
+		fail_on_test(q.remove_bufs(node, 0, 0));
+		fail_on_test(q.remove_bufs(node, 1, 0));
+		fail_on_test(q.remove_bufs(node, 6, 0));
+		fail_on_test(q.remove_bufs(node, 7, 0));
+		fail_on_test(q.remove_bufs(node, 0xffffffff, 0));
+
+		/* Remove crossing max allowed buffers boundary must fail */
+		fail_on_test(q.remove_bufs(node, q.g_max_num_buffers() - 2, 7) != EINVAL);
+
+		/* Remove overflow must fail */
+		fail_on_test(q.remove_bufs(node, 3, 0xfffffff) != EINVAL);
+
+		/* Remove 2 buffers on index 2 when index 2 is free must fail */
+		fail_on_test(q.remove_bufs(node, 2, 2) != EINVAL);
+
+		/* Remove 2 buffers on index 0 when index 1 is free must fail */
+		fail_on_test(q.remove_bufs(node, 0, 2) != EINVAL);
+
+		/* Remove 2 buffers on index 1 when index 1 and 2 are free must fail */
+		fail_on_test(q.remove_bufs(node, 1, 2) != EINVAL);
+
+		/* Create 2 buffers, that must fill the hole */
+		fail_on_test(q.create_bufs(node, 2));
+		/* Remove all buffers */
+		fail_on_test(q.remove_bufs(node, 0, 7));
+
+		fail_on_test(q.reqbufs(node, 0));
+	}
+
+	return 0;
+}
+
 int testReqBufs(struct node *node)
 {
 	struct v4l2_create_buffers crbufs = { };
