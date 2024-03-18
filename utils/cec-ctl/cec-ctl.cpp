@@ -1978,13 +1978,13 @@ static void stress_test_random_standby_wakeup_cycle(const struct node &node, uns
 
 		cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
 		cec_msg_image_view_on(&msg);
-		for (int i = 0; i < 50; i++) {
+		for (int i = 0; i < 10; i++) {
 			ret = transmit_msg_retry(node, msg);
 			if (!ret)
 				break;
 			usleep(200000);
 		}
-		if (ret)
+		if (ret != ENONET)
 			printf("%s\n", strerror(ret));
 		else
 			printf("OK\n");
@@ -2071,13 +2071,13 @@ done:
 		transmit_msg_retry(node, msg);
 		cec_msg_init(&msg, from, CEC_LOG_ADDR_TV);
 		cec_msg_standby(&msg);
-		for (int i = 0; i < 50; i++) {
+		for (int i = 0; i < 10; i++) {
 			ret = transmit_msg_retry(node, msg);
 			if (!ret)
 				break;
 			usleep(200000);
 		}
-		if (ret)
+		if (ret != ENONET)
 			printf("%s\n", strerror(ret));
 		else
 			printf("OK\n");
