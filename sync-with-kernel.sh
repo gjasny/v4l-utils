@@ -7,6 +7,7 @@ KERNEL_DIR=$1
 if [ -z "${KERNEL_DIR}" -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/videodev2.h -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/fb.h -o \
+     ! -f ${KERNEL_DIR}/usr/include/linux/vesa.h -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/v4l2-controls.h -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/v4l2-common.h -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/v4l2-subdev.h -o \
@@ -28,6 +29,7 @@ fi
 
 cp -a ${KERNEL_DIR}/usr/include/linux/videodev2.h ${TOPSRCDIR}/include/linux
 cp -a ${KERNEL_DIR}/usr/include/linux/fb.h ${TOPSRCDIR}/include/linux
+cp -a ${KERNEL_DIR}/usr/include/linux/vesa.h ${TOPSRCDIR}/include/linux
 cp -a ${KERNEL_DIR}/usr/include/linux/v4l2-controls.h ${TOPSRCDIR}/include/linux
 patch -d ${TOPSRCDIR} --no-backup-if-mismatch -p1 <${TOPSRCDIR}/utils/common/v4l2-controls.patch
 cp -a ${KERNEL_DIR}/usr/include/linux/v4l2-common.h ${TOPSRCDIR}/include/linux
