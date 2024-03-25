@@ -3000,6 +3000,21 @@ void trace_v4l2_create_buffers_gen(void *arg, json_object *parent_obj, std::stri
 		json_object_object_add(parent_obj, key_name.c_str(), v4l2_create_buffers_obj);
 }
 
+void trace_v4l2_remove_buffers_gen(void *arg, json_object *parent_obj, std::string key_name = "")
+{
+	json_object *v4l2_remove_buffers_obj = json_object_new_object();
+	struct v4l2_remove_buffers *p = static_cast<struct v4l2_remove_buffers*>(arg);
+
+	json_object_object_add(v4l2_remove_buffers_obj, "index", json_object_new_int64(p->index));
+	json_object_object_add(v4l2_remove_buffers_obj, "count", json_object_new_int64(p->count));
+	json_object_object_add(v4l2_remove_buffers_obj, "type", json_object_new_string(val2s(p->type, nullptr).c_str()));
+
+	if (key_name.empty())
+		json_object_object_add(parent_obj, "v4l2_remove_buffers", v4l2_remove_buffers_obj);
+	else
+		json_object_object_add(parent_obj, key_name.c_str(), v4l2_remove_buffers_obj);
+}
+
 void trace_media_device_info_gen(void *arg, json_object *parent_obj, std::string key_name = "")
 {
 	json_object *media_device_info_obj = json_object_new_object();

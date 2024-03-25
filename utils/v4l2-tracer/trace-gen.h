@@ -128,6 +128,7 @@ void trace_v4l2_dbg_match_gen(void *arg, json_object *parent_obj, std::string ke
 void trace_v4l2_dbg_register_gen(void *arg, json_object *parent_obj, std::string key_name = "");
 void trace_v4l2_dbg_chip_info_gen(void *arg, json_object *parent_obj, std::string key_name = "");
 void trace_v4l2_create_buffers_gen(void *arg, json_object *parent_obj, std::string key_name = "");
+void trace_v4l2_remove_buffers_gen(void *arg, json_object *parent_obj, std::string key_name = "");
 void trace_media_device_info_gen(void *arg, json_object *parent_obj, std::string key_name = "");
 void trace_media_entity_desc_gen(void *arg, json_object *parent_obj, std::string key_name = "");
 void trace_media_pad_desc_gen(void *arg, json_object *parent_obj, std::string key_name = "");

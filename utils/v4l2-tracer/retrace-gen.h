@@ -128,6 +128,7 @@ struct v4l2_dbg_match *retrace_v4l2_dbg_match_gen(json_object *parent_obj, std::
 struct v4l2_dbg_register *retrace_v4l2_dbg_register_gen(json_object *parent_obj, std::string key_name = "");
 struct v4l2_dbg_chip_info *retrace_v4l2_dbg_chip_info_gen(json_object *parent_obj, std::string key_name = "");
 struct v4l2_create_buffers *retrace_v4l2_create_buffers_gen(json_object *parent_obj, std::string key_name = "");
+struct v4l2_remove_buffers *retrace_v4l2_remove_buffers_gen(json_object *parent_obj, std::string key_name = "");
 struct media_device_info *retrace_media_device_info_gen(json_object *parent_obj, std::string key_name = "");
 struct media_entity_desc *retrace_media_entity_desc_gen(json_object *parent_obj, std::string key_name = "");
 struct media_pad_desc *retrace_media_pad_desc_gen(json_object *parent_obj, std::string key_name = "");

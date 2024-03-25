@@ -5278,6 +5278,29 @@ struct v4l2_create_buffers *retrace_v4l2_create_buffers_gen(json_object *parent_
 
 	return p;
 }
+struct v4l2_remove_buffers *retrace_v4l2_remove_buffers_gen(json_object *parent_obj, std::string key_name = "")
+{
+	struct v4l2_remove_buffers *p = (struct v4l2_remove_buffers *) calloc(1, sizeof(v4l2_remove_buffers));
+
+	json_object *v4l2_remove_buffers_obj;
+	if (key_name.empty())
+		json_object_object_get_ex(parent_obj, "v4l2_remove_buffers", &v4l2_remove_buffers_obj);
+	else
+		json_object_object_get_ex(parent_obj, key_name.c_str(), &v4l2_remove_buffers_obj);
+
+	json_object *index_obj;
+	if (json_object_object_get_ex(v4l2_remove_buffers_obj, "index", &index_obj))
+		p->index = (__u32) json_object_get_int64(index_obj);
+
+	json_object *count_obj;
+	if (json_object_object_get_ex(v4l2_remove_buffers_obj, "count", &count_obj))
+		p->count = (__u32) json_object_get_int64(count_obj);
+
+	json_object *type_obj;
+	if (json_object_object_get_ex(v4l2_remove_buffers_obj, "type", &type_obj))
+		p->type = (__u32) s2val(json_object_get_string(type_obj), nullptr);
+	return p;
+}
 struct media_device_info *retrace_media_device_info_gen(json_object *parent_obj, std::string key_name = "")
 {
 	struct media_device_info *p = (struct media_device_info *) calloc(1, sizeof(media_device_info));

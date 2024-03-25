@@ -63,6 +63,7 @@ union v4l_parms {
 	struct v4l2_query_ext_ctrl		p_v4l2_query_ext_ctrl;
 	struct v4l2_queryctrl			p_v4l2_queryctrl;
 	struct v4l2_querymenu			p_v4l2_querymenu;
+	struct v4l2_remove_buffers		p_v4l2_remove_buffers;
 	struct v4l2_requestbuffers		p_v4l2_requestbuffers;
 	struct v4l2_selection			p_v4l2_selection;
 	struct v4l2_sliced_vbi_cap		p_v4l2_sliced_vbi_cap;
@@ -178,6 +179,7 @@ static const struct {
 	ioc(video, VIDIOC_QUERYSTD),							/*  v4l2_std_id */
 	ioc(video, VIDIOC_QUERY_DV_TIMINGS),						/*  struct v4l2_dv_timings */
 	ioc(video, VIDIOC_QUERY_EXT_CTRL),						/*  struct v4l2_query_ext_ctrl */
+	ioc(video, VIDIOC_REMOVE_BUFS),							/*  struct v4l2_remove_buffers */
 	ioc(video, VIDIOC_REQBUFS),							/*  struct v4l2_requestbuffers */
 	ioc(video, VIDIOC_STREAMOFF),							/*  int */
 	ioc(video, VIDIOC_STREAMON),							/*  int */
