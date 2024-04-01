@@ -49,7 +49,7 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt,
 				  __u32 w, __u32 h, __u32 type)
 {
 	struct v4l2_frmivalenum frmival;
-	struct v4l2_frmival_stepwise *sw = &frmival.stepwise;
+	const struct v4l2_frmival_stepwise *sw = &frmival.stepwise;
 	bool found_stepwise = false;
 	unsigned f = 0;
 	int ret;
@@ -129,7 +129,7 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt,
 static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 {
 	struct v4l2_frmsizeenum frmsize;
-	struct v4l2_frmsize_stepwise *sw = &frmsize.stepwise;
+	const struct v4l2_frmsize_stepwise *sw = &frmsize.stepwise;
 	bool found_stepwise = false;
 	__u64 cookie;
 	unsigned f = 0;
@@ -438,15 +438,15 @@ static void createInvalidFmt(struct v4l2_format &fmt, struct v4l2_clip &clip, un
 
 static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4l2_format &fmt, bool have_clip = false)
 {
-	pixfmt_map &map = node->buftype_pixfmts[type];
-	pixfmt_map *map_splane;
-	struct v4l2_pix_format &pix = fmt.fmt.pix;
-	struct v4l2_pix_format_mplane &pix_mp = fmt.fmt.pix_mp;
-	struct v4l2_window &win = fmt.fmt.win;
-	struct v4l2_vbi_format &vbi = fmt.fmt.vbi;
-	struct v4l2_sliced_vbi_format &sliced = fmt.fmt.sliced;
-	struct v4l2_sdr_format &sdr = fmt.fmt.sdr;
-	struct v4l2_meta_format &meta = fmt.fmt.meta;
+	const pixfmt_map &map = node->buftype_pixfmts[type];
+	const pixfmt_map *map_splane;
+	const struct v4l2_pix_format &pix = fmt.fmt.pix;
+	const struct v4l2_pix_format_mplane &pix_mp = fmt.fmt.pix_mp;
+	const struct v4l2_window &win = fmt.fmt.win;
+	const struct v4l2_vbi_format &vbi = fmt.fmt.vbi;
+	const struct v4l2_sliced_vbi_format &sliced = fmt.fmt.sliced;
+	const struct v4l2_sdr_format &sdr = fmt.fmt.sdr;
+	const struct v4l2_meta_format &meta = fmt.fmt.meta;
 	unsigned min_data_samples;
 	unsigned min_sampling_rate;
 	v4l2_std_id std;
@@ -497,7 +497,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 			return fail("pix_mp.reserved not zeroed\n");
 		fail_on_test(pix_mp.num_planes == 0 || pix_mp.num_planes >= VIDEO_MAX_PLANES);
 		for (int i = 0; i < pix_mp.num_planes; i++) {
-			struct v4l2_plane_pix_format &pfmt = pix_mp.plane_fmt[i];
+			const struct v4l2_plane_pix_format &pfmt = pix_mp.plane_fmt[i];
 
 			ret = check_0(pfmt.reserved, sizeof(pfmt.reserved));
 			if (ret)
@@ -559,7 +559,7 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 		if (have_clip)
 			fail_on_test(!win.clipcount && (node->fbuf_caps & V4L2_FBUF_CAP_LIST_CLIPPING));
 		if (win.clipcount) {
-			struct v4l2_rect *r = &win.clips->c;
+			const struct v4l2_rect *r = &win.clips->c;
 			struct v4l2_framebuffer fb;
 
 			fail_on_test(doioctl(node, VIDIOC_G_FBUF, &fb));
@@ -1281,8 +1281,8 @@ int testSlicedVBICap(struct node *node)
 static int testParmStruct(struct node *node, struct v4l2_streamparm &parm)
 {
 	bool is_stateful_enc = node->codec_mask & STATEFUL_ENCODER;
-	struct v4l2_captureparm *cap = &parm.parm.capture;
-	struct v4l2_outputparm *out = &parm.parm.output;
+	const struct v4l2_captureparm *cap = &parm.parm.capture;
+	const struct v4l2_outputparm *out = &parm.parm.output;
 	int ret;
 
 	switch (parm.type) {
