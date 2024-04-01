@@ -281,12 +281,23 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 				      V4L2_FMT_FLAG_ENC_CAP_FRAME_INTERVAL |
 				      V4L2_FMT_FLAG_CSC_COLORSPACE |
 				      V4L2_FMT_FLAG_CSC_YCBCR_ENC | V4L2_FMT_FLAG_CSC_HSV_ENC |
-				      V4L2_FMT_FLAG_CSC_QUANTIZATION | V4L2_FMT_FLAG_CSC_XFER_FUNC))
+				      V4L2_FMT_FLAG_CSC_QUANTIZATION | V4L2_FMT_FLAG_CSC_XFER_FUNC |
+				      V4L2_FMT_FLAG_META_LINE_BASED))
 			return fail("unknown flag %08x returned\n", fmtdesc.flags);
 		if (!(fmtdesc.flags & V4L2_FMT_FLAG_COMPRESSED))
 			fail_on_test(fmtdesc.flags & (V4L2_FMT_FLAG_CONTINUOUS_BYTESTREAM |
 						      V4L2_FMT_FLAG_DYN_RESOLUTION |
 						      V4L2_FMT_FLAG_ENC_CAP_FRAME_INTERVAL));
+
+		// Checks for metadata formats.
+		// The META_LINE_BASED flag can be set for metadata formats only.
+		if (type == V4L2_BUF_TYPE_META_OUTPUT || type == V4L2_BUF_TYPE_META_CAPTURE)
+			fail_on_test(fmtdesc.flags & ~V4L2_FMT_FLAG_META_LINE_BASED);
+		// Only the META_LINE_BASED flag is valid for metadata formats.
+		if (fmtdesc.flags & V4L2_FMT_FLAG_META_LINE_BASED)
+			fail_on_test(type != V4L2_BUF_TYPE_META_OUTPUT &&
+				     type != V4L2_BUF_TYPE_META_CAPTURE);
+
 		ret = testEnumFrameSizes(node, fmtdesc.pixelformat);
 		if (ret)
 			fail_on_test(node->codec_mask & STATEFUL_ENCODER);
@@ -590,6 +601,10 @@ static int testFormatsType(struct node *node, int ret,  unsigned type, struct v4
 			return fail("dataformat %08x (%s) for buftype %d not reported by ENUM_FMT\n",
 					meta.dataformat, fcc2s(meta.dataformat).c_str(), type);
 		fail_on_test(meta.buffersize == 0);
+		if (map.at(meta.dataformat) & V4L2_FMT_FLAG_META_LINE_BASED) {
+			fail_on_test(!meta.width || !meta.height);
+			fail_on_test(!meta.bytesperline);
+		}
 		break;
 	case V4L2_BUF_TYPE_PRIVATE:
 		break;
