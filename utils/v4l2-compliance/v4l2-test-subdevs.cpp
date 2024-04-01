@@ -579,7 +579,8 @@ int testSubDevSelection(struct node *node, unsigned which, unsigned pad, unsigne
 
 int testSubDevRouting(struct node *node, unsigned which)
 {
-	const uint32_t all_route_flags_mask = V4L2_SUBDEV_ROUTE_FL_ACTIVE;
+	const uint32_t all_route_flags_mask = V4L2_SUBDEV_ROUTE_FL_ACTIVE
+					    | V4L2_SUBDEV_ROUTE_FL_IMMUTABLE;
 	struct v4l2_subdev_routing routing = {};
 	struct v4l2_subdev_route routes[NUM_ROUTES_MAX] = {};
 	unsigned int i;
@@ -629,6 +630,8 @@ int testSubDevRouting(struct node *node, unsigned which)
 			fail_on_test(!(sink->flags & MEDIA_PAD_FL_SINK));
 			fail_on_test(!(source->flags & MEDIA_PAD_FL_SOURCE));
 			fail_on_test(route->flags & ~all_route_flags_mask);
+			fail_on_test((route->flags & V4L2_SUBDEV_ROUTE_FL_IMMUTABLE) &&
+				     !(route->flags & V4L2_SUBDEV_ROUTE_FL_ACTIVE));
 		}
 	}
 
