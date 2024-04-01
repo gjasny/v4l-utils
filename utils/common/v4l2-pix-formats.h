@@ -52,6 +52,8 @@
 	case V4L2_PIX_FMT_Y10BPACK: return "10-bit Greyscale (Packed)";
 	case V4L2_PIX_FMT_Y10P: return "10-bit Greyscale (MIPI Packed)";
 	case V4L2_PIX_FMT_IPU3_Y10: return "10-bit greyscale (IPU3 Packed)";
+	case V4L2_PIX_FMT_Y12P: return "12-bit Greyscale (MIPI Packed)";
+	case V4L2_PIX_FMT_Y14P: return "14-bit Greyscale (MIPI Packed)";
 	case V4L2_PIX_FMT_Y8I: return "Interleaved 8-bit Greyscale";
 	case V4L2_PIX_FMT_Y12I: return "Interleaved 12-bit Greyscale";
 	case V4L2_PIX_FMT_Z16: return "16-bit Depth";
@@ -192,6 +194,13 @@
 	case V4L2_PIX_FMT_Y210: return "10-bit YUYV Packed";
 	case V4L2_PIX_FMT_Y212: return "12-bit YUYV Packed";
 	case V4L2_PIX_FMT_Y216: return "16-bit YUYV Packed";
+	case V4L2_META_FMT_GENERIC_8: return "8-bit Generic Metadata";
+	case V4L2_META_FMT_GENERIC_CSI2_10: return "8b Generic Meta, 10b CSI-2";
+	case V4L2_META_FMT_GENERIC_CSI2_12: return "8b Generic Meta, 12b CSI-2";
+	case V4L2_META_FMT_GENERIC_CSI2_14: return "8b Generic Meta, 14b CSI-2";
+	case V4L2_META_FMT_GENERIC_CSI2_16: return "8b Generic Meta, 16b CSI-2";
+	case V4L2_META_FMT_GENERIC_CSI2_20: return "8b Generic Meta, 20b CSI-2";
+	case V4L2_META_FMT_GENERIC_CSI2_24: return "8b Generic Meta, 24b CSI-2";
 	case V4L2_PIX_FMT_MJPEG: return "Motion-JPEG";
 	case V4L2_PIX_FMT_JPEG: return "JFIF JPEG";
 	case V4L2_PIX_FMT_DV: return "1394";

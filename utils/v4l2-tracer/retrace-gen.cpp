@@ -4930,6 +4930,18 @@ struct v4l2_meta_format *retrace_v4l2_meta_format_gen(json_object *parent_obj, s
 	if (json_object_object_get_ex(v4l2_meta_format_obj, "buffersize", &buffersize_obj))
 		p->buffersize = (__u32) json_object_get_int64(buffersize_obj);
 
+	json_object *width_obj;
+	if (json_object_object_get_ex(v4l2_meta_format_obj, "width", &width_obj))
+		p->width = (__u32) json_object_get_int64(width_obj);
+
+	json_object *height_obj;
+	if (json_object_object_get_ex(v4l2_meta_format_obj, "height", &height_obj))
+		p->height = (__u32) json_object_get_int64(height_obj);
+
+	json_object *bytesperline_obj;
+	if (json_object_object_get_ex(v4l2_meta_format_obj, "bytesperline", &bytesperline_obj))
+		p->bytesperline = (__u32) json_object_get_int64(bytesperline_obj);
+
 	return p;
 }
 struct v4l2_format *retrace_v4l2_format_gen(json_object *parent_obj, std::string key_name = "")
