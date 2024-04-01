@@ -587,17 +587,15 @@ int testSubDevRouting(struct node *node, unsigned which)
 
 	routing.which = which;
 	routing.routes = (uintptr_t)&routes;
+	routing.len_routes = 0;
 	routing.num_routes = 0;
 	memset(routing.reserved, 0xff, sizeof(routing.reserved));
 
-	/*
-	 * First test that G_ROUTING either returns success, or ENOSPC and
-	 * updates num_routes.
-	 */
+	/* First test that G_ROUTING returns success even when len_routes is 0. */
 
 	ret = doioctl(node, VIDIOC_SUBDEV_G_ROUTING, &routing);
-	fail_on_test(ret && ret != ENOSPC);
-	fail_on_test(ret == ENOSPC && routing.num_routes == 0);
+	fail_on_test(ret);
+	fail_on_test(routing.num_routes > NUM_ROUTES_MAX);
 	fail_on_test(check_0(routing.reserved, sizeof(routing.reserved)));
 
 	if (!routing.num_routes)
@@ -609,7 +607,8 @@ int testSubDevRouting(struct node *node, unsigned which)
 	 */
 
 	uint32_t num_routes = routing.num_routes;
-	routing.num_routes = num_routes + 1;
+	routing.len_routes = NUM_ROUTES_MAX;
+	routing.num_routes = 0;
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_G_ROUTING, &routing));
 	fail_on_test(routing.num_routes != num_routes);
 
@@ -633,10 +632,14 @@ int testSubDevRouting(struct node *node, unsigned which)
 		}
 	}
 
-	/* Set the same routes back, which should always succeed. */
+	/*
+	 * Set the same routes back, which should always succeed and report the
+	 * same number of routes.
+	 */
 
 	memset(routing.reserved, 0xff, sizeof(routing.reserved));
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_S_ROUTING, &routing));
+	fail_on_test(routing.num_routes != num_routes);
 	fail_on_test(check_0(routing.reserved, sizeof(routing.reserved)));
 
 	/* Test setting invalid pads */
