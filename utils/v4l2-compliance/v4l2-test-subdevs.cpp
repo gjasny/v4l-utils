@@ -121,7 +121,7 @@ static int testSubDevEnumFrameInterval(struct node *node, unsigned which,
 }
 
 static int testSubDevEnumFrameSize(struct node *node, unsigned which,
-				   unsigned pad, unsigned code)
+				   unsigned pad, unsigned stream, unsigned code)
 {
 	struct v4l2_subdev_frame_size_enum fse;
 	unsigned num_sizes;
@@ -130,7 +130,7 @@ static int testSubDevEnumFrameSize(struct node *node, unsigned which,
 	memset(&fse, 0, sizeof(fse));
 	fse.which = which;
 	fse.pad = pad;
-	fse.stream = 0;
+	fse.stream = stream;
 	fse.code = code;
 	ret = doioctl(node, VIDIOC_SUBDEV_ENUM_FRAME_SIZE, &fse);
 	node->has_subdev_enum_fsize |= (ret != ENOTTY) << which;
@@ -140,7 +140,7 @@ static int testSubDevEnumFrameSize(struct node *node, unsigned which,
 		memset(&fie, 0, sizeof(fie));
 		fie.which = which;
 		fie.pad = pad;
-		fie.stream = 0;
+		fie.stream = stream;
 		fie.code = code;
 		fail_on_test(doioctl(node, VIDIOC_SUBDEV_ENUM_FRAME_INTERVAL, &fie) != ENOTTY);
 		return ret;
@@ -156,7 +156,7 @@ static int testSubDevEnumFrameSize(struct node *node, unsigned which,
 	memset(&fse, 0xff, sizeof(fse));
 	fse.which = which;
 	fse.pad = pad;
-	fse.stream = 0;
+	fse.stream = stream;
 	fse.code = code;
 	fse.index = 0;
 	fail_on_test(doioctl(node, VIDIOC_SUBDEV_ENUM_FRAME_SIZE, &fse));
@@ -266,7 +266,7 @@ int testSubDevEnum(struct node *node, unsigned which, unsigned pad, unsigned str
 		fail_on_test(mbus_core_enum.stream != stream);
 		fail_on_test(mbus_core_enum.index != i);
 
-		ret = testSubDevEnumFrameSize(node, which, pad, mbus_core_enum.code);
+		ret = testSubDevEnumFrameSize(node, which, pad, stream, mbus_core_enum.code);
 		fail_on_test(ret && ret != ENOTTY);
 	}
 	return 0;
