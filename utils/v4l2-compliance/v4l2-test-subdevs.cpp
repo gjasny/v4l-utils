@@ -586,7 +586,7 @@ int testSubDevRouting(struct node *node, unsigned which)
 	int ret;
 
 	routing.which = which;
-	routing.routes = (__u64)&routes;
+	routing.routes = (uintptr_t)&routes;
 	routing.num_routes = 0;
 	memset(routing.reserved, 0xff, sizeof(routing.reserved));
 

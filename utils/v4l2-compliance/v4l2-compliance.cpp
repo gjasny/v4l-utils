@@ -1274,7 +1274,7 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 				which <= V4L2_SUBDEV_FORMAT_ACTIVE; which++) {
 
 				sd_routing[which].which = which;
-				sd_routing[which].routes = (__u64)sd_routes[which];
+				sd_routing[which].routes = (uintptr_t)sd_routes[which];
 				sd_routing[which].num_routes = NUM_ROUTES_MAX;
 
 				ret = doioctl(&node, VIDIOC_SUBDEV_G_ROUTING, &sd_routing[which]);
@@ -1305,7 +1305,7 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 					routes = sd_routes[which];
 				} else {
 					dummy_routing.num_routes = 1;
-					dummy_routing.routes = (__u64)&dummy_routes;
+					dummy_routing.routes = (uintptr_t)&dummy_routes;
 					dummy_routes[0].source_pad = pad;
 					dummy_routes[0].source_stream = 0;
 					dummy_routes[0].sink_pad = pad;
