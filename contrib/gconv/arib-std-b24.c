@@ -494,8 +494,10 @@ b24_char_conv (int set, unsigned char c1, unsigned char c2, uint32_t *out)
 
 	    return 1;
 	  }
-	if (set == EXTRA_SYMBOLS_set)
-	  return 0;
+	/* Some ARIB strings somehow require that
+	 * EXTRA_SYMBOLS codepoints fallback to KANJI_set.
+	 * so just fall through here.
+	 */
 
 	/* non-JISX0213 modification. (combining chars) */
 	if (c1 == 0x22 && c2 == 0x7e)
