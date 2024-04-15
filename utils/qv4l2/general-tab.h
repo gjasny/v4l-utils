@@ -67,6 +67,7 @@ public:
 	int height() const { return m_height; }
 	bool isRadio() const { return m_isRadio; }
 	bool isSDR() const { return m_isSDR; }
+	bool isTouch() const { return m_isTouch; }
 	bool isVbi() const { return m_isVbi; }
 	bool isSlicedVbi() const;
 	bool isPlanar() const { return m_isPlanar; }
@@ -299,6 +300,7 @@ private:
 	int m_maxh;
 	bool m_isRadio;
 	bool m_isSDR;
+	bool m_isTouch;
 	bool m_isVbi;
 	bool m_isOutput;
 	bool m_isSDTV;

@@ -68,6 +68,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 	m_hMargin(20),
 	m_isRadio(false),
 	m_isSDR(false),
+	m_isTouch(false),
 	m_isVbi(false),
 	m_isOutput(false),
 	m_isSDTV(false),
@@ -165,6 +166,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 		m_isVbi = g_caps() & (V4L2_CAP_VBI_CAPTURE | V4L2_CAP_SLICED_VBI_CAPTURE |
 				      V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT);
 		m_isSDR = g_caps() & V4L2_CAP_SDR_CAPTURE;
+		m_isTouch = g_caps() & V4L2_CAP_TOUCH;
 		if (m_isSDR)
 			m_isRadio = true;
 		if (g_caps() & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
@@ -195,7 +197,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 		m_audioOutDevice = new QComboBox(parent);
 	}
 
-	if (!isVbi() && (createAudioDeviceList() || (!isRadio() && !enum_audio(vaudio, true)) ||
+	if (!isVbi() && !isTouch() && (createAudioDeviceList() || (!isRadio() && !enum_audio(vaudio, true)) ||
 	    (!isSDR() && m_tuner.capability) || (!isRadio() && !enum_audout(vaudout, true)))) {
 		addTitle("Audio Settings");
 		audioSection(vaudio, vaudout); 
@@ -275,7 +277,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 	m_recordPrio = new QCheckBox(parentWidget());
 	addWidget(m_recordPrio);
 
-	if (!isRadio() && !isVbi() && (has_crop() || has_compose())) {
+	if (!isRadio() && !isVbi() && !isTouch() && (has_crop() || has_compose())) {
 		addTitle("Cropping & Compose Settings");
 		cropSection();
 	}
@@ -755,6 +757,8 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 		m_colorspace->addItem("SMPTE 240M", QVariant(V4L2_COLORSPACE_SMPTE240M));
 		m_colorspace->addItem("470 System M", QVariant(V4L2_COLORSPACE_470_SYSTEM_M));
 		m_colorspace->addItem("470 System BG", QVariant(V4L2_COLORSPACE_470_SYSTEM_BG));
+		m_colorspace->addItem("JPEG", QVariant(V4L2_COLORSPACE_JPEG));
+		m_colorspace->addItem("Raw", QVariant(V4L2_COLORSPACE_RAW));
 
 		addLabel("Colorspace");
 		addWidget(m_colorspace);
@@ -800,7 +804,7 @@ void GeneralTab::formatSection(v4l2_fmtdesc fmt)
 		connect(m_quantRange, SIGNAL(activated(int)), SLOT(quantRangeChanged(int)));
 	}
 
-	if (m_isOutput)
+	if (m_isOutput || isTouch())
 		return;
 
 	m_cropping = new QComboBox(parentWidget());
@@ -1202,7 +1206,7 @@ void GeneralTab::updateGUIInput(__u32 input)
 		m_stackedFrequency->hide();
 	}
 
-	if (isVbi()) {
+	if (isVbi() || isTouch()) {
 		m_stackedFrameSettings->hide();
 	}
 }
@@ -1823,7 +1827,7 @@ void GeneralTab::updateStandard()
 	m_tvStandard->setStatusTip(what);
 	m_tvStandard->setWhatsThis(what);
 	updateVidFormat();
-	if (!isVbi() && !m_isOutput)
+	if (!isVbi() && !isTouch() && !m_isOutput)
 		changePixelAspectRatio();
 }
 
@@ -2263,6 +2267,9 @@ double GeneralTab::getPixelAspectRatio()
 	unsigned w = 0, h = 0;
 
 	ratio = g_pixel_aspect(w, h);
+	if (!m_pixelAspectRatio)
+		return 1;
+
 	switch (m_pixelAspectRatio->currentIndex()) {
 	// override ratio if hardcoded, but keep w and h
 	case 1:
@@ -2428,7 +2435,7 @@ int GeneralTab::matchAudioDevice()
 bool GeneralTab::hasAlsaAudio()
 {
 #ifdef HAVE_ALSA
-	return !isVbi();
+	return !isVbi() && !isTouch();
 #else
 	return false;
 #endif

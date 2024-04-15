@@ -476,7 +476,7 @@ void ApplicationWindow::setDevice(const QString &device, bool rawOpen)
 
 void ApplicationWindow::opendev()
 {
-	QFileDialog d(this, "Select v4l device", "/dev", "V4L Devices (video* vbi* radio* swradio*)");
+	QFileDialog d(this, "Select v4l device", "/dev", "V4L Devices (video* vbi* radio* swradio* v4l-touch*)");
 
 	d.setFilter(QDir::AllDirs | QDir::Files | QDir::System);
 	d.setFileMode(QFileDialog::ExistingFile);
@@ -486,7 +486,7 @@ void ApplicationWindow::opendev()
 
 void ApplicationWindow::openrawdev()
 {
-	QFileDialog d(this, "Select v4l device", "/dev", "V4L Devices (video* vbi* radio* swradio*)");
+	QFileDialog d(this, "Select v4l device", "/dev", "V4L Devices (video* vbi* radio* swradio* v4l-touch*)");
 
 	d.setFilter(QDir::AllDirs | QDir::Files | QDir::System);
 	d.setFileMode(QFileDialog::ExistingFile);
@@ -1813,6 +1813,8 @@ static void usage()
 	       "                     if <dev> is a number, then /dev/radio<dev> is used\n"
 	       "  -S, --sdr-device=<dev> use device <dev> as the SDR device\n"
 	       "                     if <dev> is a number, then /dev/swradio<dev> is used\n"
+	       "  -t, --touch-device=<dev> use device <dev> as the touch device\n"
+	       "                     if <dev> is a number, then /dev/v4l-touch<dev> is used\n"
 	       "  -h, --help         display this help message\n"
 	       "  -R, --raw          open device in raw mode.\n");
 }
@@ -1875,6 +1877,7 @@ int main(int argc, char **argv)
 	QString vbi_device;
 	QString radio_device;
 	QString sdr_device;
+	QString touch_device;
 
 	a.setWindowIcon(QIcon(":/qv4l2.png"));
 	g_mw = new ApplicationWindow();
@@ -1906,6 +1909,12 @@ int main(int argc, char **argv)
 		} else if (args[i].startsWith("--sdr-device")) {
 			if (!processLongOption(args, i, sdr_device))
 				return 0;
+		} else if (args[i].startsWith("-t")) {
+			if (!processShortOption(args, i, touch_device))
+				return 0;
+		} else if (args[i].startsWith("--touch-device")) {
+			if (!processLongOption(args, i, touch_device))
+				return 0;
 		} else if (args[i] == "-h" || args[i] == "--help") {
 			usage();
 			return 0;
@@ -1926,6 +1935,8 @@ int main(int argc, char **argv)
 		device = getDeviceName("/dev/radio", radio_device);
 	else if (sdr_device != nullptr)
 		device = getDeviceName("/dev/swradio", sdr_device);
+	else if (touch_device != nullptr)
+		device = getDeviceName("/dev/v4l-touch", touch_device);
 	else
 		device = "/dev/video0";
 
