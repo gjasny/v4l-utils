@@ -170,6 +170,7 @@ GeneralTab::GeneralTab(const QString &device, cv4l_fd *fd, int n, QWidget *paren
 		if (m_isSDR)
 			m_isRadio = true;
 		if (g_caps() & (V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_OUTPUT_MPLANE |
+				V4L2_CAP_META_OUTPUT |
 				V4L2_CAP_VBI_OUTPUT | V4L2_CAP_SLICED_VBI_OUTPUT))
 			m_isOutput = true;
 	}
