@@ -1714,7 +1714,7 @@ static int set_rate(int fd, unsigned int delay, unsigned int period)
 		return -1;
 	}
 
-	printf(_("Changed Repeat delay to %d ms and repeat period to %d ms\n"), delay, period);
+	fprintf(stderr, _("Changed Repeat delay to %d ms and repeat period to %d ms\n"), delay, period);
 	return 0;
 }
 
@@ -1728,7 +1728,7 @@ static int get_rate(int fd, unsigned int *delay, unsigned int *period)
 	}
 	*delay = rep[0];
 	*period = rep[1];
-	printf(_("Repeat delay: %d ms, repeat period: %d ms\n"), *delay, *period);
+	fprintf(stderr, _("Repeat delay: %d ms, repeat period: %d ms\n"), *delay, *period);
 	return 0;
 }
 
@@ -1736,7 +1736,7 @@ static void show_evdev_attribs(int fd)
 {
 	unsigned int delay, period;
 
-	printf("\t");
+	fprintf(stderr, "\t");
 	get_rate(fd, &delay, &period);
 }
 
@@ -1839,10 +1839,10 @@ static void show_bpf(const char *lirc_name)
 		goto error;
 	}
 
-	printf(_("\tAttached BPF protocols: "));
+	fprintf(stderr, _("\tAttached BPF protocols: "));
 	for (i=0; i<count; i++) {
 		if (i)
-			printf(" ");
+			fprintf(stderr, " ");
 		prog_fd = bpf_prog_get_fd_by_id(prog_ids[i]);
 		if (prog_fd != -1) {
 			struct bpf_prog_info info = {};
@@ -1851,16 +1851,16 @@ static void show_bpf(const char *lirc_name)
 			ret = bpf_obj_get_info_by_fd(prog_fd, &info, &info_len);
 			close(prog_fd);
 			if (!ret && info.name[0]) {
-				printf("%s", info.name);
+				fprintf(stderr, "%s", info.name);
 				continue;
 			}
 		}
-		printf("%d", prog_ids[i]);
+		fprintf(stderr, "%d", prog_ids[i]);
 	}
-	printf(_("\n"));
+	fprintf(stderr, _("\n"));
 	return;
 error:
-	printf(_("\tAttached BPF protocols: %m\n"));
+	fprintf(stderr, _("\tAttached BPF protocols: %m\n"));
 }
 
 static void clear_bpf(const char *lirc_name)
@@ -1899,13 +1899,13 @@ static void clear_bpf(const char *lirc_name)
 				prog_ids[i]);
 		prog_fd = bpf_prog_get_fd_by_id(prog_ids[i]);
 		if (prog_fd == -1) {
-			printf(_("Failed to get BPF prog id %u: %m\n"),
+			fprintf(stderr, _("error: failed to get BPF prog id %u: %m\n"),
 			       prog_ids[i]);
 			continue;
 		}
 		ret = bpf_prog_detach2(prog_fd, fd, BPF_LIRC_MODE2);
 		if (ret)
-			printf(("Failed to detach BPF prog id %u: %m\n"),
+			fprintf(stderr, _("error: failed to detach BPF prog id %u: %m\n"),
 			       prog_ids[i]);
 		close(prog_fd);
 	}
@@ -1963,7 +1963,7 @@ static int show_sysfs_attribs(struct rc_device *rc_dev, char *name)
 				show_evdev_attribs(fd);
 				close(fd);
 			} else {
-				printf(_("\tExtra capabilities: <access denied>\n"));
+				fprintf(stderr, _("\tExtra capabilities: <access denied>\n"));
 			}
 		}
 	}
