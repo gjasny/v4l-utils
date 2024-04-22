@@ -390,7 +390,7 @@ static const struct {
 	[RC_PROTO_NECX] = { "necx", 0xffffff, 67, 38000, nec_encode },
 	[RC_PROTO_NEC32] = { "nec32", 0xffffffff, 67, 38000, nec_encode },
 	[RC_PROTO_SANYO] = { "sanyo", 0x1fffff, 87, 38000, sanyo_encode },
-	[RC_PROTO_RC6_0] = { "rc6_0", 0xffff, 41, 36000, rc6_encode },
+	[RC_PROTO_RC6_0] = { "rc6_0", 0xffff, 43, 36000, rc6_encode },
 	[RC_PROTO_RC6_6A_20] = { "rc6_6a_20", 0xfffff, 52, 36000, rc6_encode },
 	[RC_PROTO_RC6_6A_24] = { "rc6_6a_24", 0xffffff, 60, 36000, rc6_encode },
 	[RC_PROTO_RC6_6A_32] = { "rc6_6a_32", 0xffffffff, 76, 36000, rc6_encode },
