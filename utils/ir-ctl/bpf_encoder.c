@@ -101,6 +101,14 @@ static void encode_manchester(struct keymap *map, uint32_t scancode, int *buf, i
 {
 	int len = 0, bits, i;
 
+	int header_pulse = keymap_param(map, "header_pulse", 0);
+	int header_space = keymap_param(map, "header_space", 0);
+
+	if (header_pulse > 0) {
+		manchester_advance_pulse(buf, &len, header_pulse);
+		manchester_advance_space(buf, &len, header_space);
+	}
+
 	bits = keymap_param(map, "bits", 14);
 
 	for (i = bits - 1; i >= 0; i--) {
