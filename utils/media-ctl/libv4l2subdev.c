@@ -258,7 +258,7 @@ int v4l2_subdev_get_routing(struct media_entity *entity,
 	}
 
 	ret = ioctl(entity->fd, VIDIOC_SUBDEV_G_ROUTING, &routing);
-	if (ret == -1 && errno != ENOSPC)
+	if (ret == -1)
 		return -errno;
 
 	if (!routing.num_routes) {
@@ -272,6 +272,7 @@ int v4l2_subdev_get_routing(struct media_entity *entity,
 		return -ENOMEM;
 
 	routing.routes = (uintptr_t)r;
+	routing.len_routes = routing.num_routes;
 	ret = ioctl(entity->fd, VIDIOC_SUBDEV_G_ROUTING, &routing);
 	if (ret) {
 		free(r);
@@ -292,6 +293,7 @@ int v4l2_subdev_set_routing(struct media_entity *entity,
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
 		.routes = (uintptr_t)routes,
 		.num_routes = num_routes,
+		.len_routes = num_routes,
 	};
 	int ret;
 
