@@ -1272,15 +1272,17 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 
 			for (unsigned which = V4L2_SUBDEV_FORMAT_TRY;
 				which <= V4L2_SUBDEV_FORMAT_ACTIVE; which++) {
+				struct v4l2_subdev_routing &routing = sd_routing[which];
 
-				sd_routing[which].which = which;
-				sd_routing[which].routes = (uintptr_t)sd_routes[which];
-				sd_routing[which].num_routes = NUM_ROUTES_MAX;
+				routing.which = which;
+				routing.routes = (uintptr_t)sd_routes[which];
+				routing.len_routes = NUM_ROUTES_MAX;
+				routing.num_routes = 0;
 
-				ret = doioctl(&node, VIDIOC_SUBDEV_G_ROUTING, &sd_routing[which]);
+				ret = doioctl(&node, VIDIOC_SUBDEV_G_ROUTING, &routing);
 				if (ret) {
 					fail("VIDIOC_SUBDEV_G_ROUTING: failed to get routing\n");
-					sd_routing[which].num_routes = 0;
+					routing.num_routes = 0;
 				}
 			}
 		}
