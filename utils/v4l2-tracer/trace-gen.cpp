@@ -2245,7 +2245,7 @@ void trace_v4l2_ext_control_gen(void *arg, json_object *parent_obj, std::string 
 	//struct v4l2_ctrl_hdr10_cll_info *p_hdr10_cll_info;
 	//struct v4l2_ctrl_hdr10_mastering_display *p_hdr10_mastering_display;
 	//void *ptr;
-	//end of union 	};
+	//end of union 	} __attribute__ ((packed));
 
 	if (key_name.empty())
 		json_object_object_add(parent_obj, "v4l2_ext_control", v4l2_ext_control_obj);
@@ -2736,6 +2736,9 @@ void trace_v4l2_meta_format_gen(void *arg, json_object *parent_obj, std::string 
 
 	json_object_object_add(v4l2_meta_format_obj, "dataformat", json_object_new_int64(p->dataformat));
 	json_object_object_add(v4l2_meta_format_obj, "buffersize", json_object_new_int64(p->buffersize));
+	json_object_object_add(v4l2_meta_format_obj, "width", json_object_new_int64(p->width));
+	json_object_object_add(v4l2_meta_format_obj, "height", json_object_new_int64(p->height));
+	json_object_object_add(v4l2_meta_format_obj, "bytesperline", json_object_new_int64(p->bytesperline));
 
 	if (key_name.empty())
 		json_object_object_add(parent_obj, "v4l2_meta_format", v4l2_meta_format_obj);

@@ -52,6 +52,8 @@
 	case V4L2_PIX_FMT_Y10BPACK: return "10-bit Greyscale (Packed)";
 	case V4L2_PIX_FMT_Y10P: return "10-bit Greyscale (MIPI Packed)";
 	case V4L2_PIX_FMT_IPU3_Y10: return "10-bit greyscale (IPU3 Packed)";
+	case V4L2_PIX_FMT_Y12P: return "12-bit Greyscale (MIPI Packed)";
+	case V4L2_PIX_FMT_Y14P: return "14-bit Greyscale (MIPI Packed)";
 	case V4L2_PIX_FMT_Y8I: return "Interleaved 8-bit Greyscale";
 	case V4L2_PIX_FMT_Y12I: return "Interleaved 12-bit Greyscale";
 	case V4L2_PIX_FMT_Z16: return "16-bit Depth";
