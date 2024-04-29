@@ -381,6 +381,7 @@ static constexpr flag_def fmtdesc_ ## enc_type ## _def[] = { 			\
 	{ V4L2_FMT_FLAG_CSC_YCBCR_ENC, "csc-"#enc_type }, 			\
 	{ V4L2_FMT_FLAG_CSC_QUANTIZATION, "csc-quantization" }, 		\
 	{ V4L2_FMT_FLAG_CSC_XFER_FUNC, "csc-xfer-func" }, 			\
+	{ V4L2_FMT_FLAG_META_LINE_BASED, "meta-line-based" },			\
 	{ 0, NULL } 								\
 };
 
