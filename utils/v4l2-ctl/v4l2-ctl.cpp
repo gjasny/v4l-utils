@@ -1276,7 +1276,7 @@ int main(int argc, char **argv)
 			common_usage();
 			return 1;
 		default:
-			common_cmd(media_bus_info, ch, optarg);
+			common_cmd(ch, optarg);
 			tuner_cmd(ch, optarg);
 			io_cmd(ch, optarg);
 			stds_cmd(ch, optarg);
@@ -1510,7 +1510,7 @@ int main(int argc, char **argv)
 
 	/* List options */
 
-	common_list(c_fd);
+	common_list(media_bus_info, c_fd);
 	io_list(c_fd);
 	stds_list(c_fd);
 	vidcap_list(c_fd);

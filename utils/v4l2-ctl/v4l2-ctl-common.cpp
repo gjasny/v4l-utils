@@ -286,6 +286,7 @@ static void list_devices()
 		int fd = open(file.c_str(), O_RDWR);
 		std::string bus_info;
 		std::string card;
+		std::string extra;
 
 		if (fd < 0)
 			continue;
@@ -305,8 +306,23 @@ static void list_devices()
 					card = mdi.driver;
 			}
 		} else {
+			unsigned idx;
+
 			bus_info = reinterpret_cast<const char *>(vcap.bus_info);
 			card = reinterpret_cast<const char *>(vcap.card);
+			if (!ioctl(fd, VIDIOC_G_INPUT, &idx)) {
+				struct v4l2_input in = {
+					.index = idx
+				};
+				if (!ioctl(fd, VIDIOC_ENUMINPUT, &in))
+					extra = std::string(" (input: ") + (const char *)in.name + ")";
+			} else if (!ioctl(fd, VIDIOC_G_OUTPUT, &idx)) {
+				struct v4l2_output out = {
+					.index = idx
+				};
+				if (!ioctl(fd, VIDIOC_ENUMOUTPUT, &out))
+					extra = std::string(" (output: ") + (const char *)out.name + ")";
+			}
 		}
 		close(fd);
 		if (err)
@@ -316,6 +332,8 @@ static void list_devices()
 		cards[bus_info] += "\t" + file;
 		if (!(links[file].empty()))
 			cards[bus_info] += " <- " + links[file];
+		if (verbose)
+			cards[bus_info] += extra;
 		cards[bus_info] += "\n";
 	}
 	for (const auto &card : cards) {
@@ -1037,7 +1055,7 @@ static bool parse_next_subopt(char **subs, char **value)
 	return true;
 }
 
-void common_cmd(const std::string &media_bus_info, int ch, char *optarg)
+void common_cmd(int ch, char *optarg)
 {
 	char *value, *subs;
 
@@ -1083,12 +1101,6 @@ void common_cmd(const std::string &media_bus_info, int ch, char *optarg)
 		break;
 	case OptSetPriority:
 		prio = static_cast<enum v4l2_priority>(strtoul(optarg, nullptr, 0));
-		break;
-	case OptListDevices:
-		if (media_bus_info.empty())
-			list_devices();
-		else
-			list_media_devices(media_bus_info);
 		break;
 	}
 }
@@ -1356,8 +1368,14 @@ void common_get(cv4l_fd &_fd)
 	}
 }
 
-void common_list(cv4l_fd &fd)
+void common_list(const std::string &media_bus_info, cv4l_fd &fd)
 {
+	if (options[OptListDevices]) {
+		if (media_bus_info.empty())
+			list_devices();
+		else
+			list_media_devices(media_bus_info);
+	}
 	if (options[OptListCtrls] || options[OptListCtrlsMenus]) {
 		list_controls(fd.g_fd(), options[OptListCtrlsMenus]);
 	}
