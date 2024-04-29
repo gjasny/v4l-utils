@@ -12,6 +12,7 @@ if [ -z "${KERNEL_DIR}" -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/v4l2-common.h -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/v4l2-subdev.h -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/v4l2-mediabus.h -o \
+     ! -f ${KERNEL_DIR}/usr/include/linux/v4l2-dv-timings.h -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/ivtv.h -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/dvb/frontend.h -o \
      ! -f ${KERNEL_DIR}/usr/include/linux/dvb/dmx.h -o \
@@ -35,6 +36,7 @@ patch -d ${TOPSRCDIR} --no-backup-if-mismatch -p1 <${TOPSRCDIR}/utils/common/v4l
 cp -a ${KERNEL_DIR}/usr/include/linux/v4l2-common.h ${TOPSRCDIR}/include/linux
 cp -a ${KERNEL_DIR}/usr/include/linux/v4l2-subdev.h ${TOPSRCDIR}/include/linux
 cp -a ${KERNEL_DIR}/usr/include/linux/v4l2-mediabus.h ${TOPSRCDIR}/include/linux
+cp -a ${KERNEL_DIR}/usr/include/linux/v4l2-dv-timings.h ${TOPSRCDIR}/include/linux
 cp -a ${KERNEL_DIR}/usr/include/linux/media-bus-format.h ${TOPSRCDIR}/include/linux
 cp -a ${KERNEL_DIR}/usr/include/linux/media.h ${TOPSRCDIR}/include/linux
 cp -a ${KERNEL_DIR}/usr/include/linux/ivtv.h ${TOPSRCDIR}/include/linux
