@@ -2692,7 +2692,7 @@ int main(int argc, char **argv)
 				}
 			}
 			list_devices();
-			break;
+			return 0;
 
 		case OptTestStandbyWakeupCycle: {
 			static constexpr const char *arg_names[] = {
