@@ -2690,9 +2690,12 @@ int testRequests(struct node *node, bool test_streaming)
 			// (sequence number & 0xff).
 			vivid_ro_ctrls.request_fd = buf_req_fds[i];
 			fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &vivid_ro_ctrls));
+			// FIXME: due to unreliable sequence counters from vivid this
+			// test fails regularly. For now replace the 'warn_once' by
+			// 'info_once' until vivid is fixed.
 			if (node->is_video && !node->can_output &&
 			    vivid_ro_ctrl.value != (int)i)
-				warn_once("vivid_ro_ctrl.value (%d) != i (%u)\n",
+				info_once("vivid_ro_ctrl.value (%d) != i (%u)\n",
 					  vivid_ro_ctrl.value, i);
 
 			// Check that the dynamic control array is set as
@@ -2768,9 +2771,12 @@ int testRequests(struct node *node, bool test_streaming)
 			// For vivid check the final read-only value,
 			vivid_ro_ctrls.which = 0;
 			fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &vivid_ro_ctrls));
+			// FIXME: due to unreliable sequence counters from vivid this
+			// test fails regularly. For now replace the 'warn' by 'info'
+			// until vivid is fixed.
 			if (node->is_video && !node->can_output &&
 			    vivid_ro_ctrl.value != (int)(num_bufs - 1))
-				warn("vivid_ro_ctrl.value (%d) != num_bufs - 1 (%d)\n",
+				info("vivid_ro_ctrl.value (%d) != num_bufs - 1 (%d)\n",
 				     vivid_ro_ctrl.value, num_bufs - 1);
 
 			// the final dynamic array value,

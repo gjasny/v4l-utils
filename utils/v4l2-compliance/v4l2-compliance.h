@@ -226,6 +226,16 @@ private:
 			printf("\t\tinfo: " fmt, ##args);	\
 	} while (0)
 
+#define info_once(fmt, args...)				\
+	do {						\
+		static bool show;			\
+							\
+		if (!show) {				\
+			show = true;			\
+			info(fmt, ##args);		\
+		}					\
+	} while (0)
+
 #define warn(fmt, args...) 					\
 	do {							\
 		warnings++;					\
