@@ -193,16 +193,17 @@ fi
 
 if [ $unload -eq 1 ]; then
 	test-media-unload.pl
-	dmesg -n notice
 fi
 
 if [ $kmemleak -eq 1 ]; then
 	echo clear >/sys/kernel/debug/kmemleak
 fi
 
+dmesg -n info
 rmmod vivid 2&>/dev/null
 modprobe vivid n_devs=3 multiplanar=1,2,2 cache_hints=1,0,0 #allocators=0,1,1
 sleep $modprobe_time
+dmesg -n notice
 
 tmp=`mktemp`
 
@@ -247,11 +248,12 @@ if [ $vivid -eq 1 -a $setup -eq 0 ]; then
 fi
 
 if [ $visl -eq 1 -a $setup -eq 0 ]; then
-	dmesg -n notice
 	echo
 	echo loading visl module | tee /dev/kmsg
+	dmesg -n info
 	modprobe visl
 	sleep $modprobe_time
+	dmesg -n notice
 	echo
 	echo visl compliance tests | tee /dev/kmsg
 	echo
@@ -296,8 +298,10 @@ if [ $visl -eq 1 -a $setup -eq 0 ]; then
 		echo
 	fi
 
+	dmesg -n info
 	modprobe visl
 	sleep $modprobe_time
+	dmesg -n notice
 
 	$v4l2_ctl -z platform:visl --all
 
@@ -402,8 +406,10 @@ if [ $vivid -eq 1 -a $setup -eq 0 ]; then
 		echo
 	fi
 
+	dmesg -n info
 	modprobe vivid n_devs=3 multiplanar=1,2,2 cache_hints=1,0,0 #allocators=0,1,1
 	sleep $modprobe_time
+	dmesg -n notice
 
 	$v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
 	$v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
@@ -423,6 +429,7 @@ fi
 
 if [ $vim2m -eq 1 ]; then
 	rmmod vim2m 2&>/dev/null
+	dmesg -n info
 	modprobe vim2m
 	sleep $modprobe_time
 	dmesg -n notice
@@ -499,6 +506,7 @@ fi
 
 if [ $vimc -eq 1 ]; then
 	rmmod vimc 2&>/dev/null
+	dmesg -n info
 	modprobe vimc
 	sleep $modprobe_time
 	dmesg -n notice
@@ -603,6 +611,7 @@ if [ $vicodec -eq 1 ]; then
 	fi
 
 	rmmod vicodec 2&>/dev/null
+	dmesg -n info
 	modprobe vicodec
 	sleep $modprobe_time
 	dmesg -n notice
@@ -777,6 +786,7 @@ fi
 
 if [ $vidtv -eq 1 ]; then
 	rmmod dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod 2&>/dev/null
+	dmesg -n info
 	modprobe vidtv
 	sleep $modprobe_time
 	dmesg -n notice
