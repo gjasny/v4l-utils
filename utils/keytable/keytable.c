@@ -273,7 +273,6 @@ static const struct argp_option options[] = {
 	{"delay",	'D',	N_("DELAY"),	0,	N_("Sets the delay before repeating a keystroke"), 0},
 	{"period",	'P',	N_("PERIOD"),	0,	N_("Sets the period to repeat a keystroke"), 0},
 	{"auto-load",	'a',	N_("CFGFILE"),	0,	N_("Auto-load keymaps, based on a configuration file. Only works with --sysdev."), 0},
-	{"test-keymap",	1,	N_("KEYMAP"),	0,	N_("Test if keymap is valid"), 0},
 	{"help",        '?',	0,		0,	N_("Give this help list"), -1},
 	{"usage",	-3,	0,		0,	N_("Give a short usage message")},
 	{"version",	'V',	0,		0,	N_("Print program version"), -1},
@@ -290,7 +289,6 @@ int debug = 0;
 static int test = 0;
 static int delay = -1;
 static int period = -1;
-static int test_keymap = 0;
 static enum sysfs_protocols ch_proto = 0;
 
 struct bpf_protocol {
@@ -696,16 +694,6 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 
 			p = strtok(NULL, ":=");
 		} while (p);
-		break;
-	case 1:
-		test_keymap++;
-		struct keymap *map ;
-
-		rc = parse_keymap(arg, &map, debug);
-		if (rc)
-			argp_error(state, _("Failed to read table file %s"), arg);
-		add_keymap(map, arg);
-		free_keymap(map);
 		break;
 	case '?':
 		argp_state_help(state, state->out_stream,
@@ -2070,9 +2058,6 @@ int main(int argc, char *argv[])
 
 	argp_parse(&argp, argc, argv, ARGP_NO_HELP, 0, 0);
 
-	if (test_keymap)
-		return 0;
-
 	/* Just list all devices */
 	if (!clear && !readtable && !keytable && !ch_proto && !cfg.next && !test && delay < 0 && period < 0 && !bpf_protocol) {
 		if (show_sysfs_attribs(&rc_dev, devclass))
@@ -2084,7 +2069,7 @@ int main(int argc, char *argv[])
 	if (!devclass)
 		devclass = "rc0";
 
-	if (cfg.next && (clear || keytable || ch_proto)) {
+	if (cfg.next && (clear || keytable || ch_proto || bpf_protocol || test)) {
 		fprintf (stderr, _("Auto-mode can be used only with --read, --verbose and --sysdev options\n"));
 		return -1;
 	}
