@@ -600,7 +600,6 @@ static void media_print_topology_text(struct media_device *media,
 
 int main(int argc, char **argv)
 {
-	const enum v4l2_subdev_format_whence which = V4L2_SUBDEV_FORMAT_ACTIVE;
 	struct media_device *media;
 	struct media_entity *entity = NULL;
 	int ret = -1;
@@ -667,7 +666,8 @@ int main(int argc, char **argv)
 			goto out;
 		}
 
-		v4l2_subdev_print_format(pad->entity, pad->index, stream, which);
+		v4l2_subdev_print_format(pad->entity, pad->index, stream,
+					 media_opts.which);
 	}
 
 	if (media_opts.get_dv_pad) {
@@ -709,9 +709,10 @@ int main(int argc, char **argv)
 		media_print_topology_dot(media);
 	} else if (media_opts.print) {
 		if (entity)
-			media_print_topology_text_entity(media, entity, which);
+			media_print_topology_text_entity(media, entity,
+							 media_opts.which);
 		else
-			media_print_topology_text(media, which);
+			media_print_topology_text(media, media_opts.which);
 	} else if (entity) {
 		const char *devname;
 
@@ -741,7 +742,7 @@ int main(int argc, char **argv)
 	}
 
 	if (media_opts.routes) {
-		ret = v4l2_subdev_parse_setup_routes(media, which,
+		ret = v4l2_subdev_parse_setup_routes(media, media_opts.which,
 						     media_opts.routes);
 		if (ret) {
 			printf("Unable to setup routes: %s (%d)\n",
@@ -751,7 +752,7 @@ int main(int argc, char **argv)
 	}
 
 	if (media_opts.formats) {
-		ret = v4l2_subdev_parse_setup_formats(media, which,
+		ret = v4l2_subdev_parse_setup_formats(media, media_opts.which,
 						      media_opts.formats);
 		if (ret) {
 			printf("Unable to setup formats: %s (%d)\n",
