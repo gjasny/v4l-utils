@@ -109,7 +109,7 @@ static void v4l2_subdev_print_format(struct media_entity *entity,
 		return;
 
 	ret = v4l2_subdev_get_frame_interval(entity, &interval, pad, stream,
-					     V4L2_SUBDEV_FORMAT_ACTIVE);
+					     which);
 	if (ret != 0 && ret != -ENOTTY && ret != -EINVAL)
 		return;
 
@@ -459,7 +459,8 @@ static void media_print_topology_dot(struct media_device *media)
 static void media_print_pad_text(struct media_entity *entity,
 				 const struct media_pad *pad,
 				 struct v4l2_subdev_route *routes,
-				 unsigned int num_routes)
+				 unsigned int num_routes,
+				 enum v4l2_subdev_format_whence which)
 {
 	uint64_t printed_streams_mask = 0;
 	unsigned int i;
@@ -468,8 +469,7 @@ static void media_print_pad_text(struct media_entity *entity,
 		return;
 
 	if (!routes) {
-		v4l2_subdev_print_format(entity, pad->index, 0,
-					 V4L2_SUBDEV_FORMAT_ACTIVE);
+		v4l2_subdev_print_format(entity, pad->index, 0, which);
 	} else {
 		for (i = 0; i < num_routes; ++i) {
 			const struct v4l2_subdev_route *route = &routes[i];
@@ -494,20 +494,21 @@ static void media_print_pad_text(struct media_entity *entity,
 				continue;
 
 			v4l2_subdev_print_format(entity, pad->index, stream,
-						 V4L2_SUBDEV_FORMAT_ACTIVE);
+						 which);
 
 			printed_streams_mask |= (1ULL << stream);
 		}
 	}
 
-	v4l2_subdev_print_pad_dv(entity, pad->index, V4L2_SUBDEV_FORMAT_ACTIVE);
+	v4l2_subdev_print_pad_dv(entity, pad->index, which);
 
 	if (pad->flags & MEDIA_PAD_FL_SOURCE)
 		v4l2_subdev_print_subdev_dv(entity);
 }
 
 static void media_print_topology_text_entity(struct media_device *media,
-					     struct media_entity *entity)
+					     struct media_entity *entity,
+					     enum v4l2_subdev_format_whence which)
 {
 	static const struct flag_name link_flags[] = {
 		{ MEDIA_LNK_FL_ENABLED, "ENABLED" },
@@ -528,8 +529,7 @@ static void media_print_topology_text_entity(struct media_device *media,
 	unsigned int padding;
 
 	if (media_entity_type(entity) == MEDIA_ENT_T_V4L2_SUBDEV)
-		v4l2_subdev_get_routing(entity, &routes, &num_routes,
-					V4L2_SUBDEV_FORMAT_ACTIVE);
+		v4l2_subdev_get_routing(entity, &routes, &num_routes, which);
 
 	padding = printf("- entity %u: ", info->id);
 	printf("%s (%u pad%s, %u link%s", info->name,
@@ -557,7 +557,7 @@ static void media_print_topology_text_entity(struct media_device *media,
 		printf("\tpad%u: ", j);
 		print_flags(pad_flags, ARRAY_SIZE(pad_flags), pad->flags);
 		printf("\n");
-		media_print_pad_text(entity, pad, routes, num_routes);
+		media_print_pad_text(entity, pad, routes, num_routes, which);
 
 		for (k = 0; k < num_links; k++) {
 			const struct media_link *link = media_entity_get_link(entity, k);
@@ -585,7 +585,8 @@ static void media_print_topology_text_entity(struct media_device *media,
 	free(routes);
 }
 
-static void media_print_topology_text(struct media_device *media)
+static void media_print_topology_text(struct media_device *media,
+				      enum v4l2_subdev_format_whence which)
 {
 	unsigned int nents = media_get_entities_count(media);
 	unsigned int i;
@@ -594,11 +595,12 @@ static void media_print_topology_text(struct media_device *media)
 
 	for (i = 0; i < nents; ++i)
 		media_print_topology_text_entity(
-			media, media_get_entity(media, i));
+			media, media_get_entity(media, i), which);
 }
 
 int main(int argc, char **argv)
 {
+	const enum v4l2_subdev_format_whence which = V4L2_SUBDEV_FORMAT_ACTIVE;
 	struct media_device *media;
 	struct media_entity *entity = NULL;
 	int ret = -1;
@@ -665,8 +667,7 @@ int main(int argc, char **argv)
 			goto out;
 		}
 
-		v4l2_subdev_print_format(pad->entity, pad->index, stream,
-					 V4L2_SUBDEV_FORMAT_ACTIVE);
+		v4l2_subdev_print_format(pad->entity, pad->index, stream, which);
 	}
 
 	if (media_opts.get_dv_pad) {
@@ -708,9 +709,9 @@ int main(int argc, char **argv)
 		media_print_topology_dot(media);
 	} else if (media_opts.print) {
 		if (entity)
-			media_print_topology_text_entity(media, entity);
+			media_print_topology_text_entity(media, entity, which);
 		else
-			media_print_topology_text(media);
+			media_print_topology_text(media, which);
 	} else if (entity) {
 		const char *devname;
 
@@ -740,8 +741,7 @@ int main(int argc, char **argv)
 	}
 
 	if (media_opts.routes) {
-		ret = v4l2_subdev_parse_setup_routes(media,
-						     V4L2_SUBDEV_FORMAT_ACTIVE,
+		ret = v4l2_subdev_parse_setup_routes(media, which,
 						     media_opts.routes);
 		if (ret) {
 			printf("Unable to setup routes: %s (%d)\n",
@@ -751,8 +751,7 @@ int main(int argc, char **argv)
 	}
 
 	if (media_opts.formats) {
-		ret = v4l2_subdev_parse_setup_formats(media,
-						      V4L2_SUBDEV_FORMAT_ACTIVE,
+		ret = v4l2_subdev_parse_setup_formats(media, which,
 						      media_opts.formats);
 		if (ret) {
 			printf("Unable to setup formats: %s (%d)\n",
