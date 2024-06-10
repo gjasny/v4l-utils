@@ -108,7 +108,8 @@ static void v4l2_subdev_print_format(struct media_entity *entity,
 	if (ret != 0)
 		return;
 
-	ret = v4l2_subdev_get_frame_interval(entity, &interval, pad, stream);
+	ret = v4l2_subdev_get_frame_interval(entity, &interval, pad, stream,
+					     V4L2_SUBDEV_FORMAT_ACTIVE);
 	if (ret != 0 && ret != -ENOTTY && ret != -EINVAL)
 		return;
 
@@ -527,7 +528,8 @@ static void media_print_topology_text_entity(struct media_device *media,
 	unsigned int padding;
 
 	if (media_entity_type(entity) == MEDIA_ENT_T_V4L2_SUBDEV)
-		v4l2_subdev_get_routing(entity, &routes, &num_routes);
+		v4l2_subdev_get_routing(entity, &routes, &num_routes,
+					V4L2_SUBDEV_FORMAT_ACTIVE);
 
 	padding = printf("- entity %u: ", info->id);
 	printf("%s (%u pad%s, %u link%s", info->name,
@@ -738,7 +740,9 @@ int main(int argc, char **argv)
 	}
 
 	if (media_opts.routes) {
-		ret = v4l2_subdev_parse_setup_routes(media, media_opts.routes);
+		ret = v4l2_subdev_parse_setup_routes(media,
+						     V4L2_SUBDEV_FORMAT_ACTIVE,
+						     media_opts.routes);
 		if (ret) {
 			printf("Unable to setup routes: %s (%d)\n",
 			       strerror(-ret), -ret);
@@ -748,6 +752,7 @@ int main(int argc, char **argv)
 
 	if (media_opts.formats) {
 		ret = v4l2_subdev_parse_setup_formats(media,
+						      V4L2_SUBDEV_FORMAT_ACTIVE,
 						      media_opts.formats);
 		if (ret) {
 			printf("Unable to setup formats: %s (%d)\n",

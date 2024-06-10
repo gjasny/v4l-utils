@@ -142,32 +142,44 @@ int v4l2_subdev_set_selection(struct media_entity *entity,
  * @param entity - subdev-device media entity.
  * @param routes - routes of the subdev.
  * @param num_routes - number of routes.
+ * @param which - identifier of the routes to get.
  *
  * Get the routes of @a entity and return them in an allocated array in @a routes
  * and the number of routes in @a num_routes.
  *
  * The caller is responsible for freeing the routes array after use.
  *
+ * @a which is set to V4L2_SUBDEV_FORMAT_TRY to get the routing table stored in
+ * the file handle, of V4L2_SUBDEV_FORMAT_ACTIVE to get the device's active
+ * routing table.
+ *
  * @return 0 on success, or a negative error code on failure.
  */
 int v4l2_subdev_get_routing(struct media_entity *entity,
 			    struct v4l2_subdev_route **routes,
-			    unsigned int *num_routes);
+			    unsigned int *num_routes,
+			    enum v4l2_subdev_format_whence which);
 
 /**
  * @brief Set the routing table of a subdev media entity.
  * @param entity - subdev-device media entity.
  * @param routes - routes of the subdev.
  * @param num_routes - number of routes.
+ * @param which - identifier of the routes to set.
  *
  * Set the routes of @a entity. The routes are given in @a routes with the
  * length of @a num_routes.
+ *
+ * @a which is set to V4L2_SUBDEV_FORMAT_TRY to set the routing table stored in
+ * the file handle, of V4L2_SUBDEV_FORMAT_ACTIVE to set the device's active
+ * routing table.
  *
  * @return 0 on success, or a negative error code on failure.
  */
 int v4l2_subdev_set_routing(struct media_entity *entity,
 			    struct v4l2_subdev_route *route,
-			    unsigned int num_routes);
+			    unsigned int num_routes,
+			    enum v4l2_subdev_format_whence which);
 
 /**
  * @brief Query the digital video capabilities of a pad.
@@ -228,6 +240,7 @@ int v4l2_subdev_set_dv_timings(struct media_entity *entity,
  * @param interval - frame interval to be filled.
  * @param pad - pad number.
  * @param stream - stream number.
+ * @param which - identifier of the interval to get.
  *
  * Retrieve the current frame interval on subdev @a entity and store it in the
  * @a interval structure.
@@ -235,11 +248,16 @@ int v4l2_subdev_set_dv_timings(struct media_entity *entity,
  * Frame interval retrieving is usually supported only on devices at the
  * beginning of video pipelines, such as sensors.
  *
+ * @a which is set to V4L2_SUBDEV_FORMAT_TRY to get the frame interval stored
+ * in the file handle, of V4L2_SUBDEV_FORMAT_ACTIVE to get the device's active
+ * frame interval.
+ *
  * @return 0 on success, or a negative error code on failure.
  */
 
 int v4l2_subdev_get_frame_interval(struct media_entity *entity,
-	struct v4l2_fract *interval, unsigned int pad, unsigned int stream);
+	struct v4l2_fract *interval, unsigned int pad, unsigned int stream,
+	enum v4l2_subdev_format_whence which);
 
 /**
  * @brief Set the frame interval on a sub-device.
@@ -247,6 +265,7 @@ int v4l2_subdev_get_frame_interval(struct media_entity *entity,
  * @param interval - frame interval.
  * @param pad - pad number.
  * @param stream - stream number.
+ * @param which - identifier of the interval to set.
  *
  * Set the frame interval on subdev @a entity to @a interval. The driver is
  * allowed to modify the requested frame interval, in which case @a interval is
@@ -255,14 +274,20 @@ int v4l2_subdev_get_frame_interval(struct media_entity *entity,
  * Frame interval setting is usually supported only on devices at the beginning
  * of video pipelines, such as sensors.
  *
+ * @a which is set to V4L2_SUBDEV_FORMAT_TRY to set the frame interval stored
+ * in the file handle, of V4L2_SUBDEV_FORMAT_ACTIVE to set the device's active
+ * frame interval.
+ *
  * @return 0 on success, or a negative error code on failure.
  */
 int v4l2_subdev_set_frame_interval(struct media_entity *entity,
-	struct v4l2_fract *interval, unsigned int pad, unsigned int stream);
+	struct v4l2_fract *interval, unsigned int pad, unsigned int stream,
+	enum v4l2_subdev_format_whence which);
 
 /**
  * @brief Parse a string and apply format, crop and frame interval settings.
  * @param media - media device.
+ * @param which - identifier of the parameters to set.
  * @param p - input string
  * @param endp - pointer to string p where parsing ended (return)
  *
@@ -272,20 +297,32 @@ int v4l2_subdev_set_frame_interval(struct media_entity *entity,
  *
  * Format strings are separeted by commas (,).
  *
+ * @a which is set to V4L2_SUBDEV_FORMAT_TRY to set the parameters stored in the
+ * file handle, of V4L2_SUBDEV_FORMAT_ACTIVE to set the device's active
+ * parameters.
+ *
  * @return 0 on success, or a negative error code on failure.
  */
-int v4l2_subdev_parse_setup_formats(struct media_device *media, const char *p);
+int v4l2_subdev_parse_setup_formats(struct media_device *media,
+				    enum v4l2_subdev_format_whence which,
+				    const char *p);
 
 /**
  * @brief Parse a string and apply route settings.
  * @param media - media device.
+ * @param which - identifier of the routes to set.
  * @param p - input string
  *
  * Parse string @a p and apply route settings to a subdev.
  *
+ * @a which is set to V4L2_SUBDEV_FORMAT_TRY to set the routes stored in the
+ * file handle, of V4L2_SUBDEV_FORMAT_ACTIVE to set the device's active routes.
+ *
  * @return 0 on success, or a negative error code on failure.
  */
-int v4l2_subdev_parse_setup_routes(struct media_device *media, const char *p);
+int v4l2_subdev_parse_setup_routes(struct media_device *media,
+				   enum v4l2_subdev_format_whence which,
+				   const char *p);
 
 /**
  * @brief Convert media bus pixel code to string.
