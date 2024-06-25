@@ -214,8 +214,15 @@ if ! $v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-cap ; then
 	exit 0
 fi
 
+# Connect input HDMI 000-0 to output HDMI 000-0
+# This ensures an EDID is available at the output side, and that CEC
+# can be tested.
+$v4l2_ctl -z platform:vivid-000 -d vivid-000-vid-cap -c hdmi_000_0_is_connected_to=2
 $v4l2_ctl -z platform:vivid-000 -d vivid-000-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
 $v4l2_ctl -z platform:vivid-000 -d vivid-000-vid-out -o1 -x width=3840,height=2160,pixelformat=NV24
+# Connect input HDMI 001-0 to output HDMI 001-0
+# This ensures an EDID is available at the output side.
+$v4l2_ctl -z platform:vivid-001 -d vivid-001-vid-cap -c hdmi_001_0_is_connected_to=3
 $v4l2_ctl -z platform:vivid-001 -d vivid-001-vid-cap -i3 -v width=3840,height=2160,pixelformat=NM16
 $v4l2_ctl -z platform:vivid-001 -d vivid-001-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
 $v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
