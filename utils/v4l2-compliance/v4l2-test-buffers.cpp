@@ -879,10 +879,12 @@ int testReqBufs(struct node *node)
 				}
 
 				if (fmt.g_num_planes() < VIDEO_MAX_PLANES) {
-					// Add an extra plane, but with size 0
+					// Add an extra plane, but with size 0. The vb2
+					// framework should test for this.
 					fmt.s_num_planes(fmt.g_num_planes() + 1);
 					fmt.s_sizeimage(0, fmt.g_num_planes() - 1);
 					fail_on_test(q.create_bufs(node, 1, &fmt) != EINVAL);
+					node->g_fmt(fmt, q.g_type());
 
 					// This test is debatable: should we allow CREATE_BUFS
 					// to create buffers with more planes than required
@@ -891,6 +893,10 @@ int testReqBufs(struct node *node)
 					// For now disallow this. If there is a really good
 					// reason for allowing this, then that should be
 					// documented and carefully tested.
+					//
+					// It is the driver in queue_setup that has to check
+					// this.
+					fmt.s_num_planes(fmt.g_num_planes() + 1);
 					fmt.s_sizeimage(65536, fmt.g_num_planes() - 1);
 					fail_on_test(q.create_bufs(node, 1, &fmt) != EINVAL);
 					node->g_fmt(fmt, q.g_type());
