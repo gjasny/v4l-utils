@@ -671,6 +671,8 @@ int testReqBufs(struct node *node)
 	fail_on_test_val(ret != EINVAL, ret);
 	fail_on_test(node->node2 == nullptr);
 	for (i = 1; i <= V4L2_BUF_TYPE_LAST; i++) {
+		bool is_vbi_raw = (i == V4L2_BUF_TYPE_VBI_CAPTURE ||
+				   i == V4L2_BUF_TYPE_VBI_OUTPUT);
 		bool is_overlay = v4l_type_is_overlay(i);
 		__u32 caps = 0;
 
@@ -854,25 +856,91 @@ int testReqBufs(struct node *node)
 				fail_on_test(q2.create_bufs(node->node2, 1) != EBUSY);
 			q.reqbufs(node);
 
-			if (node->is_video) {
-				cv4l_fmt fmt;
+			cv4l_fmt fmt;
 
+			node->g_fmt(fmt, q.g_type());
+			if (V4L2_TYPE_IS_MULTIPLANAR(q.g_type())) {
+				// num_planes == 0 is not allowed
+				fmt.s_num_planes(0);
+				fail_on_test(q.create_bufs(node, 1, &fmt) != EINVAL);
 				node->g_fmt(fmt, q.g_type());
-				if (V4L2_TYPE_IS_MULTIPLANAR(q.g_type())) {
-					fmt.s_num_planes(fmt.g_num_planes() + 1);
+
+				if (fmt.g_num_planes() > 1) {
+					// fewer planes than required by the format
+					// is not allowed
+					fmt.s_num_planes(fmt.g_num_planes() - 1);
+					fail_on_test(q.create_bufs(node, 1, &fmt) != EINVAL);
+					node->g_fmt(fmt, q.g_type());
+
+					// A last plane with a 0 sizeimage is not allowed
+					fmt.s_sizeimage(0, fmt.g_num_planes() - 1);
 					fail_on_test(q.create_bufs(node, 1, &fmt) != EINVAL);
 					node->g_fmt(fmt, q.g_type());
 				}
-				fmt.s_height(fmt.g_height() / 2);
-				for (unsigned p = 0; p < fmt.g_num_planes(); p++)
-					fmt.s_sizeimage(fmt.g_sizeimage(p) / 2, p);
-				fail_on_test(q.create_bufs(node, 1, &fmt) != EINVAL);
-				fail_on_test(testQueryBuf(node, fmt.type, q.g_buffers()));
-				node->g_fmt(fmt, q.g_type());
-				for (unsigned p = 0; p < fmt.g_num_planes(); p++)
-					fmt.s_sizeimage(fmt.g_sizeimage(p) * 2, p);
-				fail_on_test(q.create_bufs(node, 1, &fmt));
+
+				if (fmt.g_num_planes() < VIDEO_MAX_PLANES) {
+					// Add an extra plane, but with size 0
+					fmt.s_num_planes(fmt.g_num_planes() + 1);
+					fmt.s_sizeimage(0, fmt.g_num_planes() - 1);
+					fail_on_test(q.create_bufs(node, 1, &fmt) != EINVAL);
+
+					// This test is debatable: should we allow CREATE_BUFS
+					// to create buffers with more planes than required
+					// by the format?
+					//
+					// For now disallow this. If there is a really good
+					// reason for allowing this, then that should be
+					// documented and carefully tested.
+					fmt.s_sizeimage(65536, fmt.g_num_planes() - 1);
+					fail_on_test(q.create_bufs(node, 1, &fmt) != EINVAL);
+					node->g_fmt(fmt, q.g_type());
+				}
 			}
+			if (is_vbi_raw) {
+				fmt.fmt.vbi.count[0] = 0;
+				fmt.fmt.vbi.count[1] = 0;
+			} else {
+				fmt.s_sizeimage(0, 0);
+			}
+			// zero size for the first plane is not allowed
+			fail_on_test(q.create_bufs(node, 1, &fmt) != EINVAL);
+			node->g_fmt(fmt, q.g_type());
+
+			// plane sizes that are too small are not allowed
+			for (unsigned p = 0; p < fmt.g_num_planes(); p++) {
+				if (is_vbi_raw) {
+					fmt.fmt.vbi.count[0] /= 2;
+					fmt.fmt.vbi.count[1] /= 2;
+				} else {
+					fmt.s_sizeimage(fmt.g_sizeimage(p) / 2, p);
+				}
+			}
+			fail_on_test(q.create_bufs(node, 1, &fmt) != EINVAL);
+			fail_on_test(testQueryBuf(node, fmt.type, q.g_buffers()));
+			node->g_fmt(fmt, q.g_type());
+
+			// Add 1 MB to each plane or double the vbi counts.
+			// This is allowed.
+			for (unsigned p = 0; p < fmt.g_num_planes(); p++) {
+				if (is_vbi_raw) {
+					fmt.fmt.vbi.count[0] *= 2;
+					fmt.fmt.vbi.count[1] *= 2;
+				} else {
+					fmt.s_sizeimage(fmt.g_sizeimage(p) + (1 << 20), p);
+				}
+			}
+			fail_on_test(q.create_bufs(node, 1, &fmt));
+			buffer buf(q);
+
+			// Check that the new buffer lengths are at least those of
+			// the large sizes as specified by CREATE_BUFS
+			fail_on_test(buf.querybuf(node, 0));
+			fail_on_test(buf.g_num_planes() != fmt.g_num_planes());
+			// Verify that the new buffers actually have the requested
+			// buffer size
+			for (unsigned p = 0; p < buf.g_num_planes(); p++)
+				fail_on_test(buf.g_length(p) < fmt.g_sizeimage(p));
+			node->g_fmt(fmt, q.g_type());
 		}
 		fail_on_test(q.reqbufs(node));
 	}
