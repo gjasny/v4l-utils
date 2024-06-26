@@ -1039,6 +1039,21 @@ static inline void v4l_format_s_sizeimage(struct v4l2_format *fmt,
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		fmt->fmt.pix_mp.plane_fmt[plane].sizeimage = sizeimage;
 		break;
+	case V4L2_BUF_TYPE_SLICED_VBI_CAPTURE:
+	case V4L2_BUF_TYPE_SLICED_VBI_OUTPUT:
+		if (plane == 0)
+			fmt->fmt.sliced.io_size = sizeimage;
+		break;
+	case V4L2_BUF_TYPE_SDR_CAPTURE:
+	case V4L2_BUF_TYPE_SDR_OUTPUT:
+		if (plane == 0)
+			fmt->fmt.sdr.buffersize = sizeimage;
+		break;
+	case V4L2_BUF_TYPE_META_CAPTURE:
+	case V4L2_BUF_TYPE_META_OUTPUT:
+		if (plane == 0)
+			fmt->fmt.meta.buffersize = sizeimage;
+		break;
 	}
 }
 
