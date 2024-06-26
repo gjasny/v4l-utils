@@ -675,6 +675,8 @@ static bool matchFormats(const struct v4l2_format &f1, const struct v4l2_format 
 {
 	const struct v4l2_pix_format &pix1 = f1.fmt.pix;
 	const struct v4l2_pix_format &pix2 = f2.fmt.pix;
+	const struct v4l2_pix_format_mplane &pix_mp1 = f1.fmt.pix_mp;
+	const struct v4l2_pix_format_mplane &pix_mp2 = f2.fmt.pix_mp;
 	const struct v4l2_window &win1 = f1.fmt.win;
 	const struct v4l2_window &win2 = f2.fmt.win;
 
@@ -711,7 +713,19 @@ static bool matchFormats(const struct v4l2_format &f1, const struct v4l2_format 
 		return !memcmp(&f1.fmt.sliced, &f2.fmt.sliced, sizeof(f1.fmt.sliced));
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
-		return !memcmp(&f1.fmt.pix_mp, &f2.fmt.pix_mp, sizeof(f1.fmt.pix_mp));
+		if (!memcmp(&f1.fmt.pix_mp, &f2.fmt.pix_mp, sizeof(f1.fmt.pix_mp)))
+			return true;
+		printf("\t\tG_FMT:     %dx%d, %s, %d, %d, %d, %d, %d\n",
+			pix_mp1.width, pix_mp1.height, fcc2s(pix_mp1.pixelformat).c_str(), pix_mp1.num_planes,
+			pix_mp1.field, pix_mp1.colorspace, pix_mp1.ycbcr_enc, pix_mp1.quantization);
+		for (unsigned p = 0; p < pix_mp1.num_planes; p++)
+			printf("\t\t\t%d: %d, %d\n", p, pix_mp1.plane_fmt[p].sizeimage, pix_mp1.plane_fmt[p].bytesperline);
+		printf("\t\tTRY/S_FMT: %dx%d, %s, %d, %d, %d, %d, %d\n",
+			pix_mp2.width, pix_mp2.height, fcc2s(pix_mp2.pixelformat).c_str(), pix_mp2.num_planes,
+			pix_mp2.field, pix_mp2.colorspace, pix_mp2.ycbcr_enc, pix_mp2.quantization);
+		for (unsigned p = 0; p < pix_mp2.num_planes; p++)
+			printf("\t\t\t%d: %d, %d\n", p, pix_mp2.plane_fmt[p].sizeimage, pix_mp2.plane_fmt[p].bytesperline);
+		return false;
 	case V4L2_BUF_TYPE_SDR_CAPTURE:
 	case V4L2_BUF_TYPE_SDR_OUTPUT:
 		return !memcmp(&f1.fmt.sdr, &f2.fmt.sdr, sizeof(f1.fmt.sdr));
