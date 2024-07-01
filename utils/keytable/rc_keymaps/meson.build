@@ -94,6 +94,7 @@ ir_keytable_rc_keymaps = files(
     'msi_digivox_ii.toml',
     'msi_tvanywhere_plus.toml',
     'msi_tvanywhere.toml',
+    'mygica_utv3.toml',
     'nebula.toml',
     'nec_terratec_cinergy_xs.toml',
     'norwood.toml',
