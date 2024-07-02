@@ -69,6 +69,12 @@ elif host_machine.system() == 'freebsd'
     v4l2_utils_incdir_arr += 'contrib/freebsd/include'
 endif
 
+# These platforms default to __[us]64 as long. Add this define to get long long
+# as is done elsewhere.
+if host_machine.cpu_family() in ['alpha', 'mips64', 'ppc64']
+  add_project_arguments('-D__SANE_USERSPACE_TYPES__', language: ['c', 'cpp'])
+endif
+
 v4l2_utils_incdir = include_directories(v4l2_utils_incdir_arr)
 
 prog_bash = find_program('bash')
