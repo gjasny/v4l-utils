@@ -72,7 +72,7 @@ void retrace_mmap(json_object *mmap_obj, bool is_mmap64)
 	                           (long) buf_address_retrace_pointer);
 
 	if (is_verbose() || (errno != 0)) {
-		fprintf(stderr, "fd: %d, offset: %ld, ", fd_retrace, off);
+		fprintf(stderr, "fd: %d, offset: %lld, ", fd_retrace, (long long)off);
 		if (is_mmap64)
 			perror("mmap64");
 		else
