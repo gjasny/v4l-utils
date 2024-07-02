@@ -1276,9 +1276,9 @@ static int testLostMsgs(struct node *node)
 			printf("\t\tReceived messages: %d of which %d were CEC_MSG_CEC_VERSION\n",
 			       pending_rx_msgs, pending_rx_cec_version_msgs);
 		if (pending_quick_msgs < pending_msgs)
-			printf("\t\tReceived %d messages immediately, and %d over %ld seconds\n",
+			printf("\t\tReceived %d messages immediately, and %d over %llu seconds\n",
 			       pending_quick_msgs, pending_msgs - pending_quick_msgs,
-			       time(nullptr) - start);
+			       (__u64)time(nullptr) - start);
 	}
 	print_sfts(sft[1][1], "SFTs for repeating messages (>= 7)");
 	print_sfts(sft[1][0], "SFTs for repeating remote messages (>= 7)");

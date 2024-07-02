@@ -414,7 +414,7 @@ std::string ts2s(__u64 ts)
 		strftime(buf, sizeof(buf), "%a %b %e %T.000000", &tm);
 	}
 	secs = last_secs + t - last_t;
-	sprintf(buf + 14, "%02u:%02u.%06lu", secs / 60, secs % 60, res.tv_usec);
+	sprintf(buf + 14, "%02u:%02u.%06llu", secs / 60, secs % 60, (__u64)res.tv_usec);
 	return buf;
 }
 
@@ -942,10 +942,10 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 		}
 		fprintf(fstore, "# cec-ctl --store-pin\n");
 		fprintf(fstore, "# version %d\n", CEC_CTL_VERSION);
-		fprintf(fstore, "# start_monotonic %lu.%09lu\n",
-			start_monotonic.tv_sec, start_monotonic.tv_nsec);
-		fprintf(fstore, "# start_timeofday %lu.%06lu\n",
-			start_timeofday.tv_sec, start_timeofday.tv_usec);
+		fprintf(fstore, "# start_monotonic %llu.%09llu\n",
+			(__u64)start_monotonic.tv_sec, (__u64)start_monotonic.tv_nsec);
+		fprintf(fstore, "# start_timeofday %llu.%06llu\n",
+			(__u64)start_timeofday.tv_sec, (__u64)start_timeofday.tv_usec);
 		fprintf(fstore, "# log_addr_mask 0x%04x\n", node.log_addr_mask);
 		fprintf(fstore, "# phys_addr %x.%x.%x.%x\n",
 			cec_phys_addr_exp(node.phys_addr));
@@ -984,10 +984,10 @@ static void monitor(const struct node &node, __u32 monitor_time, const char *sto
 			 */
 			clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
 			gettimeofday(&start_timeofday, nullptr);
-			fprintf(fstore, "# start_monotonic %lu.%09lu\n",
-				start_monotonic.tv_sec, start_monotonic.tv_nsec);
-			fprintf(fstore, "# start_timeofday %lu.%06lu\n",
-				start_timeofday.tv_sec, start_timeofday.tv_usec);
+			fprintf(fstore, "# start_monotonic %llu.%09llu\n",
+				(__u64)start_monotonic.tv_sec, (__u64)start_monotonic.tv_nsec);
+			fprintf(fstore, "# start_timeofday %llu.%06llu\n",
+				(__u64)start_timeofday.tv_sec, (__u64)start_timeofday.tv_usec);
 			fflush(fstore);
 			start_minute = now;
 		}

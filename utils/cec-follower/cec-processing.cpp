@@ -72,7 +72,7 @@ static std::string ts2s(__u64 ts, bool wallclock)
 	t = res.tv_sec;
 	s = ctime(&t);
 	s = s.substr(0, s.length() - 6);
-	sprintf(buf, "%03lu", res.tv_usec / 1000);
+	sprintf(buf, "%03llu", (__u64)res.tv_usec / 1000);
 	return s + "." + buf;
 }
 
