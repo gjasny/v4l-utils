@@ -27,8 +27,7 @@ void add_device(int fd, std::string path)
 std::string get_device(int fd)
 {
 	std::string path;
-	std::unordered_map<int, std::string>::const_iterator it;
-	it = ctx_trace.devices.find(fd);
+	auto it = ctx_trace.devices.find(fd);
 	if (it != ctx_trace.devices.end())
 		path = it->second;
 	return path;
@@ -58,8 +57,7 @@ void set_decode_order(long decode_order)
 {
 	debug_line_info("\n\t%ld", decode_order);
 
-	std::list<long>::iterator it;
-	it = find(ctx_trace.decode_order.begin(), ctx_trace.decode_order.end(), decode_order);
+	auto it = find(ctx_trace.decode_order.begin(), ctx_trace.decode_order.end(), decode_order);
 	if (it == ctx_trace.decode_order.end())
 		ctx_trace.decode_order.push_front(decode_order);
 

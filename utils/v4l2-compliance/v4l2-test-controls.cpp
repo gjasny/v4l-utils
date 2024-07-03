@@ -845,7 +845,6 @@ static int checkVividControls(struct node *node,
 
 int testExtendedControls(struct node *node)
 {
-	qctrl_map::iterator iter;
 	struct v4l2_ext_controls ctrls;
 	std::vector<struct v4l2_ext_control> total_vec;
 	std::vector<struct v4l2_ext_control> class_vec;

@@ -92,8 +92,7 @@ void add_fd(int fd_trace, int fd_retrace)
 int get_fd_retrace_from_fd_trace(int fd_trace)
 {
 	int fd_retrace = -1;
-	std::unordered_map<int, int>::const_iterator it;
-	it = ctx_retrace.retrace_fds.find(fd_trace);
+	auto it = ctx_retrace.retrace_fds.find(fd_trace);
 	if (it != ctx_retrace.retrace_fds.end())
 		fd_retrace = it->second;
 	return fd_retrace;

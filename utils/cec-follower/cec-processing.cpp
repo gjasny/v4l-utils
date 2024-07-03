@@ -1013,7 +1013,7 @@ static void poll_remote_devs(struct node *node, unsigned me)
 
 static void update_programmed_timers(struct node *node)
 {
-	std::set<struct Timer>::iterator it = programmed_timers.begin();
+	auto it = programmed_timers.begin();
 	/* Use the current minute because timers do not have second precision. */
 	time_t current_minute = time(nullptr) / 60;
 	time_t timer_start_minute = it->start_time / 60;
