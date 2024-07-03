@@ -2242,7 +2242,6 @@ int testRequests(struct node *node, bool test_streaming)
 	filehandles fhs;
 	int media_fd = fhs.add(mi_get_media_fd(node->g_fd(), node->bus_info));
 	int req_fd;
-	qctrl_map::iterator iter;
 	struct test_query_ext_ctrl valid_qctrl;
 	v4l2_ext_controls ctrls;
 	v4l2_ext_control ctrl;
@@ -2302,8 +2301,8 @@ int testRequests(struct node *node, bool test_streaming)
 	memset(&valid_qctrl, 0, sizeof(valid_qctrl));
 	memset(&ctrls, 0, sizeof(ctrls));
 	memset(&ctrl, 0, sizeof(ctrl));
-	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
-		test_query_ext_ctrl &qctrl = iter->second;
+	for (auto &control : node->controls) {
+		test_query_ext_ctrl &qctrl = control.second;
 
 		if (qctrl.type != V4L2_CTRL_TYPE_INTEGER &&
 		    qctrl.type != V4L2_CTRL_TYPE_BOOLEAN)

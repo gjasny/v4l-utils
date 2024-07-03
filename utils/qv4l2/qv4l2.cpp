@@ -127,8 +127,8 @@ ApplicationWindow::ApplicationWindow() :
 	m_tpgYCbCrEnc = 0;
 	m_tpgQuantRange = 0;
 	m_tpgLimRGBRange = NULL;
-	for (unsigned b = 0; b < sizeof(m_clear); b++)
-		m_clear[b] = false;
+	for (bool &b : m_clear)
+		b = false;
 
 	QAction *openAct = new QAction(QIcon(":/fileopen.png"), "&Open Device", this);
 	openAct->setStatusTip("Open a v4l device, use libv4l2 wrapper if possible");
@@ -1254,8 +1254,8 @@ void ApplicationWindow::updateCropping()
 void ApplicationWindow::clearBuffers()
 {
 	if (m_capture)
-		for (unsigned b = 0; b < sizeof(m_clear); b++)
-			m_clear[b] = true;
+		for (bool &b : m_clear)
+			b = true;
 }
 
 void ApplicationWindow::startAudio()

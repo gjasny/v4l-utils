@@ -194,14 +194,12 @@ enum {
 
 static void checkSubMenuItem(QMenu *menu, __u32 value)
 {
-	QList<QAction *> actions = menu->actions();
-	QList<QAction *>::iterator iter;
-
-	for (iter = actions.begin(); iter != actions.end(); ++iter)
-		if ((*iter)->data() == value)
+	for (auto &action : menu->actions()) {
+		if (action->data() == value) {
+			action->setChecked(true);
 			break;
-	if (iter != actions.end())
-		(*iter)->setChecked(true);
+		}
+	}
 }
 
 static QAction *addSubMenuItem(QActionGroup *grp, QMenu *menu, const QString &text, int val)

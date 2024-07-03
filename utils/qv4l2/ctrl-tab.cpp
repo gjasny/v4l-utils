@@ -105,16 +105,15 @@ void ApplicationWindow::addTabs(int m_winWidth)
 		m_ctrlMap[qec.id] = qec;
 	}
 
-	for (ClassMap::iterator iter = m_classMap.begin(); iter != m_classMap.end(); ++iter) {
-		if (iter->second.size() == 0)
+	for (const auto &c : m_classMap) {
+		if (c.second.size() == 0)
 			continue;
-		which = V4L2_CTRL_ID2WHICH(iter->second[0]);
+		which = V4L2_CTRL_ID2WHICH(c.second[0]);
 		id = which | 1;
 		m_col = m_row = 0;
 		m_cols = 4;
-		for (int j = 0; j < m_cols; j++) {
-			m_maxw[j] = 0;
-		}
+		for (auto &w : m_maxw)
+			w = 0;
 
 		const v4l2_query_ext_ctrl &qec = m_ctrlMap[id];
 		QWidget *t = new QWidget(m_tabs);
@@ -142,11 +141,11 @@ void ApplicationWindow::addTabs(int m_winWidth)
 			m_row++;
 		}
 		m_tabs->addTab(t, tabName);
-		for (i = 0; i < iter->second.size(); i++) {
+		for (i = 0; i < c.second.size(); i++) {
 			if (i & 1)
-				id = iter->second[(1+iter->second.size()) / 2 + i / 2];
+				id = c.second[(1 + c.second.size()) / 2 + i / 2];
 			else
-				id = iter->second[i / 2];
+				id = c.second[i / 2];
 			addCtrl(grid, m_ctrlMap[id]);
 		}
 		grid->addWidget(new QWidget(w), grid->rowCount(), 0, 1, m_cols);
@@ -157,9 +156,8 @@ void ApplicationWindow::addTabs(int m_winWidth)
 
 		int totalw = 0;
 		int diff = 0;
-		for (int i = 0; i < m_cols; i++) {
-			totalw += m_maxw[i] + m_pxw;
-		}
+		for (const auto &w : m_maxw)
+			totalw += w + m_pxw;
 		if (totalw > m_winWidth)
 			m_winWidth = totalw;
 		else {
@@ -176,12 +174,11 @@ void ApplicationWindow::fixWidth(QGridLayout *grid)
 	grid->setContentsMargins(m_vMargin, m_hMargin, m_vMargin, m_hMargin);
 	grid->setColumnStretch(3, 1);
 	QList<QWidget *> list = grid->parentWidget()->parentWidget()->findChildren<QWidget *>();
-	QList<QWidget *>::iterator it;
 
-	for (it = list.begin(); it != list.end(); ++it)	{
-		if (((*it)->sizeHint().width()) > m_minWidth) {
-			m_increment = (int) ceil(((*it)->sizeHint().width() - m_minWidth) / m_pxw);
-			(*it)->setMinimumWidth(m_minWidth + m_increment * m_pxw); // for stepsize expantion of widgets
+	for (auto &it : list) {
+		if ((it->sizeHint().width()) > m_minWidth) {
+			m_increment = (int)ceil((it->sizeHint().width() - m_minWidth) / m_pxw);
+			it->setMinimumWidth(m_minWidth + m_increment * m_pxw); // for stepsize expantion of widgets
 		}
 	}
 
@@ -415,9 +412,7 @@ void ApplicationWindow::ctrlAction(int id)
 	struct v4l2_ext_controls ctrls;
 	int idx = 0;
 
-	for (unsigned i = 0; i < count; i++) {
-		unsigned id = m_classMap[which][i];
-
+	for (unsigned int id : m_classMap[which]) {
 		if (m_ctrlMap[id].flags & CTRL_FLAG_DISABLED)
 			continue;
 		c[idx].id = id;
@@ -639,9 +634,8 @@ void ApplicationWindow::updateCtrlRange(unsigned id, __s32 new_val)
 
 void ApplicationWindow::subscribeCtrlEvents()
 {
-	for (ClassMap::iterator iter = m_classMap.begin(); iter != m_classMap.end(); ++iter) {
-		for (unsigned i = 0; i < m_classMap[iter->first].size(); i++) {
-			unsigned id = m_classMap[iter->first][i];
+	for (auto &iter : m_classMap) {
+		for (unsigned int id : m_classMap[iter.first]) {
 			struct v4l2_event_subscription sub;
 
 			memset(&sub, 0, sizeof(sub));
@@ -659,9 +653,9 @@ void ApplicationWindow::refresh(unsigned which)
 	struct v4l2_ext_control *c = new v4l2_ext_control[count];
 	struct v4l2_ext_controls ctrls;
 
-	for (unsigned i = 0; i < count; i++) {
-		unsigned id = c[cnt].id = m_classMap[which][i];
-		
+	for (unsigned int i : m_classMap[which]) {
+		unsigned id = c[cnt].id = i;
+
 		c[cnt].size = 0;
 		c[cnt].reserved2[0] = 0;
 		if (m_ctrlMap[id].type == V4L2_CTRL_TYPE_BUTTON)
@@ -715,8 +709,8 @@ void ApplicationWindow::refresh(unsigned which)
 
 void ApplicationWindow::refresh()
 {
-	for (ClassMap::iterator iter = m_classMap.begin(); iter != m_classMap.end(); ++iter)
-		refresh(iter->first);
+	for (auto &iter : m_classMap)
+		refresh(iter.first);
 }
 
 void ApplicationWindow::setWhat(QWidget *w, unsigned id, const QString &v)
@@ -889,9 +883,7 @@ void ApplicationWindow::setString(unsigned id, const QString &v)
 
 void ApplicationWindow::setDefaults(unsigned which)
 {
-	for (unsigned i = 0; i < m_classMap[which].size(); i++) {
-		unsigned id = m_classMap[which][i];
-
+	for (unsigned int id : m_classMap[which]) {
 		if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_READ_ONLY)
 			continue;
 		if (m_ctrlMap[id].flags & V4L2_CTRL_FLAG_GRABBED)

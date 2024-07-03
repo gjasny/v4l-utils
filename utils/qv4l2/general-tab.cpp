@@ -917,40 +917,37 @@ void GeneralTab::fixWidth()
 	setColumnStretch(3, 1);
 
 	QList<QWidget *> list = parentWidget()->findChildren<QWidget *>();
-	QList<QWidget *>::iterator it;
-	for (it = list.begin(); it != list.end(); ++it)	{
-		if (!qobject_cast<QComboBox *>(*it) &&
-		    !qobject_cast<QSpinBox *>(*it) &&
-		    !qobject_cast<QSlider *>(*it))
+	for (const auto &child : list) {
+		if (!qobject_cast<QComboBox *>(child) && !qobject_cast<QSpinBox *>(child) &&
+		    !qobject_cast<QSlider *>(child))
 			continue;
 
-		if (((*it)->sizeHint().width()) > m_minWidth) {
-			m_increment = (int) ceil(((*it)->sizeHint().width() - m_minWidth) / m_pxw);
-			(*it)->setMinimumWidth(m_minWidth + m_increment * m_pxw); // for stepsize expansion of widgets
+		if ((child->sizeHint().width()) > m_minWidth) {
+			m_increment = (int)ceil((child->sizeHint().width() - m_minWidth) / m_pxw);
+			child->setMinimumWidth(m_minWidth + m_increment * m_pxw); // for stepsize expansion of widgets
 		}
 	}
 
 	// fix width of subgrids
-	QList<QGridLayout *>::iterator i;
-	for (i = m_grids.begin(); i != m_grids.end(); ++i) {
-		(*i)->setColumnStretch(3, 1);
-		(*i)->setContentsMargins(0, 0, 0, 0);
-		for (int n = 0; n < (*i)->count(); n++) {
-			if ((*i)->itemAt(n)->widget()->sizeHint().width() > m_maxw[n % 4]) {
-				m_maxw[n % 4] = (*i)->itemAt(n)->widget()->sizeHint().width();
+	for (const auto &grid : m_grids) {
+		grid->setColumnStretch(3, 1);
+		grid->setContentsMargins(0, 0, 0, 0);
+		for (int n = 0; n < grid->count(); n++) {
+			if (grid->itemAt(n)->widget()->sizeHint().width() > m_maxw[n % 4]) {
+				m_maxw[n % 4] = grid->itemAt(n)->widget()->sizeHint().width();
 			}
 			if (n % 2) {
-				if (!qobject_cast<QToolButton*>((*i)->itemAt(n)->widget()))
-					(*i)->itemAt(n)->widget()->setMinimumWidth(m_minWidth);
+				if (!qobject_cast<QToolButton *>(grid->itemAt(n)->widget()))
+					grid->itemAt(n)->widget()->setMinimumWidth(m_minWidth);
 			} else {
-				(*i)->itemAt(n)->widget()->setMinimumWidth(m_maxw[n % 4]);
+				grid->itemAt(n)->widget()->setMinimumWidth(m_maxw[n % 4]);
 			}
 		}
 		for (int j = 0; j < m_cols; j++) {
 			if (j % 2)
-				(*i)->setColumnMinimumWidth(j,m_maxw[j] + m_pxw);
+				grid->setColumnMinimumWidth(j, m_maxw[j] + m_pxw);
 			else
-				(*i)->setColumnMinimumWidth(j,m_maxw[j]);
+				grid->setColumnMinimumWidth(j, m_maxw[j]);
 		}
 	}
 

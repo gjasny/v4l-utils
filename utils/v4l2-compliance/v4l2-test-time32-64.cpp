@@ -123,7 +123,6 @@ int testTime32_64(struct node *node)
 	struct v4l2_event_time32 ev32;
 	struct v4l2_event_time64 ev64;
 	struct v4l2_event ev;
-	qctrl_map::iterator iter;
 
 	if (node->controls.empty())
 		return 0;
@@ -131,8 +130,8 @@ int testTime32_64(struct node *node)
 	fail_on_test(VIDIOC_DQEVENT != VIDIOC_DQEVENT_TIME32 &&
 		     VIDIOC_DQEVENT != VIDIOC_DQEVENT_TIME64);
 
-	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
-		test_query_ext_ctrl &qctrl = iter->second;
+	for (const auto &control : node->controls) {
+		const test_query_ext_ctrl &qctrl = control.second;
 		if (qctrl.type == V4L2_CTRL_TYPE_CTRL_CLASS)
 			continue;
 

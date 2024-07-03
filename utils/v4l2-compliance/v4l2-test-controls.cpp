@@ -433,13 +433,12 @@ static int checkSimpleCtrl(const struct v4l2_control &ctrl, const struct test_qu
 
 int testSimpleControls(struct node *node)
 {
-	qctrl_map::iterator iter;
 	struct v4l2_control ctrl;
 	int ret;
 	int i;
 
-	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
-		test_query_ext_ctrl &qctrl = iter->second;
+	for (auto &control : node->controls) {
+		test_query_ext_ctrl &qctrl = control.second;
 
 		if (qctrl.type >= V4L2_CTRL_COMPOUND_TYPES || qctrl.nr_of_dims)
 			continue;
@@ -881,8 +880,8 @@ int testExtendedControls(struct node *node)
 	if (check_0(ctrls.reserved, sizeof(ctrls.reserved)))
 		return fail("reserved not zeroed\n");
 
-	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
-		test_query_ext_ctrl &qctrl = iter->second;
+	for (auto &control : node->controls) {
+		test_query_ext_ctrl &qctrl = control.second;
 
 		if (is_vivid && V4L2_CTRL_ID2WHICH(qctrl.id) == V4L2_CTRL_CLASS_VIVID)
 			continue;
@@ -1003,8 +1002,8 @@ int testExtendedControls(struct node *node)
 	if (ctrls.error_idx != ctrls.count)
 		return fail("s_ext_ctrls(0) invalid error_idx %u\n", ctrls.error_idx);
 
-	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
-		test_query_ext_ctrl &qctrl = iter->second;
+	for (auto &control : node->controls) {
+		test_query_ext_ctrl &qctrl = control.second;
 		struct v4l2_ext_control ctrl;
 
 		if (qctrl.flags & (V4L2_CTRL_FLAG_READ_ONLY | V4L2_CTRL_FLAG_WRITE_ONLY))
@@ -1089,10 +1088,8 @@ int testExtendedControls(struct node *node)
 
 int testEvents(struct node *node)
 {
-	qctrl_map::iterator iter;
-
-	for (iter = node->controls.begin(); iter != node->controls.end(); ++iter) {
-		test_query_ext_ctrl &qctrl = iter->second;
+	for (auto &control : node->controls) {
+		test_query_ext_ctrl &qctrl = control.second;
 		struct v4l2_event_subscription sub = { 0 };
 		struct v4l2_event ev;
 		struct timeval timeout = { 0, 100 };

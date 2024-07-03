@@ -189,8 +189,8 @@ public:
 	filehandles() {}
 	~filehandles()
 	{
-		for (std::set<int>::const_iterator iter = fhs.begin(); iter != fhs.end(); ++iter)
-			close(*iter);
+		for (int fh : fhs)
+			close(fh);
 	}
 
 	int add(int fd)
