@@ -1,3 +1,142 @@
+v4l-utils-1.28.0
+----------------
+
+Akihiro Tsukada (2):
+      v4l-utils/contrib/gconv: translation table fix for ARIB-STD-B24
+      v4l-utils/contrib/gconv: fix conversion errors on ARIB-STD-B24 strings
+
+Benjamin Gaignard (1):
+      v4l2-compliance: Add a test for REMOVE_BUFS ioctl
+
+Daniel Scally (2):
+      v4l2-ctl: Add --try-routing option
+      media-ctl: Re-order setting format and routes
+
+Deborah Brouwer (10):
+      v4l2-tracer: autogenerate files that can be added to git
+      v4l2-tracer: add auto-generated files to git repo
+      v4l2-tracer: stop auto-generating files with meson
+      sync-with-kernel.sh: create v4l2-tracer patches
+      v4l2-tracer: look in more places for libv4l2tracer
+      v4l2-tracer: ignore single line comments when parsing headers
+      v4l2-tracer: add re/tracing for MAX_NUM_BUFFERS
+      v4l2-tracer: add re/tracing for AV1 controls
+      v4l2-tracer: stop waiting to handle a signal
+      v4l2-tracer: use stat to verify that retrace file exists
+
+Detlev Casanova (1):
+      test-media: Add basic tests for visl
+
+Fabio Estevam (1):
+      keytable: meson: Restrict the installation of 50-rc_keymap.conf
+
+Gregor Jasny (1):
+      buildsystem: Start v4l-utils 1.27.0 development cycle
+
+Hans Verkuil (38):
+      cec-ctl: fix random cec stress test: check if msg status is OK
+      libv4l2rds: fix TMC location parsing
+      v4l-utils: v4l-utils: sync with latest kernel headers
+      v4l-utils: fix @PACKAGE_VERSION@ use
+      v4l-utils: v4l-utils: sync with latest kernel headers
+      *v4l-helpers: support V4L2_SUBDEV_CLIENT_CAP_INTERVAL_USES_WHICH
+      v4l2-ctl: add support for V4L2_SUBDEV_CLIENT_CAP_INTERVAL_USES_WHICH
+      v4l2-compliance: add support for V4L2_SUBDEV_CLIENT_CAP_INTERVAL_USES_WHICH
+      v4l2-ctl/compliance: read and show the subdev client capabilities
+      qv4l2: support menu controls in updateCtrlRange()
+      v4l2-ctl: report max_num_buffers
+      meson.build: dep_systemd was not set in one case
+      cv4l-helpers.h: add missing helper functions
+      v4l2-ctl: replace --fix-edid-checksums by --keep-edid-checksums
+      cec-compliance: add --show-timestamp option
+      v4l-utils: (c)v4l-helpers.h: support more than 32 buffers
+      cec-ctl: avoid confusing error message
+      v4l-utils: sync-with-kernel
+      v4l-utils: sync-with-kernel
+      qv4l2: add support for /dev/v4l-touchX devices
+      qv4l2: fix crash when used with metadata output devices
+      cec-ctl: exit after reporting all cec devices with --list-devices
+      v4l2-ctl: --list-devices --verbose will list current input/output
+      sync-with-kernel.sh: filter V4L2_META_FMT_GENERIC_ defines
+      v4l-utils: sync-with-kernel
+      v4l2-info: support V4L2_FMT_FLAG_META_LINE_BASED
+      sync-with-kernel.sh: add v4l2-dv-timings.h
+      v4l2-compliance: do not warn for unexpected vivid_ro_ctrl values
+      v4l-utils: test-media: add dmesg -n info before modprobes
+      v4l-helpers: v4l_format_s_sizeimage: add support for other buftypes
+      v4l2-compliance: matchFormats(): add multiplane logging
+      v4l2-compliance: add new CREATE_BUFS tests
+      v4l2-compliance: clarify a create_bufs test
+      v4l-utils: test-media: connect the hdmi input to the output
+      v4l-utils: sync with latest kernel
+      utils/keytable: forgot to add mygica_utv3.toml
+      v4l2-info: add support for V4L2_BUF_CAP_SUPPORTS_REMOVE_BUFS
+      cec-follower: change type of struct Timer duration field to int
+
+James Le Cuirot (3):
+      meson: Fix building with -Dv4l-utils=false
+      meson: Allow documentation directory to be specified with -Ddocdir
+      v4l2-compliance: Fix building against libc++
+
+Laurent Pinchart (7):
+      v4l2gl: Add missing dependency on argp
+      v4l2-compliance: Constify pointers and references in formats tests
+      v4l2-compliance: Support the changed routing API
+      v4l2-compliance: Add tests for V4L2_FMT_FLAG_META_LINE_BASED flag
+      libv4l2subdev: Extend API with 'which' argument where missing
+      utils: media-ctl: Prepare for TRY state support
+      utils: media-ctl: Support accessing the subdev TRY state
+
+Martin Tůma (1):
+      Fixed qv4l2 crash with drivers that implement VIDIOC_ENUM_FRAMESIZES for outputs
+
+Matthias Reichl (1):
+      keytable: fix segfault when reading legacy keymaps
+
+Nicolas Dufresne (1):
+      v4l2-tracer: Rewrite libv4l2tracer.so lookup
+
+Peter Seiderer (6):
+      meson: add optional Qt6 support
+      media-info: add missing sys/stat.h include (for dev_t)
+      meson: fix has_function fork detection (needs suitable include)
+      meson: v4l2grab needs libv4lconvert with fork support enabled
+      Revert "meson: v4l2grab needs libv4lconvert with fork support enabled"
+      meson: libv4lconvert helpers need fork support
+
+Rosen Penev (6):
+      v4l-utils: fix formats under alpha/ppc64/mips64
+      v4l-utils: use 64-bit off_t format
+      v4l-utils: clang-tidy: convert to for range loop
+      v4l-utils: clang-tidy: use auto with iterators
+      v4l-utils: fix potential crashing with 32-bit musl
+      v4l-utils: use 64-bit formats for time
+
+Rudi Heitbaum (1):
+      keytable: meson not passing rc_keymaps system directory
+
+Sakari Ailus (2):
+      utils: media-ctl: Print the MUST_CONNECT pad flag
+      utils: media-ctl: Support changed routing API
+
+Sean Young (7):
+      ir-ctl: remove line length limits
+      keytable: remove line length limits
+      ir-ctl: correct max_size for rc5 and rc5_sz
+      ir-ctl: encode rc6 mode 0 can have 43 edges
+      ir-ctl: add optional header to manchester encoding
+      ir-ctl: fix encoding pulse_length bpf encoder
+      keytable: fix command line processing
+
+Tomi Valkeinen (2):
+      v4l2-compliance: Fix use of routing on 32-bit platforms
+      v4l2-compliance: Fix streams use in testSubDevEnumFrameSize()
+
+Vince Ricosti (2):
+      ir-ctl: clear errno before strtol
+      keytable: fix stdout/stderr inconsistency
+
+
 v4l-utils-1.26.0
 ----------------
 
