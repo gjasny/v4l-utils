@@ -88,7 +88,7 @@ struct node {
 
 struct Timer {
 	time_t start_time;
-	time_t duration; /* In seconds. */
+	int duration; /* In seconds. */
 	__u8 recording_seq;
 	struct cec_op_record_src src;
 
