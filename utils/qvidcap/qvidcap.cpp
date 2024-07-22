@@ -434,6 +434,7 @@ int main(int argc, char **argv)
 	cv4l_fd fd;
 	enum AppMode mode = AppModeV4L2;
 	int sock_fd = -1;
+	cv4l_queue q;
 	cv4l_fmt fmt;
 	v4l2_fract pixelaspect = { 1, 1 };
 	unsigned cnt = 0;
@@ -807,7 +808,7 @@ int main(int argc, char **argv)
 	if (mode == AppModeSocket)
 		win.setModeSocket(sock_fd, port);
 	else if (mode == AppModeV4L2) {
-		cv4l_queue q(fd.g_type(), V4L2_MEMORY_MMAP);
+		q.init(fd.g_type(), V4L2_MEMORY_MMAP);
 		q.reqbufs(&fd, v4l2_bufs);
 		q.obtain_bufs(&fd);
 		q.queue_all(&fd);
