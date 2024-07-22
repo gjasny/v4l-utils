@@ -270,7 +270,8 @@ void CaptureWinGLEngine::setLinearFilter(bool enable)
 
 void CaptureWinGLEngine::clearShader()
 {
-	glDeleteTextures(m_screenTextureCount, m_screenTexture);
+	if (m_screenTextureCount)
+		glDeleteTextures(m_screenTextureCount, m_screenTexture);
 	if (m_shaderProgram.isLinked()) {
 		m_shaderProgram.release();
 		m_shaderProgram.removeAllShaders();
