@@ -202,6 +202,8 @@ size_t iconv (iconv_t cd, char * *inbuf, size_t *inbytesleft, char * *outbuf, si
     endif
 endif
 
+dep_intl = dependency('intl')
+
 have_gconv = cc.has_header('gconv.h', required : get_option('gconv'))
 
 # Detect system gconv directory

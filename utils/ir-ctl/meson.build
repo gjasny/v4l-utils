@@ -12,6 +12,7 @@ ir_ctl_sources = files(
 
 ir_ctl_deps =  [
     dep_argp,
+    dep_intl,
 ]
 
 ir_ctl = executable('ir-ctl',

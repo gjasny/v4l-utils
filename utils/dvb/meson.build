@@ -1,5 +1,6 @@
 dvb_common_deps =  [
     dep_argp,
+    dep_intl,
     dep_libdvbv5,
     dep_libudev,
     dep_threads,

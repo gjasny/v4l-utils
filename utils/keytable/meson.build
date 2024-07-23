@@ -11,6 +11,7 @@ ir_keytable_sources = files(
 
 ir_keytable_deps = [
     dep_argp,
+    dep_intl,
 ]
 
 ir_keytable_system_dir = udevdir

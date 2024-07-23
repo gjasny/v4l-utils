@@ -124,6 +124,7 @@ install_headers(libdvbv5_api, subdir: 'libdvbv5')
 
 libdvbv5_deps = [
     dep_iconv,
+    dep_intl,
     dep_libm,
     dep_librt,
     dep_libudev,
