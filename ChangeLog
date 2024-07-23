@@ -1,3 +1,12 @@
+v4l-utils-1.28.1
+----------------
+
+Hans Verkuil (3):
+      qvidcap: fix core dump
+      qv4l2: fix crash when disabling openGL
+      qv4l2: always set m_haveFramebufferSRGB to false
+
+
 v4l-utils-1.28.0
 ----------------
 
