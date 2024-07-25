@@ -15,7 +15,6 @@
 #include "cec-compliance.h"
 
 static constexpr __u8 tx_ok_retry_mask = CEC_TX_STATUS_OK | CEC_TX_STATUS_MAX_RETRIES;
-static constexpr __u32 msg_fl_mask = CEC_MSG_FL_REPLY_TO_FOLLOWERS | CEC_MSG_FL_RAW;
 
 // Flush any pending messages
 static int flush_pending_msgs(struct node *node)
@@ -267,6 +266,7 @@ static int testTransmit(struct node *node)
 	bool tested_self = false;
 	bool tested_valid_la = false;
 	bool tested_invalid_la = false;
+	bool has_reply_vendor_id = node->caps & CEC_CAP_REPLY_VENDOR_ID;
 
 	if (!(node->caps & CEC_CAP_TRANSMIT)) {
 		cec_msg_init(&msg, la, 0);
@@ -294,6 +294,19 @@ static int testTransmit(struct node *node)
 	msg.reply = CEC_MSG_CEC_VERSION;
 	fail_on_test(doioctl(node, CEC_TRANSMIT, &msg) != EINVAL);
 
+	if (has_reply_vendor_id) {
+		// Test that CEC_MSG_FL_REPLY_VENDOR_ID requires a message
+		// size of at least 6 by constructing a message of length 5
+		// and verifying that that fails with EINVAL.
+		cec_msg_init(&msg, la, 0);
+		__u8 cmd = 0;
+		cec_msg_vendor_command_with_id(&msg, node->vendor_id, 0, &cmd);
+		msg.flags = CEC_MSG_FL_REPLY_VENDOR_ID;
+		msg.reply = cmd + 1;
+		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg) != EINVAL);
+		fail_on_test(!(msg.flags & CEC_MSG_FL_REPLY_VENDOR_ID));
+	}
+
 	for (i = 0; i < 15; i++) {
 		if (tested_self && (node->adap_la_mask & (1 << i)))
 			continue;
@@ -303,7 +316,7 @@ static int testTransmit(struct node *node)
 		msg.len = 1;
 		msg.timeout = 0;
 		msg.reply = 0;
-		msg.flags &= ~msg_fl_mask;
+		msg.flags &= ~node->msg_fl_mask;
 
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 
@@ -345,7 +358,7 @@ static int testTransmit(struct node *node)
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
 			msg.timeout = 1001;
-			msg.flags &= ~msg_fl_mask;
+			msg.flags &= ~node->msg_fl_mask;
 			cec_msg_give_physical_addr(&msg, true);
 			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 			fail_on_test(!(msg.tx_status & CEC_TX_STATUS_OK));
@@ -373,7 +386,7 @@ static int testTransmit(struct node *node)
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
 			msg.timeout = 0;
-			msg.flags &= ~msg_fl_mask;
+			msg.flags &= ~node->msg_fl_mask;
 			cec_msg_give_physical_addr(&msg, false);
 			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 			fail_on_test(msg.timeout);
@@ -391,6 +404,79 @@ static int testTransmit(struct node *node)
 			fail_on_test(msg.tx_arb_lost_cnt == 0xff);
 			fail_on_test(msg.tx_low_drive_cnt == 0xff);
 			fail_on_test(msg.tx_error_cnt == 0xff);
+
+			// CEC_MSG_FL_REPLY_VENDOR_ID tests, only valid for use with
+			// the vivid driver since that has support for this.
+			//
+			// The vivid driver will Feature Abort the vendor message if
+			// it has a payload size != 1.
+			//
+			// It will ignore messages with an even payload byte, and
+			// it will reply to messages with an odd payload byte with
+			// that payload byte incremented by 1.
+			if (node->is_vivid && has_reply_vendor_id) {
+				__u32 vendor_id;
+				__u8 size;
+				const __u8 *vendor_data;
+				__u8 vendor_cmd = 0x11;
+
+				// Test that an invalid vendor ID is ignored
+				cec_msg_init(&msg, la, i);
+				cec_msg_vendor_command_with_id(&msg, node->vendor_id + 1, 1, &vendor_cmd);
+				msg.flags = CEC_MSG_FL_REPLY_VENDOR_ID;
+				msg.reply = vendor_cmd + 2;
+				fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
+				fail_on_test(!(msg.rx_status & CEC_RX_STATUS_TIMEOUT));
+				fail_on_test(!(msg.flags & CEC_MSG_FL_REPLY_VENDOR_ID));
+
+				// The vivid driver will reply with value vendor_cmd + 1, so
+				// waiting for different reply must time out
+				cec_msg_init(&msg, la, i);
+				cec_msg_vendor_command_with_id(&msg, node->vendor_id, 1, &vendor_cmd);
+				msg.flags = CEC_MSG_FL_REPLY_VENDOR_ID;
+				msg.reply = vendor_cmd + 2;
+				fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
+				fail_on_test(!(msg.rx_status & CEC_RX_STATUS_TIMEOUT));
+				fail_on_test(!(msg.flags & CEC_MSG_FL_REPLY_VENDOR_ID));
+
+				// This should work
+				cec_msg_init(&msg, la, i);
+				cec_msg_vendor_command_with_id(&msg, node->vendor_id, 1, &vendor_cmd);
+				msg.flags = CEC_MSG_FL_REPLY_VENDOR_ID;
+				msg.reply = vendor_cmd + 1;
+				fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
+				fail_on_test(!(msg.rx_status & CEC_RX_STATUS_OK));
+				fail_on_test(!(msg.flags & CEC_MSG_FL_REPLY_VENDOR_ID));
+				cec_ops_vendor_command_with_id(&msg, &vendor_id, &size, &vendor_data);
+				fail_on_test(vendor_id != node->vendor_id);
+				fail_on_test(size != 1);
+				fail_on_test(vendor_data[0] != vendor_cmd + 1);
+
+				// This too: here the reply is 0 (0xff + 1 % 256)
+				cec_msg_init(&msg, la, i);
+				vendor_cmd = 0xff;
+				cec_msg_vendor_command_with_id(&msg, node->vendor_id, 1, &vendor_cmd);
+				msg.flags = CEC_MSG_FL_REPLY_VENDOR_ID;
+				msg.reply = 0;
+				fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
+				fail_on_test(!(msg.rx_status & CEC_RX_STATUS_OK));
+				fail_on_test(!(msg.flags & CEC_MSG_FL_REPLY_VENDOR_ID));
+				cec_ops_vendor_command_with_id(&msg, &vendor_id, &size, &vendor_data);
+				fail_on_test(vendor_id != node->vendor_id);
+				fail_on_test(size != 1);
+				fail_on_test(vendor_data[0]);
+
+				// A size != 1 should result in a feature abort
+				cec_msg_init(&msg, la, i);
+				vendor_cmd = 0xff;
+				cec_msg_vendor_command_with_id(&msg, node->vendor_id, 1, &vendor_cmd);
+				msg.len++;
+				msg.flags = CEC_MSG_FL_REPLY_VENDOR_ID;
+				msg.reply = 0;
+				fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
+				fail_on_test(!(msg.rx_status & CEC_RX_STATUS_FEATURE_ABORT));
+				fail_on_test(msg.msg[3] != CEC_OP_ABORT_INVALID_OP);
+			}
 		} else {
 			if (tested_invalid_la)
 				continue;
@@ -400,7 +486,7 @@ static int testTransmit(struct node *node)
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
 			msg.timeout = 1002;
-			msg.flags &= ~msg_fl_mask;
+			msg.flags &= ~node->msg_fl_mask;
 			cec_msg_give_physical_addr(&msg, true);
 			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 			fail_on_test(msg.timeout != 1002);
@@ -424,7 +510,7 @@ static int testTransmit(struct node *node)
 			memset(&msg, 0xff, sizeof(msg));
 			msg.msg[0] = (la << 4) | i;
 			msg.timeout = 0;
-			msg.flags &= ~msg_fl_mask;
+			msg.flags &= ~node->msg_fl_mask;
 			cec_msg_give_physical_addr(&msg, false);
 			fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 			fail_on_test(msg.timeout);
@@ -592,7 +678,7 @@ static int testNonBlocking(struct node *node)
 		memset(&msg, 0xff, sizeof(msg));
 		msg.msg[0] = (la << 4) | invalid_remote;
 		msg.timeout = 0;
-		msg.flags &= ~msg_fl_mask;
+		msg.flags &= ~node->msg_fl_mask;
 		cec_msg_give_physical_addr(&msg, false);
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 		fail_on_test(msg.len != 2);
@@ -644,7 +730,7 @@ static int testNonBlocking(struct node *node)
 		memset(&msg, 0xff, sizeof(msg));
 		msg.msg[0] = (la << 4) | invalid_remote;
 		msg.timeout = 0;
-		msg.flags &= ~msg_fl_mask;
+		msg.flags &= ~node->msg_fl_mask;
 		cec_msg_give_physical_addr(&msg, true);
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 		fail_on_test(msg.len != 2);
@@ -703,7 +789,7 @@ static int testNonBlocking(struct node *node)
 		memset(&msg, 0xff, sizeof(msg));
 		msg.msg[0] = (la << 4) | remote_la;
 		msg.timeout = 0;
-		msg.flags &= ~msg_fl_mask;
+		msg.flags &= ~node->msg_fl_mask;
 		cec_msg_give_physical_addr(&msg, false);
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 		fail_on_test(msg.len != 2);
@@ -754,7 +840,7 @@ static int testNonBlocking(struct node *node)
 		memset(&msg, 0xff, sizeof(msg));
 		msg.msg[0] = (la << 4) | remote_la;
 		msg.timeout = 0;
-		msg.flags &= ~msg_fl_mask;
+		msg.flags &= ~node->msg_fl_mask;
 		cec_msg_give_physical_addr(&msg, true);
 		fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 		fail_on_test(msg.len != 2);

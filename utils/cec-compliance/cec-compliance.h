@@ -151,15 +151,18 @@ struct remote {
 struct node {
 	int fd;
 	const char *device;
+	bool is_vivid;
 	bool has_cec20;
 	unsigned caps;
 	unsigned available_log_addrs;
 	unsigned num_log_addrs;
 	unsigned adap_la_mask;
 	__u8 log_addr[CEC_MAX_LOG_ADDRS];
+	__u32 msg_fl_mask;
 	unsigned remote_la_mask;
 	struct remote remote[16];
 	__u16 phys_addr;
+	__u32 vendor_id;
 	bool in_standby;
 	__u8 prim_devtype;
 	time_t current_time;

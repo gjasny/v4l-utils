@@ -1071,7 +1071,11 @@ int main(int argc, char **argv)
 	node.device = device.c_str();
 	doioctl(&node, CEC_ADAP_G_CAPS, &caps);
 	node.caps = caps.capabilities;
+	node.msg_fl_mask = CEC_MSG_FL_REPLY_TO_FOLLOWERS | CEC_MSG_FL_RAW;
+	if (node.caps & CEC_CAP_REPLY_VENDOR_ID)
+		node.msg_fl_mask |= CEC_MSG_FL_REPLY_VENDOR_ID;
 	node.available_log_addrs = caps.available_log_addrs;
+	node.is_vivid = !strcmp(caps.driver, "vivid");
 
 	if (options[OptTestAudioRateControl])
 		test_tags |= TAG_AUDIO_RATE_CONTROL;
@@ -1169,6 +1173,7 @@ int main(int argc, char **argv)
 
 	struct cec_log_addrs laddrs = { };
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+	node.vendor_id = laddrs.vendor_id;
 
 	if (node.phys_addr == CEC_PHYS_ADDR_INVALID &&
 	    !(node.caps & (CEC_CAP_PHYS_ADDR | CEC_CAP_NEEDS_HPD)) &&
