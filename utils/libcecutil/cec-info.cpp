@@ -64,6 +64,8 @@ static std::string caps2s(unsigned caps)
 		s += "\t\tMonitor Pin\n";
 	if (caps & CEC_CAP_CONNECTOR_INFO)
 		s += "\t\tConnector Info\n";
+	if (caps & CEC_CAP_REPLY_VENDOR_ID)
+		s += "\t\tReply Vendor ID\n";
 	return s;
 }
 

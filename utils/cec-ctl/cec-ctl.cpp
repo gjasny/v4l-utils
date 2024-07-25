@@ -2609,6 +2609,7 @@ int main(int argc, char **argv)
 		case OptVendorCommandWithID: {
 			static constexpr const char *arg_names[] = {
 				"vendor-id",
+				"reply",
 				"cmd",
 				nullptr
 			};
@@ -2623,6 +2624,10 @@ int main(int argc, char **argv)
 					vendor_id = strtol(value, nullptr, 0);
 					break;
 				case 1:
+					msg.reply = strtol(value, &endptr, 0L);
+					msg.flags = CEC_MSG_FL_REPLY_VENDOR_ID;
+					break;
+				case 2:
 					while (size < sizeof(bytes)) {
 						bytes[size++] = strtol(value, &endptr, 0L);
 						if (endptr == value) {
@@ -3164,9 +3169,9 @@ int main(int argc, char **argv)
 		to = msg.msg[0] & 0xf;
 		printf("\nTransmit from %s to %s (%d to %d):\n",
 		       cec_la2s(from), to == 0xf ? "all" : cec_la2s(to), from, to);
-		msg.flags = options[OptReplyToFollowers] ? CEC_MSG_FL_REPLY_TO_FOLLOWERS : 0;
+		msg.flags |= options[OptReplyToFollowers] ? CEC_MSG_FL_REPLY_TO_FOLLOWERS : 0;
 		msg.flags |= options[OptRawMsg] ? CEC_MSG_FL_RAW : 0;
-		msg.timeout = msg.reply ? timeout : 0;
+		msg.timeout = (msg.flags & CEC_MSG_FL_REPLY_VENDOR_ID) || msg.reply ? timeout : 0;
 		cec_log_msg(&msg);
 		if (doioctl(&node, CEC_TRANSMIT, &msg))
 			continue;
