@@ -354,12 +354,18 @@ if [ $cec -eq 1 -a $setup -eq 0 ]; then
 	cec-follower -s -D vivid -a vivid-000-vid-out0 2>&1 >/dev/null &
 	f1=$!
 	date
-	# Once vivid is properly handling Arbitration Lost situation, then
-	# we can add back the -A option for the cec-compliance commands.
 	stdbuf -oL cec-compliance $compliance_args -D vivid -a vivid-000-vid-cap0 -r4 -t10 $cecpwr 2>&1 | tee -a $tmp
 	sleep 5
 	date
 	stdbuf -oL cec-compliance $compliance_args -D vivid -a vivid-000-vid-out0 -r0 -t10 $cecpwr 2>&1 | tee -a $tmp
+	sleep 5
+	date
+	stdbuf -oL cec-compliance $compliance_args -D vivid -a vivid-000-vid-cap0 -A 2>&1 | tee -a $tmp
+	sleep 5
+	date
+	cec-ctl -D vivid -a vivid-000-vid-cap0 --tv
+	stdbuf -oL cec-compliance $compliance_args -D vivid -a vivid-000-vid-out0 -A 2>&1 | tee -a $tmp
+	cec-ctl -D vivid -a vivid-000-vid-out0 --playback
 	kill $f0
 	kill $f1
 	echo
