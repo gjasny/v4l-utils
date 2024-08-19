@@ -645,6 +645,7 @@ static int testCap(struct node *node)
 		V4L2_CAP_VIDEO_M2M_MPLANE;
 	const __u32 splane_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OUTPUT |
 		V4L2_CAP_VIDEO_M2M;
+	const __u32 edid_caps = V4L2_CAP_EDID;
 
 	memset(&vcap, 0xff, sizeof(vcap));
 	fail_on_test(doioctl(node, VIDIOC_QUERYCAP, &vcap));
@@ -663,6 +664,7 @@ static int testCap(struct node *node)
 	    memcmp(vcap.bus_info, "platform:", 9) &&
 	    memcmp(vcap.bus_info, "rmi4:", 5) &&
 	    memcmp(vcap.bus_info, "libcamera:", 10) &&
+	    memcmp(vcap.bus_info, "serio:", 6) &&
 	    memcmp(vcap.bus_info, "gadget.", 7))
 		return fail("missing bus_info prefix ('%s')\n", vcap.bus_info);
 	if (!node->media_bus_info.empty() &&
@@ -685,7 +687,13 @@ static int testCap(struct node *node)
 	// for a modern driver for both caps and dcaps
 	fail_on_test(!(caps & V4L2_CAP_EXT_PIX_FORMAT));
 	//fail_on_test(!(dcaps & V4L2_CAP_EXT_PIX_FORMAT));
-	fail_on_test(node->is_video && !(dcaps & video_caps));
+	if (node->is_video) {
+		fail_on_test(!(dcaps & (video_caps | edid_caps)));
+		if (dcaps & edid_caps)
+			fail_on_test(dcaps & video_caps);
+		else if (dcaps & video_caps)
+			fail_on_test(dcaps & edid_caps);
+	}
 	fail_on_test(node->is_radio && !(dcaps & radio_caps));
 	// V4L2_CAP_AUDIO is invalid for radio and sdr
 	fail_on_test(node->is_radio && (dcaps & V4L2_CAP_AUDIO));
@@ -1034,6 +1042,14 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 			 V4L2_CAP_VIDEO_OUTPUT_MPLANE | V4L2_CAP_SLICED_VBI_OUTPUT |
 			 V4L2_CAP_META_OUTPUT))
 		node.has_outputs = true;
+	if (node.g_caps() & V4L2_CAP_EDID) {
+		int tmp;
+
+		if (!ioctl(node.g_fd(), VIDIOC_G_INPUT, &tmp))
+			node.has_inputs = true;
+		else if (!ioctl(node.g_fd(), VIDIOC_G_OUTPUT, &tmp))
+			node.has_outputs = true;
+	}
 	if (node.g_caps() & (V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VBI_CAPTURE |
 			 V4L2_CAP_VIDEO_CAPTURE_MPLANE | V4L2_CAP_VIDEO_M2M_MPLANE |
 			 V4L2_CAP_VIDEO_M2M | V4L2_CAP_SLICED_VBI_CAPTURE |
@@ -1400,20 +1416,21 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		node.valid_buftypes = 0;
 		node.valid_memorytype = 0;
 		node.buf_caps = 0;
+		node.cur_io_caps = 0;
 		for (auto &buftype_pixfmt : node.buftype_pixfmts)
 			buftype_pixfmt.clear();
 
 		if (max_io) {
 			sprintf(suffix, " (%s %u)",
 				node.can_capture ? "Input" : "Output", io);
-			if (node.can_capture) {
+			if (node.has_inputs) {
 				struct v4l2_input descr;
 
 				doioctl(&node, VIDIOC_S_INPUT, &io);
 				descr.index = io;
 				doioctl(&node, VIDIOC_ENUMINPUT, &descr);
 				node.cur_io_caps = descr.capabilities;
-			} else {
+			} else if (node.has_outputs) {
 				struct v4l2_output descr;
 
 				doioctl(&node, VIDIOC_S_OUTPUT, &io);

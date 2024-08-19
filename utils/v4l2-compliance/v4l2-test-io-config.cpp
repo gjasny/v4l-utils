@@ -513,8 +513,10 @@ static int checkEdid(struct node *node, unsigned pad, bool is_input)
 		fail_on_test(doioctl(node, VIDIOC_S_EDID, &edid) != ENOTTY);
 		return ENOTTY;
 	}
+	if (!is_input && ret == ENODATA)
+		return 0;
 	has_edid = ret == 0;
-	fail_on_test(ret && ret != EINVAL);
+	fail_on_test_val(ret && ret != EINVAL, ret);
 	fail_on_test(!ret && check_0(edid.reserved, sizeof(edid.reserved)));
 	fail_on_test(edid.start_block);
 	fail_on_test(edid.blocks > 256);
