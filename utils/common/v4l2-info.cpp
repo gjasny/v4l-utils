@@ -91,6 +91,8 @@ static std::string cap2s(unsigned cap)
 		s += "\t\tI/O MC\n";
 	if (cap & V4L2_CAP_READWRITE)
 		s += "\t\tRead/Write\n";
+	if (cap & V4L2_CAP_EDID)
+		s += "\t\tEDID Only\n";
 	if (cap & V4L2_CAP_STREAMING)
 		s += "\t\tStreaming\n";
 	if (cap & V4L2_CAP_EXT_PIX_FORMAT)
