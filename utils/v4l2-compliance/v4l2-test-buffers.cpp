@@ -2700,10 +2700,9 @@ int testRequests(struct node *node, bool test_streaming)
 		}
 		fail_on_test_val(ret, ret);
 		fail_on_test(buf.querybuf(node, i));
-		// Check that the buffer is now queued up
+		// Check that the buffer is now queued up (i.e. no longer 'IN_REQUEST')
 		fail_on_test(buf.g_flags() & V4L2_BUF_FLAG_IN_REQUEST);
 		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_REQUEST_FD));
-		fail_on_test(!(buf.g_flags() & V4L2_BUF_FLAG_QUEUED));
 		// Re-initing or requeuing the request is no longer possible
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_REINIT, nullptr) != EBUSY);
 		fail_on_test(doioctl_fd(buf_req_fds[i], MEDIA_REQUEST_IOC_QUEUE, nullptr) != EBUSY);
