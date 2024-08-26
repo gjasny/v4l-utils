@@ -488,7 +488,7 @@ public:
 		return cv4l_ioctl(VIDIOC_ENUM_DV_TIMINGS, &timings);
 	}
 
-	int enum_fmt(v4l2_fmtdesc &fmt, bool init = false, int index = 0, unsigned type = 0, __u32 mbus_code = 0)
+	int enum_fmt(v4l2_fmtdesc &fmt, bool init = false, int index = 0, unsigned type = 0, __u32 mbus_code = 0, bool enum_all = false)
 	{
 		if (init) {
 			memset(&fmt, 0, sizeof(fmt));
@@ -498,6 +498,9 @@ public:
 		} else {
 			fmt.index++;
 		}
+		if (enum_all)
+			fmt.index |= V4L2_FMTDESC_FLAG_ENUM_ALL;
+
 		return cv4l_ioctl(VIDIOC_ENUM_FMT, &fmt);
 	}
 

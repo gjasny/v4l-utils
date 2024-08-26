@@ -602,7 +602,7 @@ void print_frmival(const struct v4l2_frmivalenum &frmival, const char *prefix)
 	}
 }
 
-void print_video_formats(cv4l_fd &fd, __u32 type, unsigned int mbus_code)
+void print_video_formats(cv4l_fd &fd, __u32 type, unsigned int mbus_code, bool enum_all)
 {
 	cv4l_disable_trace dt(fd);
 	struct v4l2_fmtdesc fmt = {};
@@ -611,7 +611,7 @@ void print_video_formats(cv4l_fd &fd, __u32 type, unsigned int mbus_code)
 		mbus_code = 0;
 
 	printf("\tType: %s\n\n", buftype2s(type).c_str());
-	if (fd.enum_fmt(fmt, true, 0, type, mbus_code))
+	if (fd.enum_fmt(fmt, true, 0, type, mbus_code, enum_all))
 		return;
 	do {
 		printf("\t[%d]: '%s' (%s", fmt.index, fcc2s(fmt.pixelformat).c_str(),
@@ -623,10 +623,10 @@ void print_video_formats(cv4l_fd &fd, __u32 type, unsigned int mbus_code)
 			printf(", %s", fmtdesc2s(fmt.flags, is_hsv).c_str());
 		}
 		printf(")\n");
-	} while (!fd.enum_fmt(fmt));
+	} while (!fd.enum_fmt(fmt, false, 0, type, mbus_code, enum_all));
 }
 
-void print_video_formats_ext(cv4l_fd &fd, __u32 type, unsigned int mbus_code)
+void print_video_formats_ext(cv4l_fd &fd, __u32 type, unsigned int mbus_code, bool enum_all)
 {
 	cv4l_disable_trace dt(fd);
 	struct v4l2_fmtdesc fmt = {};
@@ -637,7 +637,7 @@ void print_video_formats_ext(cv4l_fd &fd, __u32 type, unsigned int mbus_code)
 		mbus_code = 0;
 
 	printf("\tType: %s\n\n", buftype2s(type).c_str());
-	if (fd.enum_fmt(fmt, true, 0, type, mbus_code))
+	if (fd.enum_fmt(fmt, true, 0, type, mbus_code, enum_all))
 		return;
 	do {
 		printf("\t[%d]: '%s' (%s", fmt.index, fcc2s(fmt.pixelformat).c_str(),
@@ -649,6 +649,10 @@ void print_video_formats_ext(cv4l_fd &fd, __u32 type, unsigned int mbus_code)
 			printf(", %s", fmtdesc2s(fmt.flags, is_hsv).c_str());
 		}
 		printf(")\n");
+
+		if (enum_all)
+			continue;
+
 		if (fd.enum_framesizes(frmsize, fmt.pixelformat))
 			continue;
 		do {
@@ -664,7 +668,7 @@ void print_video_formats_ext(cv4l_fd &fd, __u32 type, unsigned int mbus_code)
 				print_frmival(frmival, "\t\t");
 			} while (!fd.enum_frameintervals(frmival));
 		} while (!fd.enum_framesizes(frmsize));
-	} while (!fd.enum_fmt(fmt));
+	} while (!fd.enum_fmt(fmt,false, 0, type, mbus_code, enum_all));
 }
 
 int parse_subopt(char **subs, const char * const *subopts, char **value)

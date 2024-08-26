@@ -522,7 +522,7 @@ void overlay_list(cv4l_fd &fd)
 {
 	if (options[OptListOverlayFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_OVERLAY, 0);
+		print_video_formats(fd, V4L2_BUF_TYPE_VIDEO_OVERLAY, 0, false);
 	}
 	if (options[OptFindFb])
 		find_fb(fd.g_fd());

@@ -122,10 +122,10 @@ void sdr_list(cv4l_fd &fd)
 {
 	if (options[OptListSdrFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats(fd, V4L2_BUF_TYPE_SDR_CAPTURE, 0);
+		print_video_formats(fd, V4L2_BUF_TYPE_SDR_CAPTURE, 0, false);
 	}
 	if (options[OptListSdrOutFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats(fd, V4L2_BUF_TYPE_SDR_OUTPUT, 0);
+		print_video_formats(fd, V4L2_BUF_TYPE_SDR_OUTPUT, 0, false);
 	}
 }

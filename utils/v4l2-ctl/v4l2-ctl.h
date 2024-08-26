@@ -315,8 +315,8 @@ bool valid_pixel_format(int fd, __u32 pixelformat, bool output, bool mplane);
 void print_frmsize(const struct v4l2_frmsizeenum &frmsize, const char *prefix);
 void print_frmival(const struct v4l2_frmivalenum &frmival, const char *prefix);
 void printfmt(int fd, const struct v4l2_format &vfmt);
-void print_video_formats(cv4l_fd &fd, __u32 type, unsigned int mbus_code);
-void print_video_formats_ext(cv4l_fd &fd, __u32 type, unsigned int mbus_code);
+void print_video_formats(cv4l_fd &fd, __u32 type, unsigned int mbus_code, bool enum_all);
+void print_video_formats_ext(cv4l_fd &fd, __u32 type, unsigned int mbus_code, bool enum_all);
 
 static inline bool subscribe_event(cv4l_fd &fd, __u32 type)
 {

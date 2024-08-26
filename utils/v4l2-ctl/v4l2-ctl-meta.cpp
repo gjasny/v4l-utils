@@ -5,14 +5,19 @@
 static struct v4l2_format vfmt;	/* set_format/get_format */
 static unsigned mbus_code;
 static unsigned mbus_code_out;
+static bool enum_all;
+static bool enum_all_out;
 
 void meta_usage()
 {
 	printf("\nMetadata Formats options:\n"
-	       "  --list-formats-meta [<mbus_code>] display supported metadata capture formats.\n"
+	       "  --list-formats-meta [<mbus_code>|all] display supported metadata capture formats.\n"
 	       "		     <mbus_code> is an optional media bus code, if the device has\n"
 	       "		     capability V4L2_CAP_IO_MC then only formats that support this\n"
-	       "		     media bus code are listed [VIDIOC_ENUM_FMT]\n"
+	       "		     media bus code are listed.\n"
+	       "		     When 'all' is specified it enumerates all pixel formats if\n"
+	       "		     V4L2_FMTDESC_FLAG_ENUM_ALL flag is supported by the driver.\n"
+	       "		     [VIDIOC_ENUM_FMT]\n"
 	       "  --get-fmt-meta     query the metadata capture format [VIDIOC_G_FMT]\n"
 	       "  --set-fmt-meta <f> set the metadata capture format [VIDIOC_S_FMT]\n"
 	       "                     parameter is either the format index as reported by\n"
@@ -23,7 +28,10 @@ void meta_usage()
 	       "  --list-formats-meta-out [<mbus_code>] display supported metadata output formats.\n"
 	       "		     <mbus_code> is an optional media bus code, if the device has\n"
 	       "		     capability V4L2_CAP_IO_MC then only formats that support this\n"
-	       "		     media bus code are listed [VIDIOC_ENUM_FMT]\n"
+	       "		     media bus code are listed.\n"
+	       "		     When 'all' is specified it enumerates all pixel formats if\n"
+	       "		     V4L2_FMTDESC_FLAG_ENUM_ALL flag is supported by the driver.\n"
+	       "		     [VIDIOC_ENUM_FMT]\n"
 	       "  --get-fmt-meta-out query the metadata output format [VIDIOC_G_FMT]\n"
 	       "  --set-fmt-meta-out <f> set the metadata output format [VIDIOC_S_FMT]\n"
 	       "                     parameter is either the format index as reported by\n"
@@ -52,12 +60,20 @@ void meta_cmd(int ch, char *optarg)
 		}
 		break;
 	case OptListMetaFormats:
-		if (optarg)
-			mbus_code = strtoul(optarg, nullptr, 0);
+		if (optarg) {
+			if (strstr(optarg , "all"))
+				enum_all = true;
+			else
+				mbus_code = strtoul(optarg, nullptr, 0);
+		}
 		break;
 	case OptListMetaOutFormats:
-		if (optarg)
-			mbus_code_out = strtoul(optarg, nullptr, 0);
+		if (optarg) {
+			if (strstr(optarg , "all"))
+				enum_all_out = true;
+			else
+				mbus_code_out = strtoul(optarg, nullptr, 0);
+		}
 		break;
 	}
 }
@@ -121,12 +137,12 @@ void meta_list(cv4l_fd &fd)
 {
 	if (options[OptListMetaFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats(fd, V4L2_BUF_TYPE_META_CAPTURE, mbus_code);
+		print_video_formats(fd, V4L2_BUF_TYPE_META_CAPTURE, mbus_code, enum_all);
 	}
 
 	if (options[OptListMetaOutFormats]) {
 		printf("ioctl: VIDIOC_ENUM_FMT\n");
-		print_video_formats(fd, V4L2_BUF_TYPE_META_OUTPUT, mbus_code_out);
+		print_video_formats(fd, V4L2_BUF_TYPE_META_OUTPUT, mbus_code_out, enum_all_out);
 	}
 }
 
