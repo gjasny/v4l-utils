@@ -224,6 +224,7 @@ static int testEnumFrameSizes(struct node *node, __u32 pixfmt)
 static int testEnumFormatsType(struct node *node, unsigned type)
 {
 	pixfmt_map &map = node->buftype_pixfmts[type];
+	pixfmt_map enum_all;
 	struct v4l2_fmtdesc fmtdesc;
 	unsigned f = 0;
 	int ret;
@@ -318,6 +319,40 @@ static int testEnumFormatsType(struct node *node, unsigned type)
 		map[fmtdesc.pixelformat] = fmtdesc.flags;
 	}
 	info("found %d formats for buftype %d\n", f, type);
+
+	/* Test V4L2_FMTDESC_FLAG_ENUM_ALL if supported */
+	f = 0;
+	for (;;) {
+		memset(&fmtdesc, 0xff, sizeof(fmtdesc));
+		fmtdesc.type = type;
+		fmtdesc.index = f | V4L2_FMTDESC_FLAG_ENUM_ALL;
+		fmtdesc.mbus_code = 0;
+
+		ret = doioctl(node, VIDIOC_ENUM_FMT, &fmtdesc);
+		if (f == 0 && ret == EINVAL)
+			return 0;
+		if (ret == EINVAL)
+			break;
+		if (ret)
+			return fail("expected EINVAL, but got %d when enumerating buftype %d\n", ret, type);
+		if (fmtdesc.index != f)
+			return fail("V4L2_FMTDESC_FLAG_ENUM_ALL hasn't been cleared from fmtdesc.index 0x%x f 0x%x\n", fmtdesc.index, f);
+		f++;
+		if (type == V4L2_BUF_TYPE_PRIVATE)
+			continue;
+		assert(type <= V4L2_BUF_TYPE_LAST);
+		if (enum_all.find(fmtdesc.pixelformat) != enum_all.end())
+			return fail("duplicate format %08x (%s)\n",
+				    fmtdesc.pixelformat, fcc2s(fmtdesc.pixelformat).c_str());
+		enum_all[fmtdesc.pixelformat] = fmtdesc.flags;
+	}
+	info("found %d formats for buftype %d (with V4L2_FMTDESC_FLAG_ENUM_ALL)\n", f, type);
+
+	/* if V4L2_FMTDESC_FLAG_ENUM_ALL is supported, verify that the list is a subset of VIDIOC_ENUM_FMT list */
+	for (auto it = map.begin(); it != map.end(); it++)
+		if (enum_all.find(it->first) == enum_all.end())
+			return fail("V4L2_FMTDESC_FLAG_ENUM_ALL failed to enumerate format %08x (%s)\n", it->first, fcc2s(it->first).c_str());
+
 	return 0;
 }
 
