@@ -63,7 +63,11 @@ int v4lconvert_decode_jl2005bcd(struct v4lconvert_data *data,
 	struct jpeg_decompress_struct dinfo;
 	struct jpeg_error_mgr jcerr, jderr;
 	JOCTET *jpeg_header = NULL;
+#if JPEG_LIB_VERSION >= 90
+	size_t jpeg_header_size = 0;
+#else
 	unsigned long jpeg_header_size = 0;
+#endif
 	int i, x, y, x1, y1, jpeg_data_size, jpeg_data_idx, eoi, size;
 
 	/* src_size had better be bigger than 16 */

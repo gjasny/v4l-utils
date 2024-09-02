@@ -136,7 +136,11 @@ static void init_libjpeg_cinfo(struct v4lconvert_data *data)
 {
 	struct jpeg_compress_struct cinfo;
 	unsigned char *jpeg_header = NULL;
+#if JPEG_LIB_VERSION >= 90
+	size_t jpeg_header_size = 0;
+#else
 	unsigned long jpeg_header_size = 0;
+#endif
 
 	if (data->cinfo_initialized)
 		return;
