@@ -1478,6 +1478,8 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		printf("\ttest Requests: %s\n", ok(testRequests(&node, options[OptStreaming])));
 		if (sizeof(void *) == 4)
 			printf("\ttest TIME32/64: %s\n", ok(testTime32_64(&node)));
+		printf("\ttest blocking wait: %s\n", ok(testBlockingWait(&node)));
+
 		// Reopen after each streaming test to reset the streaming state
 		// in case of any errors in the preceeding test.
 		node.reopen();
@@ -1515,8 +1517,6 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 			printf("\ttest read/write: %s\n", ok(testReadWrite(&node)));
 			// Reopen after each streaming test to reset the streaming state
 			// in case of any errors in the preceeding test.
-			node.reopen();
-			printf("\ttest blocking wait: %s\n", ok(testBlockingWait(&node)));
 			node.reopen();
 			if (!(node.codec_mask & (STATEFUL_ENCODER | STATEFUL_DECODER))) {
 				printf("\ttest MMAP (no poll): %s\n",

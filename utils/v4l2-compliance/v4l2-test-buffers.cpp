@@ -3030,6 +3030,9 @@ static int testBlockingDQBuf(struct node *node, cv4l_queue &q)
 	/*
 	 * This test checks if a blocking wait in VIDIOC_DQBUF doesn't block
 	 * other ioctls.
+	 *
+	 * If this fails, check that the vb2_ops wait_prepare/finish callbacks
+	 * are set.
 	 */
 	fflush(stdout);
 	thread_dqbuf.start();
