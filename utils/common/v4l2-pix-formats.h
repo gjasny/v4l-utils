@@ -189,6 +189,7 @@
 	case V4L2_META_FMT_VIVID: return "Vivid Metadata";
 	case V4L2_META_FMT_RK_ISP1_PARAMS: return "Rockchip ISP1 3A Parameters";
 	case V4L2_META_FMT_RK_ISP1_STAT_3A: return "Rockchip ISP1 3A Statistics";
+	case V4L2_META_FMT_RK_ISP1_EXT_PARAMS: return "Rockchip ISP1 Ext 3A Params";
 	case V4L2_PIX_FMT_NV12_8L128: return "NV12 (8x128 Linear)";
 	case V4L2_PIX_FMT_NV12M_8L128: return "NV12M (8x128 Linear)";
 	case V4L2_PIX_FMT_NV12_10BE_8L128: return "10-bit NV12 (8x128 Linear, BE)";
