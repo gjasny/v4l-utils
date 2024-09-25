@@ -252,78 +252,6 @@ if [ $vivid -eq 1 -a $setup -eq 0 ]; then
 	echo
 fi
 
-if [ $visl -eq 1 -a $setup -eq 0 ]; then
-	echo
-	echo loading visl module | tee /dev/kmsg
-	dmesg -n info
-	modprobe visl
-	sleep $modprobe_time
-	dmesg -n notice
-	echo
-	echo visl compliance tests | tee /dev/kmsg
-	echo
-	date
-	stdbuf -oL $v4l2_compliance -m platform:visl -P -s10 -a 2>&1 | tee -a $tmp
-	echo
-	echo unbind visl | tee /dev/kmsg
-	echo
-	echo -n visl.0 >/sys/bus/platform/drivers/visl/unbind
-	sleep $unbind_time
-	echo
-	echo rebind visl | tee /dev/kmsg
-	echo
-	echo -n visl.0 >/sys/bus/platform/drivers/visl/bind
-	sleep 1
-	echo
-	echo second unbind visl | tee /dev/kmsg
-	echo
-	for i in `$v4l2_ctl -z platform:visl --list-devices`; do
-		let "t = 1 + $RANDOM / 4096"
-		echo $i: sleep ${t}s
-		sleep $t <$i &
-	done
-	sleep 1
-	echo
-	echo -n visl.0 >/sys/bus/platform/drivers/visl/unbind
-	sleep $reunbind_time
-	echo
-	echo rmmod visl | tee /dev/kmsg
-	echo
-	rmmod visl
-	sleep $rmmod_time
-
-	if [ $kmemleak -eq 1 ]; then
-		echo
-		echo kmemleak results for visl:
-		echo
-		echo scan >/sys/kernel/debug/kmemleak
-		cat /sys/kernel/debug/kmemleak
-		echo
-		echo end of kmemleak results
-		echo
-	fi
-
-	dmesg -n info
-	modprobe visl
-	sleep $modprobe_time
-	dmesg -n notice
-
-	$v4l2_ctl -z platform:visl --all
-
-	if [ $kmemleak -eq 1 ]; then
-		echo clear >/sys/kernel/debug/kmemleak
-	fi
-	echo
-	echo
-	echo
-	echo
-	echo
-	echo
-	echo
-	echo
-fi
-
-
 if [ $cec -eq 1 ]; then
 	dmesg -n notice
 	cec-ctl --version
@@ -794,6 +722,90 @@ if [ $vicodec -eq 1 -a $setup -eq 0 ]; then
 	echo
 	echo
 fi
+
+
+if [ $visl -eq 1 ]; then
+	echo
+	echo loading visl module | tee /dev/kmsg
+	dmesg -n info
+	modprobe visl
+	sleep $modprobe_time
+	dmesg -n notice
+
+	if ! $v4l2_ctl -z platform:visl ; then
+		echo "FAIL: the visl module failed to load" | tee -a $tmp
+		echo "Grand Total for visl: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
+		rmmod vivid
+		exit 0
+	fi
+fi
+
+if [ $visl -eq 1 -a $setup -eq 0 ]; then
+	echo
+	echo visl compliance tests | tee /dev/kmsg
+	echo
+	date
+	stdbuf -oL $v4l2_compliance -m platform:visl -P -s10 -a 2>&1 | tee -a $tmp
+	echo
+	echo unbind visl | tee /dev/kmsg
+	echo
+	echo -n visl.0 >/sys/bus/platform/drivers/visl/unbind
+	sleep $unbind_time
+	echo
+	echo rebind visl | tee /dev/kmsg
+	echo
+	echo -n visl.0 >/sys/bus/platform/drivers/visl/bind
+	sleep 1
+	echo
+	echo second unbind visl | tee /dev/kmsg
+	echo
+	for i in `$v4l2_ctl -z platform:visl --list-devices`; do
+		let "t = 1 + $RANDOM / 4096"
+		echo $i: sleep ${t}s
+		sleep $t <$i &
+	done
+	sleep 1
+	echo
+	echo -n visl.0 >/sys/bus/platform/drivers/visl/unbind
+	sleep $reunbind_time
+	echo
+	echo rmmod visl | tee /dev/kmsg
+	echo
+	rmmod visl
+	sleep $rmmod_time
+
+	if [ $kmemleak -eq 1 ]; then
+		echo
+		echo kmemleak results for visl:
+		echo
+		echo scan >/sys/kernel/debug/kmemleak
+		cat /sys/kernel/debug/kmemleak
+		echo
+		echo end of kmemleak results
+		echo
+	fi
+
+	dmesg -n info
+	modprobe visl
+	sleep $modprobe_time
+	dmesg -n notice
+
+	$v4l2_ctl -z platform:visl --all
+
+	if [ $kmemleak -eq 1 ]; then
+		echo clear >/sys/kernel/debug/kmemleak
+	fi
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+	echo
+fi
+
 
 if [ $vidtv -eq 1 ]; then
 	rmmod dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod 2&>/dev/null
