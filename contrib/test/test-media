@@ -317,7 +317,24 @@ if [ $vivid -eq 1 -a $setup -eq 0 ]; then
 	echo -n vivid.0 >/sys/bus/platform/drivers/vivid/bind
 	sleep 1
 	echo
+
 	echo second unbind vivid | tee /dev/kmsg
+	echo
+	# Test that you can unbind while in a blocking VIDIOC_DQBUF
+	$v4l2_ctl -z platform:vivid-000 -d vivid-000-vid-cap -c percentage_of_dropped_buffers=100
+	$v4l2_ctl -z platform:vivid-000 -d vivid-000-vid-cap --stream-mmap &
+	sleep 1
+	echo
+	echo -n vivid.0 >/sys/bus/platform/drivers/vivid/unbind
+	sleep $unbind_time
+	echo
+	echo rebind vivid | tee /dev/kmsg
+	echo
+	echo -n vivid.0 >/sys/bus/platform/drivers/vivid/bind
+	sleep 1
+	echo
+
+	echo third unbind vivid | tee /dev/kmsg
 	echo
 	for i in `$v4l2_ctl -z platform:vivid-000 --list-devices` `cec-ctl -D vivid -a vivid-000-vid-cap0 -s --list-devices` `cec-ctl -D vivid -a vivid-000-vid-out0 -s --list-devices`; do
 		let "t = 1 + $RANDOM / 4096"
