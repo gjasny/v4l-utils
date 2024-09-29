@@ -47,6 +47,7 @@ if [ -z "$1" ]; then
 	echo "-E: exit on fail"
 	echo "-W: exit on warn"
 	echo "-32: use v4l2-ctl-32 and v4l2-compliance-32 to test the 32 bit compat layer"
+	echo "-32-time64: use v4l2-ctl-32-time64 and v4l2-compliance-32-time64 to test the 32 bit compat layer with 64 bit time_t"
 	echo "-setup: load and configure all the drivers, but do not run tests"
 	echo
 	echo Test Targets:
@@ -100,6 +101,23 @@ while [ ! -z "$1" ]; do
 			echo /sys/kernel/debug/kmemleak not found, disable memleak testing
 		fi
 		;;
+	-32-time64)
+		v4l2_ctl=v4l2-ctl-32-time64
+		v4l2_compliance=v4l2-compliance-32-time64
+		if ! which $v4l2_ctl >/dev/null ; then
+			echo v4l2-ctl-32-time64 is not installed.
+			exit 0
+		fi
+		if ! which $v4l2_compliance >/dev/null ; then
+			echo v4l2-compliance-32-time64 is not installed.
+			exit 0
+		fi
+		if ! `$v4l2_compliance --version | grep -q "64-bit time_t"` ; then
+			echo $v4l2_compliance is not using 64 bit time_t:
+			$v4l2_compliance --version
+			exit 0
+		fi
+		;;
 	-32)
 		v4l2_ctl=v4l2-ctl-32
 		v4l2_compliance=v4l2-compliance-32
@@ -109,6 +127,11 @@ while [ ! -z "$1" ]; do
 		fi
 		if ! which $v4l2_compliance >/dev/null ; then
 			echo v4l2-compliance-32 is not installed.
+			exit 0
+		fi
+		if ! `$v4l2_compliance --version | grep -q "32-bit time_t"` ; then
+			echo $$v4l2_compliance is not using 32 bit time_t:
+			$v4l2_compliance --version
 			exit 0
 		fi
 		;;
