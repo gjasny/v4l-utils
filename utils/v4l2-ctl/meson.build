@@ -62,6 +62,7 @@ v4l2_ctl = executable('v4l2-ctl',
 man_pages += [[ meson.current_source_dir(), 'v4l2-ctl', 1 ]]
 
 v4l2_ctl_32_c_cpp_args = ['-m32', '-DNO_LIBV4L2']
+v4l2_ctl_32_time64_c_cpp_args = v4l2_ctl_32_c_cpp_args + '-D_TIME_BITS=64'
 v4l2_ctl_32_link_args = ['-m32', '-static']
 
 if get_option('v4l2-ctl-32') and have_m32
@@ -72,4 +73,14 @@ if get_option('v4l2-ctl-32') and have_m32
                              cpp_args : v4l2_ctl_32_c_cpp_args,
                              link_args : v4l2_ctl_32_link_args,
                              include_directories : v4l2_ctl_incdir)
+endif
+
+if get_option('v4l2-ctl-32-time64') and have_m32
+    v4l2_ctl_32_time64 = executable('v4l2-ctl-32-time64',
+                                    v4l2_ctl_sources,
+                                    install : true,
+                                    c_args : v4l2_ctl_32_c_cpp_args,
+                                    cpp_args : v4l2_ctl_32_time64_c_cpp_args,
+                                    link_args : v4l2_ctl_32_link_args,
+                                    include_directories : v4l2_ctl_incdir)
 endif

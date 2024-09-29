@@ -51,6 +51,7 @@ v4l2_compliance = executable('v4l2-compliance',
 man_pages += [[ meson.current_source_dir(), 'v4l2-compliance', 1 ]]
 
 v4l2_compliance_32_cpp_args = ['-m32', '-DNO_LIBV4L2']
+v4l2_compliance_32_time64_cpp_args = v4l2_compliance_32_cpp_args + '-D_TIME_BITS=64'
 v4l2_compliance_32_link_args = ['-m32', '-static']
 
 if get_option('v4l2-compliance-32') and have_m32
@@ -60,4 +61,13 @@ if get_option('v4l2-compliance-32') and have_m32
                                     cpp_args : v4l2_compliance_32_cpp_args,
                                     link_args : v4l2_compliance_32_link_args,
                                     include_directories : v4l2_compliance_incdir)
+endif
+
+if get_option('v4l2-compliance-32-time64') and have_m32
+    v4l2_compliance_32_time64 = executable('v4l2-compliance-32-time64',
+                                           v4l2_compliance_sources,
+                                           install : true,
+                                           cpp_args : v4l2_compliance_32_time64_cpp_args,
+                                           link_args : v4l2_compliance_32_link_args,
+                                           include_directories : v4l2_compliance_incdir)
 endif

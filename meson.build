@@ -452,10 +452,12 @@ summary({
                 get_option('v4l2-compliance-libv4l') ? 'with libv4l' : 'without libv4l',
             ],
             'v4l2-compliance-32' : is_variable('v4l2_compliance_32'),
+            'v4l2-compliance-32-time64' : is_variable('v4l2_compliance_32_time64'),
             'v4l2-ctl' : [
                 is_variable('v4l2_ctl'),
                 get_option('v4l2-ctl-libv4l') ? 'with libv4l' : 'without libv4l',
             ],
             'v4l2-ctl-32' : is_variable('v4l2_ctl_32'),
+            'v4l2-ctl-32-time64' : is_variable('v4l2_ctl_32_time64'),
             'v4l2-tracer' : is_variable('v4l2_tracer'),
         }, bool_yn : true, section : 'Applications')
