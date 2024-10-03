@@ -121,6 +121,7 @@ enum Option {
 	OptFeatSetAudioRate,
 	OptFeatSinkHasARCTx,
 	OptFeatSourceHasARCRx,
+	OptTestReliability,
 	OptTestStandbyWakeupCycle,
 	OptStressTestStandbyWakeupCycle,
 	OptStressTestRandomStandbyWakeupCycle,
@@ -228,6 +229,7 @@ static struct option long_options[] = {
 	{ "stress-test-power-cycle", required_argument, nullptr, OptStressTestStandbyWakeupCycle }, \
 	{ "test-random-power-states", required_argument, nullptr, OptStressTestRandomStandbyWakeupCycle }, \
 
+	{ "test-reliability", required_argument, nullptr, OptTestReliability }, \
 	{ "test-standby-wakeup-cycle", optional_argument, nullptr, OptTestStandbyWakeupCycle }, \
 	{ "stress-test-standby-wakeup-cycle", required_argument, nullptr, OptStressTestStandbyWakeupCycle }, \
 	{ "stress-test-random-standby-wakeup-cycle", required_argument, nullptr, OptStressTestRandomStandbyWakeupCycle }, \
@@ -326,6 +328,10 @@ static void usage()
 	       "                           Use - for stdout.\n"
 	       "  --analyze-pin <from>     Analyze the low-level CEC pin changes from the file <from>.\n"
 	       "                           Use - for stdin.\n"
+	       "  --test-reliability <count>\n"
+	       "                           Test CEC line reliability. It transmits <Give Physical Address>\n"
+	       "                           up to <count> times, checking that the broadcast reply is always the same.\n"
+	       "                           If <count> is 0, then keep trying forever.\n"
 	       "  --test-standby-wakeup-cycle [polls=<n>][,sleep=<secs>][,hpd-may-be-low=<0/1>]\n"
 	       "                           Test standby-wakeup cycle behavior of the display. It polls up to\n"
 	       "                           <n> times (default 15), waiting for a state change. If\n"
@@ -1299,6 +1305,56 @@ static int transmit_msg_retry(const struct node &node, struct cec_msg &msg)
 			usleep(100000);
 	} while (repeat && cnt++ < 10);
 	return ret;
+}
+
+static void test_reliability(const struct node &node, unsigned int to, unsigned int cnt)
+{
+	struct cec_log_addrs laddrs = { };
+	struct cec_msg msg;
+	unsigned from, iter = 0;
+	__u8 prim_dev, cur_prim_dev;
+	__u16 pa, cur_pa;
+
+	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+	if (laddrs.log_addr[0] == CEC_LOG_ADDR_INVALID) {
+		printf("FAIL: invalid logical address\n");
+		std::exit(EXIT_FAILURE);
+	}
+	from = laddrs.log_addr[0];
+	cec_msg_init(&msg, from, to);
+	cec_msg_give_physical_addr(&msg, true);
+	doioctl(&node, CEC_TRANSMIT, &msg);
+	if (!cec_msg_status_is_ok(&msg)) {
+		printf("Iteration 0: FAIL: %s\n", cec_status2s(msg).c_str());
+		std::exit(EXIT_FAILURE);
+	}
+	pa = (msg.msg[2] << 8) | msg.msg[3];
+	prim_dev = msg.msg[4];
+
+	printf("Iteration 0: Physical Address: %x.%x.%x.%x Primary Device Type: %s\n",
+	       cec_phys_addr_exp(pa), cec_prim_type2s(prim_dev));
+
+	while (1) {
+		iter++;
+		cec_msg_init(&msg, from, to);
+		cec_msg_give_physical_addr(&msg, true);
+		doioctl(&node, CEC_TRANSMIT, &msg);
+		if (!cec_msg_status_is_ok(&msg)) {
+			printf("Iteration %u: FAIL: %s\n", iter, cec_status2s(msg).c_str());
+			std::exit(EXIT_FAILURE);
+		}
+		cur_pa = (msg.msg[2] << 8) | msg.msg[3];
+		cur_prim_dev = msg.msg[4];
+		bool pass = pa == cur_pa && prim_dev == cur_prim_dev;
+
+		printf("Iteration %u: %s: Physical Address: %x.%x.%x.%x Primary Device Type: %s\n",
+		       iter, pass ? "PASS" : "FAIL",
+		       cec_phys_addr_exp(cur_pa), cec_prim_type2s(cur_prim_dev));
+		if (!pass)
+			break;
+		if (cnt && cnt-- == 1)
+			break;
+	}
 }
 
 static int init_standby_wakeup_cycle_test(const struct node &node, unsigned repeats, unsigned max_tries)
@@ -2310,6 +2366,7 @@ int main(int argc, char **argv)
 	double stress_test_standby_wakeup_cycle_sleep_before_on = 0;
 	double stress_test_standby_wakeup_cycle_sleep_before_off = 0;
 	bool stress_test_standby_wakeup_cycle_hpd_may_be_low = false;
+	unsigned int test_reliability_cnt = 0;
 	unsigned int test_standby_wakeup_cycle_polls = 15;
 	unsigned int test_standby_wakeup_cycle_sleep = 10;
 	bool test_standby_wakeup_cycle_hpd_may_be_low = false;
@@ -2698,6 +2755,10 @@ int main(int argc, char **argv)
 			}
 			list_devices();
 			return 0;
+
+		case OptTestReliability:
+			test_reliability_cnt = strtoul(optarg, nullptr, 0);
+			break;
 
 		case OptTestStandbyWakeupCycle: {
 			static constexpr const char *arg_names[] = {
@@ -3095,7 +3156,8 @@ int main(int argc, char **argv)
 			phys_addrs[la] = (phys_addr << 8) | la;
 	}
 
-	if (options[OptTestStandbyWakeupCycle] ||
+	if (options[OptTestReliability] ||
+	    options[OptTestStandbyWakeupCycle] ||
 	    options[OptStressTestStandbyWakeupCycle] ||
 	    options[OptStressTestRandomStandbyWakeupCycle]) {
 		print_version();
@@ -3197,6 +3259,8 @@ int main(int argc, char **argv)
 	if (options[OptNonBlocking])
 		fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
 
+	if (options[OptTestReliability])
+		test_reliability(node, to, test_reliability_cnt);
 	if (options[OptTestStandbyWakeupCycle])
 		test_standby_wakeup_cycle(node,
 					  test_standby_wakeup_cycle_polls,

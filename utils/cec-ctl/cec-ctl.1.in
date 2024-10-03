@@ -271,6 +271,13 @@ via the \fB\-\-analyze\-pin\fR option. Use \- to write to stdout instead of to a
 Read and analyze the CEC pin events from the given file. Use \- to read from stdin
 instead of from a file.
 .TP
+\fB\-\-test\-reliability\fR \fI<count>\fR
+This option tests the CEC reliability by transmitting <Give Physical Addr> up to
+\fI<count>\fR times (or forever if \fI<count>\fR is 0) and check if the reply is
+always the same. Since the reply is a broadcast message, it is in practice never
+Nacked and so any bit errors due to poor CEC signal quality will clearly show up.
+The message will be sent to the logical address specified by \fB\-\-to\fR.
+.TP
 \fB\-\-test\-standby\-wakeup\-cycle\fR [\fIpolls\fR=\fI<n>\fR][,\fIsleep\fR=\fI<secs>\fR][,\fIhpd\-may\-be\-low\fR=\fI<0/1>\fR]
 This option tests the standby-wakeup cycle behavior of the display. It polls up to
 \fI<n>\fR times (default 15), waiting for a state change. If that fails then it
