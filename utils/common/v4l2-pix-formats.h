@@ -58,6 +58,7 @@
 	case V4L2_PIX_FMT_Y14P: return "14-bit Greyscale (MIPI Packed)";
 	case V4L2_PIX_FMT_Y8I: return "Interleaved 8-bit Greyscale";
 	case V4L2_PIX_FMT_Y12I: return "Interleaved 12-bit Greyscale";
+	case V4L2_PIX_FMT_Y16I: return "Interleaved 16-bit Greyscale";
 	case V4L2_PIX_FMT_Z16: return "16-bit Depth";
 	case V4L2_PIX_FMT_INZI: return "Planar 10:16 Greyscale Depth";
 	case V4L2_PIX_FMT_CNF4: return "4-bit Depth Confidence (Packed)";
