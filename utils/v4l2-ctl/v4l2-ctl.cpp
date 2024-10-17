@@ -207,6 +207,8 @@ static struct option long_options[] = {
 	{"overlay", required_argument, nullptr, OptOverlay},
 	{"sleep", required_argument, nullptr, OptSleep},
 	{"list-devices", no_argument, nullptr, OptListDevices},
+	{"list-devices-input", required_argument, nullptr, OptListDevicesInput},
+	{"list-devices-output", required_argument, nullptr, OptListDevicesOutput},
 	{"list-dv-timings", optional_argument, nullptr, OptListDvTimings},
 	{"query-dv-timings", no_argument, nullptr, OptQueryDvTimings},
 	{"get-dv-timings", no_argument, nullptr, OptGetDvTimings},
@@ -1307,6 +1309,11 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	verbose = options[OptVerbose];
+
+	if (common_list_devices(media_bus_info, c_fd))
+		return 0;
+
 	media_type type = mi_media_detect_type(device);
 	if (type == MEDIA_TYPE_CANT_STAT) {
 		fprintf(stderr, "Cannot open device %s, exiting.\n",
@@ -1340,6 +1347,8 @@ int main(int argc, char **argv)
 	c_out_fd.s_direct(!options[OptUseWrapper]);
 	c_exp_fd.s_direct(!options[OptUseWrapper]);
 
+	c_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
+
 	if (is_subdev)
 		fd = c_fd.subdev_open(device);
 	else
@@ -1350,8 +1359,6 @@ int main(int argc, char **argv)
 			strerror(errno));
 		std::exit(EXIT_FAILURE);
 	}
-	verbose = options[OptVerbose];
-	c_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
 
 	if (!is_subdev && doioctl(fd, VIDIOC_QUERYCAP, &vcap)) {
 		fprintf(stderr, "%s: not a v4l2 node\n", device);
@@ -1514,7 +1521,7 @@ int main(int argc, char **argv)
 
 	/* List options */
 
-	common_list(media_bus_info, c_fd);
+	common_list(c_fd);
 	io_list(c_fd);
 	stds_list(c_fd);
 	vidcap_list(c_fd);

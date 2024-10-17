@@ -173,6 +173,8 @@ enum Option {
 	OptSetModulator,
 	OptListFreqBands,
 	OptListDevices,
+	OptListDevicesInput,
+	OptListDevicesOutput,
 	OptGetOutputParm,
 	OptSetOutputParm,
 	OptQueryStandard,
@@ -348,7 +350,8 @@ void common_usage(void);
 void common_cmd(int ch, char *optarg);
 void common_set(cv4l_fd &fd);
 void common_get(cv4l_fd &fd);
-void common_list(const std::string &media_bus_info, cv4l_fd &fd);
+bool common_list_devices(const std::string &media_bus_info, cv4l_fd &fd);
+void common_list(cv4l_fd &fd);
 void common_process_controls(cv4l_fd &fd);
 void common_control_event(int fd, const struct v4l2_event *ev);
 int common_find_ctrl_id(const char *name);

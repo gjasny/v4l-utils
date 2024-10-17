@@ -42,6 +42,8 @@ static ctrl_set_list set_ctrls;
 using dev_vec = std::vector<std::string>;
 using dev_map = std::map<std::string, std::string>;
 
+static std::string match_input, match_output;
+
 static enum v4l2_priority prio = V4L2_PRIORITY_UNSET;
 
 static bool have_query_ext_ctrl;
@@ -104,6 +106,12 @@ void common_usage()
 	       "  --list-devices     list all v4l devices. If -z was given, then list just the\n"
 	       "                     devices of the media device with the bus info string as\n"
 	       "                     specified by the -z option.\n"
+	       "  --list-devices-input <name>\n"
+	       "                     same as --list-devices, but only show devices with a current\n"
+	       "                     input name that matches <name>\n"
+	       "  --list-devices-output <name>\n"
+	       "                     same as --list-devices, but only show devices with a current\n"
+	       "                     output name that matches <name>\n"
 	       "  --log-status       log the board status in the kernel log [VIDIOC_LOG_STATUS]\n"
 	       "  --get-priority     query the current access priority [VIDIOC_G_PRIORITY]\n"
 	       "  --set-priority <prio>\n"
@@ -166,12 +174,14 @@ static bool sort_on_device_name(const std::string &s1, const std::string &s2)
 	return n1 < n2;
 }
 
-static void list_media_devices(const std::string &media_bus_info)
+static void list_media_devices(const std::string &media_bus_info,
+			       const std::string &input, const std::string &output)
 {
 	DIR *dp;
 	struct dirent *ep;
 	int media_fd = -1;
 	std::map<dev_t, std::string> devices;
+	bool match_io = !input.empty() || !output.empty();
 
 	dp = opendir("/dev");
 	if (dp == nullptr) {
@@ -200,7 +210,8 @@ static void list_media_devices(const std::string &media_bus_info)
 		if (!ioctl(fd, MEDIA_IOC_DEVICE_INFO, &mdi) &&
 		    media_bus_info == mdi.bus_info) {
 			media_fd = fd;
-			printf("%s\n", s.c_str());
+			if (!match_io)
+				printf("%s\n", s.c_str());
 		} else {
 			close(fd);
 		}
@@ -234,30 +245,39 @@ static void list_media_devices(const std::string &media_bus_info)
 			if (fd < 0)
 				continue;
 
-			if (verbose) {
+			bool match = !match_io;
+
+			if (verbose || match_io) {
 				unsigned idx;
 
 				if (!ioctl(fd, VIDIOC_G_INPUT, &idx)) {
 					struct v4l2_input in = {
 						.index = idx
 					};
-					if (!ioctl(fd, VIDIOC_ENUMINPUT, &in))
+					if (!ioctl(fd, VIDIOC_ENUMINPUT, &in)) {
 						extra = std::string(" (input: ") + (const char *)in.name + ")";
+						match = !match_io || !strcmp(match_input.c_str(), (const char *)in.name);
+					}
 				} else if (!ioctl(fd, VIDIOC_G_OUTPUT, &idx)) {
 					struct v4l2_output out = {
 						.index = idx
 					};
-					if (!ioctl(fd, VIDIOC_ENUMOUTPUT, &out))
+					if (!ioctl(fd, VIDIOC_ENUMOUTPUT, &out)) {
 						extra = std::string(" (output: ") + (const char *)out.name + ")";
+						match = !match_io || !strcmp(match_output.c_str(), (const char *)out.name);
+					}
 				}
+				if (!verbose)
+					extra.clear();
 			}
 			close(fd);
-			printf("%s%s\n", devices[dev].c_str(), extra.c_str());
+			if (match)
+				printf("%s%s\n", devices[dev].c_str(), extra.c_str());
 		}
 	close(media_fd);
 }
 
-static void list_devices()
+static void list_devices(const std::string &input, const std::string &output)
 {
 	DIR *dp;
 	struct dirent *ep;
@@ -265,6 +285,7 @@ static void list_devices()
 	dev_map links;
 	dev_map cards;
 	struct v4l2_capability vcap;
+	bool match_io = !input.empty() || !output.empty();
 
 	dp = opendir("/dev");
 	if (dp == nullptr) {
@@ -314,6 +335,7 @@ static void list_devices()
 		std::string bus_info;
 		std::string card;
 		std::string extra;
+		bool match = !match_io;
 
 		if (fd < 0)
 			continue;
@@ -341,30 +363,41 @@ static void list_devices()
 				struct v4l2_input in = {
 					.index = idx
 				};
-				if (!ioctl(fd, VIDIOC_ENUMINPUT, &in))
+				if (!ioctl(fd, VIDIOC_ENUMINPUT, &in)) {
 					extra = std::string(" (input: ") + (const char *)in.name + ")";
+					match = !match_io || !strcmp(match_input.c_str(), (const char *)in.name);
+				}
 			} else if (!ioctl(fd, VIDIOC_G_OUTPUT, &idx)) {
 				struct v4l2_output out = {
 					.index = idx
 				};
-				if (!ioctl(fd, VIDIOC_ENUMOUTPUT, &out))
+				if (!ioctl(fd, VIDIOC_ENUMOUTPUT, &out)) {
 					extra = std::string(" (output: ") + (const char *)out.name + ")";
+					match = !match_io || !strcmp(match_output.c_str(), (const char *)out.name);
+				}
 			}
 		}
 		close(fd);
 		if (err)
 			continue;
-		if (cards[bus_info].empty())
+		if (!match) continue;
+		if (cards[bus_info].empty() && !match_io)
 			cards[bus_info] += card + " (" + bus_info + "):\n";
-		cards[bus_info] += "\t" + file;
+		if (!match_io)
+			cards[bus_info] += "\t";
+		cards[bus_info] += file;
 		if (!(links[file].empty()))
 			cards[bus_info] += " <- " + links[file];
 		if (verbose)
 			cards[bus_info] += extra;
 		cards[bus_info] += "\n";
 	}
+	bool first = true;
 	for (const auto &card : cards) {
-		printf("%s\n", card.second.c_str());
+		if (!first && !match_io)
+			printf("\n");
+		first = false;
+		printf("%s", card.second.c_str());
 	}
 }
 
@@ -1129,6 +1162,12 @@ void common_cmd(int ch, char *optarg)
 	case OptSetPriority:
 		prio = static_cast<enum v4l2_priority>(strtoul(optarg, nullptr, 0));
 		break;
+	case OptListDevicesInput:
+		match_input = optarg;
+		break;
+	case OptListDevicesOutput:
+		match_output = optarg;
+		break;
 	}
 }
 
@@ -1395,14 +1434,21 @@ void common_get(cv4l_fd &_fd)
 	}
 }
 
-void common_list(const std::string &media_bus_info, cv4l_fd &fd)
+bool common_list_devices(const std::string &media_bus_info, cv4l_fd &fd)
 {
-	if (options[OptListDevices]) {
+	if (options[OptListDevices] || options[OptListDevicesInput] ||
+	    options[OptListDevicesOutput]) {
 		if (media_bus_info.empty())
-			list_devices();
+			list_devices(match_input, match_output);
 		else
-			list_media_devices(media_bus_info);
+			list_media_devices(media_bus_info,match_input, match_output);
+		return true;
 	}
+	return false;
+}
+
+void common_list(cv4l_fd &fd)
+{
 	if (options[OptListCtrls] || options[OptListCtrlsMenus]) {
 		list_controls(fd.g_fd(), options[OptListCtrlsMenus]);
 	}
