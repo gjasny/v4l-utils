@@ -59,6 +59,7 @@ static char options[512];
    case is used to retrieve a setting. */
 enum Option {
 	OptSetAdapter = 'a',
+	OptListDevices = 'A',
 	OptClear = 'C',
 	OptSetDevice = 'd',
 	OptSetDriver = 'D',
@@ -99,7 +100,6 @@ enum Option {
 	OptNoRC,
 	OptReplyToFollowers,
 	OptRawMsg,
-	OptListDevices,
 	OptTimeout,
 	OptMonitorTime,
 	OptMonitorPin,
@@ -249,6 +249,7 @@ static void print_version()
 static void usage()
 {
 	printf("Usage:\n"
+	       "  -A, --list-devices       List all cec devices\n"
 	       "  -d, --device <dev>       Use device <dev> instead of /dev/cec0\n"
 	       "                           If <dev> starts with a digit, then /dev/cec<dev> is used.\n"
 	       "  -D, --driver <driver>    Use a cec device with this driver name\n"
@@ -286,7 +287,6 @@ static void usage()
 	       "  --reply-to-followers     The reply will be sent to followers as well\n"
 	       "  --raw-msg                Transmit the message without validating it (must be root)\n"
 	       "  --timeout <ms>           Set the reply timeout in milliseconds (default is 1000 ms)\n"
-	       "  --list-devices           List all cec devices\n"
 	       "\n"
 	       "  --tv                     This is a TV\n"
 	       "  --record                 This is a recording and playback device\n"

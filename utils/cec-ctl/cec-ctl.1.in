@@ -44,6 +44,9 @@ And instead of '--to 0' you can also write this as '-t0'.
 
 .SH OPTIONS
 .TP
+\fB\-A\fR, \fB\-\-list\-devices\fR
+List all cec devices.
+.TP
 \fB\-d\fR, \fB\-\-device\fR \fI<dev>\fR
 Use device <dev> as the CEC device. If <dev> is a number, then /dev/cec<dev> is used.
 .TP
