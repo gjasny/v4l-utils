@@ -2748,10 +2748,9 @@ int main(int argc, char **argv)
 		case OptListDevices:
 			if (driver || adapter) {
 				device = cec_device_find(driver, adapter);
-				if (!device.empty()) {
+				if (!device.empty())
 					printf("%s\n", device.c_str());
-					break;
-				}
+				return 0;
 			}
 			list_devices();
 			return 0;
