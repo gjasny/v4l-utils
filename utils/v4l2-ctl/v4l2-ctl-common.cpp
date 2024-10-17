@@ -51,6 +51,9 @@ static bool have_query_ext_ctrl;
 void common_usage()
 {
 	printf("\nGeneral/Common options:\n"
+	       "  -A, --list-devices list all v4l devices. If -z was given, then list just the\n"
+	       "                     devices of the media device with the bus info string as\n"
+	       "                     specified by the -z option.\n"
 	       "  --all              display all information available\n"
 	       "  -C, --get-ctrl <ctrl>[,<ctrl>...]\n"
 	       "                     get the value of the controls [VIDIOC_G_EXT_CTRLS]\n"
@@ -103,9 +106,6 @@ void common_usage()
 #ifndef NO_LIBV4L2
 	       "  -w, --wrapper      use the libv4l2 wrapper library.\n"
 #endif
-	       "  --list-devices     list all v4l devices. If -z was given, then list just the\n"
-	       "                     devices of the media device with the bus info string as\n"
-	       "                     specified by the -z option.\n"
 	       "  --list-devices-input <name>\n"
 	       "                     same as --list-devices, but only show devices with a current\n"
 	       "                     input name that matches <name>\n"

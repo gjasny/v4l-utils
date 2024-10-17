@@ -44,6 +44,7 @@ private:
    In general the lower case is used to set something and the upper
    case is used to retrieve a setting. */
 enum Option {
+	OptListDevices = 'A',
 	OptGetSlicedVbiFormat = 'B',
 	OptSetSlicedVbiFormat = 'b',
 	OptGetCtrl = 'C',
@@ -172,7 +173,6 @@ enum Option {
 	OptGetModulator,
 	OptSetModulator,
 	OptListFreqBands,
-	OptListDevices,
 	OptListDevicesInput,
 	OptListDevicesOutput,
 	OptGetOutputParm,
