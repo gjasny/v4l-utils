@@ -224,8 +224,35 @@ static void list_media_devices(const std::string &media_bus_info)
 			dev_t dev = makedev(ifaces[i].devnode.major,
 					    ifaces[i].devnode.minor);
 
-			if (devices.find(dev) != devices.end())
-				printf("%s\n", devices[dev].c_str());
+			if (devices.find(dev) == devices.end())
+				continue;
+
+			std::string extra;
+
+			int fd = open(devices[dev].c_str(), O_RDWR);
+
+			if (fd < 0)
+				continue;
+
+			if (verbose) {
+				unsigned idx;
+
+				if (!ioctl(fd, VIDIOC_G_INPUT, &idx)) {
+					struct v4l2_input in = {
+						.index = idx
+					};
+					if (!ioctl(fd, VIDIOC_ENUMINPUT, &in))
+						extra = std::string(" (input: ") + (const char *)in.name + ")";
+				} else if (!ioctl(fd, VIDIOC_G_OUTPUT, &idx)) {
+					struct v4l2_output out = {
+						.index = idx
+					};
+					if (!ioctl(fd, VIDIOC_ENUMOUTPUT, &out))
+						extra = std::string(" (output: ") + (const char *)out.name + ")";
+				}
+			}
+			close(fd);
+			printf("%s%s\n", devices[dev].c_str(), extra.c_str());
 		}
 	close(media_fd);
 }
