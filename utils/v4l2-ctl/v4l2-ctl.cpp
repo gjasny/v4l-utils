@@ -1347,8 +1347,6 @@ int main(int argc, char **argv)
 	c_out_fd.s_direct(!options[OptUseWrapper]);
 	c_exp_fd.s_direct(!options[OptUseWrapper]);
 
-	c_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
-
 	if (is_subdev)
 		fd = c_fd.subdev_open(device);
 	else
@@ -1359,6 +1357,8 @@ int main(int argc, char **argv)
 			strerror(errno));
 		std::exit(EXIT_FAILURE);
 	}
+
+	c_fd.s_trace(options[OptSilent] ? 0 : (verbose ? 2 : 1));
 
 	if (!is_subdev && doioctl(fd, VIDIOC_QUERYCAP, &vcap)) {
 		fprintf(stderr, "%s: not a v4l2 node\n", device);
