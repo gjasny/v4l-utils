@@ -400,7 +400,7 @@ int main(int argc, char **argv)
 	const char *driver = nullptr;
 	const char *adapter = nullptr;
 	unsigned toggle_power_status = 0;
-	char short_options[26 * 2 * 2 + 1];
+	char short_options[26 * 2 * 3 + 1];
 	int idx = 0;
 	int fd = -1;
 	int ch;
