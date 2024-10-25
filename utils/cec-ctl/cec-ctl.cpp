@@ -2352,7 +2352,7 @@ int main(int argc, char **argv)
 	const char *adapter = nullptr;
 	const struct cec_msg_args *opt;
 	msg_vec msgs;
-	char short_options[26 * 2 * 2 + 1];
+	char short_options[26 * 2 * 3 + 1];
 	__u32 timeout = 1000;
 	__u32 monitor_time = 0;
 	__u32 vendor_id = 0x000c03; /* HDMI LLC vendor ID */
@@ -2397,8 +2397,12 @@ int main(int argc, char **argv)
 		if (!isalpha(long_options[i].val))
 			continue;
 		short_options[idx++] = long_options[i].val;
-		if (long_options[i].has_arg == required_argument)
+		if (long_options[i].has_arg == required_argument) {
 			short_options[idx++] = ':';
+		} else if (long_options[i].has_arg == optional_argument) {
+			short_options[idx++] = ':';
+			short_options[idx++] = ':';
+		}
 	}
 	while (true) {
 		int option_index = 0;
@@ -2413,6 +2417,18 @@ int main(int argc, char **argv)
 		cec_msg_init(&msg, 0, 0);
 		msg.msg[0] = options[OptTo] ? to : 0xf0;
 		options[ch] = 1;
+
+		if (!option_index) {
+			for (i = 0; long_options[i].val; i++) {
+				if (long_options[i].val == ch) {
+					option_index = i;
+					break;
+				}
+			}
+		}
+		if (long_options[option_index].has_arg == optional_argument &&
+		    !optarg && argv[optind] && argv[optind][0] != '-')
+			optarg = argv[optind++];
 
 		switch (ch) {
 		case OptHelp:
