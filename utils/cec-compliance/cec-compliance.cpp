@@ -892,7 +892,7 @@ int main(int argc, char **argv)
 	std::string device;
 	const char *driver = nullptr;
 	const char *adapter = nullptr;
-	char short_options[26 * 2 * 2 + 1];
+	char short_options[26 * 2 * 3 + 1];
 	int remote_la = -1;
 	bool test_remote = false;
 	unsigned test_tags = 0;
