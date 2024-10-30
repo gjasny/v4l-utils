@@ -412,7 +412,7 @@ int testTime32_64(struct node *node);
  * 	use to test the loop
  */
 int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
-	     enum poll_mode pollmode);
+	     enum poll_mode pollmode, bool use_create_bufs);
 int testUserPtr(struct node *node, struct node *node_m2m_cap,
 		unsigned frame_count, enum poll_mode pollmode);
 int testDmaBuf(struct node *expbuf_node, struct node *node,

@@ -1536,15 +1536,26 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 			// in case of any errors in the preceeding test.
 			node.reopen();
 			if (!(node.codec_mask & (STATEFUL_ENCODER | STATEFUL_DECODER))) {
-				printf("\ttest MMAP (no poll): %s\n",
-				       ok(testMmap(&node, &node_m2m_cap, frame_count, POLL_MODE_NONE)));
+				printf("\ttest MMAP (no poll, REQBUFS): %s\n",
+				       ok(testMmap(&node, &node_m2m_cap, frame_count, POLL_MODE_NONE, false)));
 				node.reopen();
 			}
-			printf("\ttest MMAP (select): %s\n",
-			       ok(testMmap(&node, &node_m2m_cap, frame_count, POLL_MODE_SELECT)));
+			printf("\ttest MMAP (select, REQBUFS): %s\n",
+			       ok(testMmap(&node, &node_m2m_cap, frame_count, POLL_MODE_SELECT, false)));
 			node.reopen();
-			printf("\ttest MMAP (epoll): %s\n",
-			       ok(testMmap(&node, &node_m2m_cap, frame_count, POLL_MODE_EPOLL)));
+			printf("\ttest MMAP (epoll, REQBUFS): %s\n",
+			       ok(testMmap(&node, &node_m2m_cap, frame_count, POLL_MODE_EPOLL, false)));
+			node.reopen();
+			if (!(node.codec_mask & (STATEFUL_ENCODER | STATEFUL_DECODER))) {
+				printf("\ttest MMAP (no poll, CREATE_BUFS): %s\n",
+				       ok(testMmap(&node, &node_m2m_cap, frame_count, POLL_MODE_NONE, true)));
+				node.reopen();
+			}
+			printf("\ttest MMAP (select, CREATE_BUFS): %s\n",
+			       ok(testMmap(&node, &node_m2m_cap, frame_count, POLL_MODE_SELECT, true)));
+			node.reopen();
+			printf("\ttest MMAP (epoll, CREATE_BUFS): %s\n",
+			       ok(testMmap(&node, &node_m2m_cap, frame_count, POLL_MODE_EPOLL, true)));
 			node.reopen();
 			if (!(node.codec_mask & (STATEFUL_ENCODER | STATEFUL_DECODER))) {
 				printf("\ttest USERPTR (no poll): %s\n",
