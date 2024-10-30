@@ -3014,7 +3014,8 @@ void streaming_list(cv4l_fd &fd, cv4l_fd &out_fd)
 		stream_buf_caps(fd, fd.g_type());
 
 	if (options[OptStreamOutBufCaps])
-		stream_buf_caps(*p_out_fd, v4l_type_invert(p_out_fd->g_type()));
+		stream_buf_caps(*p_out_fd, p_out_fd->has_vid_m2m() ?
+				v4l_type_invert(p_out_fd->g_type()) : p_out_fd->g_type());
 
 	if (options[OptListBuffersVbi])
 		list_buffers(fd, V4L2_BUF_TYPE_VBI_CAPTURE);
