@@ -1069,11 +1069,22 @@ int testReadWrite(struct node *node)
 
 static int setupM2M(struct node *node, cv4l_queue &q, bool init = true)
 {
+	unsigned buffers = 2;
 	__u32 caps;
 
 	last_m2m_seq.init();
 
-	fail_on_test(q.reqbufs(node, 2));
+	if (node->codec_mask & STATEFUL_DECODER) {
+		struct v4l2_control ctrl = {
+			.id = V4L2_CID_MIN_BUFFERS_FOR_CAPTURE,
+		};
+		fail_on_test(node->g_ctrl(ctrl));
+		fail_on_test(ctrl.value <= 0);
+		buffers = ctrl.value;
+		fail_on_test(q.reqbufs(node, 1));
+		fail_on_test((unsigned)ctrl.value < q.g_buffers());
+	}
+	fail_on_test(q.reqbufs(node, buffers));
 	fail_on_test(q.mmap_bufs(node));
 	caps = q.g_capabilities();
 	fail_on_test(node->supports_orphaned_bufs ^ !!(caps & V4L2_BUF_CAP_SUPPORTS_ORPHANED_BUFS));
@@ -1542,6 +1553,7 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 
 	buffer_info.clear();
 	for (type = 0; type <= V4L2_BUF_TYPE_LAST; type++) {
+		unsigned buffers = 2;
 		cv4l_fmt fmt;
 
 		if (!(node->valid_buftypes & (1 << type)))
@@ -1570,7 +1582,19 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 		fail_on_test(node->streamoff(q.g_type()));
 
 		q.init(type, V4L2_MEMORY_MMAP);
-		fail_on_test(q.reqbufs(node, 2));
+
+		if (node->is_m2m && (node->codec_mask & STATEFUL_ENCODER)) {
+			struct v4l2_control ctrl = {
+				.id = V4L2_CID_MIN_BUFFERS_FOR_OUTPUT,
+			};
+
+			fail_on_test(node->g_ctrl(ctrl));
+			fail_on_test(ctrl.value <= 0);
+			buffers = ctrl.value;
+			fail_on_test(q.reqbufs(node, 1));
+			fail_on_test((unsigned)ctrl.value < q.g_buffers());
+		}
+		fail_on_test(q.reqbufs(node, buffers));
 		fail_on_test(node->streamoff(q.g_type()));
 		last_seq.init();
 
@@ -1610,7 +1634,7 @@ int testMmap(struct node *node, struct node *node_m2m_cap, unsigned frame_count,
 			q.create_bufs(node, 2, &cur_fmt, V4L2_MEMORY_FLAG_NON_COHERENT);
 			fail_on_test(setupMmap(node, q));
 			q.munmap_bufs(node);
-			q.reqbufs(node, 2);
+			q.reqbufs(node, buffers);
 
 			cv4l_fmt fmt(cur_fmt);
 
