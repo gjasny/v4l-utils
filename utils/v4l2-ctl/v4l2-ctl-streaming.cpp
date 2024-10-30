@@ -38,8 +38,8 @@ static v4l2_std_id stream_out_std;
 static bool stream_out_refresh;
 static tpg_move_mode stream_out_hor_mode = TPG_MOVE_NONE;
 static tpg_move_mode stream_out_vert_mode = TPG_MOVE_NONE;
-static unsigned reqbufs_count_cap = 4;
-static unsigned reqbufs_count_out = 4;
+static unsigned reqbufs_count_cap = 0;
+static unsigned reqbufs_count_out = 0;
 static char *file_to;
 static bool to_with_hdr;
 static char *host_to;
@@ -854,11 +854,8 @@ void streaming_cmd(int ch, char *optarg)
 		memory = V4L2_MEMORY_USERPTR;
 		fallthrough;
 	case OptStreamMmap:
-		if (optarg) {
+		if (optarg)
 			reqbufs_count_cap = strtoul(optarg, nullptr, 0);
-			if (reqbufs_count_cap == 0)
-				reqbufs_count_cap = 3;
-		}
 		break;
 	case OptStreamDmaBuf:
 		memory = V4L2_MEMORY_DMABUF;
@@ -867,11 +864,8 @@ void streaming_cmd(int ch, char *optarg)
 		out_memory = V4L2_MEMORY_USERPTR;
 		fallthrough;
 	case OptStreamOutMmap:
-		if (optarg) {
+		if (optarg)
 			reqbufs_count_out = strtoul(optarg, nullptr, 0);
-			if (reqbufs_count_out == 0)
-				reqbufs_count_out = 3;
-		}
 		break;
 	case OptStreamOutDmaBuf:
 		out_memory = V4L2_MEMORY_DMABUF;
@@ -2530,6 +2524,16 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 
 		if (last_buffer) {
 			if (in_source_change_event) {
+				struct v4l2_control ctrl = {
+					.id = V4L2_CID_MIN_BUFFERS_FOR_CAPTURE,
+				};
+
+				{
+					cv4l_disable_trace dt(fd);
+					if (!fd.g_ctrl(ctrl))
+						reqbufs_count_cap = ctrl.value;
+				}
+
 				in_source_change_event = false;
 				last_buffer = false;
 				if (capture_setup(fd, in, exp_fd_p, &fmt_in))
@@ -2981,6 +2985,29 @@ void streaming_set(cv4l_fd &fd, cv4l_fd &out_fd, cv4l_fd &exp_fd)
 	get_cap_compose_rect(fd);
 	get_out_crop_rect(fd);
 	get_codec_type(fd);
+
+	if (!reqbufs_count_cap) {
+		struct v4l2_control ctrl = {
+			.id = V4L2_CID_MIN_BUFFERS_FOR_CAPTURE,
+		};
+
+		cv4l_disable_trace dt(fd);
+		if (!fd.g_ctrl(ctrl))
+			reqbufs_count_cap = ctrl.value;
+		if (!reqbufs_count_cap)
+			reqbufs_count_cap = 4;
+	}
+	if (!reqbufs_count_out) {
+		struct v4l2_control ctrl = {
+			.id = V4L2_CID_MIN_BUFFERS_FOR_OUTPUT,
+		};
+
+		cv4l_disable_trace dt(fd);
+		if (!fd.g_ctrl(ctrl))
+			reqbufs_count_out = ctrl.value;
+		if (!reqbufs_count_out)
+			reqbufs_count_out = 4;
+	}
 
 	if (do_cap && do_out && out_fd.g_fd() < 0)
 		streaming_set_m2m(fd, exp_fd);
