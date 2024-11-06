@@ -45,6 +45,7 @@ common_arguments = [
     '-D_GNU_SOURCE',
     '-DPROMOTED_MODE_T=int',
     '-DENABLE_NLS',
+    '-DGETSUBOPT_IGNORE_COMMA_IN_BRACKET',
     '-include', meson.current_build_dir() / 'config.h',
 ]
 

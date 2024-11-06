@@ -7,12 +7,41 @@
  * So add support for it here, if needed.
  */
 
-#if defined(__GLIBC__)
+#if defined(__GLIBC__) && !defined(GETSUBOPT_IGNORE_COMMA_IN_BRACKET)
 
 #define v4l_getsubopt getsubopt
 
 #else
 
+#include <string.h>
+#include <stdlib.h>
+
+#if defined (GETSUBOPT_IGNORE_COMMA_IN_BRACKET)
+/*
+ * Find the first occurrence of C in S or the final NUL byte.
+ * But ignore the C in brackets
+ */
+static inline char *v4l_strchrnul (const char *s, int c_in)
+{
+  const unsigned char *char_ptr;
+  unsigned char c;
+  int in_brackets = 0;
+
+  c = (unsigned char) c_in;
+
+  char_ptr = (const unsigned char *) s;
+  while (*char_ptr) {
+    if (*char_ptr == '(')
+      in_brackets++;
+    else if (*char_ptr == ')')
+      in_brackets--;
+    else if (*char_ptr == c && in_brackets == 0)
+      break;
+    ++char_ptr;
+  }
+  return (char *) char_ptr;
+}
+#else
 /*
  * Import strchrnul(...) from uClibc version 0.9.33.2 since this feature is
  * missing in the Android C library.
@@ -40,9 +69,6 @@
    License along with the GNU C Library; if not, write to the Free
    Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
    02111-1307 USA.  */
-
-#include <string.h>
-#include <stdlib.h>
 
 /* Find the first occurrence of C in S or the final NUL byte.  */
 static inline char *v4l_strchrnul (const char *s, int c_in)
@@ -179,6 +205,7 @@ static inline char *v4l_strchrnul (const char *s, int c_in)
   /* This should never happen.  */
   return NULL;
 }
+#endif
 
 /*
  * Import getsubopt(...) from uClibc version 0.9.33.2 since this feature is
