@@ -971,6 +971,21 @@ int testExtendedControls(struct node *node)
 		if (is_vivid && ctrl.id == VIVID_CID_U32_DYN_ARRAY &&
 		    checkVividDynArray(node, ctrl, qctrl))
 			return fail("dynamic array tests failed\n");
+
+		ctrls.which = V4L2_CTRL_WHICH_MIN_VAL;
+		ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
+		if (qctrl.flags & V4L2_CTRL_FLAG_HAS_WHICH_MIN_MAX)
+			fail_on_test_val(ret, ret);
+		else
+			fail_on_test_val(ret != EINVAL, ret);
+
+		ctrls.which = V4L2_CTRL_WHICH_MAX_VAL;
+		ret = doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls);
+		if (qctrl.flags & V4L2_CTRL_FLAG_HAS_WHICH_MIN_MAX)
+			fail_on_test_val(ret, ret);
+		else
+			fail_on_test_val(ret != EINVAL, ret);
+
 		if (qctrl.flags & V4L2_CTRL_FLAG_HAS_PAYLOAD)
 			delete [] ctrl.string;
 		ctrl.string = nullptr;
@@ -1082,6 +1097,15 @@ int testExtendedControls(struct node *node)
 	fail_on_test(!doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
 	fail_on_test(!doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls));
 	fail_on_test(doioctl(node, VIDIOC_G_EXT_CTRLS, &ctrls));
+
+	ctrls.which = V4L2_CTRL_WHICH_MIN_VAL;
+	fail_on_test(!doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+	fail_on_test(!doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls));
+
+	ctrls.which = V4L2_CTRL_WHICH_MAX_VAL;
+	fail_on_test(!doioctl(node, VIDIOC_S_EXT_CTRLS, &ctrls));
+	fail_on_test(!doioctl(node, VIDIOC_TRY_EXT_CTRLS, &ctrls));
+
 	return 0;
 }
 

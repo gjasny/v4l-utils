@@ -538,6 +538,7 @@ std::string ctrlflags2s(__u32 flags)
 		{ V4L2_CTRL_FLAG_EXECUTE_ON_WRITE, "execute-on-write" },
 		{ V4L2_CTRL_FLAG_MODIFY_LAYOUT, "modify-layout" },
 		{ V4L2_CTRL_FLAG_DYNAMIC_ARRAY, "dynamic-array" },
+		{ V4L2_CTRL_FLAG_HAS_WHICH_MIN_MAX, "has-min-max" },
 		{ 0, nullptr }
 	};
 	return flags2s(flags, def);
