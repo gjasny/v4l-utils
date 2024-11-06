@@ -614,6 +614,11 @@ static void print_value(int fd, const v4l2_query_ext_ctrl &qc, const v4l2_ext_co
 		case V4L2_CTRL_TYPE_AREA:
 			printf("%dx%d", ctrl.p_area->width, ctrl.p_area->height);
 			break;
+		case V4L2_CTRL_TYPE_RECT:
+			printf("(%d,%d)/%ux%u",
+			       ctrl.p_rect->left, ctrl.p_rect->top,
+			       ctrl.p_rect->width, ctrl.p_rect->height);
+			break;
 		default:
 			printf("unsupported payload type");
 			break;
@@ -701,6 +706,9 @@ static void print_qctrl(int fd, const v4l2_query_ext_ctrl &qc,
 		break;
 	case V4L2_CTRL_TYPE_AREA:
 		printf("%31s %#8.8x (area)   :", s.c_str(), qc.id);
+		break;
+	case V4L2_CTRL_TYPE_RECT:
+		printf("%31s %#8.8x (rect)   :", s.c_str(), qc.id);
 		break;
 	case V4L2_CTRL_TYPE_HDR10_CLL_INFO:
 		printf("%31s %#8.8x (hdr10-cll-info):", s.c_str(), qc.id);
@@ -1278,6 +1286,11 @@ void common_set(cv4l_fd &_fd)
 				case V4L2_CTRL_TYPE_AREA:
 					sscanf(set_ctrl.second.c_str(), "%ux%u",
 					       &ctrl.p_area->width, &ctrl.p_area->height);
+					break;
+				case V4L2_CTRL_TYPE_RECT:
+					sscanf(set_ctrl.second.c_str(), "(%d,%d)/%ux%u",
+					       &ctrl.p_rect->left, &ctrl.p_rect->top,
+					       &ctrl.p_rect->width, &ctrl.p_rect->height);
 					break;
 				default:
 					fprintf(stderr, "%s: unsupported payload type\n",
