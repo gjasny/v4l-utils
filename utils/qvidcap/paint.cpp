@@ -116,6 +116,8 @@ void CaptureWin::paintGL()
 	if (!supportedFmt(m_v4l_fmt.g_pixelformat()))
 		return;
 
+	m_program->bind();
+
 	switch (m_v4l_fmt.g_pixelformat()) {
 	case V4L2_PIX_FMT_YUYV:
 	case V4L2_PIX_FMT_YVYU:

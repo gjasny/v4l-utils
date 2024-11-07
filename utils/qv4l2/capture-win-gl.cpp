@@ -622,6 +622,7 @@ void CaptureWinGLEngine::paintGL()
 
 	if (m_formatChange)
 		changeShader();
+	m_shaderProgram.bind();
 
 	if (m_frameData == NULL) {
 		paintFrame();
