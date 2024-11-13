@@ -1357,14 +1357,8 @@ static void test_reliability(const struct node &node, unsigned int to, unsigned 
 	}
 }
 
-static int init_standby_wakeup_cycle_test(const struct node &node, unsigned repeats, unsigned max_tries)
+static void show_legend()
 {
-	struct cec_msg msg;
-	unsigned from;
-	unsigned tries;
-	__u16 pa;
-	int ret;
-
 	printf("Legend:\n\n"
 	       "X   No LA claimed (HPD is likely pulled low)\n"
 	       "N   Give Device Power Status was Nacked\n"
@@ -1378,8 +1372,18 @@ static int init_standby_wakeup_cycle_test(const struct node &node, unsigned repe
 	       "/   Reported Transitioning to On\n"
 	       "\\   Reported Transitioning to Standby\n"
 	       "|   Reported Transitioning to On when 'to Standby' was expected or vice versa\n\n");
+}
 
+static int init_standby_wakeup_cycle_test(const struct node &node,
+					  unsigned repeats, unsigned max_tries)
+{
+	struct cec_msg msg;
+	unsigned from;
+	unsigned tries;
+	__u16 pa;
+	int ret;
 	struct cec_log_addrs laddrs = { };
+
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
 	if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID) {
 		from = laddrs.log_addr[0];
@@ -1510,6 +1514,7 @@ static void test_standby_wakeup_cycle(const struct node &node, unsigned int max_
 	__u8 wakeup_la;
 	int ret;
 
+	show_legend();
 	from = init_standby_wakeup_cycle_test(node, 2, max_tries);
 
 	doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
@@ -1734,6 +1739,8 @@ static void stress_test_standby_wakeup_cycle(const struct node &node, unsigned c
 
 	if (mod_usleep)
 		printf("Randomizer seed: %u\n\n", seed);
+
+	show_legend();
 
 	unsigned from = init_standby_wakeup_cycle_test(node, repeats, max_tries);
 
