@@ -1351,10 +1351,11 @@ static void test_reliability(const struct node &node, unsigned int to, unsigned 
 		       iter, pass ? "PASS" : "FAIL",
 		       cec_phys_addr_exp(cur_pa), cec_prim_type2s(cur_prim_dev));
 		if (!pass)
-			break;
-		if (cnt && cnt-- == 1)
+			std::exit(EXIT_FAILURE);
+		if (cnt && iter == cnt)
 			break;
 	}
+	printf("%u iterations: PASS\n", cnt);
 }
 
 static void show_legend()
@@ -1712,6 +1713,8 @@ static void test_standby_wakeup_cycle(const struct node &node, unsigned int max_
 	}
 	if (failures)
 		printf("Test had %u failure%s\n", failures, failures == 1 ? "" : "s");
+	else
+		printf("PASS\n");
 }
 
 static void stress_test_standby_wakeup_cycle(const struct node &node, unsigned cnt,
@@ -1951,6 +1954,7 @@ static void stress_test_standby_wakeup_cycle(const struct node &node, unsigned c
 		}
 		printf(" %d second%s\n", tries, tries == 1 ? "" : "s");
 	}
+	printf("%u iterations: PASS\n", cnt);
 }
 
 static void stress_test_random_standby_wakeup_cycle(const struct node &node, unsigned cnt,
@@ -2145,6 +2149,7 @@ done:
 		else
 			printf("OK\n");
 	}
+	printf("%u iterations: PASS\n", cnt);
 }
 
 
