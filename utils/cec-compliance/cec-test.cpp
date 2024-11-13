@@ -1183,6 +1183,7 @@ void testRemote(struct node *node, unsigned me, unsigned la, unsigned test_tags,
 			continue;
 
 		printf("\t%s:\n", test.name);
+		fflush(stdout);
 		for (const auto &subtest : test.subtests) {
 			const char *name = subtest.name;
 

@@ -201,13 +201,16 @@ using vec_remote_subtests = std::vector<remote_subtest>;
 
 #define info(fmt, args...) 						\
 	do {								\
-		if (show_info)						\
+		if (show_info) {					\
 			printf("\t\tinfo: " fmt, ##args);		\
+			fflush(stdout);					\
+		}							\
 	} while (0)
 
 #define announce(fmt, args...) 						\
 	do {								\
 		printf("\t\t>>> " fmt "\n", ##args);			\
+		fflush(stdout);						\
 	} while (0)
 
 #define interactive_info(block, fmt, args...)				\
@@ -224,10 +227,12 @@ using vec_remote_subtests = std::vector<remote_subtest>;
 #define warn(fmt, args...) 						\
 ({									\
 	warnings++;							\
-	if (show_warnings)						\
+	if (show_warnings) {						\
 		printf("\t\%s: %s(%d): " fmt,				\
 		       show_colors ? COLOR_BOLD("warn") : "warn",	\
-		       __FILE_NAME__, __LINE__, ##args);			\
+		       __FILE_NAME__, __LINE__, ##args);		\
+		fflush(stdout);						\
+	}								\
 	if (exit_on_warn)						\
 		std::exit(EXIT_FAILURE);				\
 	0;								\
@@ -259,6 +264,7 @@ using vec_remote_subtests = std::vector<remote_subtest>;
 ({ 									\
 	printf("\t\t%s: %s(%d): " fmt, show_colors ?			\
 	       COLOR_RED("fail") : "fail", __FILE_NAME__, __LINE__, ##args);	\
+	fflush(stdout);							\
 	if (exit_on_fail)						\
 		std::exit(EXIT_FAILURE);				\
 	FAIL;								\
