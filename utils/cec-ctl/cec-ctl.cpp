@@ -67,8 +67,8 @@ enum Option {
 	OptPhysAddrFromEDIDPoll = 'E',
 	OptFrom = 'f',
 	OptHelp = 'h',
-	OptLogicalAddress = 'l',
-	OptLogicalAddresses = 'L',
+	OptShowLogicalAddress = 'l',
+	OptShowLogicalAddresses = 'L',
 	OptMonitor = 'm',
 	OptMonitorAll = 'M',
 	OptToggleNoReply = 'n',
@@ -85,6 +85,7 @@ enum Option {
 	OptVendorID = 'V',
 	OptWallClock = 'w',
 	OptWaitForMsgs = 'W',
+	OptShowPhysAddr = 'x',
 
 	OptTV = 128,
 	OptRecord,
@@ -179,8 +180,9 @@ static struct option long_options[] = {
 	{ "analyze-pin", required_argument, nullptr, OptAnalyzePin },
 	{ "no-reply", no_argument, nullptr, OptToggleNoReply },
 	{ "non-blocking", no_argument, nullptr, OptNonBlocking },
-	{ "logical-address", no_argument, nullptr, OptLogicalAddress },
-	{ "logical-addresses", no_argument, nullptr, OptLogicalAddresses },
+	{ "logical-address", no_argument, nullptr, OptShowLogicalAddress },
+	{ "logical-addresses", no_argument, nullptr, OptShowLogicalAddresses },
+	{ "physical-address", no_argument, nullptr, OptShowPhysAddr },
 	{ "to", required_argument, nullptr, OptTo },
 	{ "from", required_argument, nullptr, OptFrom },
 	{ "skip-info", no_argument, nullptr, OptSkipInfo },
@@ -262,6 +264,7 @@ static void usage()
 	       "                           physical address whenever there is a change\n"
 	       "  -o, --osd-name <name>    Use this OSD name\n"
 	       "  -V, --vendor-id <id>     Use this vendor ID\n"
+	       "  -x, --physical-address   Show the physical address\n"
 	       "  -l, --logical-address    Show first configured logical address\n"
 	       "  -L, --logical-addresses  Show all configured logical addresses\n"
 	       "  -C, --clear              Clear all logical addresses\n"
@@ -3209,6 +3212,9 @@ int main(int argc, char **argv)
 		}
 	}
 
+	if (options[OptShowPhysAddr])
+		printf("%x.%x.%x.%x\n", cec_phys_addr_exp(phys_addr));
+
 	if (node.num_log_addrs == 0) {
 		if (options[OptMonitor] || options[OptMonitorAll] ||
 		    options[OptMonitorPin])
@@ -3226,9 +3232,9 @@ int main(int argc, char **argv)
 	if (options[OptShowTopology])
 		showTopology(&node);
 
-	if (options[OptLogicalAddress])
+	if (options[OptShowLogicalAddress])
 		printf("%d\n", laddrs.log_addr[0] & 0xf);
-	if (options[OptLogicalAddresses]) {
+	if (options[OptShowLogicalAddresses]) {
 		for (i = 0; i < laddrs.num_log_addrs; i++)
 			printf("%d ", laddrs.log_addr[i] & 0xf);
 		printf("\n");
