@@ -200,6 +200,14 @@ Tool to help debug video devices that use the cx18 driver.
 
 Installed under `<prefix>/bin`.
 
+### edid-decode
+
+Tool to parse EDIDs into a human readable format.
+
+Installed under `<prefix>/bin`.
+
+Uses the MIT license.
+
 ### ir-keytable
 
 Dump, Load or Modify ir receiver input tables. The ir tables for remotes which

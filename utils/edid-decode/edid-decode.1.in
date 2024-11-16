@@ -1,0 +1,434 @@
+.\" shorthand for double quote that works everywhere.
+.ds q \N'34'
+.TH "EDID-DECODE" "1" "November 2024" "v4l-utils @MAN_PACKAGE_VERSION@" "User Commands"
+.SH NAME
+edid-decode - Decode EDID data in human-readable format
+.SH SYNOPSIS
+.B edid-decode <options> [in [out]]
+.SH DESCRIPTION
+.B edid-decode
+decodes EDID monitor description data in human-readable format.
+If [in] is not given, or [in] is '-', then the EDID will be read from
+standard input. If [out] is given then the EDID that was read from [in]
+is written to [out] or to standard output if [out] is '-'. By default
+the output is written as a hex dump when writing to standard output or
+a raw EDID if written to a file.
+
+If [out] is given then edid-decode only does the conversion, it will
+skip the decoding step.
+.PP
+Input files may be raw binaries or ASCII text.  ASCII input is scanned for
+hex dumps; heuristics are included to search for hexdumps in
+.B edid-decode(1)
+output (as long as the initial hex dump was included),
+.B xrandr(1)
+property output and
+.B Xorg(1)
+log file formats, otherwise the data is treated as a raw hexdump.  EDID blocks
+for connected monitors can be found in
+.B /sys/class/drm/*/edid
+on modern Linux systems with kernel modesetting support.
+
+All timings are shown in a short format, for example:
+
+    VIC  16:  1920x1080   60.000 Hz  16:9    67.500 kHz 148.500 MHz (native)
+    VIC   5:  1920x1080i  60.000 Hz  16:9    33.750 kHz  74.250 MHz
+    VIC  39:  1920x1080i  50.000 Hz  16:9    31.250 kHz  72.000 MHz
+
+Each format starts with a timings type prefix, the resolution, an optional
+interlaced indicator ('i'), the frame rate (field rate for interlaced formats),
+the picture aspect ratio, the horizontal frequency, the pixelclock
+frequency and optionally additional flags between parenthesis.
+
+Note that for interlaced formats the frame height is given, not the field
+height. So each field in a 1920x1080i format has 540 lines.
+
+Detailed timings have another 2-3 lines of data:
+
+    VIC  16:  1920x1080   60.000 Hz  16:9    67.500 kHz 148.500 MHz (native)
+                   Hfront   88 Hsync  44 Hback 148 Hpol P
+                   Vfront    4 Vsync   5 Vback  36 Vpol P
+    VIC   5:  1920x1080i  60.000 Hz  16:9    33.750 kHz  74.250 MHz
+                   Hfront   88 Hsync  44 Hback 148 Hpol P
+                   Vfront    2 Vsync   5 Vback  15 Vpol P Vfront +0.5 Odd Field
+                   Vfront    2 Vsync   5 Vback  15 Vpol P Vback  +0.5 Even Field
+    VIC  39:  1920x1080i  50.000 Hz  16:9    31.250 kHz  72.000 MHz
+                   Hfront   32 Hsync 168 Hback 184 Hpol P
+                   Vfront   23 Vsync   5 Vback  57 Vpol N Both Fields
+
+These describe the horizontal and vertical front porch, sync, backporch
+and sync polarity values. For interlaced formats there are two lines
+for the vertical information: one for the Odd Field (aka Field 1) and
+one for the Even Field (aka Field 2). The vertical front porch of the
+Odd Field is actually 2.5 (hence the 'Vfront +0.5' at the end of the
+line), and the back porch of the Even Field is actually 15.5 (hence
+the 'Vback  +0.5' at the end of the line).
+
+There is a special 'VIC 39' interlaced format where both fields have
+the same vertical timings, in that case this is marked with 'Both Fields'.
+
+The following timing types can be shown:
+
+.RS
+.TP
+DMT #: Discrete Monitor Timing (see DMT 1.3 standard). The number is the DMT ID in hexadecimal.
+.TP
+CVT: Coordinated Video Timings (formula-based, see CVT 1.2 standard)
+.TP
+GTF: Generalized Timing Formula (formula-based, see GTF 1.1 standard)
+.TP
+IBM: Old IBM Timings
+.TP
+Apple: Old Apple Timings
+.TP
+VIC #: Video Identification Code (see CTA-861 standard). The number is the actual
+VIC code.
+.TP
+HDMI VIC #: HDMI-specific Video Identification Code (see HDMI 2.1 standard). The number
+is the actual HDMI VIC code.
+.TP
+DTD #: Detailed Timings Descriptor (see EDID standard). Also used for
+DisplayID Video Timing Modes Types I, II, VI, VII, VIII and X. The number denotes that
+this is the Nth DTD in the Base Block and CTA Extension Blocks.
+.TP
+VTDB #: 20-byte DTD or 6- or 7-byte CVT descriptor in a CTA Extension Block.
+The number denotes that this is the Nth such timing in the CTA Extension Blocks.
+.TP
+RID #@#: A CTA-861.6 Video Format Descriptor with the given Resolution ID (first
+number) at the given framerate (second number).
+.RE
+
+By default DTDs are shown in the long format while others are just shown in
+the short format. With the option \fB\-\-short\-timings\fR all timings are
+shown in short format only. With the option \fB\-\-long\-timings\fR all timings
+are shown in long format.
+
+Alternate formats for long timings can be chosen via the \fB\-\-xmodeline\fR or
+\fB\-\-fbmode\fR options.
+
+.SH STANDARDS
+.TP
+The following EDID standards are supported by edid-decode:
+.RS
+.TP
+EDID 1.3: VESA Enhanced Extended Display Identication Data Standard, Release A, Revision 1
+.TP
+EDID 1.4: VESA Enhanced Extended Display Identication Data Standard, Release A, Revision 2
+.TP
+DisplayID 1.3: VESA Display Identification Data (DisplayID) Standard, Version 1.3
+.TP
+DisplayID 2.1a: VESA DisplayID Standard, Version 2.1a
+.TP
+DI-EXT: VESA Display Information Extension Block Standard, Release A
+.TP
+LS-EXT: VESA Enhanced EDID Localized String Extension Standard, Release A
+.TP
+VTB-EXT: VESA Video Timing Block Extension Data Standard, Release A
+.TP
+DTCDB: VESA Display Transfer Characteristics Data Block Standard, Version 1.0
+.TP
+DDDB: VESA Display Device Data Block (DDDB) Standard, Version 1
+.TP
+HDMI 1.4b: High-Definition Multimedia Interface, Version 1.4b
+.TP
+HDMI 2.1b: High-Definition Multimedia Interface, Version 2.1b
+.TP
+HDCP 1.4: High-bandwidth Digital Content Protection System, Revision 1.4
+.TP
+HDCP 2.3: High-bandwidth Digital Content Protection System, Mapping HDCP to HDMI, Revision 2.3
+.TP
+CTA-861-I: A DTV Profile for Uncompressed High Speed Digital Interfaces
+.TP
+CTA-861.7: Improvements to CTA-861-I
+.TP
+SPWG Notebook Panel Specification, Version 3.5
+.TP
+EPI Embedded Panel Interface, Revision 1.0
+.TP
+Microsoft EDID extension for head-mounted and specialized monitors, Version 3
+.RE
+
+.TP
+The following related standards are also used by edid-decode:
+.RS
+.TP
+DMT 1.3: VESA and Industry Standards and Guidelines for Computer Display Monitor Timing (DMT), Version 1.0, Rev. 13
+.TP
+CVT 2.1: VESA Coordinated Video Timings (CVT) Standard, Version 2.1
+.TP
+CVT 1.2: VESA Coordinated Video Timings (CVT) Standard, Version 1.2
+.TP
+CVT 1.2: VESA CVT v1.2 Errata E2
+.TP
+GTF 1.1: VESA Generalized Timing Formula Standard, Version: 1.1
+.RE
+
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Prints the help message.
+.TP
+\fB\-o\fR, \fB\-\-output\-format\fR \fI<fmt>\fR
+If [out] is specified, then write the EDID in format \fI<fmt>\fR.
+
+The output format can be one of:
+.br
+hex: hex numbers in ascii text (default for stdout)
+.br
+raw: binary data (default unless writing to stdout)
+.br
+carray: c-program struct
+.br
+xml: XML data
+.TP
+\fB\-c\fR, \fB\-\-check\fR
+Check if the EDID conforms to the standards. Warnings and failures are
+reported at the end.
+.TP
+\fB\-C\fR, \fB\-\-check\-inline\fR
+Check if the EDID conforms to the standards. Warnings and failures are
+reported as they happen.
+.TP
+\fB\-n\fR, \fB\-\-native\-resolution\fR
+Report the native resolution at the end. There may be multiple native resolution reports
+depending on whether the Source only parses Block 0 (e.g. DVI outputs) or Block 0
+and the CTA-861 Extension Blocks (HDMI), or just the DisplayID Extension Blocks
+(typical for DisplayPort). If all blocks contain the same native resolution, then
+only that resolution is reported. For older displays there may be two separate native
+resolutions: progressive and interlaced.
+.TP
+\fB\-p\fR, \fB\-\-preferred\-timings\fR
+Report the preferred timings at the end. There may be multiple preferred timing reports
+depending on whether the Source only parses Block 0 (e.g. DVI outputs), or Block 0
+and the CTA-861 Extension Blocks (HDMI), or Block 0 and the DisplayID Extension Blocks
+(typical for DisplayPort).
+.TP
+\fB\-I\fR, \fB\-\-infoframe\fR \fI<file>\fR
+Parse the given InfoFrame file. This option can be used multiple times to
+parse multiple InfoFrames. If the EDID of the display to which these InfoFrames
+are transmitted is also given, then the conformity checks will take that EDID
+into account.
+
+If the first byte in the InfoFrame is 0x80 or higher, then it is assumed to be
+an InfoFrame that starts with the HDMI header and has a checksum, as per the
+HDMI Specification. Otherwise it is assumed to be a regular CTA-861 InfoFrame
+without a checksum.
+
+Note: this is still work-in-progress, specifically for the AVI and HDMI InfoFrames.
+.TP
+\fB\-\-diagonal\fR \fI<inches>\fR
+Specify the diagonal of the display in inches. This will enable additional checks
+for the image size, checking if it corresponds to the diagonal. This assumes
+square pixels.
+.TP
+\fB\-P\fR, \fB\-\-physical\-address\fR
+Just report the HDMI Source Physical Address and nothing else. Reports f.f.f.f
+if the EDID could not be parsed, or if there was no CTA-861 Vendor-Specific Data Block
+with OUI 00-0C-03. Otherwise it reports the Source Physical Address as provided
+in that Data Block. This can be used as input to HDMI CEC utilities such as the
+linux cec-ctl(1) utility.
+.TP
+\fB\-S\fR, \fB\-\-short\-timings\fR
+Report all video timings in a short format.
+.TP
+\fB\-L\fR, \fB\-\-long\-timings\fR
+Report all video timings in a long format.
+.TP
+\fB\-N\fR, \fB\-\-ntsc\fR
+Report the video timings with values suitable for NTSC-based video.
+E.g., this will show refresh rates of 29.97 Hz instead of 30 Hz.
+This is only done for timings with refresh rates that are a multiple of 6.
+.TP
+\fB\-X\fR, \fB\-\-xmodeline\fR
+Report all long video timings in the ModeLine format as defined in xorg.conf(5).
+This ModeLine can be used in the xorg.conf file or passed to xrandr(1) with the
+xrandr \fB\-\-newmode\fR option.
+.TP
+\fB\-F\fR, \fB\-\-fbmode\fR
+Report all long video timings in the video mode format as defined in fb.modes(5).
+.TP
+\fB\-V\fR, \fB\-\-v4l2\-timings\fR
+Report all long video timings in the video mode format as defined in the linux header v4l2-dv-timings.h
+for use with the V4L2 VIDIOC_S_DV_TIMINGS ioctl.
+.TP
+\fB\-s\fR, \fB\-\-skip\-hex\-dump\fR
+Skip the initial hex dump of the EDID.
+.TP
+\fB\-H\fR, \fB\-\-only\-hex\-dump\fR
+Only show the hex dump of the EDID, then exit.
+.TP
+\fB\-\-skip\-sha\fR
+Don't show the SHA hash. Normally edid-decode will show the SHA, i.e. the
+hash of the git commit used to compile edid-decode. This uniquely identifies
+the version of edid-decode that is used to generate the warnings and
+failures. But it will also change the output of edid-decode for every new commit
+in the git repository, even if nothing else changed in the edid-decode output.
+Use this option to avoid including the SHA in the edid-decode output.
+.TP
+\fB\-u\fR, \fB\-\-utf8\fR
+Convert embedded EDID strings to UTF-8, using Code Page 437 for the base block
+and ISO 8859-1 for the DisplayID block.
+.TP
+\fB\-\-hide\-serial\-numbers\fR
+Hide any serial numbers in the human readable output by '...'.
+Note that they are still easily extracted from the EDID hex dump at
+the start.
+.TP
+\fB\-\-replace\-unique\-ids\fR
+Replaces any unique IDs in the EDID by fixed values. Serial numbers will be
+replaced by '123456', Container IDs by all zeroes and the 'Made in' date by
+the year 2000. This will also update any checksums in the EDID and update
+the EDID hex dump at the start of the output. Note that since this will
+update checksums, any checksum errors present in the original EDID will
+no longer be detected.
+
+Serial numbers can appear in the Base Block, CTA-861 Extension Blocks,
+DisplayID Extension Blocks and Localized String Extension Blocks.
+Container IDs can appear in the DisplayID and CTA-861 Extension Blocks.
+
+The 'Made in' date appears in the Base Block.
+.TP
+\fB\-\-version\fR
+Show the SHA hash and the last commit date.
+
+.SH I2C/DDC OPTIONS
+The following options read the DDC bus directly, provided the DDC bus is
+exposed by linux to \fB/dev/i2c-\fR\fIX\fR as an i2c adapter device.
+
+This can be used to read the EDID and HDCP information directly from
+the sink and parse it.
+.TP
+\fB\-a\fR, \fB\-\-i2c\-adapter\fR \fI<dev>\fR
+Use the \fI<dev>\fR device to access the DDC lines.
+If \fI<dev>\fR starts with a digit, then \fB/dev/i2c-\fR\fI<dev>\fR is used.
+.TP
+\fB\-\-i2c\-edid\fR
+Read and parse the EDID from the i2c adapter.
+.TP
+\fB\-\-i2c\-hdcp\fR
+Read and parse the HDCP data from the i2c adapter.
+.TP
+\fB\-\-i2c\-hdcp-ri\fR \fI<t>\fR
+Every \fI<t>\fR seconds read and report the HDCP Ri value from the i2c adapter.
+.TP
+\fB\-\-i2c\-test\-reliability\fR [\fBcnt\fR=\fI<cnt>\fR][,\fBsleep\fR=\fI<msecs>\fR]
+Read the EDID \fI<cnt>\fR times (default is 0, meaning forever), with a sleep of \fI<msecs>\fR milliseconds
+(default value is 50 ms) in between each read. Report a FAIL if there are
+mismatches between EDIDs. This tests the i2c communication towards the display.
+
+.SH TIMING OPTIONS
+The following options report the timings for DMT, VIC and HDMI VIC codes and
+calculate the timings for CVT or GTF timings, based on the given parameters.
+The EDID will not be shown, although it can be used with the \fB\-\-gtf\fR
+option in order to read the secondary curve parameters.
+.TP
+\fB\-\-std\fR \fI<byte1>\fR,\fI<byte2>\fR
+Show the standard timing represented by these two bytes.
+.TP
+\fB\-\-dmt\fR \fI<dmt>\fR
+Show the timings for the DMT with the given DMT ID.
+.TP
+\fB\-\-vic\fR \fI<vic>\fR
+Show the timings for this VIC.
+.TP
+\fB\-\-hdmi\-vic\fR \fI<hdmivic>\fR
+Show the timings for this HDMI VIC.
+.TP
+\fB\-\-cvt\fR \fBw\fR=\fI<width>\fR,\fBh\fR=\fI<height>\fR,\fBfps\fR=\fI<fps>\fR[,\fBrb\fR=\fI<rb>\fR][,\fBinterlaced\fR][,\fBoverscan\fR]
+[,\fBalt\fR][,\fBhblank\fR=\fI<hblank>\fR][,\fBvblank\fR=\fI<vblank>\fR][,\fBearly\-vsync\fR]
+.br
+Calculate the CVT timings for the given format.
+
+\fI<width>\fR is the width in pixels, \fI<height>\fR is the frame (not field!) height in lines.
+.br
+\fI<fps>\fR is frames per second for progressive timings and fields per second for interlaced timings.
+.br
+\fI<rb>\fR can be 0 (no reduced blanking, default), or 1-3 for the reduced blanking version.
+.br
+If \fBinterlaced\fR is given, then this is an interlaced format.
+.br
+If \fBoverscan\fR is given, then this is an overscanned format. I.e., margins are required.
+.br
+If \fBalt\fR is given and \fI<rb>\fR=2, then report the timings
+optimized for video: 1000 / 1001 * \fI<fps>\fR.
+.br
+If \fBalt\fR is given and \fI<rb>\fR=3, then the horizontal blanking
+is 160 instead of 80 pixels.
+.br
+If \fBhblank\fR is given and \fI<rb>\fR=3, then the horizontal blanking
+is \fI<hblank>\fR pixels (range of 80-200 and divisible by 8), overriding \fBalt\fR.
+.br
+If \fBvblank\fR is given and \fI<rb>\fR=3, then the vertical blanking time
+is \fI<vblank>\fR microseconds (460 minimum, values > 705 might not be supported by
+all RBv3 timings compliant source devices.
+.br
+If \fBearly\-vsync\fR is given and \fI<rb>\fR=3, then select an early vsync timing.
+.TP
+\fB\-\-gtf\fR \fBw\fR=\fI<width>\fR,\fBh\fR=\fI<height>\fR[,\fBfps\fR=\fI<fps>\fR][,\fBhorfreq\fR=\fI<horfreq>\fR][,\fBpixclk\fR=\fI<pixclk>\fR]
+[,\fBinterlaced\fR][,\fBoverscan\fR][,\fBsecondary\fR][,\fBC\fR=\fI<c>\fR][,\fBM\fR=\fI<m>\fR][,\fBK\fR=\fI<k>\fR][,\fBJ\fR=\fI<j>\fR]
+.br
+Calculate the GTF timings for the given format.
+
+\fI<width>\fR is the width in pixels, \fI<height>\fR is the frame (not field!) height in lines.
+.br
+\fI<fps>\fR is frames per second for progressive timings and fields per second for interlaced timings.
+.br
+\fI<horfreq>\fR is the horizontal frequency in kHz.
+.br
+\fI<pixclk>\fR is the pixel clock frequency in MHz.
+Only one of \fBfps\fR, \fBhorfreq\fR or \fBpixclk\fR must be given.
+.br
+If \fBinterlaced\fR is given, then this is an interlaced format.
+.br
+If \fBoverscan\fR is given, then this is an overscanned format. I.e., margins are required.
+.br
+If \fBsecondary\fR is given, then the secondary GTF is used for
+reduced blanking, where \fI<c>\fR, \fI<m>\fR, \fI<k>\fR and \fI<j>\fR are parameters
+for the secondary curve.  If none of the secondary curve parameters
+were set, and an EDID file is passed as command line option, then the
+secondary curve parameters are read from that EDID.
+.br
+The default secondary curve parameters are 40 for \fI<c>\fR, 600 for \fI<m>\fR,
+128 for \fI<k>\fR and 20 for \fI<j>\fR.
+These values correspond to the normal curve that GTF uses.
+.TP
+\fB\-\-ovt\fR (\fBrid\fR=\fI<rid>\fR|\fBw\fR=\fI<width>\fR,\fBh\fR=\fI<height>\fR),\fBfps\fR=\fI<fps>\fR
+Calculate the OVT timings for the given format.
+Either specify a \fI<rid>\fR or specify \fI<width>\fR and \fI<height>\fR.
+\fI<fps>\fR is frames per second.
+.TP
+\fB\-\-list\-established\-timings\fR
+List all known Established Timings.
+.TP
+\fB\-\-list\-dmts\fR
+List all known DMTs.
+.TP
+\fB\-\-list\-vics\fR
+List all known VICs.
+.TP
+\fB\-\-list\-hdmi\-vics\fR
+List all known HDMI VICs.
+.TP
+\fB\-\-list\-rids\fR
+List all known CTA-861 RIDs.
+.TP
+\fB\-\-list\-rid\-timings\fR \fI<rid>\fR
+List all timings for the specified \fI<rid>\fR or all known RIDs if \fI<rid>\fR is 0.
+
+.PP
+.SH NOTES
+Not all fields are decoded, or decoded completely.
+.B edid-decode
+does attempt to validate its input against the relevant standards, but its
+opinions have not been double-checked with the relevant standards bodies,
+so they may be wrong.  Do not rely on the output format, as it will likely
+change in future versions of the tool as additional fields and extensions are
+added.
+.SH "SEE ALSO"
+Xorg(1), xrandr(1), cec-ctl(1), xorg.conf(5), fb.modes(5)
+.SH AUTHORS
+edid-decode was written by Adam Jackson, with contributions from Eric
+Anholt, Damien Lespiau, Hans Verkuil and others.
+
+Bug reports or questions about this utility should be sent to the linux-media@vger.kernel.org
+mailinglist.

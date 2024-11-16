@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en-us"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style id="stndz-style"></style>
+
+
+    <link rel="icon" type="image/x-icon" href="./edid-decode.ico">
+
+    <title>EDID Decode</title>
+    <style>
+      body {
+        font-family: arial;
+        margin: 0;
+        padding: none;
+      }
+
+      textarea {
+        margin-top: 10px;
+	border: 0;
+        display: block;
+        background-color: black;
+        color: white;
+        font-family: 'Lucida Console', Monaco, monospace;
+        outline: none;
+      }
+
+      #error {
+        background-color: white;
+        color: red;
+      }
+
+      button {
+        margin: 10px;
+      }
+
+      h3 { margin: 0px; }
+    </style>
+  </head>
+  <body>
+   <div style="display:flex">
+   <div style="margin:10px">
+    <h3 style="float:left">EDID</h3>
+    <input type="file" id="upload" style="float:left; margin-left: 10px;">
+    <div style="clear:both"></div>
+    <textarea id="input" style="width:40vw; height: 300px;" placeholder="Paste EDID hex here"></textarea>
+    <button id="process">Process</button>
+    <div><a href="https://git.linuxtv.org/v4l-utils.git/">v4l-utils.git</a></div>
+    <br>
+    Credits: copied from Ilia Mirkin's website https://people.freedesktop.org/~imirkin/edid-decode/
+    <textarea readonly="" id="error" style="width: 40vw; height: 100px; resize: none;"></textarea>
+   </div>
+   <div style="margin:10px">
+    <h3>Parsed</h3>
+    <textarea readonly="" id="output" rows="8" style="width:55vw; height: calc(100vh - 80px)"></textarea>
+   </div>
+
+    <script type="text/javascript">
+
+document.getElementById("upload").addEventListener("change", function(e) {
+  if (typeof WebAssembly === 'undefined') return;
+  document.getElementById("output").value = "";
+  document.getElementById("error").value = "";
+
+  var input = e.target;
+  var file = input.files[0];
+  if (!file) return;
+  var fr = new FileReader();
+  fr.onload = function(e) {
+    process(new Uint8Array(e.target.result));
+  }
+  fr.readAsArrayBuffer(file);
+});
+
+document.getElementById("process").addEventListener("click", function(e) {
+  if (typeof WebAssembly === 'undefined') return;
+  document.getElementById("output").value = "";
+  document.getElementById("error").value = "";
+  process(document.getElementById("input").value);
+});
+
+function process(input) {
+  FS.writeFile("input-file", input);
+  Module.ccall('parse_edid', 'number', ['string'], ['input-file']);
+/*
+  // Look for the hex in the EDID output
+  var output = document.getElementById("output").value;
+  var m = output.match(/^edid-decode \(hex\):\n([0-9a-f \n]*)\n/ms);
+  if (m) {
+    var hex = m[1].replace(/\s/g, '');
+    console.log(hex);
+  }
+*/
+}
+
+      var Module = {
+      noInitialRun: true,
+        preRun: [
+	],
+        postRun: [],
+        print: (function() {
+          var element = document.getElementById('output');
+          if (element) element.value = ''; // clear browser cache
+          return function(text) {
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            // These replacements are necessary if you render to raw HTML
+            //text = text.replace(/&/g, "&amp;");
+            //text = text.replace(/</g, "&lt;");
+            //text = text.replace(/>/g, "&gt;");
+            //text = text.replace('\n', '<br>', 'g');
+            console.log(text);
+            if (element) {
+              element.value += text + "\n";
+              element.scrollTop = element.scrollHeight; // focus on bottom
+            }
+          };
+        })(),
+        printErr: (function() {
+          var element = document.getElementById('error');
+          if (element) element.value = ''; // clear browser cache
+          return function(text) {
+            if (arguments.length > 1) text = Array.prototype.slice.call(arguments).join(' ');
+            console.error(text);
+            if (element) {
+              element.value += text + "\n";
+              element.scrollTop = element.scrollHeight;
+            }
+          };
+        })(),
+        setStatus: function(text) {
+          if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
+          if (text === Module.setStatus.last.text) return;
+	  console.log(text);
+        },
+        totalDependencies: 0,
+        monitorRunDependencies: function(left) {
+          this.totalDependencies = Math.max(this.totalDependencies, left);
+          Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
+        }
+      };
+      Module.setStatus('Downloading...');
+      window.onerror = function(event) {
+        // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
+        Module.setStatus('Exception thrown, see JavaScript console');
+        Module.setStatus = function(text) {
+          if (text) Module.printErr('[post-exception status] ' + text);
+        };
+      };
+    </script>
+    <script async="" type="text/javascript" src="./edid-decode.js"></script>
+
+
+</div></body></html>

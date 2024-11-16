@@ -1,0 +1,1574 @@
+[     4.295] (--) Log file renamed from "/var/log/Xorg.pid-762.log" to "/var/log/Xorg.0.log"
+[     4.296] 
+X.Org X Server 1.20.4
+X Protocol Version 11, Revision 0
+[     4.296] Build Operating System: Linux 4.9.0-8-amd64 x86_64 Debian
+[     4.296] Current Operating System: Linux octomore 5.4.0-rc8-octomore #23 SMP PREEMPT Sat Nov 23 16:00:49 CET 2019 x86_64
+[     4.296] Kernel command line: BOOT_IMAGE=/boot/vmlinuz-5.4.0-rc8-octomore root=UUID=e227131b-ee41-479a-a25e-bce91b18a6ed ro
+[     4.296] Build Date: 05 March 2019  08:11:12PM
+[     4.296] xorg-server 2:1.20.4-1 (https://www.debian.org/support) 
+[     4.296] Current version of pixman: 0.36.0
+[     4.296] 	Before reporting problems, check http://wiki.x.org
+	to make sure that you have the latest version.
+[     4.296] Markers: (--) probed, (**) from config file, (==) default setting,
+	(++) from command line, (!!) notice, (II) informational,
+	(WW) warning, (EE) error, (NI) not implemented, (??) unknown.
+[     4.296] (==) Log file: "/var/log/Xorg.0.log", Time: Tue Nov 26 16:25:38 2019
+[     4.297] (==) Using system config directory "/usr/share/X11/xorg.conf.d"
+[     4.298] (==) No Layout section.  Using the first Screen section.
+[     4.298] (==) No screen section available. Using defaults.
+[     4.298] (**) |-->Screen "Default Screen Section" (0)
+[     4.298] (**) |   |-->Monitor "<default monitor>"
+[     4.298] (==) No monitor specified for screen "Default Screen Section".
+	Using a default monitor configuration.
+[     4.298] (==) Automatically adding devices
+[     4.298] (==) Automatically enabling devices
+[     4.298] (==) Automatically adding GPU devices
+[     4.298] (==) Max clients allowed: 256, resource mask: 0x1fffff
+[     4.299] (WW) The directory "/usr/share/fonts/X11/cyrillic" does not exist.
+[     4.299] 	Entry deleted from font path.
+[     4.301] (==) FontPath set to:
+	/usr/share/fonts/X11/misc,
+	/usr/share/fonts/X11/100dpi/:unscaled,
+	/usr/share/fonts/X11/75dpi/:unscaled,
+	/usr/share/fonts/X11/Type1,
+	/usr/share/fonts/X11/100dpi,
+	/usr/share/fonts/X11/75dpi,
+	built-ins
+[     4.301] (==) ModulePath set to "/usr/lib/xorg/modules"
+[     4.301] (II) The server relies on udev to provide the list of input devices.
+	If no devices become available, reconfigure udev or disable AutoAddDevices.
+[     4.301] (II) Loader magic: 0x55a9db113e20
+[     4.301] (II) Module ABI versions:
+[     4.301] 	X.Org ANSI C Emulation: 0.4
+[     4.301] 	X.Org Video Driver: 24.0
+[     4.301] 	X.Org XInput driver : 24.1
+[     4.301] 	X.Org Server Extension : 10.0
+[     4.301] (++) using VT number 7
+
+[     4.301] (II) systemd-logind: logind integration requires -keeptty and -keeptty was not provided, disabling logind integration
+[     4.302] (II) xfree86: Adding drm device (/dev/dri/card1)
+[     4.316] (II) xfree86: Adding drm device (/dev/dri/card0)
+[     4.318] (--) PCI:*(0@0:2:0) 8086:5917:17aa:225c rev 7, Mem @ 0x2ffa000000/16777216, 0x2fa0000000/268435456, I/O @ 0x0000e000/64, BIOS @ 0x????????/131072
+[     4.318] (II) LoadModule: "glx"
+[     4.319] (II) Loading /usr/lib/xorg/modules/extensions/libglx.so
+[     4.325] (II) Module glx: vendor="X.Org Foundation"
+[     4.325] 	compiled for 1.20.4, module version = 1.0.0
+[     4.325] 	ABI class: X.Org Server Extension, version 10.0
+[     4.325] (==) Matched modesetting as autoconfigured driver 0
+[     4.325] (==) Matched fbdev as autoconfigured driver 1
+[     4.325] (==) Matched vesa as autoconfigured driver 2
+[     4.325] (==) Assigned the driver to the xf86ConfigLayout
+[     4.325] (II) LoadModule: "modesetting"
+[     4.325] (II) Loading /usr/lib/xorg/modules/drivers/modesetting_drv.so
+[     4.326] (II) Module modesetting: vendor="X.Org Foundation"
+[     4.326] 	compiled for 1.20.4, module version = 1.20.4
+[     4.326] 	Module class: X.Org Video Driver
+[     4.326] 	ABI class: X.Org Video Driver, version 24.0
+[     4.326] (II) LoadModule: "fbdev"
+[     4.326] (II) Loading /usr/lib/xorg/modules/drivers/fbdev_drv.so
+[     4.327] (II) Module fbdev: vendor="X.Org Foundation"
+[     4.327] 	compiled for 1.20.0, module version = 0.5.0
+[     4.327] 	Module class: X.Org Video Driver
+[     4.327] 	ABI class: X.Org Video Driver, version 24.0
+[     4.327] (II) LoadModule: "vesa"
+[     4.327] (II) Loading /usr/lib/xorg/modules/drivers/vesa_drv.so
+[     4.327] (II) Module vesa: vendor="X.Org Foundation"
+[     4.327] 	compiled for 1.20.4, module version = 2.4.0
+[     4.327] 	Module class: X.Org Video Driver
+[     4.327] 	ABI class: X.Org Video Driver, version 24.0
+[     4.327] (II) modesetting: Driver for Modesetting Kernel Drivers: kms
+[     4.327] (II) FBDEV: driver for framebuffer: fbdev
+[     4.327] (II) VESA: driver for VESA chipsets: vesa
+[     4.350] (II) modeset(0): using drv /dev/dri/card1
+[     4.350] (WW) Falling back to old probe method for fbdev
+[     4.350] (II) Loading sub module "fbdevhw"
+[     4.350] (II) LoadModule: "fbdevhw"
+[     4.350] (II) Loading /usr/lib/xorg/modules/libfbdevhw.so
+[     4.350] (II) Module fbdevhw: vendor="X.Org Foundation"
+[     4.350] 	compiled for 1.20.4, module version = 0.0.2
+[     4.350] 	ABI class: X.Org Video Driver, version 24.0
+[     4.350] (II) modeset(0): Creating default Display subsection in Screen section
+	"Default Screen Section" for depth/fbbpp 24/32
+[     4.350] (==) modeset(0): Depth 24, (==) framebuffer bpp 32
+[     4.350] (==) modeset(0): RGB weight 888
+[     4.350] (==) modeset(0): Default visual is TrueColor
+[     4.350] (II) Loading sub module "glamoregl"
+[     4.350] (II) LoadModule: "glamoregl"
+[     4.350] (II) Loading /usr/lib/xorg/modules/libglamoregl.so
+[     4.356] (II) Module glamoregl: vendor="X.Org Foundation"
+[     4.356] 	compiled for 1.20.4, module version = 1.0.1
+[     4.356] 	ABI class: X.Org ANSI C Emulation, version 0.4
+[     4.395] (II) modeset(0): glamor X acceleration enabled on Mesa DRI Intel(R) UHD Graphics 620 (Kabylake GT2) 
+[     4.395] (II) modeset(0): glamor initialized
+[     4.396] (II) modeset(0): Output eDP-1 has no monitor section
+[     4.396] (II) modeset(0): Output DP-1 has no monitor section
+[     4.404] (II) modeset(0): Output HDMI-1 has no monitor section
+[     4.404] (II) modeset(0): Output DP-2 has no monitor section
+[     4.513] (II) modeset(0): Output HDMI-2 has no monitor section
+[     4.514] (II) modeset(0): EDID for output eDP-1
+[     4.514] (II) modeset(0): Manufacturer: AUO  Model: 313d  Serial#: 0
+[     4.514] (II) modeset(0): Year: 2016  Week: 0
+[     4.514] (II) modeset(0): EDID Version: 1.4
+[     4.514] (II) modeset(0): Digital Display Input
+[     4.514] (II) modeset(0): 8 bits per channel
+[     4.514] (II) modeset(0): Digital interface is DisplayPort
+[     4.514] (II) modeset(0): Max Image Size [cm]: horiz.: 31  vert.: 17
+[     4.514] (II) modeset(0): Gamma: 2.20
+[     4.514] (II) modeset(0): No DPMS capabilities specified
+[     4.514] (II) modeset(0): Supported color encodings: RGB 4:4:4 
+[     4.514] (II) modeset(0): First detailed timing is preferred mode
+[     4.514] (II) modeset(0): Preferred mode is native pixel format and refresh rate
+[     4.514] (II) modeset(0): redX: 0.631 redY: 0.336   greenX: 0.323 greenY: 0.614
+[     4.514] (II) modeset(0): blueX: 0.156 blueY: 0.040   whiteX: 0.313 whiteY: 0.329
+[     4.514] (II) modeset(0): Manufacturer's mask: 0
+[     4.514] (II) modeset(0): Supported detailed timing:
+[     4.514] (II) modeset(0): clock: 141.0 MHz   Image Size:  309 x 174 mm
+[     4.514] (II) modeset(0): h_active: 1920  h_sync: 1936  h_sync_end 1952 h_blank_end 2104 h_border: 0
+[     4.514] (II) modeset(0): v_active: 1080  v_sync: 1083  v_sync_end 1097 v_blanking: 1116 v_border: 0
+[     4.514] (II) modeset(0): Unknown vendor-specific block f
+[     4.514] (II) modeset(0):  AUO
+[     4.514] (II) modeset(0):  B140HAN03.1
+[     4.514] (II) modeset(0): EDID (in hex):
+[     4.514] (II) modeset(0): 	00ffffffffffff0006af3d3100000000
+[     4.514] (II) modeset(0): 	001a0104a51f1178028d15a156529d28
+[     4.514] (II) modeset(0): 	0a505400000001010101010101010101
+[     4.514] (II) modeset(0): 	010101010101143780b8703824401010
+[     4.514] (II) modeset(0): 	3e0035ae100000180000000f00000000
+[     4.514] (II) modeset(0): 	00000000000000000020000000fe0041
+[     4.514] (II) modeset(0): 	554f0a202020202020202020000000fe
+[     4.514] (II) modeset(0): 	004231343048414e30332e31200a003b
+[     4.514] (II) modeset(0): Printing probed modes for output eDP-1
+[     4.514] (II) modeset(0): Modeline "1920x1080"x60.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[     4.514] (II) modeset(0): Modeline "1920x1080"x120.0  356.38  1920 2080 2288 2656  1080 1081 1084 1118 doublescan -hsync +vsync (134.2 kHz d)
+[     4.514] (II) modeset(0): Modeline "1920x1080"x119.9  266.50  1920 1944 1960 2000  1080 1081 1084 1111 doublescan +hsync -vsync (133.2 kHz d)
+[     4.514] (II) modeset(0): Modeline "1920x1080"x60.0  173.00  1920 2048 2248 2576  1080 1083 1088 1120 -hsync +vsync (67.2 kHz d)
+[     4.514] (II) modeset(0): Modeline "1920x1080"x59.9  138.50  1920 1968 2000 2080  1080 1083 1088 1111 +hsync -vsync (66.6 kHz d)
+[     4.514] (II) modeset(0): Modeline "1680x1050"x60.0  146.25  1680 1784 1960 2240  1050 1053 1059 1089 -hsync +vsync (65.3 kHz d)
+[     4.514] (II) modeset(0): Modeline "1680x1050"x59.9  119.00  1680 1728 1760 1840  1050 1053 1059 1080 +hsync -vsync (64.7 kHz d)
+[     4.514] (II) modeset(0): Modeline "1600x1024"x60.2  103.12  1600 1600 1656 1664  1024 1024 1029 1030 +hsync +vsync (62.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "1400x1050"x60.0  122.00  1400 1488 1640 1880  1050 1052 1064 1082 +hsync +vsync (64.9 kHz d)
+[     4.514] (II) modeset(0): Modeline "1600x900"x120.0  246.00  1600 1728 1900 2200  900 901 904 932 doublescan -hsync +vsync (111.8 kHz d)
+[     4.514] (II) modeset(0): Modeline "1600x900"x119.9  186.50  1600 1624 1640 1680  900 901 904 926 doublescan +hsync -vsync (111.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "1600x900"x59.9  118.25  1600 1696 1856 2112  900 903 908 934 -hsync +vsync (56.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "1600x900"x59.8   97.50  1600 1648 1680 1760  900 903 908 926 +hsync -vsync (55.4 kHz d)
+[     4.514] (II) modeset(0): Modeline "1280x1024"x60.0  108.00  1280 1328 1440 1688  1024 1025 1028 1066 +hsync +vsync (64.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "1440x900"x59.9  106.50  1440 1520 1672 1904  900 903 909 934 -hsync +vsync (55.9 kHz d)
+[     4.514] (II) modeset(0): Modeline "1400x900"x60.0  103.50  1400 1480 1624 1848  900 903 913 934 -hsync +vsync (56.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "1400x900"x59.9   86.50  1400 1448 1480 1560  900 903 913 926 +hsync -vsync (55.4 kHz d)
+[     4.514] (II) modeset(0): Modeline "1280x960"x60.0  108.00  1280 1376 1488 1800  960 961 964 1000 +hsync +vsync (60.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "1440x810"x120.0  198.12  1440 1548 1704 1968  810 811 814 839 doublescan -hsync +vsync (100.7 kHz d)
+[     4.514] (II) modeset(0): Modeline "1440x810"x119.9  151.88  1440 1464 1480 1520  810 811 814 833 doublescan +hsync -vsync (99.9 kHz d)
+[     4.514] (II) modeset(0): Modeline "1368x768"x59.9   85.25  1368 1440 1576 1784  768 771 781 798 -hsync +vsync (47.8 kHz d)
+[     4.514] (II) modeset(0): Modeline "1368x768"x59.9   72.25  1368 1416 1448 1528  768 771 781 790 +hsync -vsync (47.3 kHz d)
+[     4.514] (II) modeset(0): Modeline "1360x768"x59.8   84.75  1360 1432 1568 1776  768 771 781 798 -hsync +vsync (47.7 kHz d)
+[     4.514] (II) modeset(0): Modeline "1360x768"x60.0   72.00  1360 1408 1440 1520  768 771 781 790 +hsync -vsync (47.4 kHz d)
+[     4.514] (II) modeset(0): Modeline "1280x800"x120.0  174.25  1280 1380 1516 1752  800 801 804 829 doublescan -hsync +vsync (99.5 kHz d)
+[     4.514] (II) modeset(0): Modeline "1280x800"x119.9  134.25  1280 1304 1320 1360  800 801 804 823 doublescan +hsync -vsync (98.7 kHz d)
+[     4.514] (II) modeset(0): Modeline "1280x800"x59.8   83.50  1280 1352 1480 1680  800 803 809 831 -hsync +vsync (49.7 kHz d)
+[     4.514] (II) modeset(0): Modeline "1280x800"x59.9   71.00  1280 1328 1360 1440  800 803 809 823 +hsync -vsync (49.3 kHz d)
+[     4.514] (II) modeset(0): Modeline "1152x864"x60.0   81.62  1152 1216 1336 1520  864 865 868 895 -hsync +vsync (53.7 kHz d)
+[     4.514] (II) modeset(0): Modeline "1280x720"x120.0  156.12  1280 1376 1512 1744  720 721 724 746 doublescan -hsync +vsync (89.5 kHz d)
+[     4.514] (II) modeset(0): Modeline "1280x720"x120.0  120.75  1280 1304 1320 1360  720 721 724 740 doublescan +hsync -vsync (88.8 kHz d)
+[     4.514] (II) modeset(0): Modeline "1280x720"x59.9   74.50  1280 1344 1472 1664  720 723 728 748 -hsync +vsync (44.8 kHz d)
+[     4.514] (II) modeset(0): Modeline "1280x720"x59.7   63.75  1280 1328 1360 1440  720 723 728 741 +hsync -vsync (44.3 kHz d)
+[     4.514] (II) modeset(0): Modeline "1024x768"x120.1  133.47  1024 1100 1212 1400  768 768 770 794 doublescan -hsync +vsync (95.3 kHz d)
+[     4.514] (II) modeset(0): Modeline "1024x768"x60.0   65.00  1024 1048 1184 1344  768 771 777 806 -hsync -vsync (48.4 kHz d)
+[     4.514] (II) modeset(0): Modeline "960x720"x120.0  117.00  960 1024 1128 1300  720 720 722 750 doublescan -hsync +vsync (90.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "928x696"x120.1  109.15  928 976 1088 1264  696 696 698 719 doublescan -hsync +vsync (86.4 kHz d)
+[     4.514] (II) modeset(0): Modeline "896x672"x120.0  102.40  896 960 1060 1224  672 672 674 697 doublescan -hsync +vsync (83.7 kHz d)
+[     4.514] (II) modeset(0): Modeline "1024x576"x119.9   98.50  1024 1092 1200 1376  576 577 580 597 doublescan -hsync +vsync (71.6 kHz d)
+[     4.514] (II) modeset(0): Modeline "1024x576"x119.9   78.38  1024 1048 1064 1104  576 577 580 592 doublescan +hsync -vsync (71.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "1024x576"x59.9   46.50  1024 1064 1160 1296  576 579 584 599 -hsync +vsync (35.9 kHz d)
+[     4.514] (II) modeset(0): Modeline "1024x576"x59.8   42.00  1024 1072 1104 1184  576 579 584 593 +hsync -vsync (35.5 kHz d)
+[     4.514] (II) modeset(0): Modeline "960x600"x119.9   96.62  960 1028 1128 1296  600 601 604 622 doublescan -hsync +vsync (74.6 kHz d)
+[     4.514] (II) modeset(0): Modeline "960x600"x120.0   77.00  960 984 1000 1040  600 601 604 617 doublescan +hsync -vsync (74.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "960x540"x119.9   86.50  960 1024 1124 1288  540 541 544 560 doublescan -hsync +vsync (67.2 kHz d)
+[     4.514] (II) modeset(0): Modeline "960x540"x120.0   69.25  960 984 1000 1040  540 541 544 555 doublescan +hsync -vsync (66.6 kHz d)
+[     4.514] (II) modeset(0): Modeline "960x540"x59.6   40.75  960 992 1088 1216  540 543 548 562 -hsync +vsync (33.5 kHz d)
+[     4.514] (II) modeset(0): Modeline "960x540"x59.8   37.25  960 1008 1040 1120  540 543 548 556 +hsync -vsync (33.3 kHz d)
+[     4.514] (II) modeset(0): Modeline "800x600"x120.0   81.00  800 832 928 1080  600 600 602 625 doublescan +hsync +vsync (75.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "800x600"x60.3   40.00  800 840 968 1056  600 601 605 628 +hsync +vsync (37.9 kHz d)
+[     4.514] (II) modeset(0): Modeline "800x600"x56.2   36.00  800 824 896 1024  600 601 603 625 +hsync +vsync (35.2 kHz d)
+[     4.514] (II) modeset(0): Modeline "840x525"x120.0   73.12  840 892 980 1120  525 526 529 544 doublescan -hsync +vsync (65.3 kHz d)
+[     4.514] (II) modeset(0): Modeline "840x525"x119.8   59.50  840 864 880 920  525 526 529 540 doublescan +hsync -vsync (64.7 kHz d)
+[     4.514] (II) modeset(0): Modeline "864x486"x59.9   32.50  864 888 968 1072  486 489 494 506 -hsync +vsync (30.3 kHz d)
+[     4.514] (II) modeset(0): Modeline "864x486"x59.6   30.50  864 912 944 1024  486 489 494 500 +hsync -vsync (29.8 kHz d)
+[     4.514] (II) modeset(0): Modeline "800x512"x120.3   51.56  800 800 828 832  512 512 514 515 doublescan +hsync +vsync (62.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "700x525"x120.0   61.00  700 744 820 940  525 526 532 541 doublescan +hsync +vsync (64.9 kHz d)
+[     4.514] (II) modeset(0): Modeline "800x450"x119.9   59.12  800 848 928 1056  450 451 454 467 doublescan -hsync +vsync (56.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "800x450"x119.6   48.75  800 824 840 880  450 451 454 463 doublescan +hsync -vsync (55.4 kHz d)
+[     4.514] (II) modeset(0): Modeline "640x512"x120.0   54.00  640 664 720 844  512 512 514 533 doublescan +hsync +vsync (64.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "720x450"x119.8   53.25  720 760 836 952  450 451 454 467 doublescan -hsync +vsync (55.9 kHz d)
+[     4.514] (II) modeset(0): Modeline "700x450"x119.9   51.75  700 740 812 924  450 451 456 467 doublescan -hsync +vsync (56.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "700x450"x119.8   43.25  700 724 740 780  450 451 456 463 doublescan +hsync -vsync (55.4 kHz d)
+[     4.514] (II) modeset(0): Modeline "640x480"x120.0   54.00  640 688 744 900  480 480 482 500 doublescan +hsync +vsync (60.0 kHz d)
+[     4.514] (II) modeset(0): Modeline "640x480"x59.9   25.18  640 656 752 800  480 490 492 525 -hsync -vsync (31.5 kHz d)
+[     4.514] (II) modeset(0): Modeline "720x405"x59.5   22.50  720 744 808 896  405 408 413 422 -hsync +vsync (25.1 kHz d)
+[     4.514] (II) modeset(0): Modeline "720x405"x59.0   21.75  720 768 800 880  405 408 413 419 +hsync -vsync (24.7 kHz d)
+[     4.514] (II) modeset(0): Modeline "684x384"x119.8   42.62  684 720 788 892  384 385 390 399 doublescan -hsync +vsync (47.8 kHz d)
+[     4.514] (II) modeset(0): Modeline "684x384"x119.7   36.12  684 708 724 764  384 385 390 395 doublescan +hsync -vsync (47.3 kHz d)
+[     4.514] (II) modeset(0): Modeline "680x384"x119.6   42.38  680 716 784 888  384 385 390 399 doublescan -hsync +vsync (47.7 kHz d)
+[     4.514] (II) modeset(0): Modeline "680x384"x119.9   36.00  680 704 720 760  384 385 390 395 doublescan +hsync -vsync (47.4 kHz d)
+[     4.514] (II) modeset(0): Modeline "640x400"x119.8   41.75  640 676 740 840  400 401 404 415 doublescan -hsync +vsync (49.7 kHz d)
+[     4.514] (II) modeset(0): Modeline "640x400"x120.0   35.50  640 664 680 720  400 401 404 411 doublescan +hsync -vsync (49.3 kHz d)
+[     4.514] (II) modeset(0): Modeline "576x432"x120.1   40.81  576 608 668 760  432 432 434 447 doublescan -hsync +vsync (53.7 kHz d)
+[     4.514] (II) modeset(0): Modeline "640x360"x119.7   37.25  640 672 736 832  360 361 364 374 doublescan -hsync +vsync (44.8 kHz d)
+[     4.514] (II) modeset(0): Modeline "640x360"x119.7   31.88  640 664 680 720  360 361 364 370 doublescan +hsync -vsync (44.3 kHz d)
+[     4.514] (II) modeset(0): Modeline "640x360"x59.8   18.00  640 664 720 800  360 363 368 376 -hsync +vsync (22.5 kHz d)
+[     4.514] (II) modeset(0): Modeline "640x360"x59.3   17.75  640 688 720 800  360 363 368 374 +hsync -vsync (22.2 kHz d)
+[     4.514] (II) modeset(0): Modeline "512x384"x120.0   32.50  512 524 592 672  384 385 388 403 doublescan -hsync -vsync (48.4 kHz d)
+[     4.514] (II) modeset(0): Modeline "512x288"x120.0   23.25  512 532 580 648  288 289 292 299 doublescan -hsync +vsync (35.9 kHz d)
+[     4.514] (II) modeset(0): Modeline "512x288"x119.8   21.00  512 536 552 592  288 289 292 296 doublescan +hsync -vsync (35.5 kHz d)
+[     4.514] (II) modeset(0): Modeline "480x270"x119.3   20.38  480 496 544 608  270 271 274 281 doublescan -hsync +vsync (33.5 kHz d)
+[     4.514] (II) modeset(0): Modeline "480x270"x119.6   18.62  480 504 520 560  270 271 274 278 doublescan +hsync -vsync (33.3 kHz d)
+[     4.514] (II) modeset(0): Modeline "400x300"x120.6   20.00  400 420 484 528  300 300 302 314 doublescan +hsync +vsync (37.9 kHz d)
+[     4.515] (II) modeset(0): Modeline "400x300"x112.7   18.00  400 412 448 512  300 300 301 312 doublescan +hsync +vsync (35.2 kHz d)
+[     4.515] (II) modeset(0): Modeline "432x243"x119.8   16.25  432 444 484 536  243 244 247 253 doublescan -hsync +vsync (30.3 kHz d)
+[     4.515] (II) modeset(0): Modeline "432x243"x119.1   15.25  432 456 472 512  243 244 247 250 doublescan +hsync -vsync (29.8 kHz d)
+[     4.515] (II) modeset(0): Modeline "320x240"x120.1   12.59  320 328 376 400  240 245 246 262 doublescan -hsync -vsync (31.5 kHz d)
+[     4.515] (II) modeset(0): Modeline "360x202"x119.0   11.25  360 372 404 448  202 204 206 211 doublescan -hsync +vsync (25.1 kHz d)
+[     4.515] (II) modeset(0): Modeline "360x202"x118.3   10.88  360 384 400 440  202 204 206 209 doublescan +hsync -vsync (24.7 kHz d)
+[     4.515] (II) modeset(0): Modeline "320x180"x119.7    9.00  320 332 360 400  180 181 184 188 doublescan -hsync +vsync (22.5 kHz d)
+[     4.515] (II) modeset(0): Modeline "320x180"x118.6    8.88  320 344 360 400  180 181 184 187 doublescan +hsync -vsync (22.2 kHz d)
+[     4.515] (II) modeset(0): EDID for output DP-1
+[     4.531] (II) modeset(0): EDID for output HDMI-1
+[     4.531] (II) modeset(0): EDID for output DP-2
+[     4.640] (II) modeset(0): EDID for output HDMI-2
+[     4.640] (II) modeset(0): Output eDP-1 connected
+[     4.640] (II) modeset(0): Output DP-1 disconnected
+[     4.640] (II) modeset(0): Output HDMI-1 disconnected
+[     4.640] (II) modeset(0): Output DP-2 disconnected
+[     4.640] (II) modeset(0): Output HDMI-2 disconnected
+[     4.640] (II) modeset(0): Using exact sizes for initial modes
+[     4.640] (II) modeset(0): Output eDP-1 using initial mode 1920x1080 +0+0
+[     4.641] (==) modeset(0): Using gamma correction (1.0, 1.0, 1.0)
+[     4.641] (==) modeset(0): DPI set to (96, 96)
+[     4.641] (II) Loading sub module "fb"
+[     4.641] (II) LoadModule: "fb"
+[     4.641] (II) Loading /usr/lib/xorg/modules/libfb.so
+[     4.642] (II) Module fb: vendor="X.Org Foundation"
+[     4.642] 	compiled for 1.20.4, module version = 1.0.0
+[     4.642] 	ABI class: X.Org ANSI C Emulation, version 0.4
+[     4.642] (II) UnloadModule: "fbdev"
+[     4.642] (II) Unloading fbdev
+[     4.642] (II) UnloadSubModule: "fbdevhw"
+[     4.642] (II) Unloading fbdevhw
+[     4.642] (II) UnloadModule: "vesa"
+[     4.642] (II) Unloading vesa
+[     4.651] (==) modeset(0): Backing store enabled
+[     4.651] (==) modeset(0): Silken mouse enabled
+[     4.716] (II) modeset(0): Initializing kms color map for depth 24, 8 bpc.
+[     4.716] (==) modeset(0): DPMS enabled
+[     4.717] (II) modeset(0): [DRI2] Setup complete
+[     4.717] (II) modeset(0): [DRI2]   DRI driver: i965
+[     4.717] (II) modeset(0): [DRI2]   VDPAU driver: i965
+[     4.717] (II) Initializing extension Generic Event Extension
+[     4.717] (II) Initializing extension SHAPE
+[     4.717] (II) Initializing extension MIT-SHM
+[     4.717] (II) Initializing extension XInputExtension
+[     4.718] (II) Initializing extension XTEST
+[     4.718] (II) Initializing extension BIG-REQUESTS
+[     4.718] (II) Initializing extension SYNC
+[     4.718] (II) Initializing extension XKEYBOARD
+[     4.718] (II) Initializing extension XC-MISC
+[     4.718] (II) Initializing extension SECURITY
+[     4.718] (II) Initializing extension XFIXES
+[     4.718] (II) Initializing extension RENDER
+[     4.718] (II) Initializing extension RANDR
+[     4.719] (II) Initializing extension COMPOSITE
+[     4.719] (II) Initializing extension DAMAGE
+[     4.719] (II) Initializing extension MIT-SCREEN-SAVER
+[     4.719] (II) Initializing extension DOUBLE-BUFFER
+[     4.719] (II) Initializing extension RECORD
+[     4.719] (II) Initializing extension DPMS
+[     4.719] (II) Initializing extension Present
+[     4.719] (II) Initializing extension DRI3
+[     4.719] (II) Initializing extension X-Resource
+[     4.719] (II) Initializing extension XVideo
+[     4.720] (II) Initializing extension XVideo-MotionCompensation
+[     4.720] (II) Initializing extension SELinux
+[     4.720] (II) SELinux: Disabled on system
+[     4.720] (II) Initializing extension GLX
+[     4.724] (II) AIGLX: Loaded and initialized i965
+[     4.724] (II) GLX: Initialized DRI2 GL provider for screen 0
+[     4.724] (II) Initializing extension XFree86-VidModeExtension
+[     4.724] (II) Initializing extension XFree86-DGA
+[     4.724] (II) Initializing extension XFree86-DRI
+[     4.724] (II) Initializing extension DRI2
+[     4.733] (II) modeset(0): Damage tracking initialized
+[     4.733] (II) modeset(0): Setting screen physical size to 508 x 285
+[     4.771] (II) config/udev: Adding input device Power Button (/dev/input/event2)
+[     4.771] (**) Power Button: Applying InputClass "libinput keyboard catchall"
+[     4.771] (II) LoadModule: "libinput"
+[     4.771] (II) Loading /usr/lib/xorg/modules/input/libinput_drv.so
+[     4.774] (II) Module libinput: vendor="X.Org Foundation"
+[     4.774] 	compiled for 1.20.4, module version = 0.29.0
+[     4.774] 	Module class: X.Org XInput Driver
+[     4.774] 	ABI class: X.Org XInput driver, version 24.1
+[     4.774] (II) Using input driver 'libinput' for 'Power Button'
+[     4.774] (**) Power Button: always reports core events
+[     4.774] (**) Option "Device" "/dev/input/event2"
+[     4.774] (**) Option "_source" "server/udev"
+[     4.776] (II) event2  - Power Button: is tagged by udev as: Keyboard
+[     4.776] (II) event2  - Power Button: device is a keyboard
+[     4.776] (II) event2  - Power Button: device removed
+[     4.796] (**) Option "config_info" "udev:/sys/devices/LNXSYSTM:00/LNXPWRBN:00/input/input2/event2"
+[     4.796] (II) XINPUT: Adding extended input device "Power Button" (type: KEYBOARD, id 6)
+[     4.796] (**) Option "xkb_model" "pc105"
+[     4.796] (**) Option "xkb_layout" "us"
+[     4.796] (II) event2  - Power Button: is tagged by udev as: Keyboard
+[     4.796] (II) event2  - Power Button: device is a keyboard
+[     4.797] (II) config/udev: Adding input device Video Bus (/dev/input/event5)
+[     4.797] (**) Video Bus: Applying InputClass "libinput keyboard catchall"
+[     4.797] (II) Using input driver 'libinput' for 'Video Bus'
+[     4.797] (**) Video Bus: always reports core events
+[     4.797] (**) Option "Device" "/dev/input/event5"
+[     4.797] (**) Option "_source" "server/udev"
+[     4.797] (II) event5  - Video Bus: is tagged by udev as: Keyboard
+[     4.797] (II) event5  - Video Bus: device is a keyboard
+[     4.797] (II) event5  - Video Bus: device removed
+[     4.819] (**) Option "config_info" "udev:/sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0A08:00/LNXVIDEO:00/input/input7/event5"
+[     4.819] (II) XINPUT: Adding extended input device "Video Bus" (type: KEYBOARD, id 7)
+[     4.819] (**) Option "xkb_model" "pc105"
+[     4.819] (**) Option "xkb_layout" "us"
+[     4.819] (II) event5  - Video Bus: is tagged by udev as: Keyboard
+[     4.819] (II) event5  - Video Bus: device is a keyboard
+[     4.819] (II) config/udev: Adding input device Lid Switch (/dev/input/event1)
+[     4.819] (II) No input driver specified, ignoring this device.
+[     4.819] (II) This device may have been added with another device file.
+[     4.820] (II) config/udev: Adding input device Sleep Button (/dev/input/event0)
+[     4.820] (**) Sleep Button: Applying InputClass "libinput keyboard catchall"
+[     4.820] (II) Using input driver 'libinput' for 'Sleep Button'
+[     4.820] (**) Sleep Button: always reports core events
+[     4.820] (**) Option "Device" "/dev/input/event0"
+[     4.820] (**) Option "_source" "server/udev"
+[     4.820] (II) event0  - Sleep Button: is tagged by udev as: Keyboard
+[     4.820] (II) event0  - Sleep Button: device is a keyboard
+[     4.820] (II) event0  - Sleep Button: device removed
+[     4.834] (**) Option "config_info" "udev:/sys/devices/LNXSYSTM:00/LNXSYBUS:00/PNP0C0E:00/input/input0/event0"
+[     4.834] (II) XINPUT: Adding extended input device "Sleep Button" (type: KEYBOARD, id 8)
+[     4.834] (**) Option "xkb_model" "pc105"
+[     4.834] (**) Option "xkb_layout" "us"
+[     4.834] (II) event0  - Sleep Button: is tagged by udev as: Keyboard
+[     4.834] (II) event0  - Sleep Button: device is a keyboard
+[     4.835] (II) config/udev: Adding input device serio3 (/dev/input/event19)
+[     4.835] (**) serio3: Applying InputClass "libinput keyboard catchall"
+[     4.835] (II) Using input driver 'libinput' for 'serio3'
+[     4.835] (**) serio3: always reports core events
+[     4.835] (**) Option "Device" "/dev/input/event19"
+[     4.835] (**) Option "_source" "server/udev"
+[     4.836] (II) event19 - serio3: is tagged by udev as: Keyboard
+[     4.836] (II) event19 - serio3: device is a keyboard
+[     4.836] (II) event19 - serio3: device removed
+[     4.847] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.0/tty/ttyACM0/serio3/rc/rc0/input21/event19"
+[     4.847] (II) XINPUT: Adding extended input device "serio3" (type: KEYBOARD, id 9)
+[     4.847] (**) Option "xkb_model" "pc105"
+[     4.847] (**) Option "xkb_layout" "us"
+[     4.848] (II) event19 - serio3: is tagged by udev as: Keyboard
+[     4.848] (II) event19 - serio3: device is a keyboard
+[     4.848] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/event6)
+[     4.848] (**) Pulse-Eight CEC Adapter: Applying InputClass "libinput pointer catchall"
+[     4.848] (II) Using input driver 'libinput' for 'Pulse-Eight CEC Adapter'
+[     4.848] (**) Pulse-Eight CEC Adapter: always reports core events
+[     4.848] (**) Option "Device" "/dev/input/event6"
+[     4.848] (**) Option "_source" "server/udev"
+[     4.900] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[     4.900] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[     4.900] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[     4.915] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.2/0003:2548:1002.0001/input/input8/event6"
+[     4.915] (II) XINPUT: Adding extended input device "Pulse-Eight CEC Adapter" (type: MOUSE, id 10)
+[     4.915] (**) Option "AccelerationScheme" "none"
+[     4.915] (**) Pulse-Eight CEC Adapter: (accel) selected scheme none/0
+[     4.915] (**) Pulse-Eight CEC Adapter: (accel) acceleration factor: 2.000
+[     4.915] (**) Pulse-Eight CEC Adapter: (accel) acceleration threshold: 4
+[     4.967] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[     4.967] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[     4.968] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/mouse0)
+[     4.968] (II) No input driver specified, ignoring this device.
+[     4.968] (II) This device may have been added with another device file.
+[     4.968] (II) config/udev: Adding input device Integrated IR Camera: Integrate (/dev/input/event17)
+[     4.968] (**) Integrated IR Camera: Integrate: Applying InputClass "libinput keyboard catchall"
+[     4.968] (II) Using input driver 'libinput' for 'Integrated IR Camera: Integrate'
+[     4.968] (**) Integrated IR Camera: Integrate: always reports core events
+[     4.968] (**) Option "Device" "/dev/input/event17"
+[     4.968] (**) Option "_source" "server/udev"
+[     4.969] (II) event17 - Integrated IR Camera: Integrate: is tagged by udev as: Keyboard
+[     4.969] (II) event17 - Integrated IR Camera: Integrate: device is a keyboard
+[     4.969] (II) event17 - Integrated IR Camera: Integrate: device removed
+[     4.985] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-5/1-5:1.0/input/input19/event17"
+[     4.985] (II) XINPUT: Adding extended input device "Integrated IR Camera: Integrate" (type: KEYBOARD, id 11)
+[     4.985] (**) Option "xkb_model" "pc105"
+[     4.985] (**) Option "xkb_layout" "us"
+[     4.985] (II) event17 - Integrated IR Camera: Integrate: is tagged by udev as: Keyboard
+[     4.985] (II) event17 - Integrated IR Camera: Integrate: device is a keyboard
+[     4.986] (II) config/udev: Adding input device Integrated Camera: Integrated C (/dev/input/event18)
+[     4.986] (**) Integrated Camera: Integrated C: Applying InputClass "libinput keyboard catchall"
+[     4.986] (II) Using input driver 'libinput' for 'Integrated Camera: Integrated C'
+[     4.986] (**) Integrated Camera: Integrated C: always reports core events
+[     4.986] (**) Option "Device" "/dev/input/event18"
+[     4.986] (**) Option "_source" "server/udev"
+[     4.986] (II) event18 - Integrated Camera: Integrated C: is tagged by udev as: Keyboard
+[     4.987] (II) event18 - Integrated Camera: Integrated C: device is a keyboard
+[     4.987] (II) event18 - Integrated Camera: Integrated C: device removed
+[     5.005] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-8/1-8:1.0/input/input20/event18"
+[     5.005] (II) XINPUT: Adding extended input device "Integrated Camera: Integrated C" (type: KEYBOARD, id 12)
+[     5.005] (**) Option "xkb_model" "pc105"
+[     5.005] (**) Option "xkb_layout" "us"
+[     5.005] (II) event18 - Integrated Camera: Integrated C: is tagged by udev as: Keyboard
+[     5.005] (II) event18 - Integrated Camera: Integrated C: device is a keyboard
+[     5.006] (II) config/udev: Adding input device HDA Intel PCH Mic (/dev/input/event8)
+[     5.006] (II) No input driver specified, ignoring this device.
+[     5.006] (II) This device may have been added with another device file.
+[     5.006] (II) config/udev: Adding input device HDA Intel PCH Headphone (/dev/input/event9)
+[     5.006] (II) No input driver specified, ignoring this device.
+[     5.006] (II) This device may have been added with another device file.
+[     5.006] (II) config/udev: Adding input device HDA Intel PCH HDMI/DP,pcm=3 (/dev/input/event10)
+[     5.006] (II) No input driver specified, ignoring this device.
+[     5.006] (II) This device may have been added with another device file.
+[     5.006] (II) config/udev: Adding input device HDA Intel PCH HDMI/DP,pcm=7 (/dev/input/event11)
+[     5.006] (II) No input driver specified, ignoring this device.
+[     5.006] (II) This device may have been added with another device file.
+[     5.006] (II) config/udev: Adding input device HDA Intel PCH HDMI/DP,pcm=8 (/dev/input/event12)
+[     5.006] (II) No input driver specified, ignoring this device.
+[     5.006] (II) This device may have been added with another device file.
+[     5.007] (II) config/udev: Adding input device HDA Intel PCH HDMI/DP,pcm=9 (/dev/input/event13)
+[     5.007] (II) No input driver specified, ignoring this device.
+[     5.007] (II) This device may have been added with another device file.
+[     5.007] (II) config/udev: Adding input device HDA Intel PCH HDMI/DP,pcm=10 (/dev/input/event14)
+[     5.007] (II) No input driver specified, ignoring this device.
+[     5.007] (II) This device may have been added with another device file.
+[     5.007] (II) config/udev: Adding input device HDA Digital PCBeep (/dev/input/event7)
+[     5.007] (II) No input driver specified, ignoring this device.
+[     5.007] (II) This device may have been added with another device file.
+[     5.007] (II) config/udev: Adding input device AT Translated Set 2 keyboard (/dev/input/event4)
+[     5.007] (**) AT Translated Set 2 keyboard: Applying InputClass "libinput keyboard catchall"
+[     5.007] (II) Using input driver 'libinput' for 'AT Translated Set 2 keyboard'
+[     5.007] (**) AT Translated Set 2 keyboard: always reports core events
+[     5.007] (**) Option "Device" "/dev/input/event4"
+[     5.007] (**) Option "_source" "server/udev"
+[     5.008] (II) event4  - AT Translated Set 2 keyboard: is tagged by udev as: Keyboard
+[     5.008] (II) event4  - AT Translated Set 2 keyboard: device is a keyboard
+[     5.008] (II) event4  - AT Translated Set 2 keyboard: device removed
+[     5.017] (**) Option "config_info" "udev:/sys/devices/platform/i8042/serio0/input/input3/event4"
+[     5.017] (II) XINPUT: Adding extended input device "AT Translated Set 2 keyboard" (type: KEYBOARD, id 13)
+[     5.017] (**) Option "xkb_model" "pc105"
+[     5.017] (**) Option "xkb_layout" "us"
+[     5.017] (II) event4  - AT Translated Set 2 keyboard: is tagged by udev as: Keyboard
+[     5.017] (II) event4  - AT Translated Set 2 keyboard: device is a keyboard
+[     5.018] (II) config/udev: Adding input device PC Speaker (/dev/input/event3)
+[     5.018] (II) No input driver specified, ignoring this device.
+[     5.018] (II) This device may have been added with another device file.
+[     5.018] (II) config/udev: Adding input device Synaptics TM3289-021 (/dev/input/event15)
+[     5.018] (**) Synaptics TM3289-021: Applying InputClass "libinput touchpad catchall"
+[     5.018] (II) Using input driver 'libinput' for 'Synaptics TM3289-021'
+[     5.018] (**) Synaptics TM3289-021: always reports core events
+[     5.018] (**) Option "Device" "/dev/input/event15"
+[     5.018] (**) Option "_source" "server/udev"
+[     5.019] (II) event15 - Synaptics TM3289-021: is tagged by udev as: Touchpad
+[     5.019] (II) event15 - Synaptics TM3289-021: device is a touchpad
+[     5.019] (II) event15 - Synaptics TM3289-021: device removed
+[     5.037] (**) Option "config_info" "udev:/sys/devices/rmi4-00/input/input12/event15"
+[     5.037] (II) XINPUT: Adding extended input device "Synaptics TM3289-021" (type: TOUCHPAD, id 14)
+[     5.037] (**) Option "AccelerationScheme" "none"
+[     5.037] (**) Synaptics TM3289-021: (accel) selected scheme none/0
+[     5.037] (**) Synaptics TM3289-021: (accel) acceleration factor: 2.000
+[     5.037] (**) Synaptics TM3289-021: (accel) acceleration threshold: 4
+[     5.038] (II) event15 - Synaptics TM3289-021: is tagged by udev as: Touchpad
+[     5.038] (II) event15 - Synaptics TM3289-021: device is a touchpad
+[     5.039] (II) config/udev: Adding input device Synaptics TM3289-021 (/dev/input/mouse1)
+[     5.039] (II) No input driver specified, ignoring this device.
+[     5.039] (II) This device may have been added with another device file.
+[     5.039] (II) config/udev: Adding input device TPPS/2 Elan TrackPoint (/dev/input/event16)
+[     5.039] (**) TPPS/2 Elan TrackPoint: Applying InputClass "libinput pointer catchall"
+[     5.039] (II) Using input driver 'libinput' for 'TPPS/2 Elan TrackPoint'
+[     5.039] (**) TPPS/2 Elan TrackPoint: always reports core events
+[     5.039] (**) Option "Device" "/dev/input/event16"
+[     5.039] (**) Option "_source" "server/udev"
+[     5.040] (II) event16 - TPPS/2 Elan TrackPoint: is tagged by udev as: Mouse Pointingstick
+[     5.040] (II) event16 - TPPS/2 Elan TrackPoint: trackpoint multiplier is 0.40
+[     5.040] (II) event16 - TPPS/2 Elan TrackPoint: device is a pointer
+[     5.040] (II) event16 - TPPS/2 Elan TrackPoint: device removed
+[     5.062] (**) Option "config_info" "udev:/sys/devices/rmi4-00/rmi4-00.fn03/serio2/input/input18/event16"
+[     5.062] (II) XINPUT: Adding extended input device "TPPS/2 Elan TrackPoint" (type: MOUSE, id 15)
+[     5.062] (**) Option "AccelerationScheme" "none"
+[     5.062] (**) TPPS/2 Elan TrackPoint: (accel) selected scheme none/0
+[     5.062] (**) TPPS/2 Elan TrackPoint: (accel) acceleration factor: 2.000
+[     5.062] (**) TPPS/2 Elan TrackPoint: (accel) acceleration threshold: 4
+[     5.062] (II) event16 - TPPS/2 Elan TrackPoint: is tagged by udev as: Mouse Pointingstick
+[     5.062] (II) event16 - TPPS/2 Elan TrackPoint: trackpoint multiplier is 0.40
+[     5.063] (II) event16 - TPPS/2 Elan TrackPoint: device is a pointer
+[     5.063] (II) config/udev: Adding input device TPPS/2 Elan TrackPoint (/dev/input/mouse2)
+[     5.063] (II) No input driver specified, ignoring this device.
+[     5.063] (II) This device may have been added with another device file.
+[     5.132] (EE) Failed to open authorization file "/var/run/sddm/{f25a154d-0c5d-47a7-b540-6fc92b41d2f3}": No such file or directory
+[    12.176] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[    12.176] (II) modeset(0): Printing DDC gathered Modelines:
+[    12.176] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[    12.669] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[    12.670] (II) modeset(0): Printing DDC gathered Modelines:
+[    12.670] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[   148.238] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[   148.238] (II) modeset(0): Printing DDC gathered Modelines:
+[   148.238] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[   148.829] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[   149.714] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[   219.576] (II) config/udev: removing device serio3
+[   219.577] (II) event19 - serio3: device removed
+[   219.591] (II) UnloadModule: "libinput"
+[   219.591] (II) config/udev: removing device Pulse-Eight CEC Adapter
+[   219.591] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[   219.605] (II) UnloadModule: "libinput"
+[   222.688] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/mouse0)
+[   222.688] (II) No input driver specified, ignoring this device.
+[   222.688] (II) This device may have been added with another device file.
+[   222.770] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/event6)
+[   222.771] (**) Pulse-Eight CEC Adapter: Applying InputClass "libinput pointer catchall"
+[   222.771] (II) Using input driver 'libinput' for 'Pulse-Eight CEC Adapter'
+[   222.771] (**) Pulse-Eight CEC Adapter: always reports core events
+[   222.771] (**) Option "Device" "/dev/input/event6"
+[   222.771] (**) Option "_source" "server/udev"
+[   222.824] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[   222.824] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[   222.824] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[   222.854] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.2/0003:2548:1002.0002/input/input22/event6"
+[   222.854] (II) XINPUT: Adding extended input device "Pulse-Eight CEC Adapter" (type: MOUSE, id 9)
+[   222.854] (**) Option "AccelerationScheme" "none"
+[   222.854] (**) Pulse-Eight CEC Adapter: (accel) selected scheme none/0
+[   222.854] (**) Pulse-Eight CEC Adapter: (accel) acceleration factor: 2.000
+[   222.854] (**) Pulse-Eight CEC Adapter: (accel) acceleration threshold: 4
+[   222.910] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[   222.910] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[   222.913] (II) config/udev: Adding input device serio4 (/dev/input/event19)
+[   222.913] (**) serio4: Applying InputClass "libinput keyboard catchall"
+[   222.913] (II) Using input driver 'libinput' for 'serio4'
+[   222.913] (**) serio4: always reports core events
+[   222.913] (**) Option "Device" "/dev/input/event19"
+[   222.913] (**) Option "_source" "server/udev"
+[   222.917] (II) event19 - serio4: is tagged by udev as: Keyboard
+[   222.918] (II) event19 - serio4: device is a keyboard
+[   222.918] (II) event19 - serio4: device removed
+[   222.933] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.0/tty/ttyACM0/serio4/rc/rc0/input23/event19"
+[   222.933] (II) XINPUT: Adding extended input device "serio4" (type: KEYBOARD, id 10)
+[   222.933] (**) Option "xkb_model" "pc105"
+[   222.933] (**) Option "xkb_layout" "us"
+[   222.933] (WW) Option "xkb_variant" requires a string value
+[   222.933] (WW) Option "xkb_options" requires a string value
+[   222.938] (II) event19 - serio4: is tagged by udev as: Keyboard
+[   222.938] (II) event19 - serio4: device is a keyboard
+[   268.794] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[   268.794] (II) modeset(0): Printing DDC gathered Modelines:
+[   268.794] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[   269.884] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[   272.592] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[   272.592] (II) modeset(0): Printing DDC gathered Modelines:
+[   272.592] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[   272.927] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[   273.756] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[   282.930] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[   282.930] (II) modeset(0): Printing DDC gathered Modelines:
+[   282.930] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[   283.262] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[   307.150] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[   309.524] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[   309.524] (II) modeset(0): Printing DDC gathered Modelines:
+[   309.524] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[   309.860] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[   310.742] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[   325.273] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[   325.273] (II) modeset(0): Printing DDC gathered Modelines:
+[   325.273] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[   325.607] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[   361.491] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[   364.630] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[   364.630] (II) modeset(0): Printing DDC gathered Modelines:
+[   364.630] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[   364.965] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[   365.793] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[   740.130] (II) config/udev: removing device serio4
+[   740.130] (II) event19 - serio4: device removed
+[   740.144] (II) UnloadModule: "libinput"
+[   740.149] (II) config/udev: removing device Pulse-Eight CEC Adapter
+[   740.149] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[   740.160] (II) UnloadModule: "libinput"
+[   767.809] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/mouse0)
+[   767.809] (II) No input driver specified, ignoring this device.
+[   767.809] (II) This device may have been added with another device file.
+[   767.889] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/event6)
+[   767.889] (**) Pulse-Eight CEC Adapter: Applying InputClass "libinput pointer catchall"
+[   767.889] (II) Using input driver 'libinput' for 'Pulse-Eight CEC Adapter'
+[   767.889] (**) Pulse-Eight CEC Adapter: always reports core events
+[   767.889] (**) Option "Device" "/dev/input/event6"
+[   767.889] (**) Option "_source" "server/udev"
+[   767.945] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[   767.945] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[   767.946] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[   767.973] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.2/0003:2548:1002.0003/input/input24/event6"
+[   767.973] (II) XINPUT: Adding extended input device "Pulse-Eight CEC Adapter" (type: MOUSE, id 9)
+[   767.974] (**) Option "AccelerationScheme" "none"
+[   767.975] (**) Pulse-Eight CEC Adapter: (accel) selected scheme none/0
+[   767.975] (**) Pulse-Eight CEC Adapter: (accel) acceleration factor: 2.000
+[   767.975] (**) Pulse-Eight CEC Adapter: (accel) acceleration threshold: 4
+[   768.030] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[   768.030] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[   768.033] (II) config/udev: Adding input device serio5 (/dev/input/event19)
+[   768.033] (**) serio5: Applying InputClass "libinput keyboard catchall"
+[   768.033] (II) Using input driver 'libinput' for 'serio5'
+[   768.033] (**) serio5: always reports core events
+[   768.033] (**) Option "Device" "/dev/input/event19"
+[   768.033] (**) Option "_source" "server/udev"
+[   768.037] (II) event19 - serio5: is tagged by udev as: Keyboard
+[   768.038] (II) event19 - serio5: device is a keyboard
+[   768.039] (II) event19 - serio5: device removed
+[   768.049] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.0/tty/ttyACM0/serio5/rc/rc0/input25/event19"
+[   768.049] (II) XINPUT: Adding extended input device "serio5" (type: KEYBOARD, id 10)
+[   768.049] (**) Option "xkb_model" "pc105"
+[   768.049] (**) Option "xkb_layout" "us"
+[   768.049] (WW) Option "xkb_variant" requires a string value
+[   768.049] (WW) Option "xkb_options" requires a string value
+[   768.054] (II) event19 - serio5: is tagged by udev as: Keyboard
+[   768.054] (II) event19 - serio5: device is a keyboard
+[   854.957] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[   854.957] (II) modeset(0): Printing DDC gathered Modelines:
+[   854.957] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[   856.045] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[  1518.312] (II) config/udev: removing device serio5
+[  1518.312] (II) event19 - serio5: device removed
+[  1518.328] (II) UnloadModule: "libinput"
+[  1518.331] (II) config/udev: removing device Pulse-Eight CEC Adapter
+[  1518.331] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[  1518.343] (II) UnloadModule: "libinput"
+[  1524.043] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/mouse0)
+[  1524.043] (II) No input driver specified, ignoring this device.
+[  1524.043] (II) This device may have been added with another device file.
+[  1524.122] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/event6)
+[  1524.122] (**) Pulse-Eight CEC Adapter: Applying InputClass "libinput pointer catchall"
+[  1524.122] (II) Using input driver 'libinput' for 'Pulse-Eight CEC Adapter'
+[  1524.122] (**) Pulse-Eight CEC Adapter: always reports core events
+[  1524.122] (**) Option "Device" "/dev/input/event6"
+[  1524.122] (**) Option "_source" "server/udev"
+[  1524.175] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[  1524.175] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[  1524.176] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[  1524.208] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.2/0003:2548:1002.0004/input/input26/event6"
+[  1524.208] (II) XINPUT: Adding extended input device "Pulse-Eight CEC Adapter" (type: MOUSE, id 9)
+[  1524.209] (**) Option "AccelerationScheme" "none"
+[  1524.210] (**) Pulse-Eight CEC Adapter: (accel) selected scheme none/0
+[  1524.210] (**) Pulse-Eight CEC Adapter: (accel) acceleration factor: 2.000
+[  1524.210] (**) Pulse-Eight CEC Adapter: (accel) acceleration threshold: 4
+[  1524.265] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[  1524.265] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[  1524.268] (II) config/udev: Adding input device serio6 (/dev/input/event19)
+[  1524.268] (**) serio6: Applying InputClass "libinput keyboard catchall"
+[  1524.268] (II) Using input driver 'libinput' for 'serio6'
+[  1524.268] (**) serio6: always reports core events
+[  1524.268] (**) Option "Device" "/dev/input/event19"
+[  1524.268] (**) Option "_source" "server/udev"
+[  1524.273] (II) event19 - serio6: is tagged by udev as: Keyboard
+[  1524.273] (II) event19 - serio6: device is a keyboard
+[  1524.274] (II) event19 - serio6: device removed
+[  1524.292] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.0/tty/ttyACM0/serio6/rc/rc0/input27/event19"
+[  1524.292] (II) XINPUT: Adding extended input device "serio6" (type: KEYBOARD, id 10)
+[  1524.292] (**) Option "xkb_model" "pc105"
+[  1524.292] (**) Option "xkb_layout" "us"
+[  1524.292] (WW) Option "xkb_variant" requires a string value
+[  1524.292] (WW) Option "xkb_options" requires a string value
+[  1524.297] (II) event19 - serio6: is tagged by udev as: Keyboard
+[  1524.297] (II) event19 - serio6: device is a keyboard
+[  1536.974] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[  1536.974] (II) modeset(0): Printing DDC gathered Modelines:
+[  1536.974] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[  1537.311] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[  1538.189] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 15936.823] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 15936.823] (II) modeset(0): Printing DDC gathered Modelines:
+[ 15936.823] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 15937.913] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 67070.083] (II) config/udev: removing device serio6
+[ 67070.083] (II) event19 - serio6: device removed
+[ 67070.090] (II) UnloadModule: "libinput"
+[ 67070.100] (II) config/udev: removing device Pulse-Eight CEC Adapter
+[ 67070.100] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 67070.116] (II) UnloadModule: "libinput"
+[ 67074.730] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/mouse0)
+[ 67074.730] (II) No input driver specified, ignoring this device.
+[ 67074.730] (II) This device may have been added with another device file.
+[ 67074.811] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/event6)
+[ 67074.811] (**) Pulse-Eight CEC Adapter: Applying InputClass "libinput pointer catchall"
+[ 67074.811] (II) Using input driver 'libinput' for 'Pulse-Eight CEC Adapter'
+[ 67074.811] (**) Pulse-Eight CEC Adapter: always reports core events
+[ 67074.811] (**) Option "Device" "/dev/input/event6"
+[ 67074.811] (**) Option "_source" "server/udev"
+[ 67074.867] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 67074.867] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 67074.868] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 67074.890] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.2/0003:2548:1002.0005/input/input28/event6"
+[ 67074.890] (II) XINPUT: Adding extended input device "Pulse-Eight CEC Adapter" (type: MOUSE, id 9)
+[ 67074.891] (**) Option "AccelerationScheme" "none"
+[ 67074.892] (**) Pulse-Eight CEC Adapter: (accel) selected scheme none/0
+[ 67074.892] (**) Pulse-Eight CEC Adapter: (accel) acceleration factor: 2.000
+[ 67074.892] (**) Pulse-Eight CEC Adapter: (accel) acceleration threshold: 4
+[ 67074.947] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 67074.948] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 67095.126] (II) config/udev: removing device Pulse-Eight CEC Adapter
+[ 67095.126] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 67095.138] (II) UnloadModule: "libinput"
+[ 67100.773] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/mouse0)
+[ 67100.773] (II) No input driver specified, ignoring this device.
+[ 67100.773] (II) This device may have been added with another device file.
+[ 67100.854] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/event6)
+[ 67100.854] (**) Pulse-Eight CEC Adapter: Applying InputClass "libinput pointer catchall"
+[ 67100.854] (II) Using input driver 'libinput' for 'Pulse-Eight CEC Adapter'
+[ 67100.854] (**) Pulse-Eight CEC Adapter: always reports core events
+[ 67100.854] (**) Option "Device" "/dev/input/event6"
+[ 67100.854] (**) Option "_source" "server/udev"
+[ 67100.907] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 67100.907] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 67100.907] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 67100.926] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.2/0003:2548:1002.0006/input/input30/event6"
+[ 67100.926] (II) XINPUT: Adding extended input device "Pulse-Eight CEC Adapter" (type: MOUSE, id 9)
+[ 67100.926] (**) Option "AccelerationScheme" "none"
+[ 67100.927] (**) Pulse-Eight CEC Adapter: (accel) selected scheme none/0
+[ 67100.927] (**) Pulse-Eight CEC Adapter: (accel) acceleration factor: 2.000
+[ 67100.927] (**) Pulse-Eight CEC Adapter: (accel) acceleration threshold: 4
+[ 67100.982] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 67100.982] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 67100.985] (II) config/udev: Adding input device serio8 (/dev/input/event19)
+[ 67100.985] (**) serio8: Applying InputClass "libinput keyboard catchall"
+[ 67100.985] (II) Using input driver 'libinput' for 'serio8'
+[ 67100.985] (**) serio8: always reports core events
+[ 67100.985] (**) Option "Device" "/dev/input/event19"
+[ 67100.985] (**) Option "_source" "server/udev"
+[ 67100.990] (II) event19 - serio8: is tagged by udev as: Keyboard
+[ 67100.990] (II) event19 - serio8: device is a keyboard
+[ 67100.991] (II) event19 - serio8: device removed
+[ 67101.001] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.0/tty/ttyACM0/serio8/rc/rc0/input31/event19"
+[ 67101.001] (II) XINPUT: Adding extended input device "serio8" (type: KEYBOARD, id 10)
+[ 67101.001] (**) Option "xkb_model" "pc105"
+[ 67101.001] (**) Option "xkb_layout" "us"
+[ 67101.001] (WW) Option "xkb_variant" requires a string value
+[ 67101.001] (WW) Option "xkb_options" requires a string value
+[ 67101.006] (II) event19 - serio8: is tagged by udev as: Keyboard
+[ 67101.006] (II) event19 - serio8: device is a keyboard
+[ 67127.966] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 67127.966] (II) modeset(0): Printing DDC gathered Modelines:
+[ 67127.966] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 67128.302] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 67129.177] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 67359.952] (II) config/udev: removing device Integrated Camera: Integrated C
+[ 67359.952] (II) event18 - Integrated Camera: Integrated C: device removed
+[ 67359.965] (II) UnloadModule: "libinput"
+[ 67360.066] (II) config/udev: removing device Integrated IR Camera: Integrate
+[ 67360.066] (II) event17 - Integrated IR Camera: Integrate: device removed
+[ 67360.078] (II) UnloadModule: "libinput"
+[ 67360.125] (II) config/udev: removing device serio8
+[ 67360.125] (II) event19 - serio8: device removed
+[ 67360.140] (II) UnloadModule: "libinput"
+[ 67374.717] (II) config/udev: removing device Pulse-Eight CEC Adapter
+[ 67374.717] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 67374.729] (II) UnloadModule: "libinput"
+[ 67379.434] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/mouse0)
+[ 67379.434] (II) No input driver specified, ignoring this device.
+[ 67379.434] (II) This device may have been added with another device file.
+[ 67379.514] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/event6)
+[ 67379.514] (**) Pulse-Eight CEC Adapter: Applying InputClass "libinput pointer catchall"
+[ 67379.515] (II) Using input driver 'libinput' for 'Pulse-Eight CEC Adapter'
+[ 67379.515] (**) Pulse-Eight CEC Adapter: always reports core events
+[ 67379.515] (**) Option "Device" "/dev/input/event6"
+[ 67379.515] (**) Option "_source" "server/udev"
+[ 67379.568] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 67379.569] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 67379.569] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 67379.590] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.2/0003:2548:1002.0007/input/input32/event6"
+[ 67379.590] (II) XINPUT: Adding extended input device "Pulse-Eight CEC Adapter" (type: MOUSE, id 9)
+[ 67379.590] (**) Option "AccelerationScheme" "none"
+[ 67379.591] (**) Pulse-Eight CEC Adapter: (accel) selected scheme none/0
+[ 67379.591] (**) Pulse-Eight CEC Adapter: (accel) acceleration factor: 2.000
+[ 67379.591] (**) Pulse-Eight CEC Adapter: (accel) acceleration threshold: 4
+[ 67379.646] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 67379.646] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 67379.649] (II) config/udev: Adding input device serio9 (/dev/input/event17)
+[ 67379.649] (**) serio9: Applying InputClass "libinput keyboard catchall"
+[ 67379.649] (II) Using input driver 'libinput' for 'serio9'
+[ 67379.649] (**) serio9: always reports core events
+[ 67379.649] (**) Option "Device" "/dev/input/event17"
+[ 67379.649] (**) Option "_source" "server/udev"
+[ 67379.654] (II) event17 - serio9: is tagged by udev as: Keyboard
+[ 67379.654] (II) event17 - serio9: device is a keyboard
+[ 67379.655] (II) event17 - serio9: device removed
+[ 67379.672] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.0/tty/ttyACM0/serio9/rc/rc0/input33/event17"
+[ 67379.672] (II) XINPUT: Adding extended input device "serio9" (type: KEYBOARD, id 10)
+[ 67379.672] (**) Option "xkb_model" "pc105"
+[ 67379.672] (**) Option "xkb_layout" "us"
+[ 67379.672] (WW) Option "xkb_variant" requires a string value
+[ 67379.672] (WW) Option "xkb_options" requires a string value
+[ 67379.677] (II) event17 - serio9: is tagged by udev as: Keyboard
+[ 67379.677] (II) event17 - serio9: device is a keyboard
+[ 67466.307] (II) config/udev: removing device serio9
+[ 67466.307] (II) event17 - serio9: device removed
+[ 67466.313] (II) UnloadModule: "libinput"
+[ 67466.323] (II) config/udev: removing device Pulse-Eight CEC Adapter
+[ 67466.323] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 67466.335] (II) UnloadModule: "libinput"
+[ 67489.814] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/mouse0)
+[ 67489.814] (II) No input driver specified, ignoring this device.
+[ 67489.814] (II) This device may have been added with another device file.
+[ 67489.894] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/event6)
+[ 67489.895] (**) Pulse-Eight CEC Adapter: Applying InputClass "libinput pointer catchall"
+[ 67489.895] (II) Using input driver 'libinput' for 'Pulse-Eight CEC Adapter'
+[ 67489.895] (**) Pulse-Eight CEC Adapter: always reports core events
+[ 67489.895] (**) Option "Device" "/dev/input/event6"
+[ 67489.895] (**) Option "_source" "server/udev"
+[ 67489.950] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 67489.950] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 67489.951] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 67489.974] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.2/0003:2548:1002.0008/input/input34/event6"
+[ 67489.974] (II) XINPUT: Adding extended input device "Pulse-Eight CEC Adapter" (type: MOUSE, id 9)
+[ 67489.975] (**) Option "AccelerationScheme" "none"
+[ 67489.976] (**) Pulse-Eight CEC Adapter: (accel) selected scheme none/0
+[ 67489.976] (**) Pulse-Eight CEC Adapter: (accel) acceleration factor: 2.000
+[ 67489.976] (**) Pulse-Eight CEC Adapter: (accel) acceleration threshold: 4
+[ 67490.031] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 67490.031] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 67490.034] (II) config/udev: Adding input device serio10 (/dev/input/event17)
+[ 67490.034] (**) serio10: Applying InputClass "libinput keyboard catchall"
+[ 67490.034] (II) Using input driver 'libinput' for 'serio10'
+[ 67490.034] (**) serio10: always reports core events
+[ 67490.034] (**) Option "Device" "/dev/input/event17"
+[ 67490.034] (**) Option "_source" "server/udev"
+[ 67490.039] (II) event17 - serio10: is tagged by udev as: Keyboard
+[ 67490.039] (II) event17 - serio10: device is a keyboard
+[ 67490.040] (II) event17 - serio10: device removed
+[ 67490.051] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.0/tty/ttyACM0/serio10/rc/rc0/input35/event17"
+[ 67490.051] (II) XINPUT: Adding extended input device "serio10" (type: KEYBOARD, id 10)
+[ 67490.051] (**) Option "xkb_model" "pc105"
+[ 67490.051] (**) Option "xkb_layout" "us"
+[ 67490.051] (WW) Option "xkb_variant" requires a string value
+[ 67490.051] (WW) Option "xkb_options" requires a string value
+[ 67490.056] (II) event17 - serio10: is tagged by udev as: Keyboard
+[ 67490.056] (II) event17 - serio10: device is a keyboard
+[ 67517.542] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 67517.542] (II) modeset(0): Printing DDC gathered Modelines:
+[ 67517.542] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 67518.681] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 74816.397] (II) config/udev: removing device serio10
+[ 74816.398] (II) event17 - serio10: device removed
+[ 74816.415] (II) UnloadModule: "libinput"
+[ 74816.420] (II) config/udev: removing device Pulse-Eight CEC Adapter
+[ 74816.420] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 74816.432] (II) UnloadModule: "libinput"
+[ 74820.247] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/mouse0)
+[ 74820.247] (II) No input driver specified, ignoring this device.
+[ 74820.247] (II) This device may have been added with another device file.
+[ 74820.328] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/event6)
+[ 74820.328] (**) Pulse-Eight CEC Adapter: Applying InputClass "libinput pointer catchall"
+[ 74820.328] (II) Using input driver 'libinput' for 'Pulse-Eight CEC Adapter'
+[ 74820.328] (**) Pulse-Eight CEC Adapter: always reports core events
+[ 74820.328] (**) Option "Device" "/dev/input/event6"
+[ 74820.328] (**) Option "_source" "server/udev"
+[ 74820.384] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 74820.385] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 74820.386] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 74820.408] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.2/0003:2548:1002.0009/input/input36/event6"
+[ 74820.408] (II) XINPUT: Adding extended input device "Pulse-Eight CEC Adapter" (type: MOUSE, id 9)
+[ 74820.408] (**) Option "AccelerationScheme" "none"
+[ 74820.409] (**) Pulse-Eight CEC Adapter: (accel) selected scheme none/0
+[ 74820.409] (**) Pulse-Eight CEC Adapter: (accel) acceleration factor: 2.000
+[ 74820.409] (**) Pulse-Eight CEC Adapter: (accel) acceleration threshold: 4
+[ 74820.462] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 74820.463] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 74820.465] (II) config/udev: Adding input device serio11 (/dev/input/event17)
+[ 74820.465] (**) serio11: Applying InputClass "libinput keyboard catchall"
+[ 74820.465] (II) Using input driver 'libinput' for 'serio11'
+[ 74820.465] (**) serio11: always reports core events
+[ 74820.465] (**) Option "Device" "/dev/input/event17"
+[ 74820.465] (**) Option "_source" "server/udev"
+[ 74820.468] (II) event17 - serio11: is tagged by udev as: Keyboard
+[ 74820.468] (II) event17 - serio11: device is a keyboard
+[ 74820.469] (II) event17 - serio11: device removed
+[ 74820.484] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.0/tty/ttyACM0/serio11/rc/rc0/input37/event17"
+[ 74820.484] (II) XINPUT: Adding extended input device "serio11" (type: KEYBOARD, id 10)
+[ 74820.484] (**) Option "xkb_model" "pc105"
+[ 74820.484] (**) Option "xkb_layout" "us"
+[ 74820.484] (WW) Option "xkb_variant" requires a string value
+[ 74820.484] (WW) Option "xkb_options" requires a string value
+[ 74820.489] (II) event17 - serio11: is tagged by udev as: Keyboard
+[ 74820.489] (II) event17 - serio11: device is a keyboard
+[ 74844.099] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 74844.099] (II) modeset(0): Printing DDC gathered Modelines:
+[ 74844.099] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 74844.434] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 74845.241] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 75427.645] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 75427.645] (II) modeset(0): Printing DDC gathered Modelines:
+[ 75427.645] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 75428.764] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 75434.846] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 75434.846] (II) modeset(0): Printing DDC gathered Modelines:
+[ 75434.846] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 75435.181] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 75436.047] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 75439.476] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 75439.476] (II) modeset(0): Printing DDC gathered Modelines:
+[ 75439.476] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 75439.809] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 75480.334] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 75486.077] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 75486.077] (II) modeset(0): Printing DDC gathered Modelines:
+[ 75486.077] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 75486.414] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 75487.224] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 76141.668] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76141.668] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76141.668] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76142.772] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 76145.989] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76145.989] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76145.989] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76146.324] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 76147.204] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 76181.810] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76181.811] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76181.811] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76182.899] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 76195.390] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76195.390] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76195.390] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76195.726] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 76196.600] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 76204.061] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76204.061] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76204.061] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76205.167] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 76213.216] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76213.216] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76213.216] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76213.552] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 76214.382] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 76221.922] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76221.922] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76221.922] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76222.989] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 76231.080] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76231.080] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76231.080] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76231.415] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 76232.234] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 76242.944] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76242.944] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76242.944] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76244.041] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 76252.117] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76252.117] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76252.117] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76252.453] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 76253.267] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 76259.170] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76259.170] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76259.170] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76260.333] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 76268.331] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76268.331] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76268.331] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76268.666] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 76269.545] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 76275.429] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76275.429] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76275.429] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76276.517] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 76284.585] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76284.585] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76284.585] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76284.921] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 76285.767] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 76362.635] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76362.635] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76362.635] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76363.754] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 76777.916] (II) config/udev: removing device serio11
+[ 76777.916] (II) event17 - serio11: device removed
+[ 76777.926] (II) UnloadModule: "libinput"
+[ 76777.928] (II) config/udev: removing device Pulse-Eight CEC Adapter
+[ 76777.929] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 76777.944] (II) UnloadModule: "libinput"
+[ 76791.743] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/mouse0)
+[ 76791.743] (II) No input driver specified, ignoring this device.
+[ 76791.743] (II) This device may have been added with another device file.
+[ 76791.824] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/event6)
+[ 76791.824] (**) Pulse-Eight CEC Adapter: Applying InputClass "libinput pointer catchall"
+[ 76791.824] (II) Using input driver 'libinput' for 'Pulse-Eight CEC Adapter'
+[ 76791.824] (**) Pulse-Eight CEC Adapter: always reports core events
+[ 76791.824] (**) Option "Device" "/dev/input/event6"
+[ 76791.824] (**) Option "_source" "server/udev"
+[ 76791.880] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 76791.880] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 76791.881] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 76791.904] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.2/0003:2548:1002.000A/input/input38/event6"
+[ 76791.904] (II) XINPUT: Adding extended input device "Pulse-Eight CEC Adapter" (type: MOUSE, id 9)
+[ 76791.905] (**) Option "AccelerationScheme" "none"
+[ 76791.906] (**) Pulse-Eight CEC Adapter: (accel) selected scheme none/0
+[ 76791.906] (**) Pulse-Eight CEC Adapter: (accel) acceleration factor: 2.000
+[ 76791.906] (**) Pulse-Eight CEC Adapter: (accel) acceleration threshold: 4
+[ 76791.961] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 76791.961] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 76791.964] (II) config/udev: Adding input device serio12 (/dev/input/event17)
+[ 76791.964] (**) serio12: Applying InputClass "libinput keyboard catchall"
+[ 76791.964] (II) Using input driver 'libinput' for 'serio12'
+[ 76791.964] (**) serio12: always reports core events
+[ 76791.964] (**) Option "Device" "/dev/input/event17"
+[ 76791.964] (**) Option "_source" "server/udev"
+[ 76791.969] (II) event17 - serio12: is tagged by udev as: Keyboard
+[ 76791.969] (II) event17 - serio12: device is a keyboard
+[ 76791.970] (II) event17 - serio12: device removed
+[ 76791.988] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.0/tty/ttyACM0/serio12/rc/rc0/input39/event17"
+[ 76791.988] (II) XINPUT: Adding extended input device "serio12" (type: KEYBOARD, id 10)
+[ 76791.988] (**) Option "xkb_model" "pc105"
+[ 76791.988] (**) Option "xkb_layout" "us"
+[ 76791.988] (WW) Option "xkb_variant" requires a string value
+[ 76791.988] (WW) Option "xkb_options" requires a string value
+[ 76791.993] (II) event17 - serio12: is tagged by udev as: Keyboard
+[ 76791.993] (II) event17 - serio12: device is a keyboard
+[ 76823.321] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76823.321] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76823.321] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76823.656] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 76824.514] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 76830.683] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 76830.683] (II) modeset(0): Printing DDC gathered Modelines:
+[ 76830.683] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 76831.804] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 77846.982] (II) config/udev: removing device serio12
+[ 77846.982] (II) event17 - serio12: device removed
+[ 77846.997] (II) UnloadModule: "libinput"
+[ 77849.045] (II) config/udev: removing device Pulse-Eight CEC Adapter
+[ 77849.045] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 77849.066] (II) UnloadModule: "libinput"
+[ 77854.150] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/mouse0)
+[ 77854.150] (II) No input driver specified, ignoring this device.
+[ 77854.150] (II) This device may have been added with another device file.
+[ 77854.231] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/event6)
+[ 77854.231] (**) Pulse-Eight CEC Adapter: Applying InputClass "libinput pointer catchall"
+[ 77854.231] (II) Using input driver 'libinput' for 'Pulse-Eight CEC Adapter'
+[ 77854.231] (**) Pulse-Eight CEC Adapter: always reports core events
+[ 77854.231] (**) Option "Device" "/dev/input/event6"
+[ 77854.231] (**) Option "_source" "server/udev"
+[ 77854.286] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 77854.286] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 77854.287] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 77854.308] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.2/0003:2548:1002.000B/input/input40/event6"
+[ 77854.308] (II) XINPUT: Adding extended input device "Pulse-Eight CEC Adapter" (type: MOUSE, id 9)
+[ 77854.309] (**) Option "AccelerationScheme" "none"
+[ 77854.309] (**) Pulse-Eight CEC Adapter: (accel) selected scheme none/0
+[ 77854.309] (**) Pulse-Eight CEC Adapter: (accel) acceleration factor: 2.000
+[ 77854.309] (**) Pulse-Eight CEC Adapter: (accel) acceleration threshold: 4
+[ 77854.362] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 77854.362] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 77854.364] (II) config/udev: Adding input device serio13 (/dev/input/event17)
+[ 77854.364] (**) serio13: Applying InputClass "libinput keyboard catchall"
+[ 77854.364] (II) Using input driver 'libinput' for 'serio13'
+[ 77854.364] (**) serio13: always reports core events
+[ 77854.364] (**) Option "Device" "/dev/input/event17"
+[ 77854.364] (**) Option "_source" "server/udev"
+[ 77854.366] (II) event17 - serio13: is tagged by udev as: Keyboard
+[ 77854.366] (II) event17 - serio13: device is a keyboard
+[ 77854.366] (II) event17 - serio13: device removed
+[ 77854.375] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.0/tty/ttyACM0/serio13/rc/rc0/input41/event17"
+[ 77854.375] (II) XINPUT: Adding extended input device "serio13" (type: KEYBOARD, id 10)
+[ 77854.375] (**) Option "xkb_model" "pc105"
+[ 77854.375] (**) Option "xkb_layout" "us"
+[ 77854.375] (WW) Option "xkb_variant" requires a string value
+[ 77854.375] (WW) Option "xkb_options" requires a string value
+[ 77854.377] (II) event17 - serio13: is tagged by udev as: Keyboard
+[ 77854.378] (II) event17 - serio13: device is a keyboard
+[ 77875.697] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 77875.697] (II) modeset(0): Printing DDC gathered Modelines:
+[ 77875.697] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 77876.295] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 77877.173] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 77883.094] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 77883.094] (II) modeset(0): Printing DDC gathered Modelines:
+[ 77883.094] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 77884.250] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 77892.255] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 77892.255] (II) modeset(0): Printing DDC gathered Modelines:
+[ 77892.255] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 77892.589] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 77893.419] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 77899.589] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 77899.589] (II) modeset(0): Printing DDC gathered Modelines:
+[ 77899.589] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 77900.717] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 77963.554] (II) config/udev: removing device serio13
+[ 77963.554] (II) event17 - serio13: device removed
+[ 77963.565] (II) UnloadModule: "libinput"
+[ 77970.162] (II) config/udev: removing device Pulse-Eight CEC Adapter
+[ 77970.162] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 77970.174] (II) UnloadModule: "libinput"
+[ 77973.982] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/mouse0)
+[ 77973.982] (II) No input driver specified, ignoring this device.
+[ 77973.982] (II) This device may have been added with another device file.
+[ 77974.061] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/event6)
+[ 77974.061] (**) Pulse-Eight CEC Adapter: Applying InputClass "libinput pointer catchall"
+[ 77974.061] (II) Using input driver 'libinput' for 'Pulse-Eight CEC Adapter'
+[ 77974.061] (**) Pulse-Eight CEC Adapter: always reports core events
+[ 77974.061] (**) Option "Device" "/dev/input/event6"
+[ 77974.061] (**) Option "_source" "server/udev"
+[ 77974.116] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 77974.116] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 77974.117] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 77974.134] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.2/0003:2548:1002.000C/input/input42/event6"
+[ 77974.134] (II) XINPUT: Adding extended input device "Pulse-Eight CEC Adapter" (type: MOUSE, id 9)
+[ 77974.135] (**) Option "AccelerationScheme" "none"
+[ 77974.136] (**) Pulse-Eight CEC Adapter: (accel) selected scheme none/0
+[ 77974.136] (**) Pulse-Eight CEC Adapter: (accel) acceleration factor: 2.000
+[ 77974.136] (**) Pulse-Eight CEC Adapter: (accel) acceleration threshold: 4
+[ 77974.191] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 77974.191] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 77974.194] (II) config/udev: Adding input device serio14 (/dev/input/event17)
+[ 77974.194] (**) serio14: Applying InputClass "libinput keyboard catchall"
+[ 77974.194] (II) Using input driver 'libinput' for 'serio14'
+[ 77974.194] (**) serio14: always reports core events
+[ 77974.194] (**) Option "Device" "/dev/input/event17"
+[ 77974.194] (**) Option "_source" "server/udev"
+[ 77974.199] (II) event17 - serio14: is tagged by udev as: Keyboard
+[ 77974.199] (II) event17 - serio14: device is a keyboard
+[ 77974.200] (II) event17 - serio14: device removed
+[ 77974.211] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.0/tty/ttyACM0/serio14/rc/rc0/input43/event17"
+[ 77974.211] (II) XINPUT: Adding extended input device "serio14" (type: KEYBOARD, id 10)
+[ 77974.211] (**) Option "xkb_model" "pc105"
+[ 77974.211] (**) Option "xkb_layout" "us"
+[ 77974.211] (WW) Option "xkb_variant" requires a string value
+[ 77974.211] (WW) Option "xkb_options" requires a string value
+[ 77974.216] (II) event17 - serio14: is tagged by udev as: Keyboard
+[ 77974.216] (II) event17 - serio14: device is a keyboard
+[ 77993.113] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 77993.113] (II) modeset(0): Printing DDC gathered Modelines:
+[ 77993.113] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 77993.450] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 77994.265] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78084.447] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78084.447] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78084.447] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78085.516] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78098.033] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78098.033] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78098.033] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78098.368] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78099.229] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78192.777] (II) config/udev: removing device serio14
+[ 78192.777] (II) event17 - serio14: device removed
+[ 78192.794] (II) UnloadModule: "libinput"
+[ 78197.693] (II) config/udev: removing device Pulse-Eight CEC Adapter
+[ 78197.718] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 78197.739] (II) UnloadModule: "libinput"
+[ 78201.274] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/mouse0)
+[ 78201.274] (II) No input driver specified, ignoring this device.
+[ 78201.274] (II) This device may have been added with another device file.
+[ 78201.354] (II) config/udev: Adding input device Pulse-Eight CEC Adapter (/dev/input/event6)
+[ 78201.354] (**) Pulse-Eight CEC Adapter: Applying InputClass "libinput pointer catchall"
+[ 78201.354] (II) Using input driver 'libinput' for 'Pulse-Eight CEC Adapter'
+[ 78201.354] (**) Pulse-Eight CEC Adapter: always reports core events
+[ 78201.354] (**) Option "Device" "/dev/input/event6"
+[ 78201.354] (**) Option "_source" "server/udev"
+[ 78201.410] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 78201.410] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 78201.411] (II) event6  - Pulse-Eight CEC Adapter: device removed
+[ 78201.437] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.2/0003:2548:1002.000D/input/input44/event6"
+[ 78201.437] (II) XINPUT: Adding extended input device "Pulse-Eight CEC Adapter" (type: MOUSE, id 9)
+[ 78201.438] (**) Option "AccelerationScheme" "none"
+[ 78201.439] (**) Pulse-Eight CEC Adapter: (accel) selected scheme none/0
+[ 78201.439] (**) Pulse-Eight CEC Adapter: (accel) acceleration factor: 2.000
+[ 78201.439] (**) Pulse-Eight CEC Adapter: (accel) acceleration threshold: 4
+[ 78201.494] (II) event6  - Pulse-Eight CEC Adapter: is tagged by udev as: Mouse
+[ 78201.494] (II) event6  - Pulse-Eight CEC Adapter: device is a pointer
+[ 78201.497] (II) config/udev: Adding input device serio15 (/dev/input/event17)
+[ 78201.497] (**) serio15: Applying InputClass "libinput keyboard catchall"
+[ 78201.497] (II) Using input driver 'libinput' for 'serio15'
+[ 78201.497] (**) serio15: always reports core events
+[ 78201.497] (**) Option "Device" "/dev/input/event17"
+[ 78201.497] (**) Option "_source" "server/udev"
+[ 78201.502] (II) event17 - serio15: is tagged by udev as: Keyboard
+[ 78201.502] (II) event17 - serio15: device is a keyboard
+[ 78201.503] (II) event17 - serio15: device removed
+[ 78201.517] (**) Option "config_info" "udev:/sys/devices/pci0000:00/0000:00:14.0/usb1/1-2/1-2:1.0/tty/ttyACM0/serio15/rc/rc0/input45/event17"
+[ 78201.517] (II) XINPUT: Adding extended input device "serio15" (type: KEYBOARD, id 10)
+[ 78201.517] (**) Option "xkb_model" "pc105"
+[ 78201.517] (**) Option "xkb_layout" "us"
+[ 78201.517] (WW) Option "xkb_variant" requires a string value
+[ 78201.517] (WW) Option "xkb_options" requires a string value
+[ 78201.522] (II) event17 - serio15: is tagged by udev as: Keyboard
+[ 78201.522] (II) event17 - serio15: device is a keyboard
+[ 78213.346] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78213.346] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78213.346] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78214.434] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78226.951] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78226.951] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78226.951] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78227.287] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78228.166] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78277.188] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78277.188] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78277.188] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78278.321] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78286.362] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78286.362] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78286.362] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78286.697] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78287.575] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78295.348] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78295.348] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78295.348] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78296.435] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78304.505] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78304.505] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78304.505] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78304.840] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78305.700] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78352.203] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78352.203] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78352.203] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78353.314] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78361.371] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78361.371] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78361.371] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78361.706] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78362.580] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78368.424] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78368.424] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78368.424] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78369.512] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78377.605] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78377.605] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78377.605] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78377.941] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78378.771] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78384.669] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78384.669] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78384.669] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78385.788] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78394.096] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78394.096] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78394.096] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78394.690] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78395.570] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78444.790] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78444.790] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78444.790] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78445.880] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78453.945] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78453.945] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78453.945] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78454.281] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78455.157] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78464.542] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78464.542] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78464.542] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78465.678] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78473.963] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78473.963] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78473.963] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78474.299] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78475.176] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78525.923] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78525.923] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78525.923] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78527.030] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78535.100] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78535.100] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78535.100] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78535.436] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78536.241] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78548.356] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78548.356] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78548.356] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78549.443] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78561.941] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78561.941] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78561.941] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78562.276] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78563.155] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78574.565] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78574.565] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78574.565] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78575.706] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78588.167] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78588.167] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78588.167] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78588.503] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78589.308] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78641.884] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78641.884] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78641.884] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78642.953] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78655.433] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78655.433] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78655.433] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78655.768] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78656.628] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78706.340] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78706.340] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78706.340] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78707.427] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78720.183] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78720.183] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78720.183] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78720.776] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78721.633] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78733.986] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78733.986] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78733.986] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78735.098] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78747.830] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78747.830] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78747.830] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78748.166] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78749.028] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78765.426] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78765.426] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78765.426] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78766.517] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78779.033] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78779.033] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78779.033] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78779.370] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78780.241] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78833.447] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78833.447] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78833.447] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78834.517] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78851.444] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78851.444] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78851.444] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78851.780] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78852.640] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78869.513] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78869.513] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78869.513] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78870.652] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78887.543] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78887.543] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78887.543] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78887.879] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78888.739] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 78936.478] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78936.478] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78936.478] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78937.596] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 78954.489] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 78954.489] (II) modeset(0): Printing DDC gathered Modelines:
+[ 78954.489] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 78954.825] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 78955.684] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79147.422] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79147.422] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79147.422] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79148.512] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79161.002] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79161.002] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79161.002] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79161.337] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79162.216] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79168.120] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79168.120] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79168.120] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79169.249] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79177.275] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79177.275] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79177.275] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79177.610] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79178.427] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79184.695] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79184.695] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79184.695] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79185.827] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79193.869] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79193.869] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79193.869] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79194.207] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79195.068] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79205.712] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79205.712] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79205.712] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79206.827] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79214.870] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79214.870] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79214.870] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79215.205] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79216.064] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79227.200] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79227.200] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79227.200] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79228.316] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79236.354] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79236.354] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79236.354] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79236.689] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79237.562] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79248.981] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79248.981] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79248.981] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79250.115] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79258.142] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79258.142] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79258.142] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79258.476] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79259.281] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79308.283] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79308.283] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79308.283] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79309.351] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79317.457] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79317.457] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79317.457] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79317.793] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79318.659] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79326.944] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79326.944] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79326.944] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79328.034] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79336.108] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79336.108] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79336.108] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79336.444] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79337.271] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79386.976] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79386.976] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79386.976] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79388.115] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79396.138] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79396.138] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79396.138] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79396.473] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79397.282] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79449.733] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79449.733] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79449.733] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79450.827] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79459.162] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79459.162] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79459.162] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79459.497] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79460.316] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79510.506] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79510.506] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79510.506] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79511.646] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79524.086] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79524.086] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79524.086] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79524.421] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79525.239] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79573.820] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79573.820] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79573.821] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79574.909] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79587.400] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79587.400] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79587.400] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79587.736] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79588.617] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79637.896] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79637.896] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79637.896] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79638.965] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79651.477] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79651.477] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79651.477] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79651.812] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79652.666] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79703.092] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79703.092] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79703.092] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79704.249] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79716.657] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79716.657] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79716.657] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79717.250] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79718.115] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79766.974] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79766.974] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79766.974] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79768.115] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79780.576] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79780.576] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79780.576] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79780.912] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79781.743] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79796.010] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79796.010] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79796.010] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79797.131] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79814.279] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79814.279] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79814.279] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79814.614] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79815.428] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79834.672] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79834.672] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79834.672] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79835.791] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79852.685] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79852.685] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79852.685] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79853.021] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79853.830] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79901.975] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79901.975] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79901.975] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79903.099] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79920.246] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79920.246] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79920.246] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79920.581] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79921.409] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79928.145] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79928.145] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79928.145] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79929.287] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[ 79955.264] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79955.264] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79955.264] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79955.599] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[ 79956.425] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[ 79964.166] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[ 79964.166] (II) modeset(0): Printing DDC gathered Modelines:
+[ 79964.166] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[ 79965.303] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[244829.768] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[244829.768] (II) modeset(0): Printing DDC gathered Modelines:
+[244829.768] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[244854.926] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[244854.926] (II) modeset(0): Printing DDC gathered Modelines:
+[244854.926] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[244862.679] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[244862.679] (II) modeset(0): Printing DDC gathered Modelines:
+[244862.679] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[251356.090] (EE) event15 - Synaptics TM3289-021: kernel bug: Touch jump detected and discarded.
+See https://wayland.freedesktop.org/libinput/doc/1.14.3/touchpad-jumping-cursors.html for details
+[251356.764] (EE) event15 - Synaptics TM3289-021: kernel bug: Touch jump detected and discarded.
+See https://wayland.freedesktop.org/libinput/doc/1.14.3/touchpad-jumping-cursors.html for details
+[251381.276] (EE) event15 - Synaptics TM3289-021: kernel bug: Touch jump detected and discarded.
+See https://wayland.freedesktop.org/libinput/doc/1.14.3/touchpad-jumping-cursors.html for details
+[251381.334] (EE) event15 - Synaptics TM3289-021: kernel bug: Touch jump detected and discarded.
+See https://wayland.freedesktop.org/libinput/doc/1.14.3/touchpad-jumping-cursors.html for details
+[256669.045] (EE) event15 - Synaptics TM3289-021: kernel bug: Touch jump detected and discarded.
+See https://wayland.freedesktop.org/libinput/doc/1.14.3/touchpad-jumping-cursors.html for details
+[259363.543] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[259363.543] (II) modeset(0): Printing DDC gathered Modelines:
+[259363.543] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[259363.878] (--) modeset(0): HDMI max TMDS frequency 300000KHz
+[259368.816] (II) modeset(0): Allocate new frame buffer 5760x2160 stride
+[259466.484] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[259466.484] (II) modeset(0): Printing DDC gathered Modelines:
+[259466.484] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[259467.567] (II) modeset(0): Allocate new frame buffer 1920x1080 stride
+[259508.601] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[259508.601] (II) modeset(0): Printing DDC gathered Modelines:
+[259508.601] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[259508.936] (--) modeset(0): HDMI max TMDS frequency 150000KHz
+[259509.763] (II) modeset(0): Allocate new frame buffer 3840x1080 stride
+[273910.770] (II) modeset(0): EDID vendor "AUO", prod id 12605
+[273910.770] (II) modeset(0): Printing DDC gathered Modelines:
+[273910.770] (II) modeset(0): Modeline "1920x1080"x0.0  141.00  1920 1936 1952 2104  1080 1083 1097 1116 -hsync -vsync (67.0 kHz eP)
+[273911.866] (II) modeset(0): Allocate new frame buffer 1920x1080 stride

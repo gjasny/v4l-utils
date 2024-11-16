@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "edid-decode", "edid-decode.vcxproj", "{245F601B-02E4-43DF-B64C-B49088673764}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{245F601B-02E4-43DF-B64C-B49088673764}.Debug|x64.ActiveCfg = Debug|x64
+		{245F601B-02E4-43DF-B64C-B49088673764}.Debug|x64.Build.0 = Debug|x64
+		{245F601B-02E4-43DF-B64C-B49088673764}.Release|x64.ActiveCfg = Release|x64
+		{245F601B-02E4-43DF-B64C-B49088673764}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DDBA565E-4EC9-46DF-88E0-12F489BB3FCF}
+	EndGlobalSection
+EndGlobal

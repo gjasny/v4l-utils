@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="windows-unix">
+      <UniqueIdentifier>{757b13a8-3e1d-43af-acf1-d03963acb2e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="edid-decode">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\parse-base-block.cpp">
+      <Filter>edid-decode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\parse-cta-block.cpp">
+      <Filter>edid-decode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\parse-di-ext-block.cpp">
+      <Filter>edid-decode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\parse-displayid-block.cpp">
+      <Filter>edid-decode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\parse-ls-ext-block.cpp">
+      <Filter>edid-decode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\parse-vtb-ext-block.cpp">
+      <Filter>edid-decode</Filter>
+    </ClCompile>
+    <ClCompile Include="getopt.c">
+      <Filter>windows-unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\edid-decode.cpp">
+      <Filter>edid-decode</Filter>
+    </ClCompile>
+    <ClCompile Include="getsubopt.c">
+      <Filter>windows-unix</Filter>
+    </ClCompile>
+    <ClCompile Include="..\calc-gtf-cvt.cpp">
+      <Filter>edid-decode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\calc-ovt.cpp">
+      <Filter>edid-decode</Filter>
+    </ClCompile>
+    <ClCompile Include="..\parse-if.cpp">
+      <Filter>edid-decode</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\edid-decode.h">
+      <Filter>edid-decode</Filter>
+    </ClInclude>
+    <ClInclude Include="getopt.h">
+      <Filter>windows-unix</Filter>
+    </ClInclude>
+    <ClInclude Include="unistd.h">
+      <Filter>windows-unix</Filter>
+    </ClInclude>
+    <ClInclude Include="..\oui.h">
+      <Filter>edid-decode</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

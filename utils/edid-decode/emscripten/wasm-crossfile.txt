@@ -1,0 +1,14 @@
+[binaries]
+c = 'emcc'
+cpp = 'em++'
+ar = 'emar'
+strip = 'emstrip'
+
+[built-in options]
+default_library = 'static'
+
+[host_machine]
+system = 'emscripten'
+cpu_family = 'wasm32'
+cpu = 'wasm32'
+endian = 'little'
