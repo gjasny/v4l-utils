@@ -170,13 +170,33 @@ The utilities are stored under `utils/` directory.
 
 The (for now for v4l-utils private use only) libv4l2util library is released
 under the GNU Lesser General Public License, all other code is released under
-the GNU General Public License.
+the GNU General Public License, unless otherwise stated.
 
 v4l-utils includes the following utilities:
 
-### decode\_tm6000
+### cec-compliance
 
-Decodes tm6000 proprietary format streams.
+Tool to test CEC API compliance of drivers.
+
+Installed under `<prefix>/bin`.
+
+### cec-ctl
+
+Tool to control CEC device from the command line.
+
+Installed under `<prefix>/bin`.
+
+### cec-follower
+
+Tool to setup a CEC follower for a CEC device.
+
+Installed under `<prefix>/bin`.
+
+Dual licensed as GPLv2 and BSD.
+
+### cx18-ctl
+
+Tool to help debug video devices that use the cx18 driver.
 
 Installed under `<prefix>/bin`.
 
@@ -192,17 +212,35 @@ v4l-keytable does not get installed during the install step.
 
 A swiss-knife tool to handle raw IR and to set lirc options.
 
+### ivtv-ctl
+
+Tool to help debug video devices that use the ivtv driver.
+
+Installed under `<prefix>/bin`.
+
+### media-ctl
+
+Show and configure the topology of media devices.
+
+Installed under `<prefix>/bin`.
+
 ### qv4l2
 
 QT v4l2 control panel application.
 
 Installed under `<prefix>/bin`.
 
-### rds-saa6588
+### qvidcap
 
-Poll i2c RDS receiver [Philips saa6588].
+QT vidcap video capture application.
 
-rds-saa6588 does not get installed during the install step.
+Installed under `<prefix>/bin`.
+
+### rds-ctl
+
+Handle radio RDS receivers.
+
+Installed under `<prefix>/bin`.
 
 ### v4l2-compliance
 
@@ -237,11 +275,29 @@ memory-to-memory stateless video decoder interface.
 
 Installed by `make install` under `<prefix>/bin`.
 
+## Utilities in contrib
+
+Some utilities are stored in the `contrib/` directory.
+
+These are not installed automatically.
+
+contrib includes the following utilities:
+
+### cobalt-ctl
+
+Tool to help debug video devices that use the cobalt driver.
+
+### decode\_tm6000
+
+Decodes tm6000 proprietary format streams.
+
+### rds-saa6588
+
+Poll i2c RDS receiver [Philips saa6588].
+
 ### xc3028-firmware
 
 Xceive XC2028/3028 tuner module firmware manipulation tool.
-
-xc3028-firmware does not get installed during the install step.
 
 ## Syncing with Kernel
 
