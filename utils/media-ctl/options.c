@@ -28,7 +28,6 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#include <v4l2subdev.h>
 
 #include <linux/media.h>
 #include <linux/videodev2.h>

@@ -22,6 +22,8 @@
 #ifndef __OPTIONS_H
 #define __OPTIONS_H
 
+#include <linux/v4l2-subdev.h>
+
 struct media_options
 {
 	const char *devname;
