@@ -2950,6 +2950,8 @@ int testRequests(struct node *node, bool test_streaming)
 	return 0;
 }
 
+/* Android does not have support for pthread_cancel */
+#ifndef ANDROID
 
 /*
  * This class wraps a pthread in such a way that it simplifies passing
@@ -3110,6 +3112,8 @@ static int testBlockingDQBuf(struct node *node, cv4l_queue &q)
 	return 0;
 }
 
+#endif //ANDROID
+
 int testBlockingWait(struct node *node)
 {
 	bool can_stream = node->g_caps() & V4L2_CAP_STREAMING;
@@ -3131,9 +3135,11 @@ int testBlockingWait(struct node *node)
 		if (testSetupVbi(node, type))
 			continue;
 
+#ifndef ANDROID
 		fail_on_test(testBlockingDQBuf(node, q));
 		if (node->is_m2m)
 			fail_on_test(testBlockingDQBuf(node, m2m_q));
+#endif
 	}
 	return 0;
 }
