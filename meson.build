@@ -9,8 +9,7 @@ project('v4l-utils', 'c', 'cpp',
     ],
     license : 'LGPL 2.1+')
 
-# meson >= 0.56 can use instead meson.project_source_root()
-source_root = meson.current_source_dir()
+source_root = meson.project_source_root()
 
 cc = meson.get_compiler('c')
 cpp = meson.get_compiler('cpp')
