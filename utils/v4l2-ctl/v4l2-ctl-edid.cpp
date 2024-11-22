@@ -88,7 +88,8 @@ static __u8 toggle_hdmi_vsdb_cnc_flags;
 #define HDMI_VSDB_LATENCY	(1 << 7)
 
 static __u8 toggle_hf_vsdb_flags;
-#define HF_VSDB_SCSD_PRESENT	(1 << 7)
+#define HF_VSDB_SCDC_PRESENT	(1 << 7)
+#define HF_VSDB_CABLE_STATUS	(1 << 5)
 
 static int mod_s_pt = -1;
 static int mod_s_it = -1;
@@ -186,6 +187,7 @@ void edid_usage()
 	       "\n"
 	       "                     HDMI Forum Vendor-Specific Data Block modifiers:\n"
 	       "                     scdc: toggle the SCDC Present bit.\n"
+	       "                     cable-status: toggle the Cable Status bit.\n"
 	       "\n"
 	       "                     CTA-861 Video Capability Descriptor modifiers:\n"
 	       "                     qy: toggle the QY YCC Quantization Range bit.\n"
@@ -657,7 +659,8 @@ static void print_edid_mods(const struct v4l2_edid *e)
 		if (v)
 			printf("  Max TMDS Character Rate: %u MHz\n", v * 5);
 		v = e->edid[loc + 1];
-		printf("  SCDC Present:            %s\n", (v & HF_VSDB_SCSD_PRESENT) ? "yes" : "no");
+		printf("  SCDC Present:            %s\n", (v & HF_VSDB_SCDC_PRESENT) ? "yes" : "no");
+		printf("  Cable Status:            %s\n", (v & HF_VSDB_CABLE_STATUS) ? "yes" : "no");
 	}
 	loc = get_edid_vid_cap_location(e->edid, e->blocks * 128);
 	if (loc >= 0) {
@@ -1148,6 +1151,7 @@ void edid_cmd(int ch, char *optarg)
 				"btfc",
 				"btfl-btbr",
 				"tpls-tprs",
+				"cable-status",
 				nullptr
 			};
 
@@ -1257,7 +1261,7 @@ void edid_cmd(int ch, char *optarg)
 			case 14: toggle_hdmi_vsdb_cnc_flags |= HDMI_VSDB_PHOTO; break;
 			case 15: toggle_hdmi_vsdb_cnc_flags |= HDMI_VSDB_CINEMA; break;
 			case 16: toggle_hdmi_vsdb_cnc_flags |= HDMI_VSDB_GAME; break;
-			case 17: toggle_hf_vsdb_flags |= HF_VSDB_SCSD_PRESENT; break;
+			case 17: toggle_hf_vsdb_flags |= HF_VSDB_SCDC_PRESENT; break;
 			case 18: toggle_cta861_hdr_flags |= CTA861_HDR_UNDERSCAN; break;
 			case 19: toggle_cta861_hdr_flags |= CTA861_HDR_AUDIO; break;
 			case 20: toggle_cta861_hdr_flags |= CTA861_HDR_YCBCR444; break;
@@ -1297,6 +1301,7 @@ void edid_cmd(int ch, char *optarg)
 			case 54: toggle_speaker3_flags |= SPEAKER3_BTFC; break;
 			case 55: toggle_speaker3_flags |= SPEAKER3_BTFL_BTFR; break;
 			case 56: toggle_speaker3_flags |= SPEAKER3_TPLS_TPRS; break;
+			case 57: toggle_hf_vsdb_flags |= HF_VSDB_CABLE_STATUS; break;
 			case 0:
 				 if (ch == OptSetEdid) {
 					 sedid.pad = strtoul(value, nullptr, 0);
