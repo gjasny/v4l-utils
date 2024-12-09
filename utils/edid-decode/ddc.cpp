@@ -116,7 +116,7 @@ int read_edid(int adapter_fd, unsigned char *edid)
 	return n_extension_blocks + 1;
 }
 
-int test_reliability(int adapter_fd, unsigned cnt, unsigned msleep)
+int test_reliability(int adapter_fd, unsigned secs, unsigned msleep)
 {
 	unsigned char edid[EDID_PAGE_SIZE * EDID_MAX_BLOCKS];
 	unsigned char edid_tmp[EDID_PAGE_SIZE * EDID_MAX_BLOCKS];
@@ -131,14 +131,15 @@ int test_reliability(int adapter_fd, unsigned cnt, unsigned msleep)
 	}
 	blocks = ret;
 
-	if (cnt)
-		printf("Read EDID (%u bytes) %u times with %u milliseconds between each read.\n\n",
-		       blocks * EDID_PAGE_SIZE, cnt, msleep);
+	if (secs)
+		printf("Read EDID (%u bytes) for %u seconds with %u milliseconds between each read.\n\n",
+		       blocks * EDID_PAGE_SIZE, secs, msleep);
 	else
 		printf("Read EDID (%u bytes) forever with %u milliseconds between each read.\n\n",
 		       blocks * EDID_PAGE_SIZE, msleep);
 
 	time_t start = time(NULL);
+	time_t start_test = start;
 
 	while (true) {
 		iter++;
@@ -168,16 +169,17 @@ int test_reliability(int adapter_fd, unsigned cnt, unsigned msleep)
 			printf("FAIL: mismatch between EDIDs (iteration %u).\n", iter);
 			return -1;
 		}
-		if (cnt && iter == cnt)
-			break;
 		time_t cur = time(NULL);
+		if (secs && cur - start_test > secs)
+			break;
 		if (cur - start >= 10) {
 			start = cur;
 			printf("At iteration %u...\n", iter);
+			fflush(stdout);
 		}
 	}
 
-	printf("\n%u iterations: PASS\n", cnt);
+	printf("\n%u iterations over %u seconds: PASS\n", iter, secs);
 	return 0;
 }
 

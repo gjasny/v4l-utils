@@ -311,10 +311,11 @@ Read and parse the HDCP data from the i2c adapter.
 \fB\-\-i2c\-hdcp-ri\fR \fI<t>\fR
 Every \fI<t>\fR seconds read and report the HDCP Ri value from the i2c adapter.
 .TP
-\fB\-\-i2c\-test\-reliability\fR [\fBcnt\fR=\fI<cnt>\fR][,\fBsleep\fR=\fI<msecs>\fR]
-Read the EDID \fI<cnt>\fR times (default is 0, meaning forever), with a sleep of \fI<msecs>\fR milliseconds
-(default value is 50 ms) in between each read. Report a FAIL if there are
-mismatches between EDIDs. This tests the i2c communication towards the display.
+\fB\-\-i2c\-test\-reliability\fR [\fBduration\fR=\fI<secs>\fR][,\fBsleep\fR=\fI<msecs>\fR]
+Read the EDID continuously for \fI<secs>\fR seconds (default is 0, meaning forever),
+with a sleep of \fI<msecs>\fR milliseconds (default value is 50 ms) in between
+each read. Report a FAIL if there are mismatches between EDIDs. This tests the
+i2c communication towards the display.
 
 .SH TIMING OPTIONS
 The following options report the timings for DMT, VIC and HDMI VIC codes and

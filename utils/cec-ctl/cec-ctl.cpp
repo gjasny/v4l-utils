@@ -331,10 +331,10 @@ static void usage()
 	       "                           Use - for stdout.\n"
 	       "  --analyze-pin <from>     Analyze the low-level CEC pin changes from the file <from>.\n"
 	       "                           Use - for stdin.\n"
-	       "  --test-reliability <count>\n"
-	       "                           Test CEC line reliability. It transmits <Give Physical Address>\n"
-	       "                           up to <count> times, checking that the broadcast reply is always the same.\n"
-	       "                           If <count> is 0, then keep trying forever.\n"
+	       "  --test-reliability <secs>\n"
+	       "                           Test CEC line reliability. It continuously transmits <Give Physical Address>\n"
+	       "                           for <secs> seconds, checking that the broadcast reply is always the same.\n"
+	       "                           If <secs> is 0, then keep trying forever.\n"
 	       "  --test-standby-wakeup-cycle [polls=<n>][,sleep=<secs>][,hpd-may-be-low=<0/1>]\n"
 	       "                           Test standby-wakeup cycle behavior of the display. It polls up to\n"
 	       "                           <n> times (default 15), waiting for a state change. If\n"
@@ -1310,7 +1310,7 @@ static int transmit_msg_retry(const struct node &node, struct cec_msg &msg)
 	return ret;
 }
 
-static void test_reliability(const struct node &node, unsigned int to, unsigned int cnt)
+static void test_reliability(const struct node &node, unsigned int to, unsigned int secs)
 {
 	struct cec_log_addrs laddrs = { };
 	struct cec_msg msg;
@@ -1337,6 +1337,8 @@ static void test_reliability(const struct node &node, unsigned int to, unsigned 
 	printf("Iteration 0: Physical Address: %x.%x.%x.%x Primary Device Type: %s\n",
 	       cec_phys_addr_exp(pa), cec_prim_type2s(prim_dev));
 
+	time_t start = time(NULL);
+
 	while (1) {
 		iter++;
 		cec_msg_init(&msg, from, to);
@@ -1353,12 +1355,14 @@ static void test_reliability(const struct node &node, unsigned int to, unsigned 
 		printf("Iteration %u: %s: Physical Address: %x.%x.%x.%x Primary Device Type: %s\n",
 		       iter, pass ? "PASS" : "FAIL",
 		       cec_phys_addr_exp(cur_pa), cec_prim_type2s(cur_prim_dev));
+		fflush(stdout);
 		if (!pass)
 			std::exit(EXIT_FAILURE);
-		if (cnt && iter == cnt)
+		time_t cur = time(NULL);
+		if (secs && cur - start > secs)
 			break;
 	}
-	printf("%u iterations: PASS\n", cnt);
+	printf("%u iterations over %u seconds: PASS\n", iter, secs);
 }
 
 static void show_legend()
@@ -2381,7 +2385,7 @@ int main(int argc, char **argv)
 	double stress_test_standby_wakeup_cycle_sleep_before_on = 0;
 	double stress_test_standby_wakeup_cycle_sleep_before_off = 0;
 	bool stress_test_standby_wakeup_cycle_hpd_may_be_low = false;
-	unsigned int test_reliability_cnt = 0;
+	unsigned int test_reliability_duration = 0;
 	unsigned int test_standby_wakeup_cycle_polls = 15;
 	unsigned int test_standby_wakeup_cycle_sleep = 10;
 	bool test_standby_wakeup_cycle_hpd_may_be_low = false;
@@ -2787,7 +2791,7 @@ int main(int argc, char **argv)
 			return 0;
 
 		case OptTestReliability:
-			test_reliability_cnt = strtoul(optarg, nullptr, 0);
+			test_reliability_duration = strtoul(optarg, nullptr, 0);
 			break;
 
 		case OptTestStandbyWakeupCycle: {
@@ -3293,7 +3297,7 @@ int main(int argc, char **argv)
 		fcntl(node.fd, F_SETFL, fcntl(node.fd, F_GETFL) & ~O_NONBLOCK);
 
 	if (options[OptTestReliability])
-		test_reliability(node, to, test_reliability_cnt);
+		test_reliability(node, to, test_reliability_duration);
 	if (options[OptTestStandbyWakeupCycle])
 		test_standby_wakeup_cycle(node,
 					  test_standby_wakeup_cycle_polls,
