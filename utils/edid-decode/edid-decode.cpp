@@ -1147,6 +1147,8 @@ static int edid_from_file(const char *from_file, FILE *error)
 
 	odd_hex_digits = false;
 	if (!extract_edid(fd, error)) {
+		if (options[OptPhysicalAddress])
+			return -1;
 		if (!state.edid_size) {
 			fprintf(error, "EDID of '%s' was empty.\n", from_file);
 			return -1;
@@ -1159,8 +1161,9 @@ static int edid_from_file(const char *from_file, FILE *error)
 		return -1;
 	}
 	if (state.edid_size % EDID_PAGE_SIZE) {
-		fprintf(error, "EDID length %u is not a multiple of %u.\n",
-			state.edid_size, EDID_PAGE_SIZE);
+		if (!options[OptPhysicalAddress])
+			fprintf(error, "EDID length %u is not a multiple of %u.\n",
+				state.edid_size, EDID_PAGE_SIZE);
 		return -1;
 	}
 	state.num_blocks = state.edid_size / EDID_PAGE_SIZE;
@@ -1168,7 +1171,8 @@ static int edid_from_file(const char *from_file, FILE *error)
 		close(fd);
 
 	if (memcmp(edid, "\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00", 8)) {
-		fprintf(error, "No EDID header found in '%s'.\n", from_file);
+		if (!options[OptPhysicalAddress])
+			fprintf(error, "No EDID header found in '%s'.\n", from_file);
 		return -1;
 	}
 	return 0;
