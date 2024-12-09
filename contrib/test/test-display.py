@@ -147,6 +147,29 @@ def monitor_context(device, logpath, soak_time_exit):
             fdesc.close()
 
 
+@contextlib.contextmanager
+def edid_context(device, duration, logpath):
+    """Setup an EDID reader context for DDC device.
+
+    Args:
+        device (str): DDC device /dev/i2c-X
+        duration (int): duration of test in seconds
+        logpath (str): path to logfile
+    """
+    edid_cmd = f"edid-decode -a{device} --i2c-test-reliability duration={duration}"
+    log.info(f"Starting DDC reader: {edid_cmd}")
+    fdesc = open(logpath, "w")
+    proc = Popen(edid_cmd.split(), stderr=fdesc, stdout=fdesc)
+    try:
+        if proc.poll():
+            raise MonitorSetupError("Failed to set up DDC reader")
+        yield
+    finally:
+        log.info("Terminating DDC reader")
+        proc.terminate()
+        fdesc.close()
+
+
 def write_header(cmd, log_file):
     """Write header.
 
@@ -348,9 +371,14 @@ def main(args):
         std_log = os.path.join(log_dir, "cec-stress-random-stdout.log")
     elif args.command == "cec-compliance":
         std_log = os.path.join(log_dir, "cec-compliance-stdout.log")
+    elif args.command == "cec-compliance":
+        std_log = os.path.join(log_dir, "cec-compliance-stdout.log")
+    elif args.command == "cec-ddc-reliability":
+        std_log = os.path.join(log_dir, "cec-ddc-reliability-stdout.log")
 
     follower_log = os.path.join(log_dir, "follower.log")
     monitor_log = os.path.join(log_dir, "monitor.log")
+    edid_log = os.path.join(log_dir, "edid.log")
 
     tests_to_run = ("--test-audio-return-channel-control "
                     "--test-device-osd-transfer "
@@ -372,8 +400,10 @@ def main(args):
                 follower_context(device, follower_log))
             outer_stack.enter_context(monitor_context(
                 device, monitor_log, soak_time_exit=args.log_soak_time))
+            if args.command == "cec-ddc-reliability":
+                outer_stack.enter_context(edid_context(args.edid_ddc, args.duration, edid_log))
 
-            if args.console:
+            if cec_console:
                 # Desktop managers can get very confused by displays appearing and
                 # disappearing due to Hotplug Detect toggles that happen while going
                 # into and out of standby.
@@ -398,15 +428,20 @@ def main(args):
             elif args.command == "cec-compliance":
                 command = f"cec-compliance -S -w -d{device} -r {tests_to_run}"
                 execute_cmd(command, std_log)
+            elif args.command == "cec-ddc-reliability":
+                command = f"cec-ctl -S -w -d{device} --test-reliability {args.duration}"
+                execute_cmd(command, std_log)
 
     finally:
-        if args.console:
+        if cec_console:
             run_cmd('systemctl start graphical.target', std_log, shell=True)
 
         archive_files = [
             os.path.basename(monitor_log),
             os.path.basename(follower_log),
             os.path.basename(std_log), ]
+        if args.command == "cec-ddc-reliability":
+            archive_files.append(os.path.basename(edid_log))
 
         archive_files = [os.path.join(folder_name, f) for f in archive_files]
         archive_files = " ".join(archive_files)
@@ -417,12 +452,13 @@ def main(args):
         print(f"Archive file: {log_dir}.tar.gz\n")
 
 
-def add_cec_args(subparser, soak_time):
+def add_cec_args(subparser, soak_time, have_console):
     """Add standard CEC options to subparser.
 
     Args:
         subparser (argparse): CEC subparser
         soak_time (int): CEC monitor soak time in seconds
+        have_console (bool): if true, add --console option
     """
 
     subparser.add_argument("-d", "--cec-device",
@@ -436,16 +472,19 @@ def add_cec_args(subparser, soak_time):
                            default='0x000c03',
                            help="CEC Vendor ID to use, default is 0x000c03")
     subparser.add_argument("-s", "--log-soak-time",
-                           metavar="WAIT",
-                           type=int,
-                           default=soak_time,
-                           help=f"Seconds to wait before closing the monitor log, default is {soak_time}s")
-    subparser.add_argument("-C", "--console",
-                           action='store_true',
-                           help="Switch to console mode before running CEC test")
+			   metavar="WAIT",
+			   type=int,
+			   default=soak_time,
+			   help=f"Seconds to wait before closing the monitor log, default is {soak_time}s")
+    if have_console:
+        subparser.add_argument("-C", "--console",
+                               dest="cec_console",
+                               action='store_true',
+                               help="Switch to console mode before running CEC test")
 
 
 if __name__ == "__main__":
+    cec_console = False
     parser = argparse.ArgumentParser(
         description="Display Test",
         formatter_class=argparse.RawTextHelpFormatter)
@@ -469,11 +508,11 @@ if __name__ == "__main__":
 
     cec_parser = subparser.add_parser("cec-compliance",
                                       help="Run cec compliance test")
-    add_cec_args(cec_parser, 5)
+    add_cec_args(cec_parser, 5, True)
 
     stress_parser = subparser.add_parser("cec-stress",
                                          help="Run standby-wakeup cycle stress test")
-    add_cec_args(stress_parser, 120)
+    add_cec_args(stress_parser, 120, True)
     stress_parser.add_argument("-a", "--args",
                                type=str,
                                default="cnt=10000",
@@ -482,7 +521,7 @@ if __name__ == "__main__":
 
     stress_sleep_parser = subparser.add_parser("cec-stress-sleep",
                                                help="Run standby-wakeup cycle stress test with a sleep before each state transition")
-    add_cec_args(stress_sleep_parser, 120)
+    add_cec_args(stress_sleep_parser, 120, True)
     stress_sleep_parser.add_argument("-a", "--args",
                                      type=str,
                                      default="cnt=10000,max-sleep=5",
@@ -491,12 +530,23 @@ if __name__ == "__main__":
 
     stress_random_parser = subparser.add_parser("cec-stress-random",
                                                 help="Run random standby-wakeup cycle stress test")
-    add_cec_args(stress_random_parser, 120)
+    add_cec_args(stress_random_parser, 120, True)
     stress_random_parser.add_argument("-a", "--args",
                                       type=str,
                                       default="cnt=4000",
                                       help="Arguments for the cec-ctl --stress-test-random-standby-wakeup-cycle option, "
                                       "default is cnt=4000")
+
+    cec_ddc_test = subparser.add_parser("cec-ddc-reliability",
+					help="Run a CEC and DDC cable reliability test")
+    add_cec_args(cec_ddc_test, 5, False)
+    cec_ddc_test.add_argument("-A", "--edid-ddc",
+			      type=str,
+			      help="The /dev/i2c-X device from where to read the EDID over the DDC lines from the display")
+    cec_ddc_test.add_argument("-D", "--duration",
+			      type=int,
+                              default=0,
+			      help="The duration in seconds to run this test (default=0=forever)")
 
     args = parser.parse_args()
     if not args.command:
