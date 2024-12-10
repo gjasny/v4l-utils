@@ -1119,8 +1119,9 @@ static bool extract_edid(int fd, FILE *error)
 
 	/* Assume binary */
 	if (edid_data.size() > sizeof(edid)) {
-		fprintf(error, "Binary EDID length %zu is greater than %zu.\n",
-			edid_data.size(), sizeof(edid));
+		if (!options[OptPhysicalAddress])
+			fprintf(error, "Binary EDID length %zu is greater than %zu.\n",
+				edid_data.size(), sizeof(edid));
 		return false;
 	}
 	memcpy(edid, data, edid_data.size());
@@ -1142,7 +1143,8 @@ static int edid_from_file(const char *from_file, FILE *error)
 		from_file = "stdin";
 		fd = 0;
 	} else if ((fd = open(from_file, flags)) == -1) {
-		perror(from_file);
+		if (!options[OptPhysicalAddress])
+			perror(from_file);
 		return -1;
 	}
 
