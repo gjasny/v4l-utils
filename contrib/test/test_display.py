@@ -290,6 +290,9 @@ def main(args):
             return
         port = run_cmd(cmd).strip("\n")
     else:
+        if os.geteuid() != 0:
+            sys.exit("The CEC tests require root privileges, run this program with sudo.\n")
+
         device = setup_cec_device(args)
         port = run_cmd(f"cec-ctl -d {device} -x -s").strip("\n")
         if port == 'f.f.f.f':
@@ -326,15 +329,12 @@ def main(args):
         run_edid_test(args, log_dir)
         return
 
-    if os.geteuid() != 0:
-        sys.exit("The CEC tests require root privileges, run this program with sudo.\n")
-
     if args.command == "cec-stress":
         std_log = os.path.join(log_dir, "cec-stress-stdout.log")
+    elif args.command == "cec-stress-sleep":
+        std_log = os.path.join(log_dir, "cec-stress-sleep-stdout.log")
     elif args.command == "cec-stress-random":
         std_log = os.path.join(log_dir, "cec-stress-random-stdout.log")
-    elif args.command == "cec-compliance":
-        std_log = os.path.join(log_dir, "cec-compliance-stdout.log")
     elif args.command == "cec-compliance":
         std_log = os.path.join(log_dir, "cec-compliance-stdout.log")
     elif args.command == "cec-ddc-reliability":
@@ -388,6 +388,13 @@ def main(args):
             if args.command == "cec-stress":
                 command = (f"cec-ctl -d{device} -t0"
                            f" --stress-test-standby-wakeup-cycle {args.args} -w")
+                execute_cmd(command, std_log)
+            elif args.command == "cec-stress-sleep":
+                sleep_args = args.args
+                if not "max-sleep=" in sleep_args:
+                    sleep_args = sleep_args + ",max-sleep=5"
+                command = (f"cec-ctl -d{device} -t0"
+                           f" --stress-test-standby-wakeup-cycle {sleep_args} -w")
                 execute_cmd(command, std_log)
             elif args.command == "cec-stress-random":
                 command = (f"cec-ctl -d{device} -t0"
