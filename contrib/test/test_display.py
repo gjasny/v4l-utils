@@ -9,18 +9,16 @@ The actual compliance tests are performed by the edid-decode and cec-ctl,
 cec-compliance and cec-follower utilities, and this script is a convenient
 frontend for that.
 
-The CEC tests must be performed with root permissions as that is needed to
-run the monitor mode of cec-ctl: this will produce the monitor.log during
-the CEC tests, which is very useful when debugging problems.
+The tests must be performed with root permissions.
 
 The edid-compliance test can be used as follows:
 
-  test_display.py edid-compliance
+  sudo ./test_display.py edid-compliance
 
   will just list the available EDID files found in /sys/class/drm/, and you
   can select one and give it to edid-compliance as follows:
 
-  test_display.py edid-compliance --edid-file /sys/class/drm/card1-HDMI-A-1/edid
+  sudo ./test_display.py edid-compliance --edid-file /sys/class/drm/card1-HDMI-A-1/edid
 
   The results of the test are written in /tmp/test_display.
 
@@ -264,6 +262,8 @@ def run_edid_test(args, log_dir = None):
         else:
             cmd = f"edid-decode -a {args.edid_ddc} --i2c-edid --check -p -n"
         run_cmd(cmd, std_log, shell=True)
+    except CalledProcessError:
+        pass
     finally:
         out = run_cmd(f"cat {std_log}", shell=True)
         print(f"{out}")
@@ -280,19 +280,26 @@ def main(args):
         args (argparse): Arguments for the test
     """
 
+    if os.geteuid() != 0:
+        sys.exit("These tests require root privileges, run this program with sudo.")
+
     if args.command == "edid-compliance":
         if args.edid_file:
+            if not os.path.isfile(args.edid_file):
+                sys.exit(f"{args.edid_file} does not exist.")
             cmd = f"edid-decode -P {args.edid_file}"
         elif args.edid_ddc:
+            i2c_dev = args.edid_ddc
+            if i2c_dev.isdigit():
+                i2c_dev = f"/dev/i2c-{i2c_dev}"
+            if not os.path.exists(i2c_dev):
+                sys.exit(f"{i2c_dev} does not exist.")
             cmd = f"edid-decode -a {args.edid_ddc} --i2c-edid -P"
         else:
             run_edid_test(args)
             return
         port = run_cmd(cmd).strip("\n")
     else:
-        if os.geteuid() != 0:
-            sys.exit("The CEC tests require root privileges, run this program with sudo.\n")
-
         device = setup_cec_device(args)
         port = run_cmd(f"cec-ctl -d {device} -x -s").strip("\n")
         if port == 'f.f.f.f':
@@ -301,7 +308,7 @@ def main(args):
             time.sleep(15)  # wait for the display to wake up
             port = run_cmd(f"cec-ctl -d {device} -x -s").strip("\n")
             if port == 'f.f.f.f':
-                sys.exit(f"The CEC device {device} has no physical address. Is a display connected?\n")
+                sys.exit(f"The CEC device {device} has no physical address. Is a display connected?")
 
     port = port.replace(".0.0.0", "")
     port = "-hdmi-" + port
@@ -310,8 +317,8 @@ def main(args):
     if args.log_dir:
         log_dir = pathlib.Path(args.log_dir)
     else:
-        log_dir = pathlib.Path(f"{args.top_log_dir}/tmp/test_display/{folder_name}")
-    os.makedirs(log_dir)
+        log_dir = pathlib.Path(f"{args.top_log_dir}/{folder_name}")
+    log_dir.mkdir(parents=True)
 
     logging.basicConfig(
         level=logging.DEBUG,
