@@ -16,7 +16,6 @@
 
 #include <sys/types.h>
 
-#include "compiler.h"
 #include "v4l2-compliance.h"
 
 typedef __s32		old_time32_t;
