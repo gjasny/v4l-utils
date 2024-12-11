@@ -35,7 +35,7 @@ static unsigned roundup_to_power_of_two(unsigned v)
 
 	if (!v || v > 0x80000000) {
 		fprintf(stderr, "roundup_to_power_of_two: invalid input %u.\n", v);
-		exit(1);
+		std::exit(EXIT_FAILURE);
 	}
 
 	v--;

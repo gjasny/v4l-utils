@@ -618,7 +618,7 @@ char *extract_string(const unsigned char *x, unsigned len, bool is_cp437);
 #ifdef __HAS_I2C_DEV__
 
 int request_i2c_adapter(const char *device);
-int read_edid(int adapter_fd, unsigned char *edid);
+int read_edid(int adapter_fd, unsigned char *edid, bool silent = false);
 int test_reliability(int adapter_fd, unsigned cnt, unsigned msleep);
 int read_hdcp(int adapter_fd);
 int read_hdcp_ri(int adapter_fd, double ri_time);

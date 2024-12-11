@@ -1143,9 +1143,8 @@ static int edid_from_file(const char *from_file, FILE *error)
 		from_file = "stdin";
 		fd = 0;
 	} else if ((fd = open(from_file, flags)) == -1) {
-		if (!options[OptPhysicalAddress])
-			perror(from_file);
-		return -1;
+		perror(from_file);
+		std::exit(EXIT_FAILURE);
 	}
 
 	odd_hex_digits = false;
@@ -2430,7 +2429,7 @@ int main(int argc, char **argv)
 				out_fmt = OUT_FMT_XML;
 			} else {
 				usage();
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			}
 			break;
 		case OptDiag:
@@ -2449,7 +2448,7 @@ int main(int argc, char **argv)
 
 			adapter_fd = request_i2c_adapter(device.c_str());
 			if (adapter_fd < 0)
-				exit(1);
+				std::exit(EXIT_FAILURE);
 			break;
 		}
 		case OptI2CTestReliability:
@@ -2561,7 +2560,7 @@ int main(int argc, char **argv)
 
 	if (optind == argc) {
 		if (adapter_fd >= 0 && options[OptI2CEDID]) {
-			ret = read_edid(adapter_fd, edid);
+			ret = read_edid(adapter_fd, edid, options[OptPhysicalAddress]);
 			if (ret > 0) {
 				state.edid_size = ret * EDID_PAGE_SIZE;
 				state.num_blocks = ret;

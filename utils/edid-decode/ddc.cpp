@@ -50,7 +50,8 @@ int request_i2c_adapter(const char *device)
 }
 
 static int read_edid_block(int adapter_fd, __u8 *edid,
-			   uint8_t segment, uint8_t offset, uint8_t blocks)
+			   uint8_t segment, uint8_t offset, uint8_t blocks,
+			   bool silent)
 {
 	struct i2c_rdwr_ioctl_data data;
 	struct i2c_msg write_message;
@@ -90,18 +91,19 @@ static int read_edid_block(int adapter_fd, __u8 *edid,
 	}
 
 	if (err < 0) {
-		fprintf(stderr, "Unable to read edid: %s\n", strerror(errno));
+		if (!silent)
+			fprintf(stderr, "Unable to read edid: %s\n", strerror(errno));
 		return err;
 	}
 	return 0;
 }
 
-int read_edid(int adapter_fd, unsigned char *edid)
+int read_edid(int adapter_fd, unsigned char *edid, bool silent)
 {
 	unsigned n_extension_blocks;
 	int err;
 
-	err = read_edid_block(adapter_fd, edid, 0, 0, 2);
+	err = read_edid_block(adapter_fd, edid, 0, 0, 2, silent);
 	if (err)
 		return err;
 	n_extension_blocks = edid[126];
@@ -109,7 +111,8 @@ int read_edid(int adapter_fd, unsigned char *edid)
 		return 1;
 	for (unsigned i = 2; i <= n_extension_blocks; i += 2) {
 		err = read_edid_block(adapter_fd, edid + i * 128, i / 2, 0,
-				      (i + 1 > n_extension_blocks ? 1 : 2));
+				      (i + 1 > n_extension_blocks ? 1 : 2),
+				      silent);
 		if (err)
 			return err;
 	}
