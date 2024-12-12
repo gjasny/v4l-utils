@@ -97,8 +97,12 @@ void edid_state::parse_displayid_product_id(const unsigned char *x)
 		printf(", Week %u", week);
 	printf("\n");
 	if (x[14]) {
-		char buf[256];
-
+		const unsigned char maxlen = EDID_PAGE_SIZE - 15;
+		char buf[maxlen];
+		if (x[14] >= maxlen) {
+			fail("Product ID length is more than expected (%u >= %u).\n", x[14], maxlen);
+			return;
+		}
 		memcpy(buf, x + 15, x[14]);
 		buf[x[14]] = 0;
 		printf("    Product ID: %s\n", buf);
