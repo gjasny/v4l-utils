@@ -1348,7 +1348,8 @@ static const char *colorspace_eotf_combinations[] = {
 	"Adobe RGB",
 	"DCI-P3",
 	"BT.2020",
-	"BT.2020/SMPTE ST 2084"
+	"BT.2020/SMPTE ST 2084",
+	NULL
 };
 
 static const char *colorspace_eotf_reserved[] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
