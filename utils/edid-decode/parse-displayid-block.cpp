@@ -715,6 +715,9 @@ void edid_state::parse_displayid_transfer_characteristics(const unsigned char *x
 {
 	check_displayid_datablock_revision(x[1], 0xf0, 1);
 
+	if (!check_displayid_datablock_length(x, 1, 248))
+		return;
+
 	unsigned xfer_id = x[1] >> 4;
 	bool first_is_white = x[3] & 0x80;
 	bool four_param = x[3] & 0x20;
