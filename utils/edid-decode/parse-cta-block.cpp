@@ -3006,6 +3006,10 @@ void edid_state::parse_cta_block(const unsigned char *x)
 			break;
 		}
 
+		if (offset > 127) {
+			fail("Offset %u is larger than EDID block size-1 (%d).\n", offset, 127);
+			break;
+		}
 		if (version >= 3) {
 			unsigned i;
 
