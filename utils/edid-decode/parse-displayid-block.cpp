@@ -498,9 +498,11 @@ void edid_state::parse_displayid_type_3_timing(const unsigned char *x)
 		break;
 	case 8:
 		s += "undefined";
+		t.hratio = t.vratio = 1;
 		break;
 	default:
 		s += "reserved";
+		t.hratio = t.vratio = 1;
 		fail("Unknown aspect 0x%02x.\n", x[0] & 0xf);
 		break;
 	}
