@@ -939,6 +939,10 @@ void edid_state::parse_displayid_stereo_display_intf(const unsigned char *x)
 	}
 	if (!(x[1] & 0x40)) // Has No Timing Codes
 		return;
+	if (len < x[3] + 1U) {
+		fail("Length is smaller than expected (%u < %u)\n", len, x[3] + 1);
+		return;
+	}
 	len -= 1 + x[3];
 	x += 4 + x[3];
 	while (1U + (x[0] & 0x1f) <= len) {
