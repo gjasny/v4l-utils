@@ -739,6 +739,12 @@ void edid_state::parse_displayid_transfer_characteristics(const unsigned char *x
 			printf("    Response curve #%u:",
 			       i - first_is_white);
 		unsigned samples = x[offset];
+
+		if (offset + samples >= len) {
+			fail("Length %u is too small to hold %u samples at %u offset.\n",
+			     len, samples, offset);
+			break;
+		}
 		if (four_param) {
 			if (samples != 5)
 				fail("Expected 5 samples.\n");
