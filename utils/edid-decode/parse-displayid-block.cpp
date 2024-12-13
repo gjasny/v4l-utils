@@ -740,6 +740,8 @@ void edid_state::parse_displayid_transfer_characteristics(const unsigned char *x
 			       i - first_is_white);
 		unsigned samples = x[offset];
 
+		if (!samples)
+			break;
 		if (offset + samples >= len) {
 			fail("Length %u is too small to hold %u samples at %u offset.\n",
 			     len, samples, offset);
