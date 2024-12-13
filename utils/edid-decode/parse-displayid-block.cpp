@@ -2159,6 +2159,7 @@ void edid_state::parse_displayid_block(const unsigned char *x)
 	}
 
 	unsigned len;
+	unsigned saved_length = length;
 	for (const unsigned char *y = x + 5; length > 0; y += len) {
 		len = displayid_block(version, y, length);
 		length -= len;
@@ -2170,10 +2171,10 @@ void edid_state::parse_displayid_block(const unsigned char *x)
 	 * (excluding DisplayID-in-EDID magic byte)
 	 */
 	data_block.clear();
-	do_checksum("  ", x + 1, x[2] + 5, x[2] + 4);
+	do_checksum("  ", x + 1, saved_length, x[2] + 4);
 
-	unused_bytes = 0x7f - (1 + x[2] + 5);
-	if (!memchk(x + 1 + x[2] + 5, unused_bytes)) {
+	unused_bytes = 0x7f - (1 + saved_length + 5);
+	if (!memchk(x + 1 + saved_length + 5, unused_bytes)) {
 		data_block = "Padding";
 		fail("Contains non-zero bytes.\n");
 	}
