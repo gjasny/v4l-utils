@@ -2429,8 +2429,17 @@ static void cta_ifdb(const unsigned char *x, unsigned length)
 	length -= len_hdr + 2;
 	x += len_hdr + 2;
 	while (length > 0) {
-		int payload_len = x[0] >> 5;
+		unsigned payload_len = x[0] >> 5;
 		unsigned char type = x[0] & 0x1f;
+
+		if (payload_len > length) {
+			fail("Payload size %u exceeds remaining block size (%u).\n", payload_len, length);
+			break;
+		}
+		if (payload_len == 0) {
+			fail("Payload has 0 size.\n");
+			break;
+		}
 
 		const char *name = NULL;
 		if (type < ARRAY_SIZE(infoframe_types))
@@ -2450,6 +2459,8 @@ static void cta_ifdb(const unsigned char *x, unsigned length)
 			x++;
 			length--;
 		}
+		if (length == 0)
+			break;
 		x += payload_len;
 		length -= payload_len;
 	}
