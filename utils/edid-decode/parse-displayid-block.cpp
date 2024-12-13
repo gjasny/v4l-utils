@@ -369,6 +369,10 @@ void edid_state::parse_displayid_type_1_7_timing(const unsigned char *x,
 		}
 		unsigned htot = t.hact + t.hfp + t.hsync + t.hbp;
 		unsigned vtot = t.vact + t.vfp + t.vsync + t.vbp;
+		if (htot * vtot == 0) {
+			fail("Cannot calculate refresh rate: htot * vtot is 0.\n");
+			return;
+		}
 		unsigned refresh = (t.pixclk_khz * 1000ULL) / (htot * vtot);
 
 		for (unsigned rb = RB_NONE; rb <= RB_CVT_V3; rb++) {
