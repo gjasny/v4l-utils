@@ -1113,8 +1113,9 @@ static bool extract_edid(int fd, FILE *error)
 	unsigned i;
 
 	/* Is the EDID provided in hex? */
-	for (i = 0; i < 32 && (isspace(data[i]) || strchr(ignore_chars, data[i]) ||
-			       tolower(data[i]) == 'x' || isxdigit(data[i])); i++);
+	for (i = 0; i < 32 && i < edid_data.size() &&
+	     (isspace(data[i]) || strchr(ignore_chars, data[i]) ||
+	      tolower(data[i]) == 'x' || isxdigit(data[i])); i++);
 
 	if (i == 32)
 		return extract_edid_hex(data);
