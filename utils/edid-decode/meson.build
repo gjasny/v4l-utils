@@ -25,4 +25,6 @@ edid_decode = executable(
 	install: true,
 )
 
+meson.override_find_program('edid-decode', edid_decode)
+
 man_pages += [[ meson.current_source_dir(), 'edid-decode', 1 ]]
