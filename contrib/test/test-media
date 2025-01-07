@@ -641,11 +641,13 @@ if [ $vicodec -eq 1 -a $setup -eq 0 ]; then
 	echo
 	echo vicodec encoder compliance tests | tee /dev/kmsg
 	echo
+	date
 	stdbuf -oL $v4l2_compliance -z platform:vicodec -d stateful-encoder-source -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
 
 	echo
 	echo vicodec decoder compliance tests | tee /dev/kmsg
 	echo
+	date
 	decful_opts='-z platform:vicodec -d stateful-decoder-source -z platform:vivid-002 -e vivid-002-vid-cap'
 	stdbuf -oL $v4l2_compliance $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 -s24 -P -a 2>&1 | tee -a $tmp
 	stdbuf -oL $v4l2_compliance $decful_opts --stream-from $tmpdir/comp.yu12.1280.24 -s24 -P -a 2>&1 | tee -a $tmp
@@ -662,10 +664,12 @@ if [ $vicodec -eq 1 -a $setup -eq 0 ]; then
 	echo
 	echo stateful decode | tee /dev/kmsg
 	echo
+	date
 	$v4l2_ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 --stream-to=$tmpdir/raw.yu12.1280.24
 	echo
 	echo stateless decode | tee /dev/kmsg
 	echo
+	date
 	$v4l2_ctl $decless_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 --stream-to=$tmpdir/raw.yu12.1280.24.stateless
 	vicodec_tests=$((vicodec_tests+1))
 	if cmp $tmpdir/raw.yu12.1280.24 $tmpdir/raw.yu12.1280.24.stateless ; then
@@ -679,6 +683,7 @@ if [ $vicodec -eq 1 -a $setup -eq 0 ]; then
 	echo
 	echo stateful decode with dynamic resolution changes for every frame | tee /dev/kmsg
 	echo
+	date
 	$v4l2_ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.2.12 --stream-to=$tmpdir/raw.yu12.mix.2.12
 	# v4l2-ctl does not yet reallocate buffers if they are too small for the new format
 	$v4l2_ctl $decless_opts -v width=1920,height=1088 --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.2.12 --stream-to=$tmpdir/raw.yu12.mix.2.12.stateless
@@ -694,6 +699,7 @@ if [ $vicodec -eq 1 -a $setup -eq 0 ]; then
 	echo
 	echo stateful decode with dynamic resolution changes for every other frame | tee /dev/kmsg
 	echo
+	date
 	$v4l2_ctl $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.4.6 --stream-to=$tmpdir/raw.yu12.mix.4.6
 	# v4l2-ctl does not yet reallocate buffers if they are too small for the new format
 	$v4l2_ctl $decless_opts -v width=1920,height=1088 --stream-from-hdr=$tmpdir/comp.hdr.yu12.mix.4.6 --stream-to=$tmpdir/raw.yu12.mix.4.6.stateless
