@@ -83,7 +83,7 @@ def run_cmd(cmd, file=None, shell=False):
     log.debug("Running cmd: %s", cmd)
     try:
         if file:
-            stdout = open(file, "w", encoding = "utf-8")
+            stdout = open(file, "a+", encoding = "utf-8")
             if not shell:
                 version = run_cmd("cec-compliance --version")
                 stdout.write(f"Running cmd: {cmd}\n\n")
@@ -102,7 +102,7 @@ def run_cmd(cmd, file=None, shell=False):
         if file:
             stdout.close()
 
-    log.debug("Output: %s", output.stdout)
+    log.debug("Output:\n%s", output.stdout)
     return output.stdout
 
 
@@ -116,7 +116,7 @@ def follower_context(device, logpath):
     """
     follower_cmd = f"cec-follower -d{device} -i 0,0x36 -w -v"
     log.info("Starting follower: %s", follower_cmd)
-    fdesc = open(logpath, "w", encoding = "utf-8")
+    fdesc = open(logpath, "a+", encoding = "utf-8")
     proc = Popen(follower_cmd.split(), stderr=fdesc, stdout=fdesc, encoding = "utf-8")
     try:
         if proc.poll():
@@ -140,7 +140,7 @@ def monitor_context(device, logpath, soak_time_exit):
     """
     monitor_cmd = f"cec-ctl -d{device} -M -w -v"
     log.info("Starting monitor: %s", monitor_cmd)
-    fdesc = open(logpath, "w", encoding = "utf-8")
+    fdesc = open(logpath, "a+", encoding = "utf-8")
     proc = Popen(monitor_cmd.split(), stderr=fdesc, stdout=fdesc, encoding = "utf-8")
     try:
         if proc.poll():
@@ -214,6 +214,7 @@ def execute_cmd(command, log_file):
         for line in proc.stdout:
             f.write(line)
             print(line.strip("\n"))
+            sys.stdout.flush()
 
         proc.stdout.close()
         proc.wait()
@@ -254,7 +255,7 @@ def run_edid_test(args, log_dir = None):
             print("No EDIDs were found in /sys/class/drm/")
         return
 
-    std_log = os.path.join(log_dir, "edid-compliance-stdout.log")
+    std_log = os.path.join(log_dir, "edid-compliance.log")
 
     try:
         if args.edid_file:
@@ -267,8 +268,8 @@ def run_edid_test(args, log_dir = None):
     finally:
         out = run_cmd(f"cat {std_log}", shell=True)
         print(f"{out}")
-        print(f"Logs directory: {log_dir}")
         if not args.no_tar:
+            print(f"Logs directory: {log_dir}")
             tar_cmd = f"tar -C {log_dir.parent} -czvf {log_dir}.tar.gz {log_dir.name}"
             run_cmd(tar_cmd)
             print(f"Archive file: {log_dir}.tar.gz\n")
@@ -318,7 +319,7 @@ def main(args):
         log_dir = pathlib.Path(args.log_dir)
     else:
         log_dir = pathlib.Path(f"{args.top_log_dir}/{folder_name}")
-    log_dir.mkdir(parents=True)
+    log_dir.mkdir(parents=True, exist_ok=True)
 
     logging.basicConfig(
         level=logging.DEBUG,
@@ -337,15 +338,15 @@ def main(args):
         return
 
     if args.command == "cec-stress":
-        std_log = os.path.join(log_dir, "cec-stress-stdout.log")
+        std_log = os.path.join(log_dir, "cec-stress.log")
     elif args.command == "cec-stress-sleep":
-        std_log = os.path.join(log_dir, "cec-stress-sleep-stdout.log")
+        std_log = os.path.join(log_dir, "cec-stress-sleep.log")
     elif args.command == "cec-stress-random":
-        std_log = os.path.join(log_dir, "cec-stress-random-stdout.log")
+        std_log = os.path.join(log_dir, "cec-stress-random.log")
     elif args.command == "cec-compliance":
-        std_log = os.path.join(log_dir, "cec-compliance-stdout.log")
+        std_log = os.path.join(log_dir, "cec-compliance.log")
     elif args.command == "cec-ddc-reliability":
-        std_log = os.path.join(log_dir, "cec-ddc-reliability-stdout.log")
+        std_log = os.path.join(log_dir, "cec-ddc-reliability.log")
     else:
         sys.exit(f"Unknown command {args.command}")
 
@@ -418,8 +419,8 @@ def main(args):
         if args.console:
             run_cmd('systemctl start graphical.target', std_log, shell=True)
 
-        print(f"\nLogs directory: {log_dir}")
         if not args.no_tar:
+            print(f"\nLogs directory: {log_dir}")
             tar_cmd = f"tar -C {log_dir.parent} -czvf {log_dir}.tar.gz {log_dir.name}"
             run_cmd(tar_cmd)
             print(f"Archive file: {log_dir}.tar.gz\n")
