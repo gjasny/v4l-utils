@@ -109,6 +109,16 @@ int read_edid(int adapter_fd, unsigned char *edid, bool silent)
 	n_extension_blocks = edid[126];
 	if (!n_extension_blocks)
 		return 1;
+
+	// Check for HDMI Forum EDID Extension Override Data Block
+	if (n_extension_blocks >= 1 &&
+	    edid[128] == 2 &&
+	    edid[133] == 0x78 &&
+	    (edid[132] & 0xe0) == 0xe0 &&
+	    (edid[132] & 0x1f) >= 2 &&
+	    edid[134] > 1)
+		n_extension_blocks = edid[134];
+
 	for (unsigned i = 2; i <= n_extension_blocks; i += 2) {
 		err = read_edid_block(adapter_fd, edid + i * 128, i / 2, 0,
 				      (i + 1 > n_extension_blocks ? 1 : 2),
