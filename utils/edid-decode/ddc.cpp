@@ -462,6 +462,7 @@ static int read_hdcp_ri_register(int adapter_fd, __u16 *v)
 
 int read_hdcp_ri(int adapter_fd, double ri_time)
 {
+	__u64 last_ts = current_ts();
 	bool first = true;
 	__u16 ri = 0;
 
@@ -469,13 +470,17 @@ int read_hdcp_ri(int adapter_fd, double ri_time)
 	gettimeofday(&start_timeofday, nullptr);
 
 	while (1) {
+		__u64 ts = current_ts();
 		__u16 last = ri;
 
-		printf("Timestamp: %s", ts2s(current_ts()).c_str());
+		printf("Timestamp: %s", ts2s(ts).c_str());
 		if (!read_hdcp_ri_register(adapter_fd, &ri))
 			printf(" Ri': %04x", ri);
-		if (!first && ri != last)
-			printf(" (changed from %04x)", last);
+		if (!first && ri != last) {
+			printf(" (changed from %04x after %llu ms)",
+			       last, (ts - last_ts) / 1000000);
+			last_ts = ts;
+		}
 		printf("\n");
 		fflush(stdout);
 		first = false;
