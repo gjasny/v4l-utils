@@ -465,25 +465,27 @@ int read_hdcp_ri(int adapter_fd, double ri_time)
 	__u64 last_ts = current_ts();
 	bool first = true;
 	__u16 ri = 0;
+	__u16 last_ri = 0;
 
 	clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
 	gettimeofday(&start_timeofday, nullptr);
 
 	while (1) {
 		__u64 ts = current_ts();
-		__u16 last = ri;
 
 		printf("Timestamp: %s", ts2s(ts).c_str());
-		if (!read_hdcp_ri_register(adapter_fd, &ri))
-			printf(" Ri': %04x", ri);
-		if (!first && ri != last) {
-			printf(" (changed from %04x after %llu ms)",
-			       last, (ts - last_ts) / 1000000);
-			last_ts = ts;
+		if (!read_hdcp_ri_register(adapter_fd, &ri)) {
+			printf(" Ri': 0x%04x", ri);
+			if (!first && ri != last_ri) {
+				printf(" (changed from 0x%04x after %llu ms)",
+				       last_ri, (ts - last_ts) / 1000000);
+				last_ts = ts;
+				last_ri = ri;
+			}
+			first = false;
 		}
 		printf("\n");
 		fflush(stdout);
-		first = false;
 		usleep(ri_time * 1000000);
 	}
 	return 0;
