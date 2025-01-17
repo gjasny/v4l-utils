@@ -18,6 +18,7 @@
 #include <sys/epoll.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <math.h>
 #include <dirent.h>
@@ -38,6 +39,50 @@
 // i2c addresses for HDCP
 #define HDCP_PRIM_ADDR 0x3a
 #define HDCP_SEC_ADDR 0x3b
+
+static struct timespec start_monotonic;
+static struct timeval start_timeofday;
+static time_t valid_until_t;
+
+static std::string ts2s(__u64 ts)
+{
+	static char buf[64];
+	static unsigned last_secs;
+	static time_t last_t;
+	std::string s;
+	struct timeval sub = {};
+	struct timeval res;
+	unsigned secs;
+	__s64 diff;
+	time_t t;
+
+	diff = ts - start_monotonic.tv_sec * 1000000000ULL - start_monotonic.tv_nsec;
+	if (diff >= 0) {
+		sub.tv_sec = diff / 1000000000ULL;
+		sub.tv_usec = (diff % 1000000000ULL) / 1000;
+	}
+	timeradd(&start_timeofday, &sub, &res);
+	t = res.tv_sec;
+	if (t >= valid_until_t) {
+		struct tm tm = *localtime(&t);
+		last_secs = tm.tm_min * 60 + tm.tm_sec;
+		last_t = t;
+		valid_until_t = t + 60 - last_secs;
+		strftime(buf, sizeof(buf), "%a %b %e %T.000000", &tm);
+	}
+	secs = last_secs + t - last_t;
+	sprintf(buf + 14, "%02u:%02u.%06llu", secs / 60, secs % 60, (__u64)res.tv_usec);
+	return buf;
+}
+
+static __u64 current_ts()
+{
+	struct timespec ts;
+
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+}
+
 
 int request_i2c_adapter(const char *device)
 {
@@ -150,6 +195,9 @@ int test_reliability(int adapter_fd, unsigned secs, unsigned msleep)
 	else
 		printf("Read EDID (%u bytes) forever with %u milliseconds between each read.\n\n",
 		       blocks * EDID_PAGE_SIZE, msleep);
+
+	clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
+	gettimeofday(&start_timeofday, nullptr);
 
 	time_t start = time(NULL);
 	time_t start_test = start;
@@ -414,11 +462,23 @@ static int read_hdcp_ri_register(int adapter_fd, __u16 *v)
 
 int read_hdcp_ri(int adapter_fd, double ri_time)
 {
-	__u16 ri;
+	bool first = true;
+	__u16 ri = 0;
+
+	clock_gettime(CLOCK_MONOTONIC, &start_monotonic);
+	gettimeofday(&start_timeofday, nullptr);
 
 	while (1) {
+		__u16 last = ri;
+
+		printf("Timestamp: %s", ts2s(current_ts()).c_str());
 		if (!read_hdcp_ri_register(adapter_fd, &ri))
-			printf("Ri': %04x\n", ri);
+			printf(" Ri': %04x", ri);
+		if (!first && ri != last)
+			printf(" (changed from %04x)", last);
+		printf("\n");
+		fflush(stdout);
+		first = false;
 		usleep(ri_time * 1000000);
 	}
 	return 0;
