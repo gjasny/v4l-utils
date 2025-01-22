@@ -158,7 +158,7 @@ Interactive mode when doing remote tests.
 Warn if replies take longer than this threshold (default 1000ms).
 .TP
 \fB\-t\fR, \fB\-\-timeout\fR \fI<secs>\fR
-Set the standby/resume timeout to the given number of seconds. Default is 30s.
+Set the standby/resume timeout to the given number of seconds. Default is 60s.
 .TP
 \fB\-A\fR, \fB\-\-test\-adapter\fR
 Test the CEC adapter API

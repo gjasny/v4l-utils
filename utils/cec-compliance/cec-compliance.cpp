@@ -103,7 +103,7 @@ bool exit_on_fail;
 bool exit_on_warn;
 unsigned warnings;
 unsigned reply_threshold = 1000;
-time_t long_timeout = 30;
+time_t long_timeout = 60;
 
 static struct option long_options[] = {
 	{"device", required_argument, nullptr, OptSetDevice},
@@ -187,7 +187,7 @@ static void usage()
 	       "  -R, --reply-threshold <timeout>\n"
 	       "                       Warn if replies take longer than this threshold (default 1000ms)\n"
 	       "  -i, --interactive    Interactive mode when doing remote tests\n"
-	       "  -t, --timeout <secs> Set the standby/resume timeout to <secs>. Default is 30s.\n"
+	       "  -t, --timeout <secs> Set the standby/resume timeout to <secs>. Default is 60s.\n"
 	       "\n"
 	       "  -A, --test-adapter                  Test the CEC adapter API\n"
 	       "  -F, --test-fuzzing                  Test by fuzzing CEC messages\n"
