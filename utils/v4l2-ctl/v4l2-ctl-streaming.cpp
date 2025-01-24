@@ -2460,6 +2460,33 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 			return;
 		}
 
+		if (ex_fds && FD_ISSET(fd.g_fd(), ex_fds)) {
+			struct v4l2_event ev;
+
+			while (!fd.dqevent(ev)) {
+				if (ev.type == V4L2_EVENT_EOS) {
+					wr_fds = nullptr;
+					if (!verbose)
+						stderr_info("\n");
+					stderr_info("EOS EVENT\n");
+					fflush(stderr);
+				} else if (ev.type == V4L2_EVENT_SOURCE_CHANGE) {
+					if (!verbose)
+						stderr_info("\n");
+					stderr_info("SOURCE CHANGE EVENT\n");
+					in_source_change_event = true;
+
+					/*
+					 * if capture is not streaming, the
+					 * driver will not send a last buffer so
+					 * we set it here
+					 */
+					if (!cap_streaming)
+						last_buffer = true;
+				}
+			}
+		}
+
 		if (rd_fds && FD_ISSET(fd.g_fd(), rd_fds)) {
 			r = do_handle_cap(fd, in, fin, nullptr,
 					  count[CAP], fps_ts[CAP], fmt_in,
@@ -2492,33 +2519,6 @@ static void stateful_m2m(cv4l_fd &fd, cv4l_queue &in, cv4l_queue &out,
 				}
 			} else if (r < 0) {
 				break;
-			}
-		}
-
-		if (ex_fds && FD_ISSET(fd.g_fd(), ex_fds)) {
-			struct v4l2_event ev;
-
-			while (!fd.dqevent(ev)) {
-				if (ev.type == V4L2_EVENT_EOS) {
-					wr_fds = nullptr;
-					if (!verbose)
-						stderr_info("\n");
-					stderr_info("EOS EVENT\n");
-					fflush(stderr);
-				} else if (ev.type == V4L2_EVENT_SOURCE_CHANGE) {
-					if (!verbose)
-						stderr_info("\n");
-					stderr_info("SOURCE CHANGE EVENT\n");
-					in_source_change_event = true;
-
-					/*
-					 * if capture is not streaming, the
-					 * driver will not send a last buffer so
-					 * we set it here
-					 */
-					if (!cap_streaming)
-						last_buffer = true;
-				}
 			}
 		}
 
