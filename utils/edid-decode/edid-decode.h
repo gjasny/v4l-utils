@@ -423,6 +423,7 @@ struct edid_state {
 	void check_base_block(const unsigned char *x);
 	void list_dmts();
 	void list_established_timings();
+	char *manufacturer_name(const unsigned char *x);
 
 	void data_block_oui(std::string block_name, const unsigned char *x, unsigned length, unsigned *ouinum,
 	                    bool ignorezeros = false, bool do_ascii = false, bool big_endian = false,
@@ -449,6 +450,8 @@ struct edid_state {
 	void cta_displayid_type_8(const unsigned char *x, unsigned length);
 	void cta_displayid_type_10(const unsigned char *x, unsigned length);
 	void cta_block(const unsigned char *x, std::vector<unsigned> &found_tags);
+	void cta_sadb(const unsigned char *x, unsigned length);
+	void cta_audio_block(const unsigned char *x, unsigned length);
 	void preparse_cta_block(unsigned char *x);
 	void parse_cta_block(const unsigned char *x);
 	void cta_resolve_svr(timings_ext &t_ext);
@@ -532,6 +535,9 @@ struct edid_state {
 	void parse_if_mpeg_source(const unsigned char *x, unsigned size);
 	void parse_if_ntsc_vbi(const unsigned char *x, unsigned size);
 	void parse_if_drm(const unsigned char *x, unsigned size);
+
+	int parse_eld(const std::string &fname);
+	void parse_eld_baseline(const unsigned char *x, unsigned size);
 };
 
 static inline void add_str(std::string &s, const std::string &add)

@@ -14,7 +14,7 @@
 
 #include "edid-decode.h"
 
-static char *manufacturer_name(const unsigned char *x)
+char *edid_state::manufacturer_name(const unsigned char *x)
 {
 	static char name[4];
 

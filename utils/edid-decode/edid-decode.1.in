@@ -161,6 +161,8 @@ CVT 1.2: VESA Coordinated Video Timings (CVT) Standard, Version 1.2
 CVT 1.2: VESA CVT v1.2 Errata E2
 .TP
 GTF 1.1: VESA Generalized Timing Formula Standard, Version: 1.1
+.TP
+HDA 1.0a: High Definition Audio Specification, Version 1.0a
 .RE
 
 .SH OPTIONS
@@ -215,6 +217,29 @@ HDMI Specification. Otherwise it is assumed to be a regular CTA-861 InfoFrame
 without a checksum.
 
 Note: this is still work-in-progress, specifically for the AVI and HDMI InfoFrames.
+.TP
+\fB\-E\fR, \fB\-\-eld\fR \fI<file>\fR
+Parse the given EDID-Like Data (ELD) file. This option can be used multiple
+times to parse multiple ELD files. Read data from stdin if '-' was passed as a
+filename.  If the EDID of the display to which these ELD files are generated is
+also given, then the conformity checks will take that EDID into account.
+
+On Linux systems ELD can be extracted via the amixer command (copy all hex after the 'values='):
+  $ amixer -c 0 controls | grep ELD
+  numid=6,iface=PCM,name='ELD',device=3
+  numid=12,iface=PCM,name='ELD',device=7
+  numid=18,iface=PCM,name='ELD',device=8
+  numid=24,iface=PCM,name='ELD',device=9
+  $ amixer -c 0 cget iface=PCM,name=ELD,device=3
+  numid=6,iface=PCM,name='ELD',device=3
+    ; type=BYTES,access=r--v----,values=95
+    : values=0x10,0x00,0x08,0x00,0x6d,0x10,0x00,0x01,0x00,0x02,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x30,0xae,0xf1,0x61,0x4c,0x45,0x4e,0x20,0x54,0x33,0x32,0x68,0x2d,0x32,
+    0x30,0x0a,0x20,0x09,0x7f,0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+
 .TP
 \fB\-\-diagonal\fR \fI<inches>\fR
 Specify the diagonal of the display in inches. This will enable additional checks

@@ -464,7 +464,7 @@ static std::string mpeg_h_3d_audio_level(unsigned char x)
 	return std::string("Unknown MPEG-H 3D Audio Level (") + utohex(x) + ")";
 }
 
-static void cta_audio_block(const unsigned char *x, unsigned length)
+void edid_state::cta_audio_block(const unsigned char *x, unsigned length)
 {
 	unsigned i, format, ext_format;
 
@@ -1824,7 +1824,7 @@ const char *cta_speaker_map[] = {
 	NULL
 };
 
-static void cta_sadb(const unsigned char *x, unsigned length)
+void edid_state::cta_sadb(const unsigned char *x, unsigned length)
 {
 	unsigned sad_deprecated = 0x7f000;
 	unsigned sad;

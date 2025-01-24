@@ -43,6 +43,7 @@ enum Option {
 	OptI2CAdapter = 'a',
 	OptCheck = 'c',
 	OptCheckInline = 'C',
+	OptEld = 'E',
 	OptFBModeTimings = 'F',
 	OptHelp = 'h',
 	OptOnlyHexDump = 'H',
@@ -129,6 +130,7 @@ static struct option long_options[] = {
 	{ "list-rid-timings", required_argument, 0, OptListRIDTimings },
 	{ "list-rids", no_argument, 0, OptListRIDs },
 	{ "infoframe", required_argument, 0, OptInfoFrame },
+	{ "eld", required_argument, 0, OptEld },
 	{ 0, 0, 0, 0 }
 };
 
@@ -136,7 +138,8 @@ static void usage(void)
 {
 	printf("Usage: edid-decode <options> [in [out]]\n"
 	       "  [in]                  EDID file to parse. Read from standard input if none given\n"
-	       "                        and --infoframe was not used, or if the input filename is '-'.\n"
+	       "                        and neither --infoframe nor --eld was not used, or if the\n"
+	       "                        input filename is '-'.\n"
 	       "  [out]                 Output the read EDID to this file. Write to standard output\n"
 	       "                        if the output filename is '-'.\n"
 	       "\nOptions:\n"
@@ -225,6 +228,8 @@ static void usage(void)
 	       "  --list-rid-timings <rid> List all timings for RID <rid> or all known RIDs if <rid> is 0.\n"
 	       "  -I, --infoframe <file> Parse the InfoFrame from <file> that was sent to this display.\n"
 	       "                        This option can be specified multiple times for different InfoFrame files.\n"
+	       "  -E, --eld <file>      Parse the EDID-Like Data, ELD from <file> (or stdin if '-' was specified).\n"
+	       "                        This option can be specified multiple times for different ELD files.\n"
 	       "  -h, --help            Display this help message.\n");
 }
 #endif
@@ -1600,6 +1605,9 @@ int edid_state::parse_edid()
 static unsigned char infoframe[32];
 static unsigned if_size;
 
+static unsigned char eld[128];
+static unsigned eld_size;
+
 static bool if_add_byte(const char *s)
 {
 	char buf[3];
@@ -1724,6 +1732,212 @@ static void show_if_msgs(bool is_warn)
 	       s_msgs[0][is_warn].c_str());
 }
 
+static bool eld_add_byte(const char *s)
+{
+	char buf[3];
+
+	if (eld_size == sizeof(eld))
+		return false;
+	buf[0] = s[0];
+	buf[1] = s[1];
+	buf[2] = 0;
+	eld[eld_size++] = strtoul(buf, NULL, 16);
+	return true;
+}
+
+static bool extract_eld_hex(const char *s)
+{
+	for (; *s; s++) {
+		if (isspace(*s) || strchr(ignore_chars, *s))
+			continue;
+
+		if (*s == '0' && tolower(s[1]) == 'x') {
+			s++;
+			continue;
+		}
+
+		/* Read one or two hex digits from the log */
+		if (!isxdigit(s[0]))
+			break;
+
+		if (!isxdigit(s[1])) {
+			odd_hex_digits = true;
+			return false;
+		}
+		if (!eld_add_byte(s))
+			return false;
+		s++;
+	}
+	return eld_size;
+}
+
+static bool extract_eld(int fd)
+{
+	std::vector<char> eld_data;
+	char buf[128];
+
+	for (;;) {
+		ssize_t i = read(fd, buf, sizeof(buf));
+
+		if (i < 0)
+			return false;
+		if (i == 0)
+			break;
+		eld_data.insert(eld_data.end(), buf, buf + i);
+	}
+
+	if (eld_data.empty()) {
+		eld_size = 0;
+		return false;
+	}
+	// Ensure it is safely terminated by a 0 char
+	eld_data.push_back('\0');
+
+	const char *data = &eld_data[0];
+	const char *start;
+
+	/* Look for edid-decode output */
+	start = strstr(data, "edid-decode ELD (hex):");
+	if (start)
+		return extract_eld_hex(strchr(start, ':') + 1);
+
+	unsigned i;
+
+	/* Is the EDID provided in hex? */
+	for (i = 0; i < 32 && (isspace(data[i]) || strchr(ignore_chars, data[i]) ||
+			       tolower(data[i]) == 'x' || isxdigit(data[i])); i++);
+
+	if (i == 32)
+		return extract_eld_hex(data);
+
+	// Drop the extra '\0' byte since we now assume binary data
+	eld_data.pop_back();
+
+	eld_size = eld_data.size();
+
+	/* Assume binary */
+	if (eld_size > sizeof(eld)) {
+		fprintf(stderr, "Binary ELD length %u is greater than %zu.\n",
+			eld_size, sizeof(eld));
+		return false;
+	}
+	memcpy(eld, data, eld_size);
+	return true;
+}
+
+static int eld_from_file(const char *from_file)
+{
+#ifdef O_BINARY
+	// Windows compatibility
+	int flags = O_RDONLY | O_BINARY;
+#else
+	int flags = O_RDONLY;
+#endif
+	int fd;
+
+	memset(eld, 0, sizeof(eld));
+	eld_size = 0;
+
+	if (!strcmp(from_file, "-")) {
+		from_file = "stdin";
+		fd = 0;
+	} else if ((fd = open(from_file, flags)) == -1) {
+		perror(from_file);
+		return -1;
+	}
+
+	odd_hex_digits = false;
+	if (!extract_eld(fd)) {
+		if (!eld_size) {
+			fprintf(stderr, "ELD of '%s' was empty.\n", from_file);
+			return -1;
+		}
+		fprintf(stderr, "ELD extraction of '%s' failed: ", from_file);
+		if (odd_hex_digits)
+			fprintf(stderr, "odd number of hexadecimal digits.\n");
+		else
+			fprintf(stderr, "unknown format.\n");
+		return -1;
+	}
+	close(fd);
+
+	return 0;
+}
+
+static void show_eld_msgs(bool is_warn)
+{
+	printf("\n%s:\n\n", is_warn ? "Warnings" : "Failures");
+	if (s_msgs[0][is_warn].empty())
+		return;
+	printf("ELD:\n%s",
+	       s_msgs[0][is_warn].c_str());
+}
+
+int edid_state::parse_eld(const std::string &fname)
+{
+	int ret = eld_from_file(fname.c_str());
+	unsigned int min_size = 4;
+	unsigned baseline_size;
+	unsigned char ver;
+
+	if (ret)
+		return ret;
+
+	if (!options[OptSkipHexDump]) {
+		printf("edid-decode ELD (hex):\n\n");
+		hex_block("", eld, eld_size, false);
+		if (options[OptOnlyHexDump])
+			return 0;
+		printf("\n----------------\n\n");
+	}
+
+	if (eld_size < min_size) {
+		fail("ELD is too small to parse.\n");
+		return -1;
+	}
+
+	ver = eld[0] >> 3;
+	switch (ver) {
+	case 1:
+		warn("Obsolete Baseline ELD version (%d)\n", ver);
+		break;
+	case 2:
+		printf("Baseline ELD version: 861.D or below\n");
+		break;
+	default:
+		warn("Unsupported ELD version (%d)\n", ver);
+		break;
+	}
+
+	baseline_size = eld[2] * 4;
+	if (baseline_size > 80)
+		warn("ELD too big\n");
+
+	parse_eld_baseline(&eld[4], baseline_size);
+
+	if (!options[OptCheck] && !options[OptCheckInline])
+		return 0;
+
+	printf("\n----------------\n");
+
+	if (!options[OptSkipSHA] && strlen(STRING(SHA))) {
+		options[OptSkipSHA] = 1;
+		printf("\n");
+		print_version();
+	}
+
+	if (options[OptCheck]) {
+		if (warnings)
+			show_eld_msgs(true);
+		if (failures)
+			show_eld_msgs(false);
+	}
+
+	printf("\n%s conformity: %s\n",
+	       state.data_block.empty() ? "ELD" : state.data_block.c_str(),
+	       failures ? "FAIL" : "PASS");
+	return failures ? -2 : 0;
+}
 int edid_state::parse_if(const std::string &fname)
 {
 	int ret = if_from_file(fname.c_str());
@@ -2370,6 +2584,7 @@ int main(int argc, char **argv)
 	int adapter_fd = -1;
 	double hdcp_ri_sleep = 0;
 	std::vector<std::string> if_names;
+	std::vector<std::string> eld_names;
 	unsigned test_rel_duration = 0;
 	unsigned test_rel_msleep = 50;
 	unsigned idx = 0;
@@ -2514,6 +2729,9 @@ int main(int argc, char **argv)
 		case OptInfoFrame:
 			if_names.push_back(optarg);
 			break;
+		case OptEld:
+			eld_names.push_back(optarg);
+			break;
 		case ':':
 			fprintf(stderr, "Option '%s' requires a value.\n",
 				argv[optind]);
@@ -2573,7 +2791,7 @@ int main(int argc, char **argv)
 				ret = read_hdcp_ri(adapter_fd, hdcp_ri_sleep);
 			if (options[OptI2CTestReliability])
 				ret = test_reliability(adapter_fd, test_rel_duration, test_rel_msleep);
-		} else if (options[OptInfoFrame] && !options[OptGTF]) {
+		} else if ((options[OptInfoFrame] || options[OptEld]) && !options[OptGTF]) {
 			ret = 0;
 		} else {
 			ret = edid_from_file("-", stdout);
@@ -2633,6 +2851,21 @@ int main(int argc, char **argv)
 			s_msgs[i][1].clear();
 		}
 		int r = state.parse_if(n);
+		if (r && !ret)
+			ret = r;
+	}
+
+	for (const auto &n : eld_names) {
+		if (show_line)
+			printf("\n================\n\n");
+		show_line = true;
+
+		state.warnings = state.failures = 0;
+		for (unsigned i = 0; i < EDID_MAX_BLOCKS + 1; i++) {
+			s_msgs[i][0].clear();
+			s_msgs[i][1].clear();
+		}
+		int r = state.parse_eld(n);
 		if (r && !ret)
 			ret = r;
 	}

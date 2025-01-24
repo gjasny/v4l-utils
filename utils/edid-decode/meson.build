@@ -9,6 +9,7 @@ edid_decode_sources = [
 	'parse-ls-ext-block.cpp',
 	'parse-vtb-ext-block.cpp',
 	'parse-if.cpp',
+	'parse-eld.cpp',
 ]
 
 edid_decode_args = []
