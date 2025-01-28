@@ -64,3 +64,7 @@ DisplayID example (i.e. as a replacement for the EDID) in the wild, but
 it is useful to add it to the list of test 'EDIDs':
 
 vesa-displayid-fixed-length.test
+
+
+InfoFrame examples can be found in the 'if' directory.
+ELD examples can be found in the 'eld' directory.
