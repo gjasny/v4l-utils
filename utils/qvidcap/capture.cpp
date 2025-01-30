@@ -219,6 +219,7 @@ CaptureWin::CaptureWin(QScrollArea *sa, QWidget *parent) :
 	m_frame(0),
 	m_verbose(false),
 	m_no_loop(false),
+	m_fromFrame(0),
 	m_ctx(0),
 	m_origPixelFormat(0),
 	m_fps(0),
@@ -1416,12 +1417,14 @@ void CaptureWin::startTimer()
 	for (unsigned p = 0; p < m_v4l_fmt.g_num_planes(); p++)
 		m_imageSize += m_v4l_fmt.g_sizeimage(p);
 
-	if (m_file.isOpen())
-		m_file.seek(0);
-
-	if (m_file.isOpen() && m_imageSize > m_file.size()) {
+	if (m_file.isOpen() && (m_fromFrame + 1) * m_imageSize > m_file.size()) {
 		fprintf(stderr, "the file size is too small (expect at least %u, got %llu)\n",
-			m_imageSize, m_file.size());
+			(m_fromFrame + 1) * m_imageSize, m_file.size());
+	}
+
+	if (m_file.isOpen()) {
+		m_file.seek(m_fromFrame * m_imageSize);
+		m_frame = m_fromFrame;
 	}
 
 	for (unsigned p = 0; p < m_v4l_fmt.g_num_planes(); p++) {
@@ -1463,6 +1466,9 @@ void CaptureWin::startTimer()
 				ycbcr_enc2s(ycbcr_encs[m_testState.ycbcr_enc_idx]).c_str(),
 				quantization2s(quantizations[m_testState.quant_idx]).c_str());
 	}
+	m_frame++;
+	if (m_verbose)
+		printf("frame %d\n", m_frame - 1);
 }
 
 void CaptureWin::tpgUpdateFrame()
@@ -1484,6 +1490,7 @@ void CaptureWin::tpgUpdateFrame()
 		if (m_verbose)
 			printf("loop\n");
 		m_file.seek(0);
+		m_frame = 0;
 	}
 
 	if (m_mode != AppModeFile && is_alt) {
@@ -1500,6 +1507,8 @@ void CaptureWin::tpgUpdateFrame()
 			tpg_fillbuffer(&m_tpg, 0, p, m_curData[p]);
 	}
 	m_frame++;
+	if (m_verbose)
+		printf("frame %d\n", m_frame - 1);
 	update();
 	if (m_cnt != 1)
 		tpg_update_mv_count(&m_tpg, is_alt);
