@@ -90,6 +90,7 @@ public:
 	void setCount(unsigned cnt) { m_cnt = cnt; }
 	void setReportTimings(bool report) { m_reportTimings = report; }
 	void setVerbose(bool verbose) { m_verbose = verbose; }
+	void setNoLoop(bool no_loop) { m_no_loop = no_loop; }
 	void setOverridePixelFormat(__u32 fmt) { m_overridePixelFormat = fmt; }
 	void setOverrideField(__u32 field) { m_overrideField = field; }
 	void setOverrideColorspace(__u32 colsp) { m_overrideColorspace = colsp; }
@@ -180,6 +181,7 @@ private:
 	TestState m_testState;
 	unsigned m_imageSize;
 	bool m_verbose;
+	bool m_no_loop;
 	bool m_reportTimings;
 	bool m_is_sdtv;
 	v4l2_std_id m_std;

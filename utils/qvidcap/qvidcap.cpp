@@ -64,6 +64,7 @@ static void usage()
 	       "  -t, --timings            report frame render timings\n"
 	       "  -v, --verbose            be more verbose\n"
 	       "  -R, --raw                open device in raw mode\n"
+	       "  --no-loop                stop at the end of the file, don't loop back to the beginning\n"
 	       "\n"
 	       "  --opengl                 force openGL to display the video\n"
 	       "  --opengles               force openGL ES to display the video\n"
@@ -445,6 +446,7 @@ int main(int argc, char **argv)
 	bool info_option = false;
 	bool report_timings = false;
 	bool verbose = false;
+	bool no_loop = false;
 	__u32 overridePixelFormat = 0;
 	__u32 overrideWidth = 0;
 	__u32 overrideHeight = 0;
@@ -648,6 +650,8 @@ int main(int argc, char **argv)
 			force_opengl = true;
 		} else if (isOption(args[i], "--verbose", "-v")) {
 			verbose = true;
+		} else if (isOption(args[i], "--no-loop")) {
+			no_loop = true;
 		} else if (isOption(args[i], "--raw", "-R")) {
 			fd.s_direct(true);
 		} else if (isOptArg(args[i], "--count", "-c")) {
@@ -744,6 +748,7 @@ int main(int argc, char **argv)
 	QSurfaceFormat::setDefaultFormat(format);
 	CaptureWin win(sa);
 	win.setVerbose(verbose);
+	win.setNoLoop(no_loop);
 	if (mode == AppModeFile) {
 		win.setModeFile(filename);
 		if (single_step_start)

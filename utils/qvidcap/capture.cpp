@@ -217,6 +217,8 @@ CaptureWin::CaptureWin(QScrollArea *sa, QWidget *parent) :
 	m_sock(0),
 	m_v4l_queue(0),
 	m_frame(0),
+	m_verbose(false),
+	m_no_loop(false),
 	m_ctx(0),
 	m_origPixelFormat(0),
 	m_fps(0),
@@ -1472,8 +1474,17 @@ void CaptureWin::tpgUpdateFrame()
 		return;
 	m_singleStepNext = false;
 
-	if (m_mode == AppModeFile && m_file.pos() + m_imageSize > m_file.size())
+	if (m_mode == AppModeFile && m_file.pos() + m_imageSize > m_file.size()) {
+		if (m_no_loop) {
+			printf("done\n");
+			while (true)
+				sleep(1000);
+			exit(0);
+		}
+		if (m_verbose)
+			printf("loop\n");
 		m_file.seek(0);
+	}
 
 	if (m_mode != AppModeFile && is_alt) {
 		if (m_tpg.field == V4L2_FIELD_TOP)
