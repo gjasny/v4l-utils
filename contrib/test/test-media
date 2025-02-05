@@ -209,7 +209,7 @@ if [ $kobj_rel -eq 1 ]; then
 	unbind_time=10
 	reunbind_time=14
 	rmmod_time=10
-	modprobe_time=10
+	modprobe_time=15
 fi
 
 if [ $unload -eq 1 ]; then
