@@ -219,6 +219,7 @@ CaptureWin::CaptureWin(QScrollArea *sa, QWidget *parent) :
 	m_frame(0),
 	m_verbose(false),
 	m_no_loop(false),
+	m_pause(false),
 	m_fromFrame(0),
 	m_ctx(0),
 	m_origPixelFormat(0),
@@ -591,6 +592,18 @@ void CaptureWin::keyPressEvent(QKeyEvent *event)
 			m_cnt = 1;
 		else if (m_singleStep && m_frame > m_singleStepStart)
 			m_singleStepNext = true;
+		else if (!m_singleStep && m_mode == AppModeFile)
+			m_pause = !m_pause;
+		return;
+	case Qt::Key_Backspace:
+		if (m_mode == AppModeFile &&
+		    m_singleStep && m_frame > m_singleStepStart) {
+			if (m_file.pos() >= m_imageSize * 2) {
+				m_file.seek(m_file.pos() - m_imageSize * 2);
+				m_frame -= 2;
+				m_singleStepNext = true;
+			}
+		}
 		return;
 	case Qt::Key_Escape:
 		if (!m_scrollArea->isFullScreen())
@@ -1124,6 +1137,9 @@ void CaptureWin::v4l2ReadEvent()
 {
 	cv4l_buffer buf(m_fd->g_type());
 
+	if (m_pause)
+		return;
+
 	if (m_singleStep && m_frame > m_singleStepStart && !m_singleStepNext)
 		return;
 
@@ -1224,6 +1240,9 @@ int CaptureWin::read_u32(__u32 &v)
 void CaptureWin::sockReadEvent()
 {
 	int n;
+
+	if (m_pause)
+		return;
 
 	if (m_singleStep && m_frame > m_singleStepStart && !m_singleStepNext)
 		return;
@@ -1474,6 +1493,9 @@ void CaptureWin::startTimer()
 void CaptureWin::tpgUpdateFrame()
 {
 	bool is_alt = m_v4l_fmt.g_field() == V4L2_FIELD_ALTERNATE;
+
+	if (m_mode != AppModeTest && m_pause)
+		return;
 
 	if (m_mode != AppModeTest && m_singleStep && m_frame > m_singleStepStart &&
 	    !m_singleStepNext)

@@ -216,7 +216,11 @@ Exit fullscreen.
 .TP
 \fISpace\fR
 When in test mode (\fB\-\-test\fR) pressing Space will skip to the next test.
-When single-stepping, continue to the next frame.
+When single-stepping, continue to the next frame. When reading from a file,
+pause playback until the next press of Space.
+.TP
+\fIBackspace\fR
+When single-stepping, go back to the previous frame.
 .TP
 \fIUp\fR
 Reduce the resolution by two pixels in height. Only available when "Override resolution" is enabled.

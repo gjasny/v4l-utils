@@ -183,6 +183,7 @@ private:
 	unsigned m_imageSize;
 	bool m_verbose;
 	bool m_no_loop;
+	bool m_pause;
 	unsigned m_fromFrame;
 	bool m_reportTimings;
 	bool m_is_sdtv;
