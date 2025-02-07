@@ -1482,10 +1482,14 @@ void CaptureWin::tpgUpdateFrame()
 
 	if (m_mode == AppModeFile && m_file.pos() + m_imageSize > m_file.size()) {
 		if (m_no_loop) {
-			printf("done\n");
-			while (true)
-				sleep(1000);
-			exit(0);
+			static bool done;
+
+			if (!done) {
+				if (m_verbose)
+					printf("done\n");
+				done = true;
+			}
+			return;
 		}
 		if (m_verbose)
 			printf("loop\n");
