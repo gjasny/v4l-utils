@@ -25,7 +25,7 @@ int edid_state::parse_if_hdr(const unsigned char *x, unsigned size, unsigned cha
 		return -1;
 	}
 	if (length + 3U < size) {
-		warn("There are %d dummy bytes after the payload.\n", length + 3 - size);
+		warn("There are %d dummy bytes after the payload.\n", size - length - 3);
 		if (!memchk(x + length + 3, length + 3 - size))
 			warn("There are non-zero dummy bytes after the payload.\n");
 	}
