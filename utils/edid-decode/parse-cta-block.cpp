@@ -2423,6 +2423,8 @@ static void cta_ifdb(const unsigned char *x, unsigned length)
 		fail("Empty Data Block with length %u.\n", length);
 		return;
 	}
+	if (x[0] & 0x1f)
+		fail("Bits F14-F10 are 0x%02x instead of 0x00.\n", x[0] & 0x1f);
 	printf("    VSIFs: %u\n", x[1]);
 	if (length < len_hdr + 2)
 		return;
@@ -2432,12 +2434,8 @@ static void cta_ifdb(const unsigned char *x, unsigned length)
 		unsigned payload_len = x[0] >> 5;
 		unsigned char type = x[0] & 0x1f;
 
-		if (payload_len > length) {
-			fail("Payload size %u exceeds remaining block size (%u).\n", payload_len, length);
-			break;
-		}
-		if (payload_len == 0) {
-			fail("Payload has 0 size.\n");
+		if (payload_len) {
+			fail("Payload size must be 0, but it is %u.\n", payload_len);
 			break;
 		}
 
@@ -2448,7 +2446,12 @@ static void cta_ifdb(const unsigned char *x, unsigned length)
 			name = "Unknown";
 		printf("    %s InfoFrame (%u)", name, type);
 
-		if (type == 1 && length >= 4) {
+		if (type == 1) {
+			if (length < 4) {
+				fail("Remaining length %u < 4.\n");
+				break;
+			}
+
 			unsigned oui = (x[3] << 16) | (x[2] << 8) | x[1];
 
 			printf(", OUI %s\n", ouitohex(oui).c_str());
@@ -2459,10 +2462,6 @@ static void cta_ifdb(const unsigned char *x, unsigned length)
 			x++;
 			length--;
 		}
-		if (length == 0)
-			break;
-		x += payload_len;
-		length -= payload_len;
 	}
 }
 
