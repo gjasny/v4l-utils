@@ -2186,7 +2186,7 @@ void edid_state::parse_displayid_block(const unsigned char *x)
 	 * (excluding DisplayID-in-EDID magic byte)
 	 */
 	data_block.clear();
-	do_checksum("  ", x + 1, saved_length, x[2] + 4);
+	do_checksum("  ", x + 1, saved_length + 5, x[2] + 4);
 
 	unused_bytes = 0x7f - (1 + saved_length + 5);
 	if (!memchk(x + 1 + saved_length + 5, unused_bytes)) {
