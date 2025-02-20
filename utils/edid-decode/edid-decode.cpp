@@ -857,19 +857,17 @@ void edid_state::data_block_oui(std::string block_name, const unsigned char *x,
 	if (oui || !ignorezeros) {
 		if (!silent)
 			printf("  %s:\n", data_block.c_str());
-		if (length < 3)
+		if (length < 3) {
 			fail("Data block length (%d) is not enough to contain an OUI.\n", length);
-		else if (ouiname) {
+		} else if (ouiname) {
 			if (do_ascii && !valid_ascii)
 				warn("Expected PNP ID but found OUI.\n");
 			if (matched_reverse)
 				fail("Endian-ness (%s) of OUI is different than expected (%s).\n", big_endian ? "be" : "le", big_endian ? "le" : "be");
-		}
-		else {
-			if (valid_ascii)
-				warn("Unknown OUI %s (possible PNP %s).\n", buf.c_str(), ascii);
-			else
-				warn("Unknown OUI %s.\n", buf.c_str());
+		} else if (!do_ascii && valid_ascii) {
+			warn("Unknown OUI %s (possible PNP %s).\n", buf.c_str(), ascii);
+		} else if (!do_ascii) {
+			warn("Unknown OUI %s.\n", buf.c_str());
 		}
 	}
 }
