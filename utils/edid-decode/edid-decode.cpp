@@ -1078,9 +1078,9 @@ static bool extract_edid(int fd, FILE *error)
 	const char *start;
 
 	/* Look for edid-decode output */
-	start = strstr(data, "EDID (hex):");
+	start = strstr(data, "edid-decode (hex):");
 	if (!start)
-		start = strstr(data, "edid-decode (hex):");
+		start = strstr(data, "EDID (hex):");
 	if (start)
 		return extract_edid_hex(strchr(start, ':'));
 
