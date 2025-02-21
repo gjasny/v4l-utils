@@ -104,8 +104,8 @@ const vec_remote_subtests power_status_subtests{
 
 /* One Touch Play */
 
-static int one_touch_play_view_on(struct node *node, unsigned me, unsigned la, bool interactive,
-				  __u8 opcode)
+static int one_touch_play_view_on(struct node *node, unsigned me, unsigned la,
+				  bool interactive, bool use_raw, __u8 opcode)
 {
 	struct cec_msg msg;
 
@@ -114,6 +114,8 @@ static int one_touch_play_view_on(struct node *node, unsigned me, unsigned la, b
 		cec_msg_image_view_on(&msg);
 	else if (opcode == CEC_MSG_TEXT_VIEW_ON)
 		cec_msg_text_view_on(&msg);
+	if (use_raw)
+		msg.flags |= CEC_MSG_FL_RAW;
 
 	int res = doioctl(node, CEC_TRANSMIT, &msg);
 
@@ -138,12 +140,12 @@ static int one_touch_play_view_on(struct node *node, unsigned me, unsigned la, b
 
 static int one_touch_play_image_view_on(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	return one_touch_play_view_on(node, me, la, interactive, CEC_MSG_IMAGE_VIEW_ON);
+	return one_touch_play_view_on(node, me, la, interactive, false, CEC_MSG_IMAGE_VIEW_ON);
 }
 
 static int one_touch_play_text_view_on(struct node *node, unsigned me, unsigned la, bool interactive)
 {
-	return one_touch_play_view_on(node, me, la, interactive, CEC_MSG_TEXT_VIEW_ON);
+	return one_touch_play_view_on(node, me, la, interactive, false, CEC_MSG_TEXT_VIEW_ON);
 }
 
 static int one_touch_play_view_on_wakeup(struct node *node, unsigned me, unsigned la, bool interactive,
@@ -151,7 +153,7 @@ static int one_touch_play_view_on_wakeup(struct node *node, unsigned me, unsigne
 {
 	fail_on_test(!util_interactive_ensure_power_state(node, me, la, interactive, CEC_OP_POWER_STATUS_STANDBY));
 
-	int ret = one_touch_play_view_on(node, me, la, interactive, opcode);
+	int ret = one_touch_play_view_on(node, me, la, interactive, false, opcode);
 
 	if (ret && ret != OK_PRESUMED)
 		return ret;
@@ -186,7 +188,7 @@ static int one_touch_play_view_on_change(struct node *node, unsigned me, unsigne
 	fail_on_test(!util_interactive_ensure_power_state(node, me, la, interactive, CEC_OP_POWER_STATUS_ON));
 
 	interactive_info(true, "Please switch the TV to another source.");
-	ret = one_touch_play_view_on(node, me, la, interactive, opcode);
+	ret = one_touch_play_view_on(node, me, la, interactive, false, opcode);
 	if (ret && ret != OK_PRESUMED)
 		return ret;
 	cec_msg_init(&msg, me, la);
@@ -525,6 +527,8 @@ static int standby_resume_wakeup_view_on(struct node *node, unsigned me, unsigne
 		return NOTAPPLICABLE;
 	if (me == CEC_LOG_ADDR_UNREGISTERED && from_unregistered)
 		return NOTAPPLICABLE;
+	if (from_unregistered && getuid())
+		return NOTAPPLICABLE;
 
 	unsigned unresponsive_cnt = 0;
 
@@ -545,7 +549,7 @@ static int standby_resume_wakeup_view_on(struct node *node, unsigned me, unsigne
 	sleep(6);
 
 	ret = one_touch_play_view_on(node, from_unregistered ? CEC_LOG_ADDR_UNREGISTERED : me,
-				     la, interactive, opcode);
+				     la, interactive, from_unregistered, opcode);
 
 	if (ret)
 		return ret;
