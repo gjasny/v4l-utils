@@ -167,7 +167,7 @@ diff --git a/utils/common/v4l2-tpg.h b/utils/common/v4l2-tpg.h
 index 0b0ddb87..91da74ec 100644
 --- a/utils/common/v4l2-tpg.h
 +++ b/utils/common/v4l2-tpg.h
-@@ -8,13 +8,65 @@
+@@ -8,13 +8,66 @@
  #ifndef _V4L2_TPG_H_
  #define _V4L2_TPG_H_
  
@@ -202,6 +202,7 @@ index 0b0ddb87..91da74ec 100644
 +#define max3(x, y, z) tpg_max((typeof(x))tpg_max(x, y), z)
 +#define array_size(a, b) ((a) * (b))
 +#define array3_size(a, b, c) ((a) * (b) * (c))
++#define WARN_ON_ONCE(a) (a)
 +
 +static inline void vfree(void *p)
 +{
