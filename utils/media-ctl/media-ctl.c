@@ -144,28 +144,28 @@ static void v4l2_subdev_print_format(struct media_entity *entity,
 					V4L2_SEL_TGT_CROP_BOUNDS,
 					which);
 	if (ret == 0)
-		printf("\n\t\t crop.bounds:(%u,%u)/%ux%u", rect.left, rect.top,
+		printf("\n\t\t crop.bounds:(%d,%d)/%ux%u", rect.left, rect.top,
 		       rect.width, rect.height);
 
 	ret = v4l2_subdev_get_selection(entity, &rect, pad, stream,
 					V4L2_SEL_TGT_CROP,
 					which);
 	if (ret == 0)
-		printf("\n\t\t crop:(%u,%u)/%ux%u", rect.left, rect.top,
+		printf("\n\t\t crop:(%d,%d)/%ux%u", rect.left, rect.top,
 		       rect.width, rect.height);
 
 	ret = v4l2_subdev_get_selection(entity, &rect, pad, stream,
 					V4L2_SEL_TGT_COMPOSE_BOUNDS,
 					which);
 	if (ret == 0)
-		printf("\n\t\t compose.bounds:(%u,%u)/%ux%u",
+		printf("\n\t\t compose.bounds:(%d,%d)/%ux%u",
 		       rect.left, rect.top, rect.width, rect.height);
 
 	ret = v4l2_subdev_get_selection(entity, &rect, pad, stream,
 					V4L2_SEL_TGT_COMPOSE,
 					which);
 	if (ret == 0)
-		printf("\n\t\t compose:(%u,%u)/%ux%u",
+		printf("\n\t\t compose:(%d,%d)/%ux%u",
 		       rect.left, rect.top, rect.width, rect.height);
 
 	printf("]\n");

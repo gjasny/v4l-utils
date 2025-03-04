@@ -68,7 +68,7 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt,
 		fail_on_test(node->is_m2m && !(node->codec_mask & STATEFUL_ENCODER));
 		if (f == 0 && ret == EINVAL) {
 			if (type == V4L2_FRMSIZE_TYPE_DISCRETE)
-				warn("found framesize %dx%d, but no frame intervals\n", w, h);
+				warn("found framesize %ux%u, but no frame intervals\n", w, h);
 			return ENOTTY;
 		}
 		if (ret == EINVAL)
@@ -120,8 +120,8 @@ static int testEnumFrameIntervals(struct node *node, __u32 pixfmt,
 		node->has_frmintervals = true;
 	}
 	if (type == 0)
-		return fail("found frame intervals for invalid size %dx%d\n", w, h);
-	info("found %d frameintervals for pixel format %08x (%s) and size %dx%d\n",
+		return fail("found frame intervals for invalid size %ux%u\n", w, h);
+	info("found %d frameintervals for pixel format %08x (%s) and size %ux%u\n",
 	     f, pixfmt, fcc2s(pixfmt).c_str(), w, h);
 	return 0;
 }
@@ -722,10 +722,10 @@ static bool matchFormats(const struct v4l2_format &f1, const struct v4l2_format 
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
 		if (!memcmp(&f1.fmt.pix, &f2.fmt.pix, sizeof(f1.fmt.pix)))
 			return true;
-		printf("\t\tG_FMT:     %dx%d, %s, %d, %d, %d, %d, %d, %d, %x\n",
+		printf("\t\tG_FMT:     %ux%u, %s, %u, %u, %u, %u, %u, %u, %x\n",
 			pix1.width, pix1.height, fcc2s(pix1.pixelformat).c_str(), pix1.field, pix1.bytesperline,
 			pix1.sizeimage, pix1.colorspace, pix1.ycbcr_enc, pix1.quantization, pix1.priv);
-		printf("\t\tTRY/S_FMT: %dx%d, %s, %d, %d, %d, %d, %d, %d, %x\n",
+		printf("\t\tTRY/S_FMT: %ux%u, %s, %u, %u, %u, %u, %u, %u, %x\n",
 			pix2.width, pix2.height, fcc2s(pix2.pixelformat).c_str(), pix2.field, pix2.bytesperline,
 			pix2.sizeimage, pix2.colorspace, pix2.ycbcr_enc, pix2.quantization, pix2.priv);
 		return false;
@@ -733,11 +733,11 @@ static bool matchFormats(const struct v4l2_format &f1, const struct v4l2_format 
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_OVERLAY:
 		if (!memcmp(&f1.fmt.win, &f2.fmt.win, sizeof(f1.fmt.win)))
 			return true;
-		printf("\t\tG_FMT:     %dx%d@%dx%d, %d, %x, %p, %d, %p, %x\n",
-			win1.w.width, win1.w.height, win1.w.left, win1.w.top, win1.field,
+		printf("\t\tG_FMT:     (%d,%d)/%ux%u, %u, %x, %p, %u, %p, %x\n",
+			win1.w.left, win1.w.top, win1.w.width, win1.w.height, win1.field,
 			win1.chromakey, (void *)win1.clips, win1.clipcount, win1.bitmap, win1.global_alpha);
-		printf("\t\tTRY/S_FMT: %dx%d@%dx%d, %d, %x, %p, %d, %p, %x\n",
-			win2.w.width, win2.w.height, win2.w.left, win2.w.top, win2.field,
+		printf("\t\tTRY/S_FMT: (%d,%d)/%ux%u, %u, %x, %p, %u, %p, %x\n",
+			win2.w.left, win2.w.top, win2.w.width, win2.w.height, win2.field,
 			win2.chromakey, (void *)win2.clips, win2.clipcount, win2.bitmap, win2.global_alpha);
 		return false;
 	case V4L2_BUF_TYPE_VBI_CAPTURE:
@@ -750,16 +750,16 @@ static bool matchFormats(const struct v4l2_format &f1, const struct v4l2_format 
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		if (!memcmp(&f1.fmt.pix_mp, &f2.fmt.pix_mp, sizeof(f1.fmt.pix_mp)))
 			return true;
-		printf("\t\tG_FMT:     %dx%d, %s, %d, %d, %d, %d, %d\n",
+		printf("\t\tG_FMT:     %ux%u, %s, %u, %u, %u, %u, %u\n",
 			pix_mp1.width, pix_mp1.height, fcc2s(pix_mp1.pixelformat).c_str(), pix_mp1.num_planes,
 			pix_mp1.field, pix_mp1.colorspace, pix_mp1.ycbcr_enc, pix_mp1.quantization);
 		for (unsigned p = 0; p < pix_mp1.num_planes; p++)
 			printf("\t\t\t%d: %d, %d\n", p, pix_mp1.plane_fmt[p].sizeimage, pix_mp1.plane_fmt[p].bytesperline);
-		printf("\t\tTRY/S_FMT: %dx%d, %s, %d, %d, %d, %d, %d\n",
+		printf("\t\tTRY/S_FMT: %ux%u, %s, %u, %u, %u, %u, %u\n",
 			pix_mp2.width, pix_mp2.height, fcc2s(pix_mp2.pixelformat).c_str(), pix_mp2.num_planes,
 			pix_mp2.field, pix_mp2.colorspace, pix_mp2.ycbcr_enc, pix_mp2.quantization);
 		for (unsigned p = 0; p < pix_mp2.num_planes; p++)
-			printf("\t\t\t%d: %d, %d\n", p, pix_mp2.plane_fmt[p].sizeimage, pix_mp2.plane_fmt[p].bytesperline);
+			printf("\t\t\t%u: %u, %u\n", p, pix_mp2.plane_fmt[p].sizeimage, pix_mp2.plane_fmt[p].bytesperline);
 		return false;
 	case V4L2_BUF_TYPE_SDR_CAPTURE:
 	case V4L2_BUF_TYPE_SDR_OUTPUT:
@@ -1158,7 +1158,7 @@ static int testGlobalFormat(struct node *node, int type)
 		h2 = p2->height;
 	}
 	if (pixfmt1 != pixfmt2 || w1 != w2 || h1 != h2)
-		return fail("Global format mismatch: %08x(%s)/%dx%d vs %08x(%s)/%dx%d\n",
+		return fail("Global format mismatch: %08x(%s)/%ux%u vs %08x(%s)/%ux%u\n",
 			    pixfmt1, fcc2s(pixfmt1).c_str(), w1, h1,
 			    pixfmt2, fcc2s(pixfmt2).c_str(), w2, h2);
 	info("Global format check succeeded for type %d\n", type);

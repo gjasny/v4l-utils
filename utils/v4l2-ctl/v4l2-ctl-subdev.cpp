@@ -891,7 +891,7 @@ static std::string fract2fps(const struct v4l2_fract &f)
 
 static void print_frmsize(const struct v4l2_subdev_frame_size_enum &frmsize)
 {
-	printf("\tSize Range: %dx%d - %dx%d\n",
+	printf("\tSize Range: %ux%u - %ux%u\n",
 	       frmsize.min_width, frmsize.min_height,
 	       frmsize.max_width, frmsize.max_height);
 }

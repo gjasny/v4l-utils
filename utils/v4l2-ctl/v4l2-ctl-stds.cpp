@@ -363,7 +363,7 @@ static void print_dv_timings(const struct v4l2_dv_timings *t)
 		tot_width = bt->width +
 			bt->hfrontporch + bt->hsync + bt->hbackporch;
 		if (options[OptConcise]) {
-			printf("\t%dx%d%c%.2f %s\n", bt->width, bt->height,
+			printf("\t%ux%u%c%.2f %s\n", bt->width, bt->height,
 				bt->interlaced ? 'i' : 'p',
 				static_cast<double>(bt->pixelclock) /
 					(tot_width * (tot_height / (bt->interlaced ? 2 : 1))),

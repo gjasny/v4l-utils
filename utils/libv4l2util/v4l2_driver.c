@@ -509,9 +509,9 @@ int v4l2_gettryset_fmt_cap (struct v4l2_driver *drv, enum v4l2_direction dir,
 	}
 
 	if (drv->debug)
-		printf( "FMT SET: %dx%d, fourcc=%c%c%c%c, %d bytes/line,"
-			" %d bytes/frame, colorspace=0x%08x\n",
-			pix->width,pix->height,
+		printf( "FMT SET: %ux%u, fourcc=%c%c%c%c, %u bytes/line,"
+			" %u bytes/frame, colorspace=0x%08x\n",
+			pix->width, pix->height,
 			pix->pixelformat & 0xff,
 			(pix->pixelformat >>  8) & 0xff,
 			(pix->pixelformat >> 16) & 0xff,

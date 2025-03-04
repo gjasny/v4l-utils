@@ -612,7 +612,7 @@ static void print_value(int fd, const v4l2_query_ext_ctrl &qc, const v4l2_ext_co
 			printf("'%s'", safename(ctrl.string).c_str());
 			break;
 		case V4L2_CTRL_TYPE_AREA:
-			printf("%dx%d", ctrl.p_area->width, ctrl.p_area->height);
+			printf("%ux%u", ctrl.p_area->width, ctrl.p_area->height);
 			break;
 		case V4L2_CTRL_TYPE_RECT:
 			printf("(%d,%d)/%ux%u",

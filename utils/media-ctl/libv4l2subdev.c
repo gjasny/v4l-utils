@@ -1011,7 +1011,7 @@ static int set_selection(struct media_pad *pad, unsigned int stream,
 		return 0;
 
 	media_dbg(pad->entity->media,
-		  "Setting up selection target %u rectangle (%u,%u)/%ux%u on pad %s/%u/%u\n",
+		  "Setting up selection target %u rectangle (%d,%d)/%ux%u on pad %s/%u/%u\n",
 		  target, rect->left, rect->top, rect->width, rect->height,
 		  pad->entity->info.name, pad->index, stream);
 
@@ -1025,7 +1025,7 @@ static int set_selection(struct media_pad *pad, unsigned int stream,
 	}
 
 	media_dbg(pad->entity->media,
-		  "Selection rectangle set: (%u,%u)/%ux%u\n",
+		  "Selection rectangle set: (%d,%d)/%ux%u\n",
 		  rect->left, rect->top, rect->width, rect->height);
 
 	return 0;

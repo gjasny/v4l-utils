@@ -1859,10 +1859,10 @@ void GeneralTab::refreshTimings()
 			char buf[100];
 
 			if (bt.interlaced)
-				sprintf(buf, "%dx%di%.2f", bt.width, bt.height,
+				sprintf(buf, "%ux%ui%.2f", bt.width, bt.height,
 					(double)bt.pixelclock / (tot_width * (tot_height / 2)));
 			else
-				sprintf(buf, "%dx%dp%.2f", bt.width, bt.height,
+				sprintf(buf, "%ux%up%.2f", bt.width, bt.height,
 					(double)bt.pixelclock / (tot_width * tot_height));
 			m_videoTimings->addItem(buf);
 		} while (!enum_dv_timings(timings));

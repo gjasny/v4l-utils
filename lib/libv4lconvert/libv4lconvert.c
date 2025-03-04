@@ -1901,8 +1901,8 @@ int v4lconvert_enum_frameintervals(struct v4lconvert_data *data,
 		int frmival_pixformat = frmival->pixel_format;
 		int dest_pixformat = dest_fmt.fmt.pix.pixelformat;
 
-		V4LCONVERT_ERR("Could not find matching framesize for: %c%c%c%c %dx%d "
-				"closest match: %c%c%c%c %dx%d\n",
+		V4LCONVERT_ERR("Could not find matching framesize for: %c%c%c%c %ux%u "
+				"closest match: %c%c%c%c %ux%u\n",
 				frmival_pixformat & 0xff,
 				(frmival_pixformat >> 8) & 0xff,
 				(frmival_pixformat >> 16) & 0xff,
@@ -1912,7 +1912,7 @@ int v4lconvert_enum_frameintervals(struct v4lconvert_data *data,
 				(dest_pixformat >> 8) & 0xff,
 				(dest_pixformat >> 16) & 0xff,
 				dest_pixformat >> 24,
-				dest_fmt.fmt.pix.width , dest_fmt.fmt.pix.height);
+				dest_fmt.fmt.pix.width, dest_fmt.fmt.pix.height);
 		errno = EINVAL;
 		return -1;
 	}
@@ -1927,14 +1927,14 @@ int v4lconvert_enum_frameintervals(struct v4lconvert_data *data,
 		int dest_pixfmt = dest_fmt.fmt.pix.pixelformat;
 		int src_pixfmt  = src_fmt.fmt.pix.pixelformat;
 
-		V4LCONVERT_ERR("Could not enum frameival index: %d for: %c%c%c%c %dx%d "
-				"using src: %c%c%c%c %dx%d, error: %s\n",
+		V4LCONVERT_ERR("Could not enum frameival index: %d for: %c%c%c%c %ux%u "
+				"using src: %c%c%c%c %ux%u, error: %s\n",
 				frmival->index,
 				dest_pixfmt & 0xff,
 				(dest_pixfmt >> 8) & 0xff,
 				(dest_pixfmt >> 16) & 0xff,
 				dest_pixfmt >> 24,
-				dest_fmt.fmt.pix.width , dest_fmt.fmt.pix.height,
+				dest_fmt.fmt.pix.width, dest_fmt.fmt.pix.height,
 				src_pixfmt & 0xff,
 				(src_pixfmt >> 8) & 0xff,
 				(src_pixfmt >> 16) & 0xff,

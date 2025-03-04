@@ -44,7 +44,7 @@
 static void fmt_print(struct v4l2_format *fmt)
 {
 	int f;
-	printf("Format: %dx%d. ", fmt->fmt.pix.width, fmt->fmt.pix.height);
+	printf("Format: %ux%u. ", fmt->fmt.pix.width, fmt->fmt.pix.height);
 	printf("%x ", fmt->fmt.pix.pixelformat);
 	f = fmt->fmt.pix.pixelformat;
 	for (int i=0; i<4; i++) {

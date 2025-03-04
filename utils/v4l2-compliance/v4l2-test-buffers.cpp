@@ -3376,15 +3376,15 @@ static void streamFmtRun(struct node *node, cv4l_fmt &fmt, unsigned frame_count,
 
 	if (has_crop) {
 		node->g_frame_selection(crop, fmt.g_field());
-		sprintf(s_crop, "Crop %ux%u@%ux%u, ",
-				crop.r.width, crop.r.height,
-				crop.r.left, crop.r.top);
+		sprintf(s_crop, "Crop (%d,%d)/%ux%u, ",
+				crop.r.left, crop.r.top,
+				crop.r.width, crop.r.height);
 	}
 	if (has_compose) {
 		node->g_frame_selection(compose, fmt.g_field());
-		sprintf(s_compose, "Compose %ux%u@%ux%u, ",
-				compose.r.width, compose.r.height,
-				compose.r.left, compose.r.top);
+		sprintf(s_compose, "Compose (%d,%d)/%ux%u, ",
+				compose.r.left, compose.r.top,
+				compose.r.width, compose.r.height);
 	}
 	printf("\r\t\t%s%sStride %u, Field %s%s: %s   \n",
 			s_crop, s_compose,
@@ -3729,7 +3729,7 @@ static void streamM2MRun(struct node *node, unsigned frame_count)
 	node->g_fmt(out_fmt, out_type);
 	if (!no_progress)
 		printf("\r");
-	printf("\t%s (%s) %dx%d -> %s (%s) %dx%d: %s\n",
+	printf("\t%s (%s) %ux%u -> %s (%s) %ux%u: %s\n",
 	       fcc2s(out_fmt.g_pixelformat()).c_str(),
 	       pixfmt2s(out_fmt.g_pixelformat()).c_str(),
 	       out_fmt.g_width(), out_fmt.g_height(),

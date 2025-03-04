@@ -474,8 +474,8 @@ void printfmt(int fd, const struct v4l2_format &vfmt)
 			for (unsigned i = 0; i < vfmt.fmt.win.clipcount; i++) {
 				struct v4l2_rect &r = vfmt.fmt.win.clips[i].c;
 
-				printf("\t\tClip %2d: %ux%u@%ux%u\n", i,
-						r.width, r.height, r.left, r.top);
+				printf("\t\tClip %2d: (%d,%d)/%ux%u\n", i,
+						r.left, r.top, r.width, r.height);
 			}
 		printf("\tClip Bitmap : %s", vfmt.fmt.win.bitmap ? "Yes, " : "No\n");
 		if (vfmt.fmt.win.bitmap) {
@@ -566,15 +566,15 @@ void print_frmsize(const struct v4l2_frmsizeenum &frmsize, const char *prefix)
 {
 	printf("%s\tSize: %s ", prefix, frmtype2s(frmsize.type).c_str());
 	if (frmsize.type == V4L2_FRMSIZE_TYPE_DISCRETE) {
-		printf("%dx%d", frmsize.discrete.width, frmsize.discrete.height);
+		printf("%ux%u", frmsize.discrete.width, frmsize.discrete.height);
 	} else if (frmsize.type == V4L2_FRMSIZE_TYPE_CONTINUOUS) {
-		printf("%dx%d - %dx%d",
+		printf("%ux%u - %ux%u",
 				frmsize.stepwise.min_width,
 				frmsize.stepwise.min_height,
 				frmsize.stepwise.max_width,
 				frmsize.stepwise.max_height);
 	} else if (frmsize.type == V4L2_FRMSIZE_TYPE_STEPWISE) {
-		printf("%dx%d - %dx%d with step %d/%d",
+		printf("%ux%u - %ux%u with step %u/%u",
 				frmsize.stepwise.min_width,
 				frmsize.stepwise.min_height,
 				frmsize.stepwise.max_width,
