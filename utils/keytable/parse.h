@@ -445,6 +445,7 @@ struct parse_event key_events[] = {
 	{"KEY_NOTIFICATION_CENTER", 0x1bc},
 	{"KEY_PICKUP_PHONE", 0x1bd},
 	{"KEY_HANGUP_PHONE", 0x1be},
+	{"KEY_LINK_PHONE", 0x1bf},
 	{"KEY_DEL_EOL", 0x1c0},
 	{"KEY_DEL_EOS", 0x1c1},
 	{"KEY_INS_LINE", 0x1c2},

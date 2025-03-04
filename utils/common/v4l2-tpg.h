@@ -34,6 +34,7 @@ typedef __s8 s8;
 #define max3(x, y, z) tpg_max((typeof(x))tpg_max(x, y), z)
 #define array_size(a, b) ((a) * (b))
 #define array3_size(a, b, c) ((a) * (b) * (c))
+#define WARN_ON_ONCE(a) (a)
 
 static inline void vfree(void *p)
 {

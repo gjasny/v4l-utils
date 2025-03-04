@@ -119,6 +119,7 @@ ir_keytable_rc_keymaps = files(
     'real_audio_220_32_keys.toml',
     'reddo.toml',
     'samsung_ak59_00125a.toml',
+    'siemens_gigaset_rc20.toml',
     'snapstream_firefly.toml',
     'streamzap.toml',
     'su3000.toml',

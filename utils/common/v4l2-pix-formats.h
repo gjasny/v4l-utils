@@ -199,6 +199,8 @@
 	case V4L2_PIX_FMT_Y212: return "12-bit YUYV Packed";
 	case V4L2_PIX_FMT_Y216: return "16-bit YUYV Packed";
 	case V4L2_META_FMT_RPI_BE_CFG: return "RPi PiSP BE Config format";
+	case V4L2_META_FMT_RPI_FE_CFG: return "RPi PiSP FE Config format";
+	case V4L2_META_FMT_RPI_FE_STATS: return "RPi PiSP FE Statistics format";
 	case V4L2_PIX_FMT_MJPEG: return "Motion-JPEG";
 	case V4L2_PIX_FMT_JPEG: return "JFIF JPEG";
 	case V4L2_PIX_FMT_DV: return "1394";

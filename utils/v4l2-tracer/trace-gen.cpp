@@ -2220,6 +2220,7 @@ void trace_v4l2_ext_control_gen(void *arg, json_object *parent_obj, std::string 
 	//__s32 *p_s32;
 	//__s64 *p_s64;
 	//struct v4l2_area *p_area;
+	//struct v4l2_rect *p_rect;
 	//struct v4l2_ctrl_h264_sps *p_h264_sps;
 	//struct v4l2_ctrl_h264_pps *p_h264_pps;
 	//struct v4l2_ctrl_h264_scaling_matrix *p_h264_scaling_matrix;
