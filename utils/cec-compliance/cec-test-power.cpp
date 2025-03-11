@@ -527,8 +527,19 @@ static int standby_resume_wakeup_view_on(struct node *node, unsigned me, unsigne
 		return NOTAPPLICABLE;
 	if (me == CEC_LOG_ADDR_UNREGISTERED && from_unregistered)
 		return NOTAPPLICABLE;
-	if (from_unregistered && getuid())
-		return NOTAPPLICABLE;
+
+	if (from_unregistered) {
+		cec_msg msg;
+		int res;
+
+		// Check if we have permission to use CEC_MSG_FL_RAW.
+		// It relies on CAP_SYS_RAWIO being set.
+		cec_msg_init(&msg, me, la);
+		msg.flags |= CEC_MSG_FL_RAW;
+		res = doioctl(node, CEC_TRANSMIT, &msg);
+		if (res == EPERM)
+			return NOTAPPLICABLE;
+	}
 
 	unsigned unresponsive_cnt = 0;
 
