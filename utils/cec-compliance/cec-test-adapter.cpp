@@ -1031,7 +1031,7 @@ static int testModes(struct node *node, struct node *node2)
 	fail_on_test(doioctl(node2, CEC_G_MODE, &m));
 	fail_on_test(m != (CEC_MODE_INITIATOR | CEC_MODE_FOLLOWER));
 
-	bool is_root = getuid() == 0;
+	bool is_root = geteuid() == 0;
 
 	mode = CEC_MODE_MONITOR;
 	fail_on_test(doioctl(node2, CEC_S_MODE, &mode) != (is_root ? 0 : EPERM));
