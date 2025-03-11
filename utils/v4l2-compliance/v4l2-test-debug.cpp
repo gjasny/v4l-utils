@@ -30,7 +30,7 @@ int testRegister(struct node *node)
 	struct v4l2_dbg_register reg;
 	struct v4l2_dbg_chip_info chip = {};
 	int ret;
-	int uid = getuid();
+	int uid = geteuid();
 
 	reg.match.type = V4L2_CHIP_MATCH_BRIDGE;
 	reg.match.addr = 0;
