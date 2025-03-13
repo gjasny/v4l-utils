@@ -3041,7 +3041,7 @@ void edid_state::parse_cta_block(const unsigned char *x)
 	} while (0);
 
 	data_block.clear();
-	if (base.serial_number && serial_strings.size())
+	if (base.serial_number && serial_strings.size() && cta.first_cta)
 		warn("Display Product Serial Number is set, so the Serial Number in the Base EDID should be 0.\n");
 	if (!cta.has_vic_1 && !base.has_640x480p60_est_timing)
 		fail("Required 640x480p60 timings are missing in the established timings"
@@ -3053,6 +3053,7 @@ void edid_state::parse_cta_block(const unsigned char *x)
 		fail("Missing VCDB, needed for Set Selectable RGB Quantization to avoid interop issues.\n");
 	if (!base.uses_srgb && !cta.has_cdb)
 		warn("Add a Colorimetry Data Block with the sRGB colorimetry bit set to avoid interop issues.\n");
+	cta.first_cta = false;
 }
 
 void edid_state::cta_resolve_svr(timings_ext &t_ext)

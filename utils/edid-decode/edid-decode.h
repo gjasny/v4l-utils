@@ -188,6 +188,7 @@ struct edid_state {
 		cta.block_number = 0;
 		cta.has_svrs = false;
 		cta.first_svd = true;
+		cta.first_cta = true;
 		cta.supported_hdmi_vic_codes = cta.supported_hdmi_vic_vsb_codes = 0;
 		memset(cta.vics, 0, sizeof(cta.vics));
 		memset(cta.preparsed_has_vic, 0, sizeof(cta.preparsed_has_vic));
@@ -343,6 +344,7 @@ struct edid_state {
 		bool has_ycbcr444;
 		bool has_ycbcr422;
 		bool has_ycbcr420;
+		bool first_cta;
 	} cta;
 
 	// DisplayID block state
