@@ -2815,7 +2815,7 @@ int main(int argc, char **argv)
 					test_standby_wakeup_cycle_sleep = strtoul(value, nullptr, 0);
 					break;
 				case 2:
-					test_standby_wakeup_cycle_hpd_may_be_low = true;
+					test_standby_wakeup_cycle_hpd_may_be_low = !!strtoul(value, nullptr, 0);
 					break;
 				default:
 					std::exit(EXIT_FAILURE);
@@ -2867,7 +2867,7 @@ int main(int argc, char **argv)
 					stress_test_standby_wakeup_cycle_polls = strtoul(value, nullptr, 0);
 					break;
 				case 8:
-					stress_test_standby_wakeup_cycle_hpd_may_be_low = true;
+					stress_test_standby_wakeup_cycle_hpd_may_be_low = !!strtoul(value, nullptr, 0);
 					break;
 				default:
 					std::exit(EXIT_FAILURE);
@@ -2908,7 +2908,7 @@ int main(int argc, char **argv)
 					stress_test_random_standby_wakeup_seed = strtoul(value, nullptr, 0);
 					break;
 				case 4:
-					stress_test_random_standby_wakeup_hpd_may_be_low = true;
+					stress_test_random_standby_wakeup_hpd_may_be_low = !!strtoul(value, nullptr, 0);
 					break;
 				default:
 					std::exit(EXIT_FAILURE);
