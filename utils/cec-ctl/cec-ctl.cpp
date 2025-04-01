@@ -1487,6 +1487,16 @@ static int init_standby_wakeup_cycle_test(const struct node &node,
 	if (pa != CEC_PHYS_ADDR_INVALID)
 		return from;
 
+	sleep(2);
+
+	doioctl(&node, CEC_ADAP_G_PHYS_ADDR, &pa);
+	if (pa != CEC_PHYS_ADDR_INVALID) {
+		printf("FAIL: Five seconds after being put in the Standby state the HPD was low.\n");
+		printf("      Two seconds later the HPD was high again. HPD toggles while in Standby\n");
+		printf("      are not allowed.\n");
+		std::exit(EXIT_FAILURE);
+	}
+
 	struct cec_caps caps = { };
 	doioctl(&node, CEC_ADAP_G_CAPS, &caps);
 	unsigned major = caps.version >> 16;
