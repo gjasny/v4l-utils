@@ -116,6 +116,13 @@ enum gtf_ip_parm {
 	gtf_ip_clk_freq,
 };
 
+enum hdmi_image_size {
+	hdmi_image_size_none,
+	hdmi_image_size_ratio,
+	hdmi_image_size_rounded,
+	hdmi_image_size_5cm,
+};
+
 typedef std::vector<timings_ext> vec_timings_ext;
 
 struct cta_rid {
@@ -202,6 +209,7 @@ struct edid_state {
 		cta.preparsed_has_t8vtdb = false;
 		cta.preparsed_t8vtdb_dmt = 0;
 		cta.preparsed_max_vic_pixclk_khz = 0;
+		cta.preparsed_image_size = hdmi_image_size_none;
 		cta.warn_about_hdmi_2x_dtd = false;
 		cta.avi_version = 2;
 		cta.avi_v4_length = 14;
@@ -338,6 +346,7 @@ struct edid_state {
 		bool preparsed_has_vic[2][256];
 		std::vector<unsigned char> preparsed_svds[2];
 		unsigned preparsed_max_vic_pixclk_khz;
+		enum hdmi_image_size preparsed_image_size;
 		bool warn_about_hdmi_2x_dtd;
 		unsigned avi_version;
 		unsigned avi_v4_length;
@@ -627,14 +636,14 @@ char *extract_string(const unsigned char *x, unsigned len, bool is_cp437);
 
 int request_i2c_adapter(const char *device);
 int read_edid(int adapter_fd, unsigned char *edid, bool silent = false);
-int test_reliability(int adapter_fd, unsigned cnt, unsigned msleep);
+int test_reliability(int adapter_fd, unsigned secs, unsigned msleep);
 int read_hdcp(int adapter_fd);
 int read_hdcp_ri(int adapter_fd, double ri_time);
 
 #else
 
 static inline int read_edid(int adapter_fd, unsigned char *edid) { return -ENODEV; }
-static inline int test_reliability(int adapter_fd, unsigned cnt, unsigned msleep) { return -ENODEV; }
+static inline int test_reliability(int adapter_fd, unsigned secs, unsigned msleep) { return -ENODEV; }
 static inline int read_hdcp(int adapter_fd) { return -ENODEV; }
 static inline int read_hdcp_ri(int adapter_fd, double ri_time) { return -ENODEV; }
 

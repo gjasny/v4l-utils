@@ -942,13 +942,20 @@ void edid_state::cta_nvrdb(const unsigned char *x, unsigned length)
 	unsigned w = (x[3] << 8) | x[2];
 	unsigned h = (x[5] << 8) | x[4];
 
-	if (!w || !h)
+	if (!w || !h) {
 		fail("Image Size has a zero width and/or height.\n");
+		return;
+	}
 
-	if (flags & 0x80)
-		printf("    Image Size: %ux%u mm\n", w, h);
-	else
-		printf("    Image Size: %.1fx%.1f mm\n", w / 10.0, h / 10.0);
+	if (flags & 0x80) {
+		w *= 10;
+		h *= 10;
+	}
+	printf("    Image Size: %.1fx%.1f mm\n", w / 10.0, h / 10.0);
+	image_width = w;
+	image_height = h;
+	if (w < 25500 && h < 25500)
+		warn("Image Size should only be used for large displays with width and/or height > 255 cm\n");
 }
 
 static std::string hdmi_latency2s(unsigned char l, bool is_video)
@@ -1088,10 +1095,9 @@ void edid_state::cta_hdmi_block(const unsigned char *x, unsigned length)
 		   break;
 	case 0x18:
 		   printf("      Base EDID image size is in units of 5 cm\n");
-		   base.max_display_width_mm *= 5;
-		   base.max_display_height_mm *= 5;
-		   printf("        Recalculated image size: %u cm x %u cm\n",
-			  base.max_display_width_mm / 10, base.max_display_height_mm / 10);
+		   if (base.max_display_width_mm < 2550 &&
+		       base.max_display_height_mm < 2550)
+			   fail("5 cm units should not be used for displays smaller than 255x255 cm\n");
 		   break;
 	}
 	b++;
@@ -2848,10 +2854,28 @@ void edid_state::preparse_cta_block(unsigned char *x)
 
 		switch ((x[i] & 0xe0) >> 5) {
 		case 0x03:
+			if ((x[i] & 0x1f) < 5)
+				continue;
 			oui = (x[i + 3] << 16) + (x[i + 2] << 8) + x[i + 1];
 			if (oui == 0x000c03) {
+				unsigned length = x[i] & 0x1f;
+				unsigned b = i + 8;
+
 				cta.has_hdmi = true;
 				cta.preparsed_phys_addr = (x[i + 4] << 8) | x[i + 5];
+				if (length < 9 || !(x[b] & 0x20))
+					continue;
+				if (x[b] & 0x80) {
+					if (length < 11)
+						continue;
+					if (x[b] & 0x40) {
+						if (length < 13)
+							continue;
+						b += 2;
+					}
+					b += 2;
+				}
+				cta.preparsed_image_size = (enum hdmi_image_size)((x[b + 1] & 0x18) >> 3);
 			} else if ((oui == 0xca125c || oui == 0x5c12ca) &&
 				   (x[i] & 0x1f) == 0x15 && replace_unique_ids) {
 				memset(x + i + 6, 0, 16);
