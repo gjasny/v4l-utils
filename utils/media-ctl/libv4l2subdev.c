@@ -829,6 +829,8 @@ static struct media_pad *v4l2_subdev_parse_pad_format(
 			}
 
 			format->colorspace = colorspace;
+			if (pad->flags & MEDIA_PAD_FL_SOURCE)
+				format->flags |= V4L2_MBUS_FRAMEFMT_SET_CSC;
 
 			p = end;
 			continue;
@@ -857,6 +859,8 @@ static struct media_pad *v4l2_subdev_parse_pad_format(
 			}
 
 			format->xfer_func = xfer_func;
+			if (pad->flags & MEDIA_PAD_FL_SOURCE)
+				format->flags |= V4L2_MBUS_FRAMEFMT_SET_CSC;
 
 			p = end;
 			continue;
@@ -885,6 +889,8 @@ static struct media_pad *v4l2_subdev_parse_pad_format(
 			}
 
 			format->ycbcr_enc = ycbcr_enc;
+			if (pad->flags & MEDIA_PAD_FL_SOURCE)
+				format->flags |= V4L2_MBUS_FRAMEFMT_SET_CSC;
 
 			p = end;
 			continue;
@@ -913,6 +919,8 @@ static struct media_pad *v4l2_subdev_parse_pad_format(
 			}
 
 			format->quantization = quantization;
+			if (pad->flags & MEDIA_PAD_FL_SOURCE)
+				format->flags |= V4L2_MBUS_FRAMEFMT_SET_CSC;
 
 			p = end;
 			continue;
