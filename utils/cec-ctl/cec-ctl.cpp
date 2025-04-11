@@ -1358,7 +1358,7 @@ static void test_reliability(const struct node &node, unsigned int to, unsigned 
 		if (!pass)
 			std::exit(EXIT_FAILURE);
 		time_t cur = time(NULL);
-		if (secs && cur - start > secs)
+		if (secs && cur - start > (time_t)secs)
 			break;
 	}
 	printf("%u iterations over %u seconds: PASS\n", iter, secs);

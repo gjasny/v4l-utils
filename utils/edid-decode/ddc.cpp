@@ -231,7 +231,7 @@ int test_reliability(int adapter_fd, unsigned secs, unsigned msleep)
 			return -1;
 		}
 		time_t cur = time(NULL);
-		if (secs && cur - start_test > secs)
+		if (secs && cur - start_test > (time_t)secs)
 			break;
 		if (cur - start >= 10) {
 			start = cur;
