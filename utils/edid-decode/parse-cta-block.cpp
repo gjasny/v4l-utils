@@ -581,6 +581,8 @@ void edid_state::cta_svd(const unsigned char *x, unsigned n, bool for_ycbcr420)
 	bool have_vics_5_and_up = false;
 	unsigned i;
 
+	if (!n)
+		fail("This Data Block is empty.\n");
 	for (i = 0; i < n; i++)  {
 		const struct timings *t = NULL;
 		unsigned char svd = x[i];
