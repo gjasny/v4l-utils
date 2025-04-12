@@ -42,6 +42,7 @@ conf.set('PATCH', as_patch_version)
 
 common_arguments = [
     '-Wpointer-arith',
+    '-Wno-psabi',
     '-D_GNU_SOURCE',
     '-DPROMOTED_MODE_T=int',
     '-DENABLE_NLS',
