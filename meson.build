@@ -215,14 +215,22 @@ have_gconv = cc.has_header('gconv.h', required : get_option('gconv'))
 gconvsysdir = get_option('gconvsysdir')
 
 # Generic check: works with most distributions
-gconv_dirs_generic = [
-    'lib64',
-    'usr/lib64',
-    'lib',
-    'usr/lib',
-    'usr/local/lib64',
-    'usr/local/lib',
-]
+if cc.sizeof('long') == 8
+    gconv_dirs_generic = [
+        'lib64',
+        'usr/lib64',
+        'lib',
+        'usr/lib',
+        'usr/local/lib64',
+        'usr/local/lib',
+    ]
+else
+    gconv_dirs_generic = [
+        'lib',
+        'usr/lib',
+        'usr/local/lib',
+    ]
+endif
 
 if gconvsysdir == ''
     foreach dir : gconv_dirs_generic
