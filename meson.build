@@ -54,8 +54,12 @@ v4l2_wrapper_args = [
     # As the library needs to provide both 32-bit and 64-bit versions
     # of file operations, disable transparent large file support (fixes
     # 'Error: symbol `open64/mmap64' is already defined' compile failure
-    # otherwise)
+    # otherwise).
+    #
+    # Also disable _TIME_BITS=64 since this is allowed only with
+    # _FILE_OFFSET_BITS=64, which is now 32.
     '-U_FILE_OFFSET_BITS',
+    '-U_TIME_BITS',
     '-D_FILE_OFFSET_BITS=32',
     '-D_LARGEFILE64_SOURCE',
 ]
