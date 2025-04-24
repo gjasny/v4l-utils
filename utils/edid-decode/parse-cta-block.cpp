@@ -641,10 +641,17 @@ void edid_state::cta_svd(const unsigned char *x, unsigned n, bool for_ycbcr420)
 				print_timings("    ", t, type, flags);
 			}
 			if (first_svd && !cta.preferred_timings.empty()) {
-				if (!match_timings(cta.preferred_timings[0].t, *t))
-					warn("VIC %u and the first DTD are not identical. Is this intended?\n", vic);
-				else if (cta.first_svd_might_be_preferred)
+				if (!match_timings(cta.preferred_timings[0].t, *t)) {
+					// The DTD can't handle width or height >= 4096. If the first
+					// VIC has a width or height >= 4096, then adding VFPDB and
+					// NVRDB data blocks is strongly recommended.
+					if (t->vact < 4096 && t->hact < 4096)
+						warn("VIC %u and the first DTD are not identical. Is this intended?\n", vic);
+					else if (!cta.has_vfpdb)
+						warn("The first VIC %u has width or height >= 4096, adding a VFPDB and NVRDB is strongly recommended.\n", vic);
+				} else if (cta.first_svd_might_be_preferred) {
 					warn("For improved preferred timing interoperability, set 'Native detailed modes' to 1.\n");
+				}
 			}
 			if (first_svd) {
 				if (cta.first_svd_might_be_preferred)
@@ -2849,6 +2856,9 @@ void edid_state::preparse_cta_block(unsigned char *x)
 
 	if (version < 3)
 		return;
+
+	if (!cta.byte3)
+		cta.byte3 = x[3];
 
 	for (unsigned i = 4; i < offset; i += (x[i] & 0x1f) + 1) {
 		bool for_ycbcr420 = false;

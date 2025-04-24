@@ -1137,7 +1137,9 @@ void edid_state::detailed_timings(const char *prefix, const unsigned char *x,
 		base.preferred_timing = te;
 		if (has_cta) {
 			cta.preferred_timings.push_back(te);
-			cta.native_timings.push_back(te);
+			if (cta.byte3 & 0xf) {
+				cta.native_timings.push_back(te);
+			}
 		}
 	}
 	if (base_or_cta)
@@ -1479,7 +1481,6 @@ void edid_state::parse_base_block(const unsigned char *x)
 {
 	time_t the_time;
 	struct tm *ptm;
-	int analog;
 	unsigned col_x, col_y;
 	bool has_preferred_timing = false;
 	char *manufacturer;
@@ -1564,7 +1565,7 @@ void edid_state::parse_base_block(const unsigned char *x)
 	data_block = "Basic Display Parameters & Features";
 	printf("  %s:\n", data_block.c_str());
 	if (x[0x14] & 0x80) {
-		analog = 0;
+		base.is_analog = false;
 		printf("    Digital display\n");
 		if (base.edid_minor >= 4) {
 			if ((x[0x14] & 0x70) == 0x00)
@@ -1607,7 +1608,7 @@ void edid_state::parse_base_block(const unsigned char *x)
 		unsigned voltage = (x[0x14] & 0x60) >> 5;
 		unsigned sync = (x[0x14] & 0x0f);
 
-		analog = 1;
+		base.is_analog = true;
 		printf("    Analog display\n");
 		printf("    Signal Level Standard: %s\n", voltages[voltage]);
 
@@ -1662,7 +1663,7 @@ void edid_state::parse_base_block(const unsigned char *x)
 		printf("\n");
 	}
 
-	if (analog || base.edid_minor < 4) {
+	if (base.is_analog || base.edid_minor < 4) {
 		printf("    ");
 		switch (x[0x18] & 0x18) {
 		case 0x00: printf("Monochrome or grayscale display\n"); break;
@@ -1803,8 +1804,7 @@ void edid_state::parse_base_block(const unsigned char *x)
 	detailed_block(x + 0x5a);
 	detailed_block(x + 0x6c);
 	base.has_spwg = false;
-	if (!base.preferred_is_also_native) {
-		cta.native_timings.clear();
+	if (!has_preferred_timing) {
 		base.preferred_timing = timings_ext();
 	}
 

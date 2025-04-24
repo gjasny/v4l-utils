@@ -171,6 +171,7 @@ struct edid_state {
 			base.preferred_is_also_native = false;
 		base.serial_number = 0;
 		base.week = base.year = 0;
+		base.is_analog = false;
 		base.supports_sec_gtf = false;
 		base.sec_gtf_start_freq = 0;
 		base.C = base.M = base.K = base.J = 0;
@@ -275,6 +276,7 @@ struct edid_state {
 		bool has_display_range_descriptor;
 		unsigned serial_number;
 		unsigned char week, year;
+		bool is_analog;
 		bool supports_continuous_freq;
 		bool supports_gtf;
 		bool supports_sec_gtf;
