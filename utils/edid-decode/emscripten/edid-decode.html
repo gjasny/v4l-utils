@@ -22,6 +22,16 @@
         outline: none;
       }
 
+      input {
+        margin-top: 10px;
+	border: 0;
+        display: block;
+        background-color: black;
+        color: white;
+        font-family: 'Lucida Console', Monaco, monospace;
+        outline: none;
+      }
+
       #error {
         background-color: white;
         color: red;
@@ -41,6 +51,8 @@
     <input type="file" id="upload" style="float:left; margin-left: 10px;">
     <div style="clear:both"></div>
     <textarea id="input" style="width:40vw; height: 300px;" placeholder="Paste EDID hex here"></textarea>
+    <div style="clear:both"></div>
+    <input type="number" id="diagonal" min="10" max="2559" step="0.1" style="width:40vw; height: 14px;" placeholder="Diagonal of the display in inches (optional)"></input>
     <button id="process">Process</button>
     <div><a href="https://git.linuxtv.org/v4l-utils.git/">v4l-utils.git</a></div>
     <br>
@@ -64,7 +76,7 @@ document.getElementById("upload").addEventListener("change", function(e) {
   if (!file) return;
   var fr = new FileReader();
   fr.onload = function(e) {
-    process(new Uint8Array(e.target.result));
+    process(new Uint8Array(e.target.result), document.getElementById("diagonal").value);
   }
   fr.readAsArrayBuffer(file);
 });
@@ -73,12 +85,12 @@ document.getElementById("process").addEventListener("click", function(e) {
   if (typeof WebAssembly === 'undefined') return;
   document.getElementById("output").value = "";
   document.getElementById("error").value = "";
-  process(document.getElementById("input").value);
+  process(document.getElementById("input").value, document.getElementById("diagonal").value);
 });
 
-function process(input) {
+function process(input, diag) {
   FS.writeFile("input-file", input);
-  Module.ccall('parse_edid', 'number', ['string'], ['input-file']);
+  Module.ccall('parse_edid', 'number', ['string', 'number'], ['input-file', diag]);
 /*
   // Look for the hex in the EDID output
   var output = document.getElementById("output").value;

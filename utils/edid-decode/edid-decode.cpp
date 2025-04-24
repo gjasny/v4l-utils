@@ -1083,8 +1083,21 @@ static bool extract_edid(int fd, FILE *error)
 	start = strstr(data, "edid-decode (hex):");
 	if (!start)
 		start = strstr(data, "EDID (hex):");
-	if (start)
-		return extract_edid_hex(strchr(start, ':'));
+	if (start) {
+		bool ok = extract_edid_hex(strchr(start, ':'));
+		float diag;
+
+		if (state.diagonal)
+			return ok;
+
+		start = strstr(start, "Diagonal: ");
+		if (start)
+			start = strchr(start, ' ') + 1;
+		if (ok && start && sscanf(start, "%f\"", &diag) == 1) {
+			state.diagonal = diag;
+		}
+		return ok;
+	}
 
 	/* Look for C-array */
 	start = strstr(data, "unsigned char edid[] = {");
@@ -1558,6 +1571,10 @@ int edid_state::parse_edid()
 			printf("\n");
 		}
 		printf("----------------\n\n");
+		if (diagonal) {
+			printf("Diagonal: %.1f\"\n\n", diagonal);
+			printf("----------------\n\n");
+		}
 	}
 
 	block = block_name(0x00);
@@ -2655,9 +2672,18 @@ int main(int argc, char **argv)
 				std::exit(EXIT_FAILURE);
 			}
 			break;
-		case OptDiag:
-			state.diagonal = strtod(optarg, NULL);
+		case OptDiag: {
+			double diag;
+
+			diag = strtod(optarg, NULL);
+			if (isnormal(diag)) {
+				if (diag == 0 || (diag >= 10 && diag <= 2559))
+					state.diagonal = diag;
+				else
+					fprintf(stderr, "Ignored diagonal, expected to be between 10 and 2559 inches.\n");
+			}
 			break;
+		}
 #ifdef __HAS_I2C_DEV__
 		case OptI2CAdapter: {
 			std::string device = optarg;
@@ -2887,7 +2913,7 @@ int main(int argc, char **argv)
  * each time it wants to decode an EDID. So this should reset all the
  * state and start over.
  */
-extern "C" int parse_edid(const char *input)
+extern "C" int parse_edid(const char *input, float diag)
 {
 	for (unsigned i = 0; i < EDID_MAX_BLOCKS + 1; i++) {
 		s_msgs[i][0].clear();
@@ -2899,6 +2925,13 @@ extern "C" int parse_edid(const char *input)
 	options[OptSkipSHA] = 0;
 	options[OptUTF8] = 1;
 	state = edid_state();
+	// Accept values
+	if (isnormal(diag) && diag) {
+	        if (diag >= 10 && diag <= 2559)
+			state.diagonal = diag;
+		else
+			fprintf(stderr, "Ignored diagonal, expected to be between 10 and 2559 inches.\n");
+	}
 	int ret = edid_from_file(input, stderr);
 	return ret ? ret : state.parse_edid();
 }
