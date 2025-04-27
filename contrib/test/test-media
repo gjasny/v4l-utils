@@ -432,6 +432,43 @@ if [ $vim2m -eq 1 -a $setup -eq 0 ]; then
 	echo
 	echo
 	echo
+	echo rmmod vim2m | tee /dev/kmsg
+	echo
+	rmmod vim2m
+	sleep $rmmod_time
+	if [ $kmemleak -eq 1 ]; then
+		echo
+		echo kmemleak results for vim2m:
+		echo
+		echo scan >/sys/kernel/debug/kmemleak
+		cat /sys/kernel/debug/kmemleak
+		echo
+		echo end of kmemleak results
+		echo clear >/sys/kernel/debug/kmemleak
+	fi
+
+	dmesg -n info
+	modprobe vim2m multiplanar=2
+	sleep $modprobe_time
+	dmesg -n notice
+
+	if ! $v4l2_ctl -z platform:vim2m ; then
+		echo "FAIL: the vim2m module failed to load" | tee -a $tmp
+		echo "Grand Total for vim2m: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
+		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
+		rmmod vivid
+		exit 0
+	fi
+
+	echo
+	echo vim2m multiplanar compliance tests | tee /dev/kmsg
+	echo
+	date
+	stdbuf -oL $v4l2_compliance -m platform:vim2m -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
+	echo
+	echo
+	echo
+	echo
 	echo
 	echo
 	echo
