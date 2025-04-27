@@ -205,7 +205,7 @@ static int check_frontend(void *__args,
 	};
 
 	if (isatty(STDERR_FILENO)) {
-		fprintf(stderr, "\x1b[37m");
+		fprintf(stderr, "\x1b[0m");
 	}
 
 	return (status & FE_HAS_LOCK) ? 0 : -1;
