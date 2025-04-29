@@ -1450,9 +1450,10 @@ void edid_state::print_native_res()
 			double h = image_height;
 			double d = sqrt(w * w + h * h) / 254.0;
 
-			if (fabs(diagonal - d) >= 0.1)
+			if (fabs(diagonal - d) >= 0.1) {
 				warn("Specified diagonal is %.1f\", calculated diagonal is %.1f\" for EDID image size %.1fx%.1fmm.\n",
 				     diagonal, d, w / 10.0, h / 10.0);
+			}
 		}
 		if (native_width) {
 			double w = native_width;
@@ -1477,6 +1478,8 @@ void edid_state::print_native_res()
 				warn("No image size was specified, but it is calculated as %.1fx%.1fmm.\n",
 				     w / 10.0, h / 10.0);
 			}
+			if (has_cta && !cta.nvrdb_has_size && (w > 25500 || h > 25500))
+				warn("Calculated image width or height > 255 cm, recommend including an NVRDB with image size.\n");
 		}
 	}
 

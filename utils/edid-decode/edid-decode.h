@@ -193,6 +193,7 @@ struct edid_state {
 		cta.hdmi_max_rate = 0;
 		cta.hf_eeodb_blocks = 0;
 		cta.image_width = cta.image_height = 0;
+		cta.nvrdb_has_size = false;
 		cta.block_number = 0;
 		cta.has_svrs = false;
 		cta.first_svd = true;
@@ -321,6 +322,7 @@ struct edid_state {
 		vec_timings_ext native_timing_nvrdb;
 		// in 0.1 mm units
 		unsigned image_width, image_height;
+		bool nvrdb_has_size;
 		bool has_vic_1;
 		bool first_svd_might_be_preferred;
 		unsigned char byte3;

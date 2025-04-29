@@ -972,8 +972,9 @@ void edid_state::cta_nvrdb(const unsigned char *x, unsigned length)
 	printf("    Image Size: %.1fx%.1f mm\n", w / 10.0, h / 10.0);
 	image_width = w;
 	image_height = h;
-	if (w < 25500 && h < 25500)
+	if (w <= 25500 && h <= 25500)
 		warn("Image Size should only be used for large displays with width and/or height > 255 cm\n");
+	cta.nvrdb_has_size = true;
 }
 
 static std::string hdmi_latency2s(unsigned char l, bool is_video)
