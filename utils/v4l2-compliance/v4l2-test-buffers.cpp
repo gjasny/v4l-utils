@@ -3119,7 +3119,7 @@ int testBlockingWait(struct node *node)
 	bool can_stream = node->g_caps() & V4L2_CAP_STREAMING;
 	int type;
 
-	if (!can_stream || !node->valid_buftypes)
+	if (!can_stream || node->is_io_mc || !node->valid_buftypes)
 		return ENOTTY;
 
 	buffer_info.clear();
