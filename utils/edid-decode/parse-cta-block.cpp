@@ -926,6 +926,15 @@ void edid_state::cta_vfpdb(const unsigned char *x, unsigned length)
 	cta.preferred_timings_vfpdb.clear();
 	for (i = 0; i < length; i++)
 		cta_print_svr(x[i], cta.preferred_timings_vfpdb);
+	if (cta.has_nvrdb)
+		return;
+
+	for (const auto &n : cta.preferred_timings_vfpdb) {
+		if (n.t.vact >= 4096 || n.t.hact >= 4096) {
+			warn("One of the VFPDB timings has width or height >= 4096, adding an NVRDB is strongly recommended.\n");
+			break;
+		}
+	}
 }
 
 void edid_state::cta_nvrdb(const unsigned char *x, unsigned length)

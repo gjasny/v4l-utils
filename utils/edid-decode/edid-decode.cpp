@@ -1435,6 +1435,10 @@ void edid_state::print_native_res()
 			} else if (native_width &&
 				   (iter->t.hact != native_width ||
 				    iter->t.vact != native_height)) {
+				if (iter->t.hact >= 4096 || iter->t.vact >= 4096) {
+					native_width = iter->t.hact;
+					native_height = iter->t.vact;
+				}
 				native_mismatch = true;
 			}
 		}
@@ -1447,8 +1451,8 @@ void edid_state::print_native_res()
 			double d = sqrt(w * w + h * h) / 254.0;
 
 			if (fabs(diagonal - d) >= 0.1)
-				warn("Specified diagonal is %.1f\", calculated diagonal is %.1f\".\n",
-				     diagonal, d);
+				warn("Specified diagonal is %.1f\", calculated diagonal is %.1f\" for EDID image size %.1fx%.1fmm.\n",
+				     diagonal, d, w / 10.0, h / 10.0);
 		}
 		if (native_width) {
 			double w = native_width;
@@ -1461,8 +1465,8 @@ void edid_state::print_native_res()
 
 			if (image_width) {
 				printf("\n----------------\n");
-				printf("\nCalculated image size for a diagonal of %.1f\" is %.1fx%.1fmm.\n",
-				     diagonal, w / 10.0, h / 10.0);
+				printf("\nCalculated image size for a diagonal of %.1f\" is %.1fx%.1fmm (native resolution %ux%u).\n",
+				     diagonal, w / 10.0, h / 10.0, native_width, native_height);
 
 				if (fabs((double)image_width - w) >= 100.0 ||
 				    fabs((double)image_height - h) >= 100.0)
