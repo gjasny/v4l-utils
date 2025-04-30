@@ -34,6 +34,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #include <stdlib.h>
 #include <sys/time.h>
 
@@ -46,6 +47,7 @@
 #include <libdvbv5/dvb-scan.h>
 #include <libdvbv5/dvb-log.h>
 #include <libdvbv5/dvb-demux.h>
+#include <libdvbv5/dvb-vb2.h>
 #include <libdvbv5/descriptors.h>
 #include <libdvbv5/header.h>
 #include <libdvbv5/pat.h>
@@ -79,20 +81,8 @@
 		fprintf(stderr, " (%s)\n", strerror(errno));		\
 	} while (0)
 
-
-/**Videobuf2 streaming
- * Comment VB2 macro to disable the streaming code
- */
-#define VB2
-
-#ifdef VB2
-#include <sys/mman.h>
-#include <libdvbv5/dvb-vb2.h>
 #define STREAM_BUF_CNT (4)
 #define STREAM_BUF_SIZ (DVB_MAX_PAYLOAD_PACKET_SIZE)
-
-struct dvb_v5_stream_ctx sc = {0,};
-#endif
 
 static int dvb_poll(struct dvb_v5_fe_parms_priv *parms, int fd, unsigned int seconds)
 {
@@ -353,21 +343,22 @@ int dvb_read_sections(struct dvb_v5_fe_parms *__p, int dmx_fd,
 	if (parms->p.verbose)
 		dvb_log(_("%s: waiting for table ID 0x%02x, program ID 0x%02x"),
 			__func__, sect->tid, sect->pid);
-#ifdef VB2
-#else
-	buf = calloc(DVB_MAX_PAYLOAD_PACKET_SIZE, 1);
-	if (!buf) {
-		dvb_logerr(_("%s: out of memory"), __func__);
-		dvb_dmx_stop(dmx_fd);
-		dvb_table_filter_free(sect);
-		return -1;
+
+	if (!parms->p.stream_ctx) {
+		buf = calloc(DVB_MAX_PAYLOAD_PACKET_SIZE, 1);
+		if (!buf) {
+			dvb_logerr(_("%s: out of memory"), __func__);
+			dvb_dmx_stop(dmx_fd);
+			dvb_table_filter_free(sect);
+			return -1;
+		}
 	}
-#endif
 
 	do {
 		int available;
 		uint32_t crc;
 		ssize_t buf_length = 0;
+		struct dmx_buffer b;
 
 		do {
 			available = dvb_poll(parms, dmx_fd, timeout);
@@ -382,23 +373,23 @@ int dvb_read_sections(struct dvb_v5_fe_parms *__p, int dmx_fd,
 			ret = -1;
 			break;
 		}
-#ifdef VB2
-		struct dmx_buffer b;
-		memset(&b, 0, sizeof(b));
 
-		ret = dvb_v5_stream_dqbuf(&sc, &b);
-		if (ret < 0) {
-			sc.error = 1;
-			break;
+		if (parms->p.stream_ctx) {
+			memset(&b, 0, sizeof(b));
+
+			ret = dvb_v5_stream_dqbuf(parms->p.stream_ctx, &b);
+			if (ret < 0) {
+				parms->p.stream_ctx->error = 1;
+				break;
+			}
+			else {
+				parms->p.stream_ctx->buf_flag[b.index] = 0;
+				buf = parms->p.stream_ctx->buf[b.index];
+				buf_length = b.bytesused;
+			}
+		} else {
+			buf_length = read(dmx_fd, buf, DVB_MAX_PAYLOAD_PACKET_SIZE);
 		}
-		else {
-			sc.buf_flag[b.index] = 0;
-			buf = sc.buf[b.index];
-			buf_length = b.bytesused;
-		}
-#else
-		buf_length = read(dmx_fd, buf, DVB_MAX_PAYLOAD_PACKET_SIZE);
-#endif
 
 		if (!buf_length) {
 			dvb_logerr(_("%s: buf returned an empty buffer"), __func__);
@@ -419,24 +410,23 @@ int dvb_read_sections(struct dvb_v5_fe_parms *__p, int dmx_fd,
 		}
 
 		ret = dvb_parse_section(parms, sect, buf, buf_length);
-#ifdef VB2
-		/**enqueue the buffer again*/
-		if (!ret) {
-			if (dvb_v5_stream_qbuf(&sc, b.index) < 0) {
-				sc.error = 1;
-				break;
-			}
-			else
-				sc.buf_flag[b.index] = 1;
-		}
 
-#endif
+		if (parms->p.stream_ctx) {
+			/**enqueue the buffer again*/
+			if (!ret) {
+				if (dvb_v5_stream_qbuf(parms->p.stream_ctx, b.index) < 0) {
+					parms->p.stream_ctx->error = 1;
+					break;
+				} else {
+					parms->p.stream_ctx->buf_flag[b.index] = 1;
+				}
+			}
+		}
 	} while (!ret);
 
-#ifdef VB2
-#else
-	free(buf);
-#endif
+	if (!parms->p.stream_ctx) {
+		free(buf);
+	}
 	dvb_dmx_stop(dmx_fd);
 	dvb_table_filter_free(sect);
 
@@ -514,18 +504,18 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *__p,
 
 	struct dvb_v5_descriptors *dvb_scan_handler;
 
-#ifdef VB2
-	rc = dvb_v5_stream_init(&sc, dmx_fd, STREAM_BUF_SIZ, STREAM_BUF_CNT);
-	if (rc < 0) {
-		PERROR("stream_init failed: error %d, %s\n",
-				errno, strerror(errno));
-		/** We don't know what failed during dvb_v5_stream_init
-		 * reqbufs, mmap or  qbuf. We will call dvb_v5_stream_deinit
-		 * to delete the mapping which might have been created
-		 */
-		goto ret_null;
+	if (parms->p.stream_ctx) {
+		rc = dvb_v5_stream_init(parms->p.stream_ctx, dmx_fd, STREAM_BUF_SIZ, STREAM_BUF_CNT);
+		if (rc < 0) {
+			PERROR("stream_init failed: error %d, %s\n",
+			       errno, strerror(errno));
+			/** We don't know what failed during dvb_v5_stream_init
+			 * reqbufs, mmap or  qbuf. We will call dvb_v5_stream_deinit
+			 * to delete the mapping which might have been created
+			 */
+			goto ret_null;
+		}
 	}
-#endif
 
 	dvb_scan_handler = dvb_scan_alloc_handler_table(delivery_system);
 	if (!dvb_scan_handler)
@@ -696,17 +686,18 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *__p,
 		else if (parms->p.verbose)
 			dvb_table_sdt_print(&parms->p, dvb_scan_handler->sdt);
 	}
+	return dvb_scan_handler;
 
 ret_null:
-#ifdef VB2
-	dvb_v5_stream_deinit(&sc);
-#endif
+	if (parms->p.stream_ctx) {
+		dvb_v5_stream_deinit(parms->p.stream_ctx);
+	}
 	return NULL;
 
 ret_handler:
-#ifdef VB2
-	dvb_v5_stream_deinit(&sc);
-#endif
+	if (parms->p.stream_ctx) {
+		dvb_v5_stream_deinit(parms->p.stream_ctx);
+	}
 	return dvb_scan_handler;
 }
 

@@ -269,8 +269,6 @@ void dvb_v5_stream_deinit(struct dvb_v5_stream_ctx *sc)
 		}
 
 	}
-
-	return;
 }
 
 /**
@@ -313,7 +311,6 @@ void dvb_v5_stream_to_file(int in_fd, int out_fd, int timeout, int dbg_level,
 		dvb_v5_stream_free(sc);
 		return;
 	}
-	fprintf(stderr, "start streaming!!!\n");
 	sc->out_fd = out_fd;
 
 	while (!*exit_flag  && !sc->error) {

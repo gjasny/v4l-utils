@@ -57,7 +57,7 @@ struct dvb_v5_stats {
 struct dvb_device_priv;
 
 struct dvb_v5_fe_parms_priv {
-	/* dvbv_v4_fe_parms should be the first element on this struct */
+	/* dvbv_v5_fe_parms should be the first element on this struct */
 	struct dvb_v5_fe_parms		p;
 
 	struct dvb_device_priv		*dvb;

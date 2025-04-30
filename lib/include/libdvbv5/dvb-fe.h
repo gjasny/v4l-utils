@@ -83,6 +83,8 @@
 
 #endif
 
+struct dvb_v5_stream_ctx;
+
 /**
  * @struct dvb_v5_fe_parms
  * @ingroup frontend
@@ -105,6 +107,7 @@
  * @param lnb			LNBf description (RW)
  * @param sat_number		Number of the satellite (used by DISEqC setup) (RW)
  * @param freq_bpf		SCR/Unicable band-pass filter frequency to use, in kHz
+ * @param stream_ctx		VB2 stream context
  * @param verbose		Verbosity level of the library (RW)
  * @param dvb_logfunc		Function used to write log messages (RO)
  * @param default_charset	Name of the charset used by the DVB standard (RW)
@@ -137,6 +140,8 @@ struct dvb_v5_fe_parms {
 	int				sat_number;
 	unsigned			freq_bpf;
 	unsigned			diseqc_wait;
+
+	struct dvb_v5_stream_ctx	*stream_ctx;
 
 	/* Function to write DVB logs */
 	unsigned			verbose;
