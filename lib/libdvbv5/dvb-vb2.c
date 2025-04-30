@@ -155,6 +155,17 @@ int dvb_v5_stream_expbuf(struct dvb_v5_stream_ctx *sc, int idx)
 			idx, sc->exp_fd[idx]);
 	return ret;
 }
+
+/**
+ * dvb_v5_stream_alloc - Allocate stream context
+ *
+ * @return a stream context or NULL.
+ */
+struct dvb_v5_stream_ctx *dvb_v5_stream_alloc(void)
+{
+	return calloc(1, sizeof(struct dvb_v5_stream_ctx));
+}
+
 /**
  * dvb_v5_stream_init - Requests number of buffers from memory
  * Gets pointer to the buffers from driver, mmaps those buffers
@@ -263,6 +274,16 @@ void dvb_v5_stream_deinit(struct dvb_v5_stream_ctx *sc)
 }
 
 /**
+ * dvb_v5_stream_free - Free stream context
+ *
+ * @param sc - Context for streaming management
+ */
+void dvb_v5_stream_free(struct dvb_v5_stream_ctx *sc)
+{
+	free(sc);
+}
+
+/**
  * dvb_v5_stream_to_file - Implements enqueue and dequeue logic
  * First enqueues all the available buffers then dequeues
  * one buffer, again enqueues it and so on.
@@ -278,33 +299,36 @@ void dvb_v5_stream_deinit(struct dvb_v5_stream_ctx *sc)
 void dvb_v5_stream_to_file(int in_fd, int out_fd, int timeout, int dbg_level,
 			   int *exit_flag)
 {
-	struct dvb_v5_stream_ctx sc;
-	int ret;
+	struct dvb_v5_stream_ctx *sc = dvb_v5_stream_alloc();
 	long long int rc = 0LL;
+	int ret;
 
-	ret = dvb_v5_stream_init(&sc, in_fd, STREAM_BUF_SIZ, STREAM_BUF_CNT);
+	if (!sc) {
+		PERROR("[%s] Failed to allocate stream context", __func__);
+		return;
+	}
+	ret = dvb_v5_stream_init(sc, in_fd, STREAM_BUF_SIZ, STREAM_BUF_CNT);
 	if (ret < 0) {
-		PERROR("[%s] Failed to setup buffers!!!", __func__);
-		sc.error = 1;
+		PERROR("[%s] Failed to initialize stream context", __func__);
+		dvb_v5_stream_free(sc);
 		return;
 	}
 	fprintf(stderr, "start streaming!!!\n");
-	sc.out_fd = out_fd;
+	sc->out_fd = out_fd;
 
-	while (!*exit_flag  && !sc.error) {
+	while (!*exit_flag  && !sc->error) {
 		/* dequeue the buffer */
 		struct dmx_buffer b;
 
 		memzero(b);
-		ret = dvb_v5_stream_dqbuf(&sc, &b);
+		ret = dvb_v5_stream_dqbuf(sc, &b);
 		if (ret < 0) {
-			sc.error = 1;
+			sc->error = 1;
 			break;
 		}
 		else {
-			sc.buf_flag[b.index] = 0;
-			ret = write(sc.out_fd, sc.buf[b.index],
-					b.bytesused);
+			sc->buf_flag[b.index] = 0;
+			ret = write(sc->out_fd, sc->buf[b.index], b.bytesused);
 			if (ret < 0) {
 				PERROR("Write failed err=%d", ret);
 				break;
@@ -313,15 +337,16 @@ void dvb_v5_stream_to_file(int in_fd, int out_fd, int timeout, int dbg_level,
 		}
 
 		/* enqueue the buffer */
-		ret = dvb_v5_stream_qbuf(&sc, b.index);
+		ret = dvb_v5_stream_qbuf(sc, b.index);
 		if (ret < 0)
-			sc.error = 1;
+			sc->error = 1;
 		else
-			sc.buf_flag[b.index] = 1;
+			sc->buf_flag[b.index] = 1;
 	}
 	if (dbg_level < 2) {
 		fprintf(stderr, "copied %lld bytes (%lld Kbytes/sec)\n", rc,
 			rc / (1024 * timeout));
 	}
-	dvb_v5_stream_deinit(&sc);
+	dvb_v5_stream_deinit(sc);
+	dvb_v5_stream_free(sc);
 }

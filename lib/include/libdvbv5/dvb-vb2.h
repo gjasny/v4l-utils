@@ -102,6 +102,13 @@ int dvb_v5_stream_dqbuf(struct dvb_v5_stream_ctx *sc, struct dmx_buffer *buf);
 int dvb_v5_stream_expbuf(struct dvb_v5_stream_ctx *sc, int idx);
 
 /**
+ * dvb_v5_stream_alloc - Allocate stream context
+ *
+ * @return a stream context or NULL.
+ */
+struct dvb_v5_stream_ctx *dvb_v5_stream_alloc(void);
+
+/**
  * dvb_v5_stream_init - Requests number of buffers from memory
  * Gets pointer to the buffers from driver, mmaps those buffers
  * and stores them in an array
@@ -123,6 +130,13 @@ int dvb_v5_stream_init(struct dvb_v5_stream_ctx *sc, int in_fd, int buf_size, in
  * @param sc		Pointer to &struct dvb_v5_stream_ctx
  */
 void dvb_v5_stream_deinit(struct dvb_v5_stream_ctx *sc);
+
+/**
+ * dvb_v5_stream_free - Free stream context
+ *
+ * @param sc - Context for streaming management
+ */
+void dvb_v5_stream_free(struct dvb_v5_stream_ctx *sc);
 
 /**
  * dvb_v5_stream_to_file - Implements enqueue and dequeue logic
