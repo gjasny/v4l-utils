@@ -91,7 +91,7 @@
 #define STREAM_BUF_CNT (4)
 #define STREAM_BUF_SIZ (DVB_MAX_PAYLOAD_PACKET_SIZE)
 
-struct stream_ctx sc = {0,};
+struct dvb_v5_stream_ctx sc = {0,};
 #endif
 
 static int dvb_poll(struct dvb_v5_fe_parms_priv *parms, int fd, unsigned int seconds)
@@ -386,7 +386,7 @@ int dvb_read_sections(struct dvb_v5_fe_parms *__p, int dmx_fd,
 		struct dmx_buffer b;
 		memset(&b, 0, sizeof(b));
 
-		ret = stream_dqbuf(&sc, &b);
+		ret = dvb_v5_stream_dqbuf(&sc, &b);
 		if (ret < 0) {
 			sc.error = 1;
 			break;
@@ -422,7 +422,7 @@ int dvb_read_sections(struct dvb_v5_fe_parms *__p, int dmx_fd,
 #ifdef VB2
 		/**enqueue the buffer again*/
 		if (!ret) {
-			if (stream_qbuf(&sc, b.index) < 0) {
+			if (dvb_v5_stream_qbuf(&sc, b.index) < 0) {
 				sc.error = 1;
 				break;
 			}
@@ -515,12 +515,12 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *__p,
 	struct dvb_v5_descriptors *dvb_scan_handler;
 
 #ifdef VB2
-	rc = stream_init(&sc, dmx_fd, STREAM_BUF_SIZ, STREAM_BUF_CNT);
+	rc = dvb_v5_stream_init(&sc, dmx_fd, STREAM_BUF_SIZ, STREAM_BUF_CNT);
 	if (rc < 0) {
 		PERROR("stream_init failed: error %d, %s\n",
 				errno, strerror(errno));
-		/** We dont know what failed during stream_init
-		 * reqbufs, mmap or  qbuf. We will call stream_deinit
+		/** We don't know what failed during dvb_v5_stream_init
+		 * reqbufs, mmap or  qbuf. We will call dvb_v5_stream_deinit
 		 * to delete the mapping which might have been created
 		 */
 		goto ret_null;
@@ -699,13 +699,13 @@ struct dvb_v5_descriptors *dvb_get_ts_tables(struct dvb_v5_fe_parms *__p,
 
 ret_null:
 #ifdef VB2
-	stream_deinit(&sc);
+	dvb_v5_stream_deinit(&sc);
 #endif
 	return NULL;
 
 ret_handler:
 #ifdef VB2
-	stream_deinit(&sc);
+	dvb_v5_stream_deinit(&sc);
 #endif
 	return dvb_scan_handler;
 }

@@ -1411,8 +1411,8 @@ int main(int argc, char **argv)
 						args.dvr_dev);
 					goto err;
 				}
-				stream_to_file(fd, file_fd, args.timeout,
-						args.silent, &timeout_flag);
+				dvb_v5_stream_to_file(fd, file_fd, args.timeout,
+						      args.silent, &timeout_flag);
 			} else
 				copy_to_file(dvr_fd, file_fd, args.timeout,
 						args.silent);

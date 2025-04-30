@@ -39,13 +39,11 @@
 extern "C" {
 #endif
 
-#define memzero(x) memset(&(x), 0, sizeof(x))
-
-/**Max count of the buffers*/
-#define MAX_STREAM_BUF_CNT	10
+/** Max count of the buffers */
+#define DVB_V5_MAX_STREAM_BUF_CNT	10
 
 /**
- * struct stream_ctx - Streaming context
+ * struct dvb_v5_stream_ctx - Streaming context
  *
  * @param in_fd		File descriptor of streaming device
  * @param out_fd	File descriptor of output file
@@ -56,52 +54,55 @@ extern "C" {
  * @param exp_fd	Array of file descriptors of exported buffers
  * @param error		Error flag
  */
-struct stream_ctx {
+struct dvb_v5_stream_ctx {
 	int in_fd;
 	int out_fd;
 	int buf_cnt;
 	int buf_size;
-	unsigned char *buf[MAX_STREAM_BUF_CNT];
-	int buf_flag[MAX_STREAM_BUF_CNT];
-	int exp_fd[MAX_STREAM_BUF_CNT];
+	unsigned char *buf[DVB_V5_MAX_STREAM_BUF_CNT];
+	int buf_flag[DVB_V5_MAX_STREAM_BUF_CNT];
+	int exp_fd[DVB_V5_MAX_STREAM_BUF_CNT];
 	int error;
 };
+
 /**
- * stream_qbuf - Enqueues a buffer specified by index n
+ * dvb_v5_stream_qbuf - Enqueues a buffer specified by index n
  *
  * @param sc		Context for streaming management
- *			Pointer to &struct stream_ctx
+ *			Pointer to &struct dvb_v5_stream_ctx
  * @param idx		Index of the buffer
  *
  * @return At return, it returns a negative value if error or
  * zero on success.
  */
-int stream_qbuf(struct stream_ctx *sc, int idx);
+int dvb_v5_stream_qbuf(struct dvb_v5_stream_ctx *sc, int idx);
 
 /**
- * sream_dqbuf - Dequeues a buffer specified by buf argument
+ * dvb_v5_stream_dqbuf - Dequeues a buffer specified by buf argument
  *
  * @param sc		Context for streaming management
- *			Pointer to &struct stream_ctx
+ *			Pointer to &struct dvb_v5_stream_ctx
  * @param buf		Pointer to &struct dmx_buffer
  *
  * @return At return, it returns a negative value if error or
  * zero on success.
  */
-int stream_dqbuf(struct stream_ctx *sc, struct dmx_buffer *buf);
+int dvb_v5_stream_dqbuf(struct dvb_v5_stream_ctx *sc, struct dmx_buffer *buf);
+
 /**
- * sream_expbuf - Exports a buffer specified by buf argument
+ * dvb_v5_stream_expbuf - Exports a buffer specified by buf argument
  *
  * @param sc		Context for streaming management
- *			Pointer to &struct stream_ctx
+ *			Pointer to &struct dvb_v5_stream_ctx
  * @param idx		Index of the buffer
  *
  * @return At return, it returns a negative value if error or
  * zero on success.
  */
-int stream_expbuf(struct stream_ctx *sc, int idx);
+int dvb_v5_stream_expbuf(struct dvb_v5_stream_ctx *sc, int idx);
+
 /**
- * stream_init - Requests number of buffers from memory
+ * dvb_v5_stream_init - Requests number of buffers from memory
  * Gets pointer to the buffers from driver, mmaps those buffers
  * and stores them in an array
  * Also, optionally exports those buffers
@@ -114,18 +115,17 @@ int stream_expbuf(struct stream_ctx *sc, int idx);
  * @return At return, it returns a negative value if error or
  * zero on success.
  */
-int stream_init(struct stream_ctx *sc, int in_fd, int buf_size, int buf_cnt);
+int dvb_v5_stream_init(struct dvb_v5_stream_ctx *sc, int in_fd, int buf_size, int buf_cnt);
 
 /**
- * @struct dvb_table_filter
- * @brief De-initiazes streaming
- * @ingroup frontend_scan
+ * dvb_v5_stream_deinit - Dequeues and unmaps the buffers
  *
- * @param sc		Pointer to &struct stream_ctx
+ * @param sc		Pointer to &struct dvb_v5_stream_ctx
  */
-void stream_deinit(struct stream_ctx *sc);
+void dvb_v5_stream_deinit(struct dvb_v5_stream_ctx *sc);
+
 /**
- * stream_to_file - Implements enqueue and dequeue logic
+ * dvb_v5_stream_to_file - Implements enqueue and dequeue logic
  * First enqueues all the available buffers then dequeues
  * one buffer, again enqueues it and so on.
  *
@@ -137,8 +137,8 @@ void stream_deinit(struct stream_ctx *sc);
  *
  * @return void
  */
-void stream_to_file(int in_fd, int out_fd, int timeout, int dbg_level,
-			int *exit_flag);
+void dvb_v5_stream_to_file(int in_fd, int out_fd, int timeout, int dbg_level,
+			   int *exit_flag);
 
 #ifdef __cplusplus
 }

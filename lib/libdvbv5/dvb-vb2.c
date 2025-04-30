@@ -50,6 +50,8 @@
 /*Sleep time for retry, in case ioctl fails*/
 #define SLEEP_US	1000
 
+#define memzero(x) memset(&(x), 0, sizeof(x))
+
 static inline int xioctl(int fd, unsigned long int cmd, void *arg)
 {
 	int ret;
@@ -79,16 +81,16 @@ static inline int xioctl(int fd, unsigned long int cmd, void *arg)
 
 
 /**
- * stream_qbuf - Enqueues a buffer specified by index
+ * dvb_v5_stream_qbuf - Enqueues a buffer specified by index
  *
  * @param sc		Context for streaming management
- *			Pointer to &struct stream_ctx
+ *			Pointer to &struct dvb_v5_stream_ctx
  * @param idx		Index of the buffer
  *
  * @return At return, it returns a negative value if error or
  * zero on success.
  */
-int stream_qbuf(struct stream_ctx *sc, int idx)
+int dvb_v5_stream_qbuf(struct dvb_v5_stream_ctx *sc, int idx)
 {
 	struct dmx_buffer buf;
 	int ret;
@@ -106,16 +108,16 @@ int stream_qbuf(struct stream_ctx *sc, int idx)
 }
 
 /**
- * stream_dqbuf - Dequeues a buffer specified by index
+ * dvb_v5_stream_dqbuf - Dequeues a buffer specified by index
  *
  * @param sc		Context for streaming management
- *			Pointer to &struct stream_ctx
+ *			Pointer to &struct dvb_v5_stream_ctx
  * @param buf		Pointer to &struct dmx_buffer
  *
  * @return At return, it returns a negative value if error or
  * zero on success.
  */
-int stream_dqbuf(struct stream_ctx *sc, struct dmx_buffer *buf)
+int dvb_v5_stream_dqbuf(struct dvb_v5_stream_ctx *sc, struct dmx_buffer *buf)
 {
 	int ret;
 
@@ -128,16 +130,16 @@ int stream_dqbuf(struct stream_ctx *sc, struct dmx_buffer *buf)
 	return ret;
 }
 /**
- * sream_expbuf - Exports a buffer specified by buf argument
+ * dvb_v5_stream_expbuf - Exports a buffer specified by buf argument
  *
  * @param sc		Context for streaming management
- *			Pointer to &struct stream_ctx
+ *			Pointer to &struct dvb_v5_stream_ctx
  * @param idx		Buffer index
  *
  * @return At return, it returns a negative value if error or
  * zero on success.
  */
-int stream_expbuf(struct stream_ctx *sc, int idx)
+int dvb_v5_stream_expbuf(struct dvb_v5_stream_ctx *sc, int idx)
 {
 	int ret;
 	struct dmx_exportbuffer exp;
@@ -154,7 +156,7 @@ int stream_expbuf(struct stream_ctx *sc, int idx)
 	return ret;
 }
 /**
- * stream_init - Requests number of buffers from memory
+ * dvb_v5_stream_init - Requests number of buffers from memory
  * Gets pointer to the buffers from driver, mmaps those buffers
  * and stores them in an array
  * Also, optionally exports those buffers
@@ -167,14 +169,14 @@ int stream_expbuf(struct stream_ctx *sc, int idx)
  * @return At return, it returns a negative value if error or
  * zero on success.
  */
-int stream_init(struct stream_ctx *sc, int in_fd, int buf_size, int buf_cnt)
+int dvb_v5_stream_init(struct dvb_v5_stream_ctx *sc, int in_fd, int buf_size, int buf_cnt)
 {
 	struct dmx_requestbuffers req;
 	struct dmx_buffer buf;
 	int ret;
 	int i;
 
-	memset(sc, 0, sizeof(struct stream_ctx));
+	memset(sc, 0, sizeof(struct dvb_v5_stream_ctx));
 	sc->in_fd = in_fd;
 	sc->buf_size = buf_size;
 	sc->buf_cnt = buf_cnt;
@@ -213,7 +215,7 @@ int stream_init(struct stream_ctx *sc, int in_fd, int buf_size, int buf_cnt)
 			return -1;
 		}
 		/**enqueue the buffers*/
-		ret = stream_qbuf(sc, i);
+		ret = dvb_v5_stream_qbuf(sc, i);
 		if (ret) {
 			PERROR("stream_qbuf failed: buf=%d error=%d", i, ret);
 			return ret;
@@ -226,14 +228,14 @@ int stream_init(struct stream_ctx *sc, int in_fd, int buf_size, int buf_cnt)
 }
 
 /**
- * stream_deinit - Dequeues and unmaps the buffers
+ * dvb_v5_stream_deinit - Dequeues and unmaps the buffers
  *
  * @param sc - Context for streaming management
  *
  * @return At return, it returns a negative value if error or
  * zero on success.
  */
-void stream_deinit(struct stream_ctx *sc)
+void dvb_v5_stream_deinit(struct dvb_v5_stream_ctx *sc)
 {
 	struct dmx_buffer buf;
 	int ret;
@@ -244,7 +246,7 @@ void stream_deinit(struct stream_ctx *sc)
 		buf.index = i;
 
 		if (sc->buf_flag[i]) {
-			ret = stream_dqbuf(sc, &buf);
+			ret = dvb_v5_stream_dqbuf(sc, &buf);
 			if (ret) {
 				PERROR("stream_dqbuf failed: buf=%d error=%d",
 					 i, ret);
@@ -261,7 +263,7 @@ void stream_deinit(struct stream_ctx *sc)
 }
 
 /**
- * stream_to_file - Implements enqueue and dequeue logic
+ * dvb_v5_stream_to_file - Implements enqueue and dequeue logic
  * First enqueues all the available buffers then dequeues
  * one buffer, again enqueues it and so on.
  *
@@ -273,14 +275,14 @@ void stream_deinit(struct stream_ctx *sc)
  *
  * @return void
  */
-void stream_to_file(int in_fd, int out_fd, int timeout, int dbg_level,
-			int *exit_flag)
+void dvb_v5_stream_to_file(int in_fd, int out_fd, int timeout, int dbg_level,
+			   int *exit_flag)
 {
-	struct stream_ctx sc;
+	struct dvb_v5_stream_ctx sc;
 	int ret;
 	long long int rc = 0LL;
 
-	ret = stream_init(&sc, in_fd, STREAM_BUF_SIZ, STREAM_BUF_CNT);
+	ret = dvb_v5_stream_init(&sc, in_fd, STREAM_BUF_SIZ, STREAM_BUF_CNT);
 	if (ret < 0) {
 		PERROR("[%s] Failed to setup buffers!!!", __func__);
 		sc.error = 1;
@@ -294,7 +296,7 @@ void stream_to_file(int in_fd, int out_fd, int timeout, int dbg_level,
 		struct dmx_buffer b;
 
 		memzero(b);
-		ret = stream_dqbuf(&sc, &b);
+		ret = dvb_v5_stream_dqbuf(&sc, &b);
 		if (ret < 0) {
 			sc.error = 1;
 			break;
@@ -311,7 +313,7 @@ void stream_to_file(int in_fd, int out_fd, int timeout, int dbg_level,
 		}
 
 		/* enqueue the buffer */
-		ret = stream_qbuf(&sc, b.index);
+		ret = dvb_v5_stream_qbuf(&sc, b.index);
 		if (ret < 0)
 			sc.error = 1;
 		else
@@ -321,5 +323,5 @@ void stream_to_file(int in_fd, int out_fd, int timeout, int dbg_level,
 		fprintf(stderr, "copied %lld bytes (%lld Kbytes/sec)\n", rc,
 			rc / (1024 * timeout));
 	}
-	stream_deinit(&sc);
+	dvb_v5_stream_deinit(&sc);
 }
