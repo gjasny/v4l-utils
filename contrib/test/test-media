@@ -21,6 +21,7 @@ reunbind_time=9
 rmmod_time=1
 modprobe_time=3
 kobj_rel=0
+dvb_mmap=0
 v4l2_ctl=v4l2-ctl
 v4l2_compliance=v4l2-compliance
 compliance_args=
@@ -57,6 +58,9 @@ run_modprobe () {
 if [ -f /proc/config.gz ]; then
 	if cat /proc/config.gz | gunzip |grep -q CONFIG_DEBUG_KOBJECT_RELEASE=y ; then
 		kobj_rel=1
+	fi
+	if cat /proc/config.gz | gunzip |grep -q CONFIG_DVB_MMAP=y ; then
+		dvb_mmap=1
 	fi
 elif [ -f .config ]; then
 	if grep -q CONFIG_DEBUG_KOBJECT_RELEASE=y .config ; then
@@ -909,6 +913,14 @@ if [ $vidtv -eq 1 ]; then
 		unload_modules
 		exit 0
 	fi
+
+	if [ $setup -eq 0 ]; then
+		tmpdir=`mktemp -d`
+	else
+		tmpdir=/tmp/vidtv-test
+		rm -rf $tmpdir
+		mkdir $tmpdir
+	fi
 fi
 
 if [ $vidtv -eq 1 -a $setup -eq 0 ]; then
@@ -918,6 +930,44 @@ if [ $vidtv -eq 1 -a $setup -eq 0 ]; then
 	date
 	stdbuf -oL $v4l2_compliance -m platform:vidtv 2>&1 | tee -a $tmp
 
+	echo
+	echo vidtv scan tests | tee /dev/kmsg
+	echo
+	date
+	cat >$tmpdir/vidtv-channel.conf <<EOF
+[Channel]
+FREQUENCY = 474000000
+MODULATION = QAM/AUTO
+SYMBOL_RATE = 6940000
+INNER_FEC = AUTO
+DELIVERY_SYSTEM = DVBC/ANNEX_A
+EOF
+
+	dvbv5-scan $tmpdir/vidtv-channel.conf -o $tmpdir/dvb_channel.conf
+	if [ $dvb_mmap -eq 1 ]; then
+		dvbv5-scan -R $tmpdir/vidtv-channel.conf -o $tmpdir/dvb_channel-vb2.conf
+		vidtv_ok=0
+		vidtv_fail=0
+		if cmp $tmpdir/dvb_channel.conf $tmpdir/dvb_channel-vb2.conf; then
+			echo "OK: dvbv5-scan results are identical for read and streaming" | tee -a $tmp
+			vidtv_ok=1
+		else
+			diff -u $tmpdir/dvb_channel.conf $tmpdir/dvb_channel-vb2.conf
+			echo "FAIL: dvbv5-scan results differ for read and streaming" | tee -a $tmp
+			vidtv_fail=1
+		fi
+		echo Total for vidtv dvbv5-scan cmp tests: 1, Succeeded: $vidtv_ok, Failed: $vidtv_fail, Warnings: 0 | tee -a $tmp
+	fi
+
+	echo
+	echo vidtv stream tests | tee /dev/kmsg
+	echo
+	date
+	dvbv5-zap -c $tmpdir/dvb_channel.conf "Beethoven" -o $tmpdir/music.ts -P -t 10
+	if [ $dvb_mmap -eq 1 ]; then
+		dvbv5-zap -R -c $tmpdir/dvb_channel.conf "Beethoven" -o $tmpdir/music-vb2.ts -P -t 10
+	fi
+	rm -rf $tmpdir
 	echo
 	echo
 	echo
