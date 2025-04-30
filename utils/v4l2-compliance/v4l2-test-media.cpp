@@ -575,6 +575,14 @@ void walkTopology(struct node &node, struct node &expbuf_node,
 		case MEDIA_TYPE_TOUCH:
 		case MEDIA_TYPE_SUBDEV:
 			break;
+		case MEDIA_TYPE_DVB_FRONTEND:
+		case MEDIA_TYPE_DVB_DEMUX:
+		case MEDIA_TYPE_DVB_DVR:
+		case MEDIA_TYPE_DVB_NET:
+		case MEDIA_TYPE_DTV_CA:
+			fprintf(stderr, "\nUnsupported device %s, skipping.\n\n",
+				dev.c_str());
+			continue;
 		default:
 			type = MEDIA_TYPE_UNKNOWN;
 			break;
