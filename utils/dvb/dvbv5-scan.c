@@ -48,6 +48,7 @@
 #include "libdvbv5/dvb-dev.h"
 #include "libdvbv5/dvb-v5-std.h"
 #include "libdvbv5/dvb-scan.h"
+#include "libdvbv5/dvb-vb2.h"
 #include "libdvbv5/countries.h"
 
 #define PROGRAM_NAME	"dvbv5-scan"
@@ -80,6 +81,7 @@ static const struct argp_option options[] = {
 	{"wait",	'W',	N_("time"),		0, N_("adds additional wait time for DISEqC command completion"), 0},
 	{"nit",		'N',	NULL,			0, N_("use data from NIT table on the output file"), 0},
 	{"get_frontend",'G',	NULL,			0, N_("use data from get_frontend on the output file"), 0},
+	{"streaming",	'R',	NULL,			0, N_("uses streaming I/O"), 0},
 	{"verbose",	'v',	NULL,			0, N_("be (very) verbose"), 0},
 	{"output",	'o',	N_("file"),		0, N_("output filename (default: ") DEFAULT_OUTPUT ")", 0},
 	{"file-freqs-only", 'F', NULL,			0, N_("don't use the other frequencies discovered during scan"), 0},
@@ -95,6 +97,7 @@ static const struct argp_option options[] = {
 };
 
 static int verbose = 0;
+static int streaming = 0;
 #define CHANNEL_FILE "channels.conf"
 
 #define ERROR(x...)                                                     \
@@ -394,6 +397,9 @@ static error_t parse_opt(int k, char *optarg, struct argp_state *state)
 	case 'p':
 		args->other_nit++;
 		break;
+	case 'R':
+		streaming++;
+		break;
 	case 'v':
 		verbose++;
 		break;
@@ -521,6 +527,9 @@ int main(int argc, char **argv)
 	dvb_dev_set_log(dvb, verbose, NULL);
 	dvb_dev_find(dvb, NULL, NULL);
 	parms = dvb->fe_parms;
+	if (streaming) {
+		parms->stream_ctx = dvb_v5_stream_alloc();
+	}
 
 	dvb_dev = dvb_dev_seek_by_adapter(dvb, args.adapter_dmx, args.demux, DVB_DEVICE_DEMUX);
 	if (!dvb_dev) {
@@ -559,6 +568,10 @@ int main(int argc, char **argv)
 
 	err = run_scan(&args, dvb);
 
+	if (streaming) {
+		dvb_v5_stream_free(parms->stream_ctx);
+		parms->stream_ctx = NULL;
+	}
 	dvb_dev_free(dvb);
 
 	return err;
