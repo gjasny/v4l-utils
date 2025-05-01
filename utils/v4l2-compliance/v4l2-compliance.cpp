@@ -1495,7 +1495,9 @@ void testNode(struct node &node, struct node &node_m2m_cap, struct node &expbuf_
 		printf("\ttest Requests: %s\n", ok(testRequests(&node, options[OptStreaming])));
 		if (sizeof(void *) == 4)
 			printf("\ttest TIME32/64: %s\n", ok(testTime32_64(&node)));
-		printf("\ttest blocking wait: %s\n", ok(testBlockingWait(&node)));
+		// If this is a media-centric device, then only run when streaming
+		if (!node.is_io_mc || options[OptStreaming])
+			printf("\ttest blocking wait: %s\n", ok(testBlockingWait(&node)));
 
 		// Reopen after each streaming test to reset the streaming state
 		// in case of any errors in the preceeding test.
