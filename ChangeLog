@@ -1,3 +1,174 @@
+v4l-utils-1.30.0
+----------------
+
+Adrian Fiergolski (1):
+      media-ctl: libv4l2subdev: Add Y16 format
+
+Alexandre Courbot (1):
+      v4l2-ctl: process events before queues in stateful_m2m()
+
+Benjamin Gaignard (2):
+      v4l2-compliance: Add test for V4L2_FMTDESC_FLAG_ENUM_ALL flag
+      v4l2-ctl-vidcap: Add options to enumerate all pixel formats
+
+Dmitry Baryshkov (1):
+      edid-decode: support parsing EDID-Like Data
+
+Gregor Jasny (1):
+      buildsystem: Start v4l-utils 1.29.0 development cycle
+
+Hans Verkuil (102):
+      qvidcap: fix core dump
+      qv4l2: fix crash when disabling openGL
+      qv4l2: always set m_haveFramebufferSRGB to false
+      v4l-utils: sync with latest kernel
+      cec-ctl: add support for CEC_MSG_FL_REPLY_VENDOR_ID
+      cec-compliance: add tests for CEC_MSG_FL_REPLY_VENDOR_ID
+      contrib/test/test-media: re-add cec-compliance -A tests
+      v4l-utils: sync with latest kernel
+      v4l2-compliance: testRequests(): drop V4L2_BUF_FLAG_QUEUED check
+      contrib/test/test-media: set log level to info at end
+      v4l2-compliance: only do request-queued checks while streaming is off
+      v4l2-compliance: always test blocking wait
+      v4l-utils: sync with latest kernel
+      utils/common: add V4L2_CAP_EDID support
+      v4l2-compliance: add support for V4L2_CAP_EDID
+      test-media: move visl out of the vivid test sequence
+      contrib/test/test-media: test unbind in DQBUF
+      v4l2-ctl/compliance: add -32-time64 variants
+      test-media: add -32-time64 option
+      cec-ctl: add --test-reliability option
+      v4l-utils: sync with latest kernel
+      cec-ctl: always return in list_devices
+      cec-ctl: use -A shortcut for --list-devices
+      v4l2-ctl: list_media_devices() should show the in/out name
+      v4l2-ctl: add --list-devices-input/output options
+      v4l2-ctl: add -A as shortcut for --list-devices
+      v4l2-ctl: move s_trace back to where it was before
+      cec-follower: the short_options array was potentially too small
+      cec-compliance: the short_options array was potentially too small
+      cec-ctl: missing support for optional arguments
+      v4l2-ctl: fix --stream-out-buf-caps option
+      qv4l2/qvidcap: bind shader program in paintGL()
+      v4l2-ctl: support V4L2_CID_MIN_BUFFERS_FOR_CAPTURE/OUTPUT
+      v4l2-compliance: improve stateful codec tests
+      v4l2-compliance: improve CREATE_BUFS tests
+      cec-compliance: add fflush(stdout) in several places
+      cec-ctl: don't show legend for --stress-test-random-standby-wakeup-cycle
+      cec-ctl: clearly report PASS if a test passes
+      cec-ctl: add --physical-address (-x) option
+      v4l2-ctl: support toggling Cable Status in EDID
+      v4l-utils: update README.md
+      cec-compliance: change long timeout to 30s
+      v4l2-ctl: also report the SHA if available in --version
+      media-ctl: also report the SHA if available in --version
+      edid-decode: move edid-decode into v4l-utils
+      edid-decode: don't show parse errors if -P is given
+      test-display.py: test display CEC and EDID compliance
+      cec-ctl/edid-decode: use seconds for the reliability test
+      test-display: add cec-ddc-reliability test
+      edid-decode: suppress two more errors if -P is used
+      test_display.py: add log options, checked with linter
+      test_display.py: fix cec-stress-sleep test
+      edid-decode: hide error when using -P and -a
+      test_display.py: various fixes
+      contrib/test/test-media: add more 'date' commands
+      contrib/test/test_display.py: various improvements
+      edid-decode: support HF-EEODB when reading EDID over DDC
+      edid-decode: show timestamp for --i2c-hdcp-ri
+      edid-decode: show the delta in ms since last Ri' change
+      edid-decode: ignore failed Ri' reads
+      Revert "cec-compliance: change long timeout to 30s"
+      edid-decode: add eld.test example
+      qvidcap: add --no-loop option
+      qvidcap: add --from-frame option
+      qvidcap: update the man page
+      edid-decode: transfer characteristics improvements
+      qvidcap: allow Q to close the window with option --no-loop
+      qvidcap: 'Space' will pause, 'Backspace' will go back one frame
+      edid-decode: fix incorrect message
+      cec-compliance: add two new tests
+      v4l2-ctl: add new hdmi-4k-600mhz-with-displayid-eeodb EDID
+      edid-decode: fix DisplayID checksum regression
+      edid-decode: fix infoframe DB parsing regression
+      edid-decode: fix incorrect warning for DisplayID v1
+      edid-decode: search for 'edid-decode (hex)' first
+      cec-compliance: use CEC_MSG_FL_RAW with Unregistered
+      v4l2-tpg.patch: add define for WARN_ON_ONCE
+      v4l-utils: sync with latest media-committers git repo
+      v4l2-tracer: add V4L2_CTRL_WHICH_MIN/MAX_VAL support
+      v4l-utils: clean up printf formatting for top, left, width and height
+      v4l-utils: sync with latest media-committers git repo
+      v4l2-compliance: use geteuid instead of getuid
+      cec-compliance: use geteuid instead of getuid
+      cec-compliance: don't check UID, instead test with a <Poll>
+      edid-decode: fix wrong CTA warning if more than 1 CTA block
+      edid-decode: more warnings that only apply for the first CTA
+      cec-ctl: improve usage message
+      cec-ctl: actually parse the hpd-may-be-low suboption argument
+      cec-ctl: fail if HPD goes high unexpectedly
+      edid-decode: preparse the HDMI VSDB Image_Size
+      cec-ctl/edid-decode: fix arm architecture warnings
+      cec-follower: add support for 5V events
+      edid-decode: fail if there are no SVDs in the Data Block
+      meson.build: add -Wno-psabi to suppress arm ABI warning
+      meson.build: fix arm _TIME_BITS=64 error
+      meson.build: fix location of gconv library
+      edid-decode: improve handling of preferred/native timings
+      edid-decode: improved diagonal handling
+      test-media: add vim2m multiplanar tests
+      dvbv5-scan: color was set to white instead of resetting
+      edid-decode: more native resolution/diagonal improvements
+      edid-decode: check if NVRDB needs the size as well
+
+Laurent Pinchart (3):
+      meson: Bump minimum meson version
+      utils: media-ctl: Set V4L2_MBUS_FRAMEFMT_SET_CSC flag to set colorspace
+      v4l2-compliance: Don't perform blocking DQBUF test on MC_IO devices
+
+Maciej Miszczyk (12):
+      edid-decode: fix transfer characteristics buffer overread
+      edid-decode: avoid infinite loop in transfer characteristics
+      edid-decode: fix a transfer characteristics buffer overread
+      edid-decode: fix buffer overread in infoframe parsing
+      edid-decode: fix buffer overread on CTA block parsing
+      edid-decode: fix buffer overread on displayid block parsing
+      edid-decode: fix buffer overread on product identification parsing
+      edid-decode: fix buffer overread while parsing Stereo Display Interface DB
+      edid-decode: size colorspace_eotf_combinations array correctly
+      edid-decode: fix divide by zero in type17 timings parsing
+      edid-decode: fix divide by zero in type3 timings parsing
+      edid-decode: fix heap overread on early EOF
+
+Michal Rostecki (1):
+      libv4l2: Guard the v4l2_ioctl function with HAVE_POSIX_IOCTL
+
+Ming Qian (1):
+      v4l-utils: Ignore comma in bracket when getting subopt
+
+Peter Seiderer (2):
+      libv4lconvert: fix jpeg-v9x/gcc-14.x compile (jpeg_mem_dest argument mismatch)
+      meson: remove two pre-0.60 workarounds
+
+Ricardo Ribalda (6):
+      media-ctl: Remove duplicated include
+      Android.mk: Remove obsolete build files
+      v4l2-compliance: Do not run test requiring pthread_cancel in Android
+      v4l2-compliance: Fix build error clang TOT
+      android: Remove unused file
+      contrib/test/test-media: Increase modprobe time
+
+Rosen Penev (1):
+      v4l-utils: fix compilation with external intl
+
+Simon Ser (1):
+      edid-decode: use override_find_program() to ease subproject use
+
+Yunke Cao (2):
+      v4l2-ctl: Support V4L2_CTRL_TYPE_RECT
+      v4l2-utils: Support V4L2_CTRL_WHICH_MIN/MAX_VAL
+
+
 v4l-utils-1.28.0
 ----------------
 
