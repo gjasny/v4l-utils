@@ -100,7 +100,6 @@ struct arguments {
 	struct keymap *keymap;
 	struct send *send;
 	bool oneshot;
-	char *savetofile;
 	int wideband;
 	unsigned carrier_low, carrier_high;
 	unsigned timeout;
@@ -115,7 +114,7 @@ struct arguments {
 static const struct argp_option options[] = {
 	{ "device",	'd',	N_("DEV"),	0,	N_("lirc device to use") },
 	{ "features",	'f',	0,		0,	N_("list lirc device features") },
-	{ "receive",	'r',	N_("FILE"),	OPTION_ARG_OPTIONAL,	N_("receive IR to stdout or file") },
+	{ "receive",	'r',	0,		0,	N_("receive IR to stdout") },
 	{ "send",	's',	N_("FILE"),	0,	N_("send IR pulse and space file") },
 	{ "scancode",	'S',	N_("SCANCODE"),	0,	N_("send IR scancode in protocol specified") },
 	{ "keycode",	'K',	N_("KEYCODE"),	0,	N_("send IR keycode from keymap") },
@@ -140,7 +139,7 @@ static const struct argp_option options[] = {
 
 static const char args_doc[] = N_(
 	"--features\n"
-	"--receive [save to file]\n"
+	"--receive\n"
 	"--send [file to send]\n"
 	"--scancode [scancode to send]\n"
 	"--keycode [keycode to send]\n"
@@ -602,12 +601,6 @@ static error_t parse_opt(int k, char *arg, struct argp_state *state)
 			argp_error(state, _("receive can not be combined with features or send option"));
 
 		arguments->receive = true;
-		if (arg) {
-			if (arguments->savetofile)
-				argp_error(state, _("receive filename already set"));
-
-			arguments->savetofile = arg;
-		}
 		break;
 	case '1':
 		arguments->oneshot = true;
@@ -1126,7 +1119,6 @@ static int lirc_send(struct arguments *args, int fd, unsigned features, struct s
 int lirc_receive(struct arguments *args, int fd, unsigned features)
 {
 	char *dev = args->device;
-	FILE *out = stdout;
 	int rc = EX_IOERR;
 	int mode = LIRC_MODE_MODE2;
 
@@ -1141,13 +1133,6 @@ int lirc_receive(struct arguments *args, int fd, unsigned features)
 		return EX_IOERR;
 	}
 
-	if (args->savetofile) {
-		out = fopen(args->savetofile, "w");
-		if (!out) {
-			fprintf(stderr, _("%s: failed to open for writing: %m\n"), args->savetofile);
-			return EX_CANTCREAT;
-		}
-	}
 	unsigned buf[LIRCBUF_SIZE];
 
 	bool keep_reading = true;
@@ -1188,20 +1173,20 @@ int lirc_receive(struct arguments *args, int fd, unsigned features)
 			if (args->mode2) {
 				switch (msg) {
 				case LIRC_MODE2_TIMEOUT:
-					fprintf(out, "timeout %u\n", val);
+					printf("timeout %u\n", val);
 					leading_space = true;
 					break;
 				case LIRC_MODE2_PULSE:
-					fprintf(out, "pulse %u\n", val);
+					printf("pulse %u\n", val);
 					break;
 				case LIRC_MODE2_SPACE:
-					fprintf(out, "space %u\n", val);
+					printf("space %u\n", val);
 					break;
 				case LIRC_MODE2_FREQUENCY:
-					fprintf(out, "carrier %u\n", val);
+					printf("carrier %u\n", val);
 					break;
 				case LIRC_MODE2_OVERFLOW:
-					fprintf(out, "overflow\n");
+					printf("overflow\n");
 					leading_space = true;
 					break;
 				}
@@ -1209,41 +1194,38 @@ int lirc_receive(struct arguments *args, int fd, unsigned features)
 				switch (msg) {
 				case LIRC_MODE2_TIMEOUT:
 					if (carrier)
-						fprintf(out, "-%u # carrier %uHz\n", val, carrier);
+						printf("-%u # carrier %uHz\n", val, carrier);
 					else
-						fprintf(out, "-%u\n", val);
+						printf("-%u\n", val);
 					leading_space = true;
 					carrier = 0;
 					break;
 				case LIRC_MODE2_PULSE:
-					fprintf(out, "+%u ", val);
+					printf("+%u ", val);
 					break;
 				case LIRC_MODE2_SPACE:
-					fprintf(out, "-%u ", val);
+					printf("-%u ", val);
 					break;
 				case LIRC_MODE2_FREQUENCY:
 					carrier = val;
 					break;
 				case LIRC_MODE2_OVERFLOW:
 					if (carrier)
-						fprintf(out, "# carrier %uHz, overflow\n", carrier);
+						printf("# carrier %uHz, overflow\n", carrier);
 					else
-						fprintf(out, "# overflow\n");
+						printf("# overflow\n");
 					leading_space = true;
 					carrier = 0;
 					break;
 				}
 			}
 
-			fflush(out);
+			fflush(stdout);
 		}
 	}
 
 	rc = 0;
 err:
-	if (args->savetofile)
-		fclose(out);
-
 	return rc;
 }
 

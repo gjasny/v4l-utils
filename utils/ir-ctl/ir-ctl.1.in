@@ -18,7 +18,7 @@ ir\-ctl \- a swiss\-knife tool to handle raw IR and to set lirc options
 [\fIOPTION\fR]... \fI\-\-keycode\fR [\fIkeycode to send\fR]
 .br
 .B ir\-ctl
-[\fIOPTION\fR]... \fI\-\-receive\fR [\fIsave to file\fR]
+[\fIOPTION\fR]... \fI\-\-receive\fR
 .SH DESCRIPTION
 ir\-ctl is a tool that allows one to list the features of a lirc device,
 set its options, receive raw IR, and send IR.
@@ -36,9 +36,8 @@ lirc device to control, /dev/lirc0 by default
 \fB\-f\fR, \fB\-\-features\fR
 List the features of the lirc device.
 .TP
-\fB\-r\fR, \fB\-\-receive\fR[=\fIFILE\fR]
-Receive IR and print to standard output if no file is specified, else
-save to the filename.
+\fB\-r\fR, \fB\-\-receive\fR
+Receive IR and print to standard output.
 .TP
 \fB\-s\fR, \fB\-\-send\fR=\fIFILE\fR
 Send IR in text file. It must be in the format described below. If this
@@ -237,8 +236,6 @@ To list all capabilities of /dev/lirc2:
 To show the IR of the first button press on a remote in learning mode:
 .br
 	\fBir\-ctl \-r \-m \-w\fR
-.PP
-Note that \fBir\-ctl \-rmw\fR would receive to a file called \fBmw\fR.
 .PP
 To restore the normal (longer distance) receiver:
 .br
