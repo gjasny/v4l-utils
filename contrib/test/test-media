@@ -25,6 +25,14 @@ v4l2_ctl=v4l2-ctl
 v4l2_compliance=v4l2-compliance
 compliance_args=
 
+run_modprobe () {
+	dmesg -n info
+	modprobe $@
+	sleep $modprobe_time
+	udevadm settle
+	dmesg -n notice
+}
+
 if [ -f /proc/config.gz ]; then
 	if cat /proc/config.gz | gunzip |grep -q CONFIG_DEBUG_KOBJECT_RELEASE=y ; then
 		kobj_rel=1
@@ -222,9 +230,7 @@ fi
 
 dmesg -n info
 rmmod vivid 2&>/dev/null
-modprobe vivid n_devs=3 multiplanar=1,2,2 cache_hints=1,0,0 #allocators=0,1,1
-sleep $modprobe_time
-dmesg -n notice
+run_modprobe vivid n_devs=3 multiplanar=1,2,2 cache_hints=1,0,0 #allocators=0,1,1
 
 tmp=`mktemp`
 
@@ -385,10 +391,7 @@ if [ $vivid -eq 1 -a $setup -eq 0 ]; then
 		echo
 	fi
 
-	dmesg -n info
-	modprobe vivid n_devs=3 multiplanar=1,2,2 cache_hints=1,0,0 #allocators=0,1,1
-	sleep $modprobe_time
-	dmesg -n notice
+	run_modprobe vivid n_devs=3 multiplanar=1,2,2 cache_hints=1,0,0 #allocators=0,1,1
 
 	$v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-cap -i3 -v width=3840,height=2160,pixelformat=NV24
 	$v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-out -o1 -x width=3840,height=2160,pixelformat=NM16
@@ -408,10 +411,7 @@ fi
 
 if [ $vim2m -eq 1 ]; then
 	rmmod vim2m 2&>/dev/null
-	dmesg -n info
-	modprobe vim2m
-	sleep $modprobe_time
-	dmesg -n notice
+	run_modprobe vim2m
 
 	if ! $v4l2_ctl -z platform:vim2m ; then
 		echo "FAIL: the vim2m module failed to load" | tee -a $tmp
@@ -447,10 +447,7 @@ if [ $vim2m -eq 1 -a $setup -eq 0 ]; then
 		echo clear >/sys/kernel/debug/kmemleak
 	fi
 
-	dmesg -n info
-	modprobe vim2m multiplanar=2
-	sleep $modprobe_time
-	dmesg -n notice
+	run_modprobe vim2m multiplanar=2
 
 	if ! $v4l2_ctl -z platform:vim2m ; then
 		echo "FAIL: the vim2m module failed to load" | tee -a $tmp
@@ -522,10 +519,7 @@ fi
 
 if [ $vimc -eq 1 ]; then
 	rmmod vimc 2&>/dev/null
-	dmesg -n info
-	modprobe vimc
-	sleep $modprobe_time
-	dmesg -n notice
+	run_modprobe vimc
 
 	if ! $v4l2_ctl -z platform:vimc -d "Sensor A" ; then
 		echo "FAIL: the vimc module failed to load" | tee -a $tmp
@@ -627,10 +621,7 @@ if [ $vicodec -eq 1 ]; then
 	fi
 
 	rmmod vicodec 2&>/dev/null
-	dmesg -n info
-	modprobe vicodec
-	sleep $modprobe_time
-	dmesg -n notice
+	run_modprobe vicodec
 
 	if ! $v4l2_ctl -z platform:vicodec ; then
 		echo "FAIL: the vicodec module failed to load" | tee -a $tmp
@@ -810,10 +801,7 @@ fi
 if [ $visl -eq 1 ]; then
 	echo
 	echo loading visl module | tee /dev/kmsg
-	dmesg -n info
-	modprobe visl
-	sleep $modprobe_time
-	dmesg -n notice
+	run_modprobe visl
 
 	if ! $v4l2_ctl -z platform:visl ; then
 		echo "FAIL: the visl module failed to load" | tee -a $tmp
@@ -869,10 +857,7 @@ if [ $visl -eq 1 -a $setup -eq 0 ]; then
 		echo
 	fi
 
-	dmesg -n info
-	modprobe visl
-	sleep $modprobe_time
-	dmesg -n notice
+	run_modprobe visl
 
 	$v4l2_ctl -z platform:visl --all
 
@@ -892,10 +877,7 @@ fi
 
 if [ $vidtv -eq 1 ]; then
 	rmmod dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod 2&>/dev/null
-	dmesg -n info
-	modprobe vidtv
-	sleep $modprobe_time
-	dmesg -n notice
+	run_modprobe vidtv
 
 	if ! media-ctl -d platform:vidtv ; then
 		echo "FAIL: the vidtv module failed to load" | tee -a $tmp
