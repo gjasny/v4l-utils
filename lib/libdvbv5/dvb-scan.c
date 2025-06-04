@@ -412,14 +412,12 @@ int dvb_read_sections(struct dvb_v5_fe_parms *__p, int dmx_fd,
 		ret = dvb_parse_section(parms, sect, buf, buf_length);
 
 		if (parms->p.stream_ctx) {
-			/**enqueue the buffer again*/
-			if (!ret) {
-				if (dvb_v5_stream_qbuf(parms->p.stream_ctx, b.index) < 0) {
-					parms->p.stream_ctx->error = 1;
-					break;
-				} else {
-					parms->p.stream_ctx->buf_flag[b.index] = 1;
-				}
+			/* enqueue the buffer again */
+			if (dvb_v5_stream_qbuf(parms->p.stream_ctx, b.index) < 0) {
+				parms->p.stream_ctx->error = 1;
+				break;
+			} else {
+				parms->p.stream_ctx->buf_flag[b.index] = 1;
 			}
 		}
 	} while (!ret);
