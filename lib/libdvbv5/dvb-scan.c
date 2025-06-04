@@ -427,6 +427,15 @@ int dvb_read_sections(struct dvb_v5_fe_parms *__p, int dmx_fd,
 	}
 	dvb_dmx_stop(dmx_fd);
 	dvb_table_filter_free(sect);
+	if (parms->p.stream_ctx) {
+		/* Flush pending buffers */
+		while (dvb_poll(parms, dmx_fd, 0) > 0) {
+			struct dmx_buffer b;
+			if (dvb_v5_stream_dqbuf(parms->p.stream_ctx, &b) >= 0) {
+				dvb_v5_stream_qbuf(parms->p.stream_ctx, b.index);
+			}
+		}
+	}
 
 	if (ret > 0)
 		ret = 0;
