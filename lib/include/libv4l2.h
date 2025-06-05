@@ -63,7 +63,7 @@ LIBV4L_PUBLIC extern FILE *v4l2_log_file;
 LIBV4L_PUBLIC int v4l2_open(const char *file, int oflag, ...);
 LIBV4L_PUBLIC int v4l2_close(int fd);
 LIBV4L_PUBLIC int v4l2_dup(int fd);
-#ifdef HAVE_POSIX_IOCTL
+#ifdef LIBV4L_HAVE_POSIX_IOCTL
 LIBV4L_PUBLIC int v4l2_ioctl(int fd, int request, ...);
 #else
 LIBV4L_PUBLIC int v4l2_ioctl(int fd, unsigned long int request, ...);

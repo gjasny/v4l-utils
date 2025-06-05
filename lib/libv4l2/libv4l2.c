@@ -1051,7 +1051,7 @@ static int v4l2_s_fmt(int index, struct v4l2_format *dest_fmt)
 	return 0;
 }
 
-#ifdef HAVE_POSIX_IOCTL
+#ifdef LIBV4L_HAVE_POSIX_IOCTL
 int v4l2_ioctl(int fd, int request, ...)
 #else
 int v4l2_ioctl(int fd, unsigned long int request, ...)

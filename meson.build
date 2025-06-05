@@ -388,7 +388,7 @@ ioctl_posix_test = '''
 int ioctl (int, int, ...);
 '''
 if cc.compiles(ioctl_posix_test)
-    conf.set('HAVE_POSIX_IOCTL', 1)
+    conf.set('LIBV4L_HAVE_POSIX_IOCTL', 1)
 endif
 
 c_arguments = []
