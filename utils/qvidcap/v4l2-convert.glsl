@@ -96,7 +96,7 @@ void main()
 {
 	const float texl_w = 1.0 / tex_w;
 	const float texl_h = 1.0 / tex_h;
-	float alpha = 0.0;
+	float alpha = 1.0;
 	vec2 xy = vs_TexCoord;
 	float xcoord = floor(xy.x * tex_w);
 	float ycoord = floor(xy.y * tex_h);
