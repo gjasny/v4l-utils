@@ -68,7 +68,7 @@ configure_file(
     input : '../include/libdvbv5/libdvb-version.h.in',
     configuration : conf,
     install: true,
-    install_dir: 'include/libdvbv5',
+    install_dir: get_option('includedir') / 'libdvbv5',
 )
 
 libdvbv5_api = files(
