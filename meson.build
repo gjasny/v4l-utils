@@ -200,7 +200,7 @@ if cc.has_function('strerrorname_np')
     conf.set('HAVE_STRERRORNAME_NP', 1)
 endif
 
-conf.set_quoted('LOCALEDIR', get_option('prefix') / get_option('datadir') / 'locale')
+conf.set_quoted('LOCALEDIR', get_option('prefix') / get_option('localedir'))
 
 # Meson 0.60 handles the iconv dependency natively. For older versions, fall
 # back to manual checks for the iconv_open function in libc, or finding an
