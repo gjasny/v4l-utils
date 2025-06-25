@@ -535,7 +535,18 @@ fi
 if [ $vimc -eq 1 ]; then
 	run_modprobe -r vimc
 
-	if ! $v4l2_ctl -z platform:vimc -d "Sensor A" ; then
+	for i in vimc vimc.0; do
+		if media-ctl -d platform:$i > /dev/null; then
+			vimc_device=platform:$i
+		fi
+	done
+	if [ "$vimc_device" -eq "" ]; then
+		echo "FAIL: can't find vimc device" | tee -a $tmp
+		unload_modules
+		exit 0
+	fi
+
+	if ! $v4l2_ctl -z $vimc_device -d "Sensor A" ; then
 		echo "FAIL: the vimc module failed to load" | tee -a $tmp
 		echo "Grand Total for vimc: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
 		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
@@ -543,14 +554,14 @@ if [ $vimc -eq 1 ]; then
 		exit 0
 	fi
 
-	media-ctl -d platform:vimc -V '"Sensor A":0[fmt:SBGGR8_1X8/640x480]'
-	media-ctl -d platform:vimc -V '"Debayer A":0[fmt:SBGGR8_1X8/640x480]'
-	media-ctl -d platform:vimc -V '"Sensor B":0[fmt:SBGGR8_1X8/640x480]'
-	media-ctl -d platform:vimc -V '"Debayer B":0[fmt:SBGGR8_1X8/640x480]'
-	media-ctl -d platform:vimc -V '"Scaler":1[fmt:RGB888_1X24/1920x1440]'
-	$v4l2_ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
-	$v4l2_ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
-	$v4l2_ctl -z platform:vimc -d "Raw Capture 1" -v pixelformat=BA81
+	media-ctl -d $vimc_device -V '"Sensor A":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d $vimc_device -V '"Debayer A":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d $vimc_device -V '"Sensor B":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d $vimc_device -V '"Debayer B":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d $vimc_device -V '"Scaler":1[fmt:RGB888_1X24/1920x1440]'
+	$v4l2_ctl -z $vimc_device -d "RGB/YUV Capture" -v width=1920,height=1440
+	$v4l2_ctl -z $vimc_device -d "Raw Capture 0" -v pixelformat=BA81
+	$v4l2_ctl -z $vimc_device -d "Raw Capture 1" -v pixelformat=BA81
 fi
 
 if [ $vimc -eq 1 -a $setup -eq 0 ]; then
@@ -559,7 +570,7 @@ if [ $vimc -eq 1 -a $setup -eq 0 ]; then
 	echo vimc compliance tests | tee /dev/kmsg
 	echo
 	date
-	stdbuf -oL $v4l2_compliance -m platform:vimc -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
+	stdbuf -oL $v4l2_compliance -m $vimc_device -z platform:vivid-002 -e vivid-002-vid-cap -s10 -P -a 2>&1 | tee -a $tmp
 	echo
 	echo
 	echo
@@ -579,24 +590,24 @@ if [ $vimc -eq 1 -a $setup -eq 0 ]; then
 	echo
 	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/bind
 	sleep 1
-	media-ctl -d platform:vimc -V '"Sensor A":0[fmt:SBGGR8_1X8/640x480]'
-	media-ctl -d platform:vimc -V '"Debayer A":0[fmt:SBGGR8_1X8/640x480]'
-	media-ctl -d platform:vimc -V '"Sensor B":0[fmt:SBGGR8_1X8/640x480]'
-	media-ctl -d platform:vimc -V '"Debayer B":0[fmt:SBGGR8_1X8/640x480]'
-	media-ctl -d platform:vimc -V '"Scaler":1[fmt:RGB888_1X24/1920x1440]'
-	$v4l2_ctl -z platform:vimc -d "RGB/YUV Capture" -v width=1920,height=1440
-	$v4l2_ctl -z platform:vimc -d "Raw Capture 0" -v pixelformat=BA81
-	$v4l2_ctl -z platform:vimc -d "Raw Capture 1" -v pixelformat=BA81
+	media-ctl -d $vimc_device -V '"Sensor A":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d $vimc_device -V '"Debayer A":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d $vimc_device -V '"Sensor B":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d $vimc_device -V '"Debayer B":0[fmt:SBGGR8_1X8/640x480]'
+	media-ctl -d $vimc_device -V '"Scaler":1[fmt:RGB888_1X24/1920x1440]'
+	$v4l2_ctl -z $vimc_device -d "RGB/YUV Capture" -v width=1920,height=1440
+	$v4l2_ctl -z $vimc_device -d "Raw Capture 0" -v pixelformat=BA81
+	$v4l2_ctl -z $vimc_device -d "Raw Capture 1" -v pixelformat=BA81
 	echo
 	echo second unbind vimc | tee /dev/kmsg
 	echo
 	# Max sleep time is 6 + 8 = 14s
-	for i in `$v4l2_ctl -z platform:vimc --list-devices`; do
+	for i in `$v4l2_ctl -z $vimc_device --list-devices`; do
 		let "t = 6 + $RANDOM / 4096"
 		echo $i: sleep ${t}s
 		sleep $t <$i &
 	done
-	$v4l2_ctl -z platform:vimc -d "Raw Capture 0" --stream-mmap --sleep 5 &
+	$v4l2_ctl -z $vimc_device -d "Raw Capture 0" --stream-mmap --sleep 5 &
 	sleep 1
 	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/unbind
 	sleep 14
