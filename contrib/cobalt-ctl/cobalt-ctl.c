@@ -141,7 +141,7 @@ static int get_mtd_device(char *path, char *device, int slen)
 {
 	struct dirent *entry;
 	struct stat info;
-	DIR *dir;
+	DIR *dir, *dir2;
 	int found = -1;
 
 	if (stat(path, &info)) {
@@ -155,15 +155,33 @@ static int get_mtd_device(char *path, char *device, int slen)
 	}
 
 	dir = opendir(path);
-	if (dir) {
-		while ((entry = readdir(dir)) != NULL) {
-			if (strstr(entry->d_name, "mtd") && !strstr(entry->d_name, "ro")) {
-				snprintf(device, slen, "/dev/%s", entry->d_name);
-				found = 0;
-			}
+	if (!dir)
+		return found;
+
+	while (found && (entry = readdir(dir)) != NULL) {
+		struct dirent *entry2;
+		char path2[256];
+
+		if (!strstr(entry->d_name, "mtd_master"))
+			continue;
+
+		sprintf(path2, "%s%s", path, entry->d_name);
+		dir2 = opendir(path2);
+		if (!dir2)
+			continue;
+
+		while ((entry2 = readdir(dir2)) != NULL) {
+			if (!strstr(entry2->d_name, "mtd") || strstr(entry2->d_name, "ro") ||
+			    strstr(entry2->d_name, "mtd_"))
+				continue;
+
+			snprintf(device, slen, "/dev/%s", entry2->d_name);
+			found = 0;
+			break;
 		}
-		closedir(dir);
+		closedir(dir2);
 	}
+	closedir(dir);
 	return found;
 }
 
@@ -198,7 +216,7 @@ static int scan_for_mtd_devices(void)
 		}
 		printf("\n");
 
-		sprintf(path, "%s%s/mtd/", cobalt_sysfs, cobalt_entry->d_name);
+		sprintf(path, "%s%s/mtd_master/", cobalt_sysfs, cobalt_entry->d_name);
 		if (get_mtd_device(path, mtd_device, 20) == 0) {
 			show_flash_info(mtd_device);
 		}
@@ -594,7 +612,7 @@ int main(int argc, char **argv)
 	if (!memcmp("/dev/", device, 5))
 		device += 5;
 
-	sprintf(path, "/sys/class/video4linux/%s/device/mtd/", device);
+	sprintf(path, "/sys/class/video4linux/%s/device/mtd_master/", device);
 	if (get_mtd_device(path, mtd_device, 20))
 		goto input_err;
 
