@@ -641,6 +641,9 @@ static void print_value(int fd, const v4l2_query_ext_ctrl &qc, const v4l2_ext_co
 		else
 			printf("%d (%lld 0x%llx)", ctrl.value, qmenu.value, qmenu.value);
 		break;
+	case V4L2_CTRL_TYPE_BITMASK:
+		printf("0x%08x", ctrl.value);
+		break;
 	default:
 		printf("%d", ctrl.value);
 		break;
