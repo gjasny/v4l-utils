@@ -451,10 +451,7 @@ static int checkInput(struct node *node, const struct v4l2_input &descr, unsigne
 	return 0;
 }
 
-static unsigned roundup(unsigned v, unsigned mult)
-{
-	return mult * ((v + mult - 1) / mult);
-}
+#define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 
 static int checkVividPixelArray(struct node *node)
 {
@@ -466,8 +463,8 @@ static int checkVividPixelArray(struct node *node)
 	fail_on_test(node->query_ext_ctrl(qextctrl));
 	fail_on_test(node->g_fmt(fmt));
 	fail_on_test(qextctrl.nr_of_dims != 2);
-	fail_on_test(qextctrl.dims[0] != roundup(fmt.g_width(), PIXEL_ARRAY_DIV));
-	fail_on_test(qextctrl.dims[1] != roundup(fmt.g_height(), PIXEL_ARRAY_DIV));
+	fail_on_test(qextctrl.dims[0] != DIV_ROUND_UP(fmt.g_height(), PIXEL_ARRAY_DIV));
+	fail_on_test(qextctrl.dims[1] != DIV_ROUND_UP(fmt.g_width(), PIXEL_ARRAY_DIV));
 	fail_on_test(qextctrl.minimum == qextctrl.default_value);
 
 	struct v4l2_ext_control ctrl = {
