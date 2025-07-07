@@ -761,6 +761,18 @@ bool edid_state::print_timings(const char *prefix, const struct timings *t,
 		fail("Mismatch of image size %ux%u mm vs display size %ux%u mm.\n",
 		     t->hsize_mm, t->vsize_mm, base.max_display_width_mm, base.max_display_height_mm);
 	}
+	if (t->hsize_mm && t->vsize_mm) {
+		if (t->hsize_mm < 100 || t->vsize_mm < 100) {
+			warn("Dubious image size (%ux%u mm is smaller than 100x100 mm).\n",
+			     t->hsize_mm, t->vsize_mm);
+		} else if (t->hratio && t->vratio) {
+			unsigned vsize = (t->hsize_mm * t->vratio) / t->hratio;
+
+			if (vsize < t->vsize_mm - 10 || vsize > t->vsize_mm + 10)
+				warn("Image size is %dx%d mm, but based on the picture AR it should be %dx%d mm.\n",
+				     t->hsize_mm, t->vsize_mm, t->hsize_mm, vsize);
+		}
+	}
 	return ok;
 }
 
