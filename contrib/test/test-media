@@ -675,13 +675,18 @@ if [ $vicodec -eq 1 -a $setup -eq 0 ]; then
 	echo
 	echo vicodec decoder compliance tests | tee /dev/kmsg
 	echo
-	date
 	decful_opts='-z platform:vicodec -d stateful-decoder-source -z platform:vivid-002 -e vivid-002-vid-cap'
+	date
 	stdbuf -oL $v4l2_compliance $decful_opts --stream-from-hdr=$tmpdir/comp.hdr.yu12.1280.24 -s24 -P -a 2>&1 | tee -a $tmp
+	date
 	stdbuf -oL $v4l2_compliance $decful_opts --stream-from $tmpdir/comp.yu12.1280.24 -s24 -P -a 2>&1 | tee -a $tmp
+	date
 	stdbuf -oL $v4l2_compliance $decful_opts --stream-from-hdr $tmpdir/comp.hdr.yu12.mix.4.6 -s24 -P -a 2>&1 | tee -a $tmp
+	date
 	stdbuf -oL $v4l2_compliance $decful_opts --stream-from $tmpdir/comp.yu12.mix.4.6 -s24 -P -a 2>&1 | tee -a $tmp
+	date
 	stdbuf -oL $v4l2_compliance $decful_opts --stream-from-hdr $tmpdir/comp.hdr.yu12.mix.2.12 -s24 -P -a 2>&1 | tee -a $tmp
+	date
 	stdbuf -oL $v4l2_compliance $decful_opts --stream-from $tmpdir/comp.yu12.mix.2.12 -s24 -P -a 2>&1 | tee -a $tmp
 
 	decful_opts='-z platform:vicodec -d stateful-decoder-source --stream-mmap --stream-out-mmap'
