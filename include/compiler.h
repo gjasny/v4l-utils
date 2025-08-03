@@ -3,7 +3,11 @@
 #else
 	#include <ciso646>
 	#ifdef _LIBCPP_VERSION
-		#define fallthrough _LIBCPP_FALLTHROUGH()
+		#ifdef _LIBCPP_FALLTHROUGH
+			#define fallthrough _LIBCPP_FALLTHROUGH()
+		#else
+			#define fallthrough [[__fallthrough__]]
+		#endif // _LIBCPP_FALLTHROUGH
 	#else
 		#ifdef __clang__
 			#define fallthrough [[clang::fallthrough]]
