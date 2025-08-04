@@ -24,10 +24,31 @@ kobj_rel=0
 v4l2_ctl=v4l2-ctl
 v4l2_compliance=v4l2-compliance
 compliance_args=
+declare -A modules_loaded
+
+unload_module() {
+	echo rmmod $1 | tee /dev/kmsg
+	rmmod $1 2> /dev/null
+	unset modules_loaded[$1];
+}
+
+unload_modules() {
+	local i
+
+	for i in ${!modules_unload[@]}; do
+		unload_module $i
+	done
+}
 
 run_modprobe () {
 	dmesg -n info
+	if [ "$1" == "-r" ]; then
+		unload_module "$2"
+		shift
+	fi
+	echo modprobe $1 | tee /dev/kmsg
 	modprobe $@
+	modules_loaded[$1]=1
 	sleep $modprobe_time
 	udevadm settle
 	dmesg -n notice
@@ -229,8 +250,7 @@ if [ $kmemleak -eq 1 ]; then
 fi
 
 dmesg -n info
-rmmod vivid 2&>/dev/null
-run_modprobe vivid n_devs=3 multiplanar=1,2,2 cache_hints=1,0,0 #allocators=0,1,1
+run_modprobe -r vivid n_devs=3 multiplanar=1,2,2 cache_hints=1,0,0 #allocators=0,1,1
 
 tmp=`mktemp`
 
@@ -238,6 +258,7 @@ if ! $v4l2_ctl -z platform:vivid-002 -d vivid-002-vid-cap ; then
 	echo "FAIL: the vivid module failed to load" | tee -a $tmp
 	echo "Grand Total for vivid: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
 	echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
+	unload_modules
 	exit 0
 fi
 
@@ -291,6 +312,7 @@ if [ $cec -eq 1 ]; then
 		echo "FAIL: the vivid module had no cec support" | tee -a $tmp
 		echo "Grand Total for vivid cec: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
 		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
+		unload_modules
 		exit 0
 	fi
 	cec-ctl -D vivid -a vivid-000-vid-cap0 --tv
@@ -375,9 +397,7 @@ if [ $vivid -eq 1 -a $setup -eq 0 ]; then
 	echo -n vivid.0 >/sys/bus/platform/drivers/vivid/unbind
 	sleep $reunbind_time
 	echo
-	echo rmmod vivid | tee /dev/kmsg
-	echo
-	rmmod vivid
+	unload_module vivid
 	sleep $rmmod_time
 
 	if [ $kmemleak -eq 1 ]; then
@@ -410,14 +430,13 @@ if [ $vivid -eq 1 -a $setup -eq 0 ]; then
 fi
 
 if [ $vim2m -eq 1 ]; then
-	rmmod vim2m 2&>/dev/null
-	run_modprobe vim2m
+	run_modprobe -r vim2m
 
 	if ! $v4l2_ctl -z platform:vim2m ; then
 		echo "FAIL: the vim2m module failed to load" | tee -a $tmp
 		echo "Grand Total for vim2m: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
 		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
-		rmmod vivid
+		unload_modules
 		exit 0
 	fi
 fi
@@ -432,9 +451,7 @@ if [ $vim2m -eq 1 -a $setup -eq 0 ]; then
 	echo
 	echo
 	echo
-	echo rmmod vim2m | tee /dev/kmsg
-	echo
-	rmmod vim2m
+	unload_module vim2m
 	sleep $rmmod_time
 	if [ $kmemleak -eq 1 ]; then
 		echo
@@ -453,7 +470,7 @@ if [ $vim2m -eq 1 -a $setup -eq 0 ]; then
 		echo "FAIL: the vim2m module failed to load" | tee -a $tmp
 		echo "Grand Total for vim2m: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
 		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
-		rmmod vivid
+		unload_modules
 		exit 0
 	fi
 
@@ -493,9 +510,7 @@ if [ $vim2m -eq 1 -a $setup -eq 0 ]; then
 	echo -n vim2m.0 >/sys/bus/platform/drivers/vim2m/unbind
 	sleep $reunbind_time
 	echo
-	echo rmmod vim2m | tee /dev/kmsg
-	echo
-	rmmod vim2m
+	unload_module vim2m
 	sleep $rmmod_time
 	if [ $kmemleak -eq 1 ]; then
 		echo
@@ -518,14 +533,13 @@ if [ $vim2m -eq 1 -a $setup -eq 0 ]; then
 fi
 
 if [ $vimc -eq 1 ]; then
-	rmmod vimc 2&>/dev/null
-	run_modprobe vimc
+	run_modprobe -r vimc
 
 	if ! $v4l2_ctl -z platform:vimc -d "Sensor A" ; then
 		echo "FAIL: the vimc module failed to load" | tee -a $tmp
 		echo "Grand Total for vimc: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
 		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
-		rmmod vivid
+		unload_modules
 		exit 0
 	fi
 
@@ -587,9 +601,7 @@ if [ $vimc -eq 1 -a $setup -eq 0 ]; then
 	echo -n vimc.0 >/sys/bus/platform/drivers/vimc/unbind
 	sleep 14
 	echo
-	echo rmmod vimc | tee /dev/kmsg
-	echo
-	rmmod vimc
+	unload_module vimc
 	sleep $rmmod_time
 	if [ $kmemleak -eq 1 ]; then
 		echo
@@ -620,14 +632,13 @@ if [ $vicodec -eq 1 ]; then
 		mkdir $tmpdir
 	fi
 
-	rmmod vicodec 2&>/dev/null
-	run_modprobe vicodec
+	run_modprobe -r vicodec
 
 	if ! $v4l2_ctl -z platform:vicodec ; then
 		echo "FAIL: the vicodec module failed to load" | tee -a $tmp
 		echo "Grand Total for vicodec: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
 		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
-		rmmod vivid
+		unload_modules
 		exit 0
 	fi
 
@@ -778,9 +789,7 @@ if [ $vicodec -eq 1 -a $setup -eq 0 ]; then
 	echo -n vicodec.0 >/sys/bus/platform/drivers/vicodec/unbind
 	sleep $reunbind_time
 	echo
-	echo rmmod vicodec | tee /dev/kmsg
-	echo
-	rmmod vicodec
+	unload_module vicodec
 	sleep $rmmod_time
 	if [ $kmemleak -eq 1 ]; then
 		echo
@@ -805,14 +814,13 @@ fi
 
 if [ $visl -eq 1 ]; then
 	echo
-	echo loading visl module | tee /dev/kmsg
-	run_modprobe visl
+	run_modprobe -r visl
 
 	if ! $v4l2_ctl -z platform:visl ; then
 		echo "FAIL: the visl module failed to load" | tee -a $tmp
 		echo "Grand Total for visl: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
 		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
-		rmmod vivid
+		unload_modules
 		exit 0
 	fi
 fi
@@ -846,9 +854,7 @@ if [ $visl -eq 1 -a $setup -eq 0 ]; then
 	echo -n visl.0 >/sys/bus/platform/drivers/visl/unbind
 	sleep $reunbind_time
 	echo
-	echo rmmod visl | tee /dev/kmsg
-	echo
-	rmmod visl
+	unload_module visl
 	sleep $rmmod_time
 
 	if [ $kmemleak -eq 1 ]; then
@@ -889,6 +895,7 @@ if [ $vidtv -eq 1 ]; then
 		echo "Grand Total for vidtv: Succeeded: 0, Failed: 1, Warnings: 0" | tee -a $tmp
 		echo "Final Summary: 1, Succeeded: 0, Failed: 1, Warnings: 0"
 		rmmod dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod 2&>/dev/null
+		unload_modules
 		exit 0
 	fi
 fi
@@ -926,9 +933,7 @@ if [ $vidtv -eq 1 -a $setup -eq 0 ]; then
 	echo -n vidtv.0 >/sys/bus/platform/drivers/vidtv/unbind
 	sleep $reunbind_time
 	echo
-	echo rmmod dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod
-	echo
-	rmmod dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod
+	unload_module dvb_vidtv_bridge dvb_vidtv_tuner dvb_vidtv_demod
 	sleep $rmmod_time
 	if [ $kmemleak -eq 1 ]; then
 		echo
@@ -959,9 +964,7 @@ if [ $setup -eq 0 ]; then
 	echo -n vivid.0 >/sys/bus/platform/drivers/vivid/unbind
 	sleep $unbind_time
 	echo
-	echo rmmod vivid | tee /dev/kmsg
-	echo
-	rmmod vivid
+	unload_module vivid
 	sleep $rmmod_time
 fi
 
@@ -1000,6 +1003,8 @@ if [ $setup -eq 0 ]; then
 		dmesg
 	fi
 fi
+
+unload_modules
 
 dmesg -n info
 date
