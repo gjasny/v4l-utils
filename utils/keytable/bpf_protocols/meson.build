@@ -10,9 +10,9 @@ bpf_protocols_files = [
     'xbox-dvd',
 ]
 
-clang_sys_includes = run_command('clang_sys_includes.sh',
-                                 check : true,
-                                 env : ['CLANG=' + prog_clang.full_path()])
+bpf_args += run_command('cc_sys_includes.sh',
+                        cc.cmd_array(),
+                        check : true).stdout().split()
 
 foreach file : bpf_protocols_files
     output = file + '.o'
@@ -21,9 +21,9 @@ foreach file : bpf_protocols_files
                   output : output,
                   input : input,
                   command : [
-                      prog_clang,
-                      clang_sys_includes.stdout().split(),
-                      '-D__linux__', '-fno-stack-protector', '-target', 'bpf',
+                      prog_bpf,
+                      bpf_args,
+                      '-D__linux__', '-fno-stack-protector',
                       '-O2', '-c', '@INPUT@', '-o', '@OUTPUT@',
                   ],
                   install : true,

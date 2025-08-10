@@ -22,7 +22,7 @@ ir_keytable_c_args = [
     '-DIR_KEYTABLE_USER_DIR="@0@"'.format(ir_keytable_user_dir),
 ]
 
-ir_bpf_enabled = prog_clang.found() and dep_libbpf.found() and dep_libelf.found()
+ir_bpf_enabled = prog_bpf.found() and dep_libbpf.found() and dep_libelf.found()
 
 if ir_bpf_enabled
     ir_keytable_sources += files(

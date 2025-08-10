@@ -83,10 +83,33 @@ endif
 v4l2_utils_incdir = include_directories(v4l2_utils_incdir_arr)
 
 prog_bash = find_program('bash')
-prog_clang = find_program('clang', required : get_option('bpf'))
 prog_doxygen = find_program('doxygen', required : get_option('doxygen-doc'))
 prog_grep = find_program('grep')
 prog_perl = find_program('perl')
+
+if get_option('bpf').allowed()
+    bpf_args = []
+    prog_bpf = find_program('bpf-gcc',
+                            'bpf-none-gcc',
+                            'bpf-unknown-none-gcc',
+                            required : false)
+
+    if prog_bpf.found()
+        bpf_args += ['-fno-tree-switch-conversion']
+    else
+        prog_bpf = find_program('clang', required : get_option('bpf'))
+        if prog_bpf.found()
+            target_bpf = run_command(prog_bpf, '-target', 'bpf', '--print-supported-cpus', check : get_option('bpf').enabled())
+            if target_bpf.returncode() == 0
+                bpf_args += ['-target', 'bpf']
+            else
+                prog_bpf = disabler()
+            endif
+        endif
+    endif
+else
+    prog_bpf = disabler()
+endif
 
 dep_alsa = dependency('alsa', required : false)
 if dep_alsa.found()
