@@ -1,6 +1,6 @@
 /*
     Sliced vbi autodetection demonstration utility
-    Copyright (C) 2004  Hans Verkuil  <hverkuil@xs4all.nl>
+    Copyright (C) 2004  Hans Verkuil  <hverkuil@kernel.org>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

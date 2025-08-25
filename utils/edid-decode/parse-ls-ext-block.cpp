@@ -2,7 +2,7 @@
 /*
  * Copyright 2019-2020 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  *
- * Author: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+ * Author: Hans Verkuil <hverkuil+cisco@kernel.org>
  */
 
 #include "edid-decode.h"

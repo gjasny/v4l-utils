@@ -1,4 +1,4 @@
-/* Copyright (C) 2006 Hans Verkuil <hverkuil@xs4all.nl>
+/* Copyright (C) 2006 Hans Verkuil <hverkuil@kernel.org>
 
    The libv4l2util Library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Lesser General Public

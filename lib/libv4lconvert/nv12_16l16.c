@@ -2,7 +2,7 @@
 
 cx2341x NV12_16L16 conversion routines
 
-(C) 2009 Hans Verkuil <hverkuil@xs4all.nl>
+(C) 2009 Hans Verkuil <hverkuil@kernel.org>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by

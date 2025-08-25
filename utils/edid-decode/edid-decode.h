@@ -4,7 +4,7 @@
  * Copyright 2018-2020 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  *
  * Author: Adam Jackson <ajax@nwnk.net>
- * Maintainer: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+ * Maintainer: Hans Verkuil <hverkuil+cisco@kernel.org>
  */
 
 #ifndef __EDID_DECODE_H_

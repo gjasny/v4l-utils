@@ -1,7 +1,7 @@
 /* Copyright (C) 2006 Nathan Laredo <laredo@gnu.org>
    Nathan contributed the frequency tables.
 
-   Copyright (C) 2006 Hans Verkuil <hverkuil@xs4all.nl>
+   Copyright (C) 2006 Hans Verkuil <hverkuil@kernel.org>
    Added the iso-std table.
 
    The libv4l2util Library is free software; you can redistribute it and/or
@@ -1323,7 +1323,7 @@ const struct v4l2_channel_lists v4l2_channel_lists[] = {
 };
 
 /* This list contains omissions and almost certainly incorrect information.
-   Please provide me (Hans Verkuil, <hverkuil@xs4all.nl>) with corrections. */
+   Please provide me (Hans Verkuil, <hverkuil@kernel.org>) with corrections. */
 const struct v4l2_country_std_map v4l2_country_std_map[] = {
 	{ "AE", V4L2_STD_PAL_BG   }, /* United Arab Emirates */
 	{ "AF", V4L2_STD_SECAM_D  }, /* Afghanistan */

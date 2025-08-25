@@ -59,4 +59,4 @@ Resize Capture Window to frame size
 .SH EXIT STATUS
 On success, it returns 0. Otherwise, it will return the error code.
 .SH BUGS
-Report bugs to Hans Verkuil <hverkuil@xs4all.nl>
+Report bugs to Hans Verkuil <hverkuil@kernel.org>

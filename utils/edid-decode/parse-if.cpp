@@ -2,7 +2,7 @@
 /*
  * Copyright 2024 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  *
- * Author: Hans Verkuil <hverkuil-cisco@xs4all.nl>
+ * Author: Hans Verkuil <hverkuil+cisco@kernel.org>
  */
 
 #include <stdio.h>

@@ -236,4 +236,4 @@ Increase the resolution by two pixels in width. Only available when "Override re
 .SH EXIT STATUS
 On success, it returns 0. Otherwise, it will return the number of errors.
 .SH BUGS
-Report bugs to Hans Verkuil <hverkuil@xs4all.nl>
+Report bugs to Hans Verkuil <hverkuil@kernel.org>
