@@ -3281,6 +3281,8 @@ int main(int argc, char **argv)
 		msg.flags |= options[OptRawMsg] ? CEC_MSG_FL_RAW : 0;
 		msg.timeout = (msg.flags & CEC_MSG_FL_REPLY_VENDOR_ID) || msg.reply ? timeout : 0;
 		cec_log_msg(&msg);
+		if (options[OptShowRaw])
+			log_raw_msg(&msg);
 		if (doioctl(&node, CEC_TRANSMIT, &msg))
 			continue;
 		if (msg.rx_status & (CEC_RX_STATUS_OK | CEC_RX_STATUS_FEATURE_ABORT)) {
