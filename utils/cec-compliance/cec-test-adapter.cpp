@@ -420,13 +420,22 @@ static int testTransmit(struct node *node)
 				const __u8 *vendor_data;
 				__u8 vendor_cmd = 0x11;
 
-				// Test that an invalid vendor ID is ignored
-				cec_msg_init(&msg, la, i);
+				// Test that a broadcast of an invalid vendor ID is ignored
+				cec_msg_init(&msg, la, CEC_LOG_ADDR_BROADCAST);
 				cec_msg_vendor_command_with_id(&msg, node->vendor_id + 1, 1, &vendor_cmd);
 				msg.flags = CEC_MSG_FL_REPLY_VENDOR_ID;
 				msg.reply = vendor_cmd + 2;
 				fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
 				fail_on_test(!(msg.rx_status & CEC_RX_STATUS_TIMEOUT));
+				fail_on_test(!(msg.flags & CEC_MSG_FL_REPLY_VENDOR_ID));
+
+				// Test that an invalid vendor ID is feature aborted
+				cec_msg_init(&msg, la, i);
+				cec_msg_vendor_command_with_id(&msg, node->vendor_id + 1, 1, &vendor_cmd);
+				msg.flags = CEC_MSG_FL_REPLY_VENDOR_ID;
+				msg.reply = vendor_cmd + 2;
+				fail_on_test(doioctl(node, CEC_TRANSMIT, &msg));
+				fail_on_test(!(msg.rx_status & CEC_RX_STATUS_FEATURE_ABORT));
 				fail_on_test(!(msg.flags & CEC_MSG_FL_REPLY_VENDOR_ID));
 
 				// The vivid driver will reply with value vendor_cmd + 1, so
