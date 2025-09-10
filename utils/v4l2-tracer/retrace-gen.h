@@ -34,8 +34,6 @@ struct v4l2_hevc_pred_weight_table *retrace_v4l2_hevc_pred_weight_table_gen(json
 struct v4l2_ctrl_hevc_slice_params *retrace_v4l2_ctrl_hevc_slice_params_gen(json_object *ctrl_obj);
 struct v4l2_ctrl_hevc_decode_params *retrace_v4l2_ctrl_hevc_decode_params_gen(json_object *ctrl_obj);
 struct v4l2_ctrl_hevc_scaling_matrix *retrace_v4l2_ctrl_hevc_scaling_matrix_gen(json_object *ctrl_obj);
-struct v4l2_ctrl_hdr10_cll_info *retrace_v4l2_ctrl_hdr10_cll_info_gen(json_object *ctrl_obj);
-struct v4l2_ctrl_hdr10_mastering_display *retrace_v4l2_ctrl_hdr10_mastering_display_gen(json_object *ctrl_obj);
 struct v4l2_vp9_loop_filter *retrace_v4l2_vp9_loop_filter_gen(json_object *ctrl_obj);
 struct v4l2_vp9_quantization *retrace_v4l2_vp9_quantization_gen(json_object *ctrl_obj);
 struct v4l2_vp9_segmentation *retrace_v4l2_vp9_segmentation_gen(json_object *ctrl_obj);
@@ -53,6 +51,8 @@ struct v4l2_av1_quantization *retrace_v4l2_av1_quantization_gen(json_object *ctr
 struct v4l2_av1_tile_info *retrace_v4l2_av1_tile_info_gen(json_object *ctrl_obj);
 struct v4l2_ctrl_av1_frame *retrace_v4l2_ctrl_av1_frame_gen(json_object *ctrl_obj);
 struct v4l2_ctrl_av1_film_grain *retrace_v4l2_ctrl_av1_film_grain_gen(json_object *ctrl_obj);
+struct v4l2_ctrl_hdr10_cll_info *retrace_v4l2_ctrl_hdr10_cll_info_gen(json_object *ctrl_obj);
+struct v4l2_ctrl_hdr10_mastering_display *retrace_v4l2_ctrl_hdr10_mastering_display_gen(json_object *ctrl_obj);
 struct v4l2_rect *retrace_v4l2_rect_gen(json_object *parent_obj, std::string key_name = "");
 struct v4l2_fract *retrace_v4l2_fract_gen(json_object *parent_obj, std::string key_name = "");
 struct v4l2_area *retrace_v4l2_area_gen(json_object *parent_obj, std::string key_name = "");

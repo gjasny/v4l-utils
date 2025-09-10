@@ -1606,68 +1606,6 @@ struct v4l2_ctrl_hevc_scaling_matrix *retrace_v4l2_ctrl_hevc_scaling_matrix_gen(
 	return p;
 }
 
-struct v4l2_ctrl_hdr10_cll_info *retrace_v4l2_ctrl_hdr10_cll_info_gen(json_object *ctrl_obj)
-{
-	struct v4l2_ctrl_hdr10_cll_info *p = (struct v4l2_ctrl_hdr10_cll_info *) calloc(1, sizeof(v4l2_ctrl_hdr10_cll_info));
-	json_object *v4l2_ctrl_hdr10_cll_info_obj;
-	if (!json_object_object_get_ex(ctrl_obj, "v4l2_ctrl_hdr10_cll_info", &v4l2_ctrl_hdr10_cll_info_obj))
-		v4l2_ctrl_hdr10_cll_info_obj = ctrl_obj;
-
-	json_object *max_content_light_level_obj;
-	if (json_object_object_get_ex(v4l2_ctrl_hdr10_cll_info_obj, "max_content_light_level", &max_content_light_level_obj))
-		p->max_content_light_level = (__u16) json_object_get_int(max_content_light_level_obj);
-
-	json_object *max_pic_average_light_level_obj;
-	if (json_object_object_get_ex(v4l2_ctrl_hdr10_cll_info_obj, "max_pic_average_light_level", &max_pic_average_light_level_obj))
-		p->max_pic_average_light_level = (__u16) json_object_get_int(max_pic_average_light_level_obj);
-
-	return p;
-}
-
-struct v4l2_ctrl_hdr10_mastering_display *retrace_v4l2_ctrl_hdr10_mastering_display_gen(json_object *ctrl_obj)
-{
-	struct v4l2_ctrl_hdr10_mastering_display *p = (struct v4l2_ctrl_hdr10_mastering_display *) calloc(1, sizeof(v4l2_ctrl_hdr10_mastering_display));
-	json_object *v4l2_ctrl_hdr10_mastering_display_obj;
-	if (!json_object_object_get_ex(ctrl_obj, "v4l2_ctrl_hdr10_mastering_display", &v4l2_ctrl_hdr10_mastering_display_obj))
-		v4l2_ctrl_hdr10_mastering_display_obj = ctrl_obj;
-
-	/* __u16 display_primaries_x[3] */
-	json_object *display_primaries_x_obj;
-	if (json_object_object_get_ex(v4l2_ctrl_hdr10_mastering_display_obj, "display_primaries_x", &display_primaries_x_obj)) {
-		for (size_t i = 0; i < 3; i++) {
-			if (json_object_array_get_idx(display_primaries_x_obj, i))
-				p->display_primaries_x[i] = (__u16) json_object_get_int(json_object_array_get_idx(display_primaries_x_obj, i));
-		}
-	}
-
-	/* __u16 display_primaries_y[3] */
-	json_object *display_primaries_y_obj;
-	if (json_object_object_get_ex(v4l2_ctrl_hdr10_mastering_display_obj, "display_primaries_y", &display_primaries_y_obj)) {
-		for (size_t i = 0; i < 3; i++) {
-			if (json_object_array_get_idx(display_primaries_y_obj, i))
-				p->display_primaries_y[i] = (__u16) json_object_get_int(json_object_array_get_idx(display_primaries_y_obj, i));
-		}
-	}
-
-	json_object *white_point_x_obj;
-	if (json_object_object_get_ex(v4l2_ctrl_hdr10_mastering_display_obj, "white_point_x", &white_point_x_obj))
-		p->white_point_x = (__u16) json_object_get_int(white_point_x_obj);
-
-	json_object *white_point_y_obj;
-	if (json_object_object_get_ex(v4l2_ctrl_hdr10_mastering_display_obj, "white_point_y", &white_point_y_obj))
-		p->white_point_y = (__u16) json_object_get_int(white_point_y_obj);
-
-	json_object *max_display_mastering_luminance_obj;
-	if (json_object_object_get_ex(v4l2_ctrl_hdr10_mastering_display_obj, "max_display_mastering_luminance", &max_display_mastering_luminance_obj))
-		p->max_display_mastering_luminance = (__u32) json_object_get_int64(max_display_mastering_luminance_obj);
-
-	json_object *min_display_mastering_luminance_obj;
-	if (json_object_object_get_ex(v4l2_ctrl_hdr10_mastering_display_obj, "min_display_mastering_luminance", &min_display_mastering_luminance_obj))
-		p->min_display_mastering_luminance = (__u32) json_object_get_int64(min_display_mastering_luminance_obj);
-
-	return p;
-}
-
 struct v4l2_vp9_loop_filter *retrace_v4l2_vp9_loop_filter_gen(json_object *ctrl_obj)
 {
 	struct v4l2_vp9_loop_filter *p = (struct v4l2_vp9_loop_filter *) calloc(1, sizeof(v4l2_vp9_loop_filter));
@@ -2912,6 +2850,68 @@ struct v4l2_ctrl_av1_film_grain *retrace_v4l2_ctrl_av1_film_grain_gen(json_objec
 	json_object *cr_offset_obj;
 	if (json_object_object_get_ex(v4l2_ctrl_av1_film_grain_obj, "cr_offset", &cr_offset_obj))
 		p->cr_offset = (__u16) json_object_get_int(cr_offset_obj);
+
+	return p;
+}
+
+struct v4l2_ctrl_hdr10_cll_info *retrace_v4l2_ctrl_hdr10_cll_info_gen(json_object *ctrl_obj)
+{
+	struct v4l2_ctrl_hdr10_cll_info *p = (struct v4l2_ctrl_hdr10_cll_info *) calloc(1, sizeof(v4l2_ctrl_hdr10_cll_info));
+	json_object *v4l2_ctrl_hdr10_cll_info_obj;
+	if (!json_object_object_get_ex(ctrl_obj, "v4l2_ctrl_hdr10_cll_info", &v4l2_ctrl_hdr10_cll_info_obj))
+		v4l2_ctrl_hdr10_cll_info_obj = ctrl_obj;
+
+	json_object *max_content_light_level_obj;
+	if (json_object_object_get_ex(v4l2_ctrl_hdr10_cll_info_obj, "max_content_light_level", &max_content_light_level_obj))
+		p->max_content_light_level = (__u16) json_object_get_int(max_content_light_level_obj);
+
+	json_object *max_pic_average_light_level_obj;
+	if (json_object_object_get_ex(v4l2_ctrl_hdr10_cll_info_obj, "max_pic_average_light_level", &max_pic_average_light_level_obj))
+		p->max_pic_average_light_level = (__u16) json_object_get_int(max_pic_average_light_level_obj);
+
+	return p;
+}
+
+struct v4l2_ctrl_hdr10_mastering_display *retrace_v4l2_ctrl_hdr10_mastering_display_gen(json_object *ctrl_obj)
+{
+	struct v4l2_ctrl_hdr10_mastering_display *p = (struct v4l2_ctrl_hdr10_mastering_display *) calloc(1, sizeof(v4l2_ctrl_hdr10_mastering_display));
+	json_object *v4l2_ctrl_hdr10_mastering_display_obj;
+	if (!json_object_object_get_ex(ctrl_obj, "v4l2_ctrl_hdr10_mastering_display", &v4l2_ctrl_hdr10_mastering_display_obj))
+		v4l2_ctrl_hdr10_mastering_display_obj = ctrl_obj;
+
+	/* __u16 display_primaries_x[3] */
+	json_object *display_primaries_x_obj;
+	if (json_object_object_get_ex(v4l2_ctrl_hdr10_mastering_display_obj, "display_primaries_x", &display_primaries_x_obj)) {
+		for (size_t i = 0; i < 3; i++) {
+			if (json_object_array_get_idx(display_primaries_x_obj, i))
+				p->display_primaries_x[i] = (__u16) json_object_get_int(json_object_array_get_idx(display_primaries_x_obj, i));
+		}
+	}
+
+	/* __u16 display_primaries_y[3] */
+	json_object *display_primaries_y_obj;
+	if (json_object_object_get_ex(v4l2_ctrl_hdr10_mastering_display_obj, "display_primaries_y", &display_primaries_y_obj)) {
+		for (size_t i = 0; i < 3; i++) {
+			if (json_object_array_get_idx(display_primaries_y_obj, i))
+				p->display_primaries_y[i] = (__u16) json_object_get_int(json_object_array_get_idx(display_primaries_y_obj, i));
+		}
+	}
+
+	json_object *white_point_x_obj;
+	if (json_object_object_get_ex(v4l2_ctrl_hdr10_mastering_display_obj, "white_point_x", &white_point_x_obj))
+		p->white_point_x = (__u16) json_object_get_int(white_point_x_obj);
+
+	json_object *white_point_y_obj;
+	if (json_object_object_get_ex(v4l2_ctrl_hdr10_mastering_display_obj, "white_point_y", &white_point_y_obj))
+		p->white_point_y = (__u16) json_object_get_int(white_point_y_obj);
+
+	json_object *max_display_mastering_luminance_obj;
+	if (json_object_object_get_ex(v4l2_ctrl_hdr10_mastering_display_obj, "max_display_mastering_luminance", &max_display_mastering_luminance_obj))
+		p->max_display_mastering_luminance = (__u32) json_object_get_int64(max_display_mastering_luminance_obj);
+
+	json_object *min_display_mastering_luminance_obj;
+	if (json_object_object_get_ex(v4l2_ctrl_hdr10_mastering_display_obj, "min_display_mastering_luminance", &min_display_mastering_luminance_obj))
+		p->min_display_mastering_luminance = (__u32) json_object_get_int64(min_display_mastering_luminance_obj);
 
 	return p;
 }

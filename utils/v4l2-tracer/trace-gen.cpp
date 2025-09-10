@@ -797,40 +797,6 @@ void trace_v4l2_ctrl_hevc_scaling_matrix_gen(void *ptr, json_object *parent_obj)
 	json_object_object_add(parent_obj, "v4l2_ctrl_hevc_scaling_matrix", v4l2_ctrl_hevc_scaling_matrix_obj);
 }
 
-void trace_v4l2_ctrl_hdr10_cll_info_gen(void *ptr, json_object *parent_obj)
-{
-	json_object *v4l2_ctrl_hdr10_cll_info_obj = json_object_new_object();
-	struct v4l2_ctrl_hdr10_cll_info *p = static_cast<struct v4l2_ctrl_hdr10_cll_info*>(ptr);
-	json_object_object_add(v4l2_ctrl_hdr10_cll_info_obj, "max_content_light_level", json_object_new_int(p->max_content_light_level));
-	json_object_object_add(v4l2_ctrl_hdr10_cll_info_obj, "max_pic_average_light_level", json_object_new_int(p->max_pic_average_light_level));
-	json_object_object_add(parent_obj, "v4l2_ctrl_hdr10_cll_info", v4l2_ctrl_hdr10_cll_info_obj);
-}
-
-void trace_v4l2_ctrl_hdr10_mastering_display_gen(void *ptr, json_object *parent_obj)
-{
-	json_object *v4l2_ctrl_hdr10_mastering_display_obj = json_object_new_object();
-	struct v4l2_ctrl_hdr10_mastering_display *p = static_cast<struct v4l2_ctrl_hdr10_mastering_display*>(ptr);
-	/* __u16 display_primaries_x[3] */
-	json_object *display_primaries_x_obj = json_object_new_array();
-	for (size_t i = 0; i < 3; i++) {
-		json_object_array_add(display_primaries_x_obj, json_object_new_int(p->display_primaries_x[i]));
-	}
-	json_object_object_add(v4l2_ctrl_hdr10_mastering_display_obj, "display_primaries_x", display_primaries_x_obj);
-
-	/* __u16 display_primaries_y[3] */
-	json_object *display_primaries_y_obj = json_object_new_array();
-	for (size_t i = 0; i < 3; i++) {
-		json_object_array_add(display_primaries_y_obj, json_object_new_int(p->display_primaries_y[i]));
-	}
-	json_object_object_add(v4l2_ctrl_hdr10_mastering_display_obj, "display_primaries_y", display_primaries_y_obj);
-
-	json_object_object_add(v4l2_ctrl_hdr10_mastering_display_obj, "white_point_x", json_object_new_int(p->white_point_x));
-	json_object_object_add(v4l2_ctrl_hdr10_mastering_display_obj, "white_point_y", json_object_new_int(p->white_point_y));
-	json_object_object_add(v4l2_ctrl_hdr10_mastering_display_obj, "max_display_mastering_luminance", json_object_new_int64(p->max_display_mastering_luminance));
-	json_object_object_add(v4l2_ctrl_hdr10_mastering_display_obj, "min_display_mastering_luminance", json_object_new_int64(p->min_display_mastering_luminance));
-	json_object_object_add(parent_obj, "v4l2_ctrl_hdr10_mastering_display", v4l2_ctrl_hdr10_mastering_display_obj);
-}
-
 void trace_v4l2_vp9_loop_filter_gen(void *ptr, json_object *parent_obj)
 {
 	json_object *v4l2_vp9_loop_filter_obj = json_object_new_object();
@@ -1536,6 +1502,40 @@ void trace_v4l2_ctrl_av1_film_grain_gen(void *ptr, json_object *parent_obj)
 	json_object_object_add(v4l2_ctrl_av1_film_grain_obj, "cb_offset", json_object_new_int(p->cb_offset));
 	json_object_object_add(v4l2_ctrl_av1_film_grain_obj, "cr_offset", json_object_new_int(p->cr_offset));
 	json_object_object_add(parent_obj, "v4l2_ctrl_av1_film_grain", v4l2_ctrl_av1_film_grain_obj);
+}
+
+void trace_v4l2_ctrl_hdr10_cll_info_gen(void *ptr, json_object *parent_obj)
+{
+	json_object *v4l2_ctrl_hdr10_cll_info_obj = json_object_new_object();
+	struct v4l2_ctrl_hdr10_cll_info *p = static_cast<struct v4l2_ctrl_hdr10_cll_info*>(ptr);
+	json_object_object_add(v4l2_ctrl_hdr10_cll_info_obj, "max_content_light_level", json_object_new_int(p->max_content_light_level));
+	json_object_object_add(v4l2_ctrl_hdr10_cll_info_obj, "max_pic_average_light_level", json_object_new_int(p->max_pic_average_light_level));
+	json_object_object_add(parent_obj, "v4l2_ctrl_hdr10_cll_info", v4l2_ctrl_hdr10_cll_info_obj);
+}
+
+void trace_v4l2_ctrl_hdr10_mastering_display_gen(void *ptr, json_object *parent_obj)
+{
+	json_object *v4l2_ctrl_hdr10_mastering_display_obj = json_object_new_object();
+	struct v4l2_ctrl_hdr10_mastering_display *p = static_cast<struct v4l2_ctrl_hdr10_mastering_display*>(ptr);
+	/* __u16 display_primaries_x[3] */
+	json_object *display_primaries_x_obj = json_object_new_array();
+	for (size_t i = 0; i < 3; i++) {
+		json_object_array_add(display_primaries_x_obj, json_object_new_int(p->display_primaries_x[i]));
+	}
+	json_object_object_add(v4l2_ctrl_hdr10_mastering_display_obj, "display_primaries_x", display_primaries_x_obj);
+
+	/* __u16 display_primaries_y[3] */
+	json_object *display_primaries_y_obj = json_object_new_array();
+	for (size_t i = 0; i < 3; i++) {
+		json_object_array_add(display_primaries_y_obj, json_object_new_int(p->display_primaries_y[i]));
+	}
+	json_object_object_add(v4l2_ctrl_hdr10_mastering_display_obj, "display_primaries_y", display_primaries_y_obj);
+
+	json_object_object_add(v4l2_ctrl_hdr10_mastering_display_obj, "white_point_x", json_object_new_int(p->white_point_x));
+	json_object_object_add(v4l2_ctrl_hdr10_mastering_display_obj, "white_point_y", json_object_new_int(p->white_point_y));
+	json_object_object_add(v4l2_ctrl_hdr10_mastering_display_obj, "max_display_mastering_luminance", json_object_new_int64(p->max_display_mastering_luminance));
+	json_object_object_add(v4l2_ctrl_hdr10_mastering_display_obj, "min_display_mastering_luminance", json_object_new_int64(p->min_display_mastering_luminance));
+	json_object_object_add(parent_obj, "v4l2_ctrl_hdr10_mastering_display", v4l2_ctrl_hdr10_mastering_display_obj);
 }
 
 void trace_v4l2_rect_gen(void *arg, json_object *parent_obj, std::string key_name = "")
