@@ -46,6 +46,8 @@ option('libv4l2subdir', type : 'string', value : 'libv4l',
        description : 'Set libv4l2 library subdir')
 option('libv4lconvertsubdir', type : 'string', value : 'libv4l',
        description : 'Set libv4lconvert library subdir')
+option('libv4l2tracersubdir', type : 'string', value : 'libv4l',
+       description : 'Set libv4l2tracer library subdir')
 option('systemdsystemunitdir', type : 'string',
        description : 'Set systemd system unit directory')
 option('udevdir', type : 'string',
