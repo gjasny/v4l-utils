@@ -1668,7 +1668,7 @@ static bool if_add_byte(const char *s)
 static bool extract_if_hex(const char *s)
 {
 	for (; *s; s++) {
-		if (isspace(*s))
+		if (isspace(*s) || strchr(ignore_chars, *s))
 			continue;
 
 		/* Read one or two hex digits from the log */
@@ -1715,6 +1715,14 @@ static bool extract_if(int fd)
 	start = strstr(data, "edid-decode InfoFrame (hex):");
 	if (start)
 		return extract_if_hex(strchr(start, ':') + 1);
+
+	unsigned i;
+
+	for (i = 0; i < 32 && (isspace(data[i]) || strchr(ignore_chars, data[i]) ||
+			       tolower(data[i]) == 'x' || isxdigit(data[i])); i++);
+
+	if (i == 32)
+		return extract_if_hex(data);
 
 	// Drop the extra '\0' byte since we now assume binary data
 	if_data.pop_back();
