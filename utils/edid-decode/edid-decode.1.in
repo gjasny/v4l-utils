@@ -206,10 +206,10 @@ and the CTA-861 Extension Blocks (HDMI), or Block 0 and the DisplayID Extension 
 (typical for DisplayPort).
 .TP
 \fB\-I\fR, \fB\-\-infoframe\fR \fI<file>\fR
-Parse the given InfoFrame file. This option can be used multiple times to
-parse multiple InfoFrames. If the EDID of the display to which these InfoFrames
-are transmitted is also given, then the conformity checks will take that EDID
-into account.
+Parse the given InfoFrame file. Read data from stdin if '-' was passed as a
+filename. This option can be used multiple times to parse multiple InfoFrames.
+If the EDID of the display to which these InfoFrames are transmitted is also
+given, then the conformity checks will take that EDID into account.
 
 If the first byte in the InfoFrame is 0x80 or higher, then it is assumed to be
 an InfoFrame that starts with the HDMI header and has a checksum, as per the

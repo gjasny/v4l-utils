@@ -226,7 +226,7 @@ static void usage(void)
 	       "  --list-hdmi-vics      List all known HDMI VICs.\n"
 	       "  --list-rids           List all known RIDs.\n"
 	       "  --list-rid-timings <rid> List all timings for RID <rid> or all known RIDs if <rid> is 0.\n"
-	       "  -I, --infoframe <file> Parse the InfoFrame from <file> that was sent to this display.\n"
+	       "  -I, --infoframe <file> Parse the InfoFrame from <file> (or stdin if '-' was specified) that was sent to this display.\n"
 	       "                        This option can be specified multiple times for different InfoFrame files.\n"
 	       "  -E, --eld <file>      Parse the EDID-Like Data, ELD from <file> (or stdin if '-' was specified).\n"
 	       "                        This option can be specified multiple times for different ELD files.\n"
@@ -1752,7 +1752,10 @@ static int if_from_file(const char *from_file)
 	memset(infoframe, 0, sizeof(infoframe));
 	if_size = 0;
 
-	if ((fd = open(from_file, flags)) == -1) {
+	if (!strcmp(from_file, "-")) {
+		from_file = "stdin";
+		fd = 0;
+	} else if ((fd = open(from_file, flags)) == -1) {
 		perror(from_file);
 		return -1;
 	}
