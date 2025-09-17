@@ -1584,7 +1584,7 @@ ssize_t v4l2_read(int fd, void *dest, size_t n)
 	if (devices[index].flags & V4L2_USE_READ_FOR_READ) {
 		result = v4l2_read_and_convert(index, dest, n);
 	} else {
-		struct v4l2_buffer buf;
+		struct v4l2_buffer buf = {};
 
 		buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		buf.memory = V4L2_MEMORY_MMAP;
