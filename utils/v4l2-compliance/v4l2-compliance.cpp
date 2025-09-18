@@ -525,7 +525,7 @@ static void determine_codec_mask(struct node &node)
 		return;
 
 	do {
-		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED) {
+		if (is_codec_format(fmt_desc)) {
 			num_compressed_cap_fmts++;
 			switch (fmt_desc.pixelformat) {
 			case V4L2_PIX_FMT_JPEG:
@@ -553,10 +553,6 @@ static void determine_codec_mask(struct node &node)
 				mask |= STATELESS_ENCODER;
 				break;
 #endif
-			case V4L2_PIX_FMT_QC08C:
-			case V4L2_PIX_FMT_QC10C:
-				num_compressed_cap_fmts--;
-				break;
 			default:
 				return;
 			}
@@ -569,7 +565,7 @@ static void determine_codec_mask(struct node &node)
 		return;
 
 	do {
-		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED) {
+		if (is_codec_format(fmt_desc)) {
 			num_compressed_out_fmts++;
 			switch (fmt_desc.pixelformat) {
 			case V4L2_PIX_FMT_JPEG:
@@ -600,10 +596,6 @@ static void determine_codec_mask(struct node &node)
 			case V4L2_PIX_FMT_AV1_FRAME:
 			case V4L2_PIX_FMT_FWHT_STATELESS:
 				mask |= STATELESS_DECODER;
-				break;
-			case V4L2_PIX_FMT_QC08C:
-			case V4L2_PIX_FMT_QC10C:
-				num_compressed_out_fmts--;
 				break;
 			default:
 				return;

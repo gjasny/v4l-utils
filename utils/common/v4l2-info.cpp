@@ -892,3 +892,16 @@ std::string subdevclientcap2s(__u64 cap)
 		s += "interval-uses-which ";
 	return s;
 }
+
+bool is_codec_format(const v4l2_fmtdesc& fmt_desc) {
+    if (!(fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED))
+        return false;
+
+    switch (fmt_desc.pixelformat) {
+        case V4L2_PIX_FMT_QC08C:
+        case V4L2_PIX_FMT_QC10C:
+            return false;
+        default:
+            return true;
+    }
+}

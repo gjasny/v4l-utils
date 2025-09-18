@@ -427,7 +427,7 @@ static void get_codec_type(cv4l_fd &fd)
 		return;
 
 	do {
-		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED)
+		if (is_codec_format(fmt_desc))
 			num_compressed_cap_fmts++;
 		num_cap_fmts++;
 	} while (!fd.enum_fmt(fmt_desc));
@@ -437,7 +437,7 @@ static void get_codec_type(cv4l_fd &fd)
 		return;
 
 	do {
-		if (fmt_desc.flags & V4L2_FMT_FLAG_COMPRESSED)
+		if (is_codec_format(fmt_desc))
 			num_compressed_out_fmts++;
 		num_out_fmts++;
 	} while (!fd.enum_fmt(fmt_desc));

@@ -161,4 +161,7 @@ std::string modulation2s(unsigned modulation);
 /* Return subdev client capabilities description */
 std::string subdevclientcap2s(__u64 cap);
 
+/* Return whether a color format is compressed or not */
+bool is_codec_format(const v4l2_fmtdesc &fmt_desc);
+
 #endif
