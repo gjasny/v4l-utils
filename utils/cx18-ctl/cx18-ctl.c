@@ -261,7 +261,7 @@ int main(int argc, char **argv)
 			usage();
 			return 0;
 		case OptSetDebugLevel:{
-			debug_level = strtol(optarg, 0L, 0);
+			debug_level = strtoul(optarg, 0L, 0);
 			break;
 		}
 		case OptSetDevice:
@@ -274,7 +274,7 @@ int main(int argc, char **argv)
 			}
 			break;
 		case OptReset:
-			reset = strtol(optarg, 0L, 0);
+			reset = strtoul(optarg, 0L, 0);
 			break;
 		case OptSetGPIO:
 			subs = optarg;
