@@ -813,7 +813,7 @@ int parse_fmt(char *optarg, __u32 &width, __u32 &height, __u32 &pixelformat,
 				if (be_pixfmt)
 					pixelformat |= 1U << 31;
 			} else if (isdigit(value[0])) {
-				pixelformat = strtol(value, nullptr, 0);
+				pixelformat = strtoul(value, nullptr, 0);
 			} else {
 				fprintf(stderr, "The pixelformat '%s' is invalid\n", value);
 				std::exit(EXIT_FAILURE);

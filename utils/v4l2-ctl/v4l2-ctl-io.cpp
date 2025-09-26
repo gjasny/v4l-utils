@@ -69,10 +69,10 @@ void io_cmd(int ch, char *optarg)
 			output = strtol(optarg, nullptr, 0);
 			break;
 		case OptSetAudioInput:
-			vaudio.index = strtol(optarg, nullptr, 0);
+			vaudio.index = strtoul(optarg, nullptr, 0);
 			break;
 		case OptSetAudioOutput:
-			vaudout.index = strtol(optarg, nullptr, 0);
+			vaudout.index = strtoul(optarg, nullptr, 0);
 			break;
 	}
 }

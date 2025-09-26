@@ -446,7 +446,7 @@ void stds_cmd(int ch, char *optarg)
 				standard = V4L2_STD_SECAM;
 		}
 		else if (isdigit(optarg[0])) {
-			standard = strtol(optarg, nullptr, 0) | (1ULL << 63);
+			standard = strtoul(optarg, nullptr, 0) | (1ULL << 63);
 		} else {
 			fprintf(stderr, "Unknown standard '%s'\n", optarg);
 			stds_usage();

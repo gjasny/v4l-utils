@@ -111,11 +111,11 @@ static void parse_crop(char *optarg, unsigned int &set_crop, v4l2_rect &vcrop)
 			set_crop |= CropTop;
 			break;
 		case 2:
-			vcrop.width = strtol(value, nullptr, 0);
+			vcrop.width = strtoul(value, nullptr, 0);
 			set_crop |= CropWidth;
 			break;
 		case 3:
-			vcrop.height = strtol(value, nullptr, 0);
+			vcrop.height = strtoul(value, nullptr, 0);
 			set_crop |= CropHeight;
 			break;
 		default:

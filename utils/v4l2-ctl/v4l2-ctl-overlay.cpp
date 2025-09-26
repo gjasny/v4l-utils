@@ -321,27 +321,27 @@ void overlay_cmd(int ch, char *optarg)
 			switch (parse_subopt(&subs, subopts, &value)) {
 			case 0:
 				fbuf.flags &= ~chroma_flags;
-				fbuf.flags |= strtol(value, nullptr, 0) ? V4L2_FBUF_FLAG_CHROMAKEY : 0;
+				fbuf.flags |= strtoul(value, nullptr, 0) ? V4L2_FBUF_FLAG_CHROMAKEY : 0;
 				set_fbuf |= chroma_flags;
 				break;
 			case 1:
 				fbuf.flags &= ~chroma_flags;
-				fbuf.flags |= strtol(value, nullptr, 0) ? V4L2_FBUF_FLAG_SRC_CHROMAKEY : 0;
+				fbuf.flags |= strtoul(value, nullptr, 0) ? V4L2_FBUF_FLAG_SRC_CHROMAKEY : 0;
 				set_fbuf |= chroma_flags;
 				break;
 			case 2:
 				fbuf.flags &= ~alpha_flags;
-				fbuf.flags |= strtol(value, nullptr, 0) ? V4L2_FBUF_FLAG_GLOBAL_ALPHA : 0;
+				fbuf.flags |= strtoul(value, nullptr, 0) ? V4L2_FBUF_FLAG_GLOBAL_ALPHA : 0;
 				set_fbuf |= alpha_flags;
 				break;
 			case 3:
 				fbuf.flags &= ~alpha_flags;
-				fbuf.flags |= strtol(value, nullptr, 0) ? V4L2_FBUF_FLAG_LOCAL_ALPHA : 0;
+				fbuf.flags |= strtoul(value, nullptr, 0) ? V4L2_FBUF_FLAG_LOCAL_ALPHA : 0;
 				set_fbuf |= alpha_flags;
 				break;
 			case 4:
 				fbuf.flags &= ~alpha_flags;
-				fbuf.flags |= strtol(value, nullptr, 0) ? V4L2_FBUF_FLAG_LOCAL_INV_ALPHA : 0;
+				fbuf.flags |= strtoul(value, nullptr, 0) ? V4L2_FBUF_FLAG_LOCAL_INV_ALPHA : 0;
 				set_fbuf |= alpha_flags;
 				break;
 			case 5:
