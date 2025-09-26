@@ -298,8 +298,8 @@ int tracer(int argc, char *argv[], bool retrace)
 	/*
 	 * Preload the libv4l2tracer library. The tracer is looked up using following order:
 	 * 1. Check if LD_PRELOAD is already set, in which case just honor it
-	 * 2. Check V4L2_TRACER_PATH env is set (meson devenv / uninstalled)
-	 * 3. Check in the prefix/libdir path for an installed tracer.
+	 * 2. Check V4L2_TRACER env is set (meson devenv / uninstalled)
+	 * 3. Check in LIBTRACER_PATH for an installed tracer.
 	 */
 	std::string libv4l2tracer_path;
 	if (getenv("LD_PRELOAD"))
