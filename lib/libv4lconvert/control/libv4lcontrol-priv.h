@@ -34,9 +34,9 @@ struct v4lcontrol_flags_info;
 struct v4lcontrol_data {
 	int fd;                   /* Device fd */
 	int bandwidth;            /* Connection bandwidth (0 = unknown) */
-	int flags;                /* Flags for this device */
+	unsigned int flags;       /* Flags for this device */
 	int priv_flags;           /* Internal use only flags */
-	int controls;             /* Which controls to use for this device */
+	unsigned int controls;    /* Which controls to use for this device */
 	unsigned int *shm_values; /* shared memory control value store */
 	unsigned int old_values[V4LCONTROL_COUNT]; /* for controls_changed() */
 	const struct v4lcontrol_flags_info *flags_info;

@@ -629,7 +629,7 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, void *dev_ops_priv,
 	/* Allow overriding through environment */
 	s = getenv("LIBV4LCONTROL_FLAGS");
 	if (s)
-		data->flags = strtol(s, NULL, 0);
+		data->flags = strtoul(s, NULL, 0);
 
 	ctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
 	if (data->dev_ops->ioctl(data->dev_ops_priv, data->fd,
@@ -681,7 +681,7 @@ struct v4lcontrol_data *v4lcontrol_create(int fd, void *dev_ops_priv,
 	/* Allow overriding through environment */
 	s = getenv("LIBV4LCONTROL_CONTROLS");
 	if (s)
-		data->controls = strtol(s, NULL, 0);
+		data->controls = strtoul(s, NULL, 0);
 
 	if (data->controls == 0)
 		return data; /* No need to create a shared memory segment */
