@@ -2643,7 +2643,7 @@ int main(int argc, char **argv)
 				switch (cec_parse_subopt(&subs, arg_names, &value)) {
 				case 0:
 					while (size < sizeof(bytes)) {
-						bytes[size++] = strtol(value, &endptr, 0L);
+						bytes[size++] = strtoul(value, &endptr, 0L);
 						if (endptr == value) {
 							size--;
 							break;
@@ -2679,12 +2679,12 @@ int main(int argc, char **argv)
 			while (*subs != '\0') {
 				switch (cec_parse_subopt(&subs, arg_names, &value)) {
 				case 0:
-					cmd = strtol(value, &endptr, 0L);
+					cmd = strtoul(value, &endptr, 0L);
 					have_cmd = true;
 					break;
 				case 1:
 					while (size < sizeof(bytes)) {
-						bytes[size++] = strtol(value, &endptr, 0L);
+						bytes[size++] = strtoul(value, &endptr, 0L);
 						if (endptr == value) {
 							size--;
 							break;
@@ -2722,15 +2722,15 @@ int main(int argc, char **argv)
 			while (*subs != '\0') {
 				switch (cec_parse_subopt(&subs, arg_names, &value)) {
 				case 0:
-					vendor_id = strtol(value, nullptr, 0);
+					vendor_id = strtoul(value, nullptr, 0);
 					break;
 				case 1:
-					msg.reply = strtol(value, &endptr, 0L);
+					msg.reply = strtoul(value, &endptr, 0L);
 					msg.flags = CEC_MSG_FL_REPLY_VENDOR_ID;
 					break;
 				case 2:
 					while (size < sizeof(bytes)) {
-						bytes[size++] = strtol(value, &endptr, 0L);
+						bytes[size++] = strtoul(value, &endptr, 0L);
 						if (endptr == value) {
 							size--;
 							break;
@@ -2764,7 +2764,7 @@ int main(int argc, char **argv)
 				switch (cec_parse_subopt(&subs, arg_names, &value)) {
 				case 0:
 					while (size < sizeof(bytes)) {
-						bytes[size++] = strtol(value, &endptr, 0L);
+						bytes[size++] = strtoul(value, &endptr, 0L);
 						if (endptr == value) {
 							size--;
 							break;
