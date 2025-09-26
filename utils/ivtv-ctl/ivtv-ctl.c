@@ -326,8 +326,8 @@ int main(int argc, char **argv)
 						return 1;
 
 					}
-					yuv_mode = strtol(value, 0L, 0);
-					if (yuv_mode < 0 || yuv_mode > 3) {
+					yuv_mode = strtoul(value, 0L, 0);
+					if (yuv_mode > 3) {
 						fprintf(stderr, "invalid yuv mode\n");
 						return 1;
 					}
@@ -340,7 +340,7 @@ int main(int argc, char **argv)
 			usage();
 			return 0;
 		case OptSetDebugLevel:{
-			debug_level = strtol(optarg, 0L, 0);
+			debug_level = strtoul(optarg, 0L, 0);
 			break;
 		}
 		case OptSetDevice:
@@ -353,10 +353,10 @@ int main(int argc, char **argv)
 			}
 			break;
 		case OptReset:
-			reset = strtol(optarg, 0L, 0);
+			reset = strtoul(optarg, 0L, 0);
 			break;
 		case OptPassThrough:
-			passthrough = strtol(optarg, 0L, 0);
+			passthrough = strtoul(optarg, 0L, 0);
 			break;
 		case OptSetGPIO:
 			subs = optarg;
@@ -379,7 +379,7 @@ int main(int argc, char **argv)
 						usage();
 						exit(1);
 					}
-					gpio_out = (unsigned short)strtol(value, 0L, 0);
+					gpio_out = strtoul(value, 0L, 0);
 					break;
 				default:
 					fprintf(stderr,
