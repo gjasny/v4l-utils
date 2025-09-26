@@ -45,7 +45,7 @@ struct buffer          *buffers;
 static unsigned int     n_buffers;
 static int		out_buf;
 static int              force_format;
-static int              frame_count = 70;
+static unsigned int     frame_count = 70;
 
 static void errno_exit(const char *s)
 {
@@ -557,7 +557,7 @@ static void usage(FILE *fp, int argc, char **argv)
 		 "-u | --userp         Use application allocated buffers\n"
 		 "-o | --output        Outputs stream to stdout\n"
 		 "-f | --format        Force format to 640x480 YUYV\n"
-		 "-c | --count         Number of frames to grab [%i]\n"
+		 "-c | --count         Number of frames to grab [%u]\n"
 		 "",
 		 argv[0], dev_name, frame_count);
 }
@@ -625,7 +625,7 @@ int main(int argc, char **argv)
 
 		case 'c':
 			errno = 0;
-			frame_count = strtol(optarg, NULL, 0);
+			frame_count = strtoul(optarg, NULL, 0);
 			if (errno)
 				errno_exit(optarg);
 			break;
