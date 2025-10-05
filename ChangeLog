@@ -1,3 +1,74 @@
+v4l-utils-1.32.0
+----------------
+
+Dikshita Agarwal (1):
+      v4l-utils: Add is_compressed_format helper to centralize compressed format checks
+
+Dmitry Baryshkov (2):
+      edid-decode: be more relaxed on InfoFrames format
+      edid-decode: allow using stdin for InfoFrame decoding
+
+Gregor Jasny (2):
+      buildsystem: Start v4l-utils 1.31.0 development cycle
+      licenses: update copyright files to remove fsf address
+
+Hans Verkuil (22):
+      v4l2-compliance: run testBlockingWait when streaming
+      v4l2-ctl: fix string in hdmi-4k-600mhz-with-displayid-eeodb
+      v4l2-compliance: report unsupported devices as such
+      cobalt-ctl: fix search for the mtd device
+      v4l2-ctl: log bitmask control value has hex number
+      edid-decode: add sanity checks for DTD image size
+      v4l2-compliance: fix pix_array control test
+      test-media: add 'date' commands to the vicodec tests
+      test-media: speed up stateful decoder compliance tests
+      v4l-utils: sync with v6.17-rc1
+      v4l-utils: update Hans Verkuil's email addresses
+      cec-ctl: --show-raw should show raw transmit data as well
+      v4l-utils: sync with latest media kernel tree
+      cec-compliance: fix Vendor Command With ID vivid tests
+      v4l2-tracer: fix out of date comment
+      v4l2-ctl: use strtoul instead of strtol where appropriate
+      rds-ctl: use strtoul instead of strtol where appropriate
+      ivtv-ctl: use strtoul instead of strtol where appropriate
+      cx18-ctl: use strtoul instead of strtol where appropriate
+      cec-ctl: use strtoul instead of strtol where appropriate
+      libv4lconvert: use strtoul instead of strtol where appropriate
+      capture-example.c: use strtoul instead of strtol for -c
+
+James Le Cuirot (2):
+      meson: Allow BPF code to be built with GCC
+      compiler.h: Fix libc++ build now that _LIBCPP_FALLTHROUGH has gone
+
+Jianfeng Liu (1):
+      Change install dir of libv4l2tracer.so
+
+Leo Izen (1):
+      libv4l2: prefix HAVE_POSIX_IOCTL with LIBV4L_ for public header
+
+Mavroudis Chatzilazaridis (2):
+      qv4l2: Fix video capture being transparent on Wayland
+      qvidcap: Fix video capture being transparent on Wayland
+
+Ricardo Ribalda (2):
+      contrib/test/test-media: Wait for udev to settle after modprobe
+      CONTRIBUTE: Add simple contribution instructions
+
+Sakari Ailus (2):
+      contrib/test/test-media: Fix module unloading
+      contrib/test/test-media: Probe the vimc device
+
+Sean Young (1):
+      ir-ctl: remove quirky -rmw command line parsing
+
+Tianyu Chen (1):
+      libv4l2: zero v4l2_buffer
+
+Yarny (2):
+      meson.build: use `localedir` for `LOCALEDIR`
+      lib/libdvbv5/meson.build: use `includedir` also for `libdvb-version.h`
+
+
 v4l-utils-1.30.0
 ----------------
 

@@ -1,5 +1,5 @@
 project('v4l-utils', 'c', 'cpp',
-    version: '1.31.0',
+    version: '1.32.0',
     meson_version : '>= 0.60',
     default_options : [
         'buildtype=debugoptimized',
