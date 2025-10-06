@@ -1,0 +1,3 @@
+[b4]
+  send-series-cc = linux-media@vger.kernel.org
+  send-prefixes = v4l-utils
