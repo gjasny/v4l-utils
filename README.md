@@ -9,9 +9,9 @@ You can always find the latest development v4l-utils in the git repo:
 Those utilities follow the latest Linux Kernel media API, as documented at:
 [http://linuxtv.org/downloads/v4l-dvb-apis/](http://linuxtv.org/downloads/v4l-dvb-apis/).
 
-Any questions/remarks/patches can be sent to the linux-media mailinglist. See
+Any questions/remarks/patches can be sent to the linux-media mailing list. See
 [https://linuxtv.org/lists.php](https://linuxtv.org/lists.php) for more
-information about the mailinglist.
+information about the mailing list.
 
 There is also a wiki page for the v4l-utils:
 [https://linuxtv.org/wiki/index.php/V4l-utils](https://linuxtv.org/wiki/index.php/V4l-utils).
@@ -23,7 +23,7 @@ v4l-utils uses the meson build system.
 A number of packages is required to fully build v4l-utils. The first step is to
 install those packages. The package names are different on each distro.
 
-On Debian and derivated distributions, you need to install the following
+On Debian and derivative distributions, you need to install the following
 packages with `apt-get` or `aptitude`:
 
 ```
@@ -38,7 +38,7 @@ On Fedora, the package list for a minimal install with `dnf` or `yum` is:
 gcc gcc-c++ gettext-devel git meson perl which
 ```
 
-(git is only requiried if you're cloning from the main git repository at
+(git is only required if you're cloning from the main git repository at
 linuxtv.org).
 
 And, to be able to compile it with all usual functionality with qt5, you'll need
