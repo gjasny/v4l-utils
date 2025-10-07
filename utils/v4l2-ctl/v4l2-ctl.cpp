@@ -1369,7 +1369,7 @@ int main(int argc, char **argv)
 	} else if (is_subdev) {
 		// This ioctl was introduced in kernel 5.10, so don't
 		// exit if this ioctl returns an error.
-		doioctl(fd, VIDIOC_SUBDEV_QUERYCAP, &subdevcap);
+		test_ioctl(fd, VIDIOC_SUBDEV_QUERYCAP, &subdevcap);
 		subdevclientcap.capabilities = ~0ULL;
 		// This ioctl was introduced in kernel 6.4, so don't
 		// exit if this ioctl returns an error.
