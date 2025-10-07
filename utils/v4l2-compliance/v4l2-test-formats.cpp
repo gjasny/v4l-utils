@@ -1481,8 +1481,10 @@ static int testParmType(struct node *node, unsigned type)
 	 * Stateful encoders can support S_PARM without ENUM_FRAMEINTERVALS.
 	 * being present. In that case the limits of the chosen codec apply.
 	 */
-	if (!ret && (cap & V4L2_CAP_TIMEPERFRAME) && !node->has_frmintervals && !is_stateful_enc)
-		warn("S_PARM is supported for buftype %d, but not for ENUM_FRAMEINTERVALS\n", type);
+	if (!ret && (cap & V4L2_CAP_TIMEPERFRAME) && !node->has_frmintervals &&
+	    !is_stateful_enc && !V4L2_TYPE_IS_OUTPUT(type))
+		warn("S_PARM is supported for buftype %s, but not for ENUM_FRAMEINTERVALS\n",
+		     buftype2s(type).c_str());
 	if (ret == ENOTTY)
 		return 0;
 	/*
