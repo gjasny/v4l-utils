@@ -56,7 +56,7 @@ After downloading and installing the needed packages on your distribution, you
 should run:
 
 ```
-meson build/
+meson setup build/
 ninja -C build/
 ```
 
