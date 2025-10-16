@@ -198,7 +198,8 @@ struct edid_state {
 		cta.has_svrs = false;
 		cta.first_svd = true;
 		cta.first_cta = true;
-		cta.supported_hdmi_vic_codes = cta.supported_hdmi_vic_vsb_codes = 0;
+		cta.preparsed_hdmi_vic_vsb_codes = 0;
+		cta.hdmi_vic_codes = 0;
 		memset(cta.vics, 0, sizeof(cta.vics));
 		memset(cta.preparsed_has_vic, 0, sizeof(cta.preparsed_has_vic));
 		memset(&cta.preparsed_first_vfd, 0, sizeof(cta.preparsed_first_vfd));
@@ -344,8 +345,8 @@ struct edid_state {
 		unsigned block_number;
 		bool has_svrs;
 		bool first_svd;
-		unsigned supported_hdmi_vic_codes;
-		unsigned supported_hdmi_vic_vsb_codes;
+		unsigned preparsed_hdmi_vic_vsb_codes;
+		unsigned hdmi_vic_codes;
 		unsigned short vics[256][2];
 		bool preparsed_has_vic[2][256];
 		std::vector<unsigned char> preparsed_svds[2];

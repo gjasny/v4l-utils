@@ -612,20 +612,6 @@ void edid_state::cta_svd(const unsigned char *x, unsigned n, bool for_ycbcr420)
 
 		t = find_vic_id(vic);
 		if (t) {
-			switch (vic) {
-			case 95:
-				cta.supported_hdmi_vic_vsb_codes |= 1 << 0;
-				break;
-			case 94:
-				cta.supported_hdmi_vic_vsb_codes |= 1 << 1;
-				break;
-			case 93:
-				cta.supported_hdmi_vic_vsb_codes |= 1 << 2;
-				break;
-			case 98:
-				cta.supported_hdmi_vic_vsb_codes |= 1 << 3;
-				break;
-			}
 			bool first_svd = cta.first_svd && !for_ycbcr420;
 
 			char type[16];
@@ -1128,13 +1114,14 @@ void edid_state::cta_hdmi_block(const unsigned char *x, unsigned length)
 		unsigned i;
 
 		printf("      HDMI VICs:\n");
+		cta.hdmi_vic_codes = 0;
 		for (i = 0; i < len_vic; i++) {
 			unsigned char vic = x[b + i];
 			const struct timings *t;
 
 			if (vic && vic <= ARRAY_SIZE(edid_hdmi_mode_map)) {
 				std::string suffix = "HDMI VIC " + std::to_string(vic);
-				cta.supported_hdmi_vic_codes |= 1 << (vic - 1);
+				cta.hdmi_vic_codes |= 1 << (vic - 1);
 				t = find_vic_id(edid_hdmi_mode_map[vic - 1]);
 				print_timings("        ", t, suffix.c_str());
 			} else {
@@ -1144,6 +1131,9 @@ void edid_state::cta_hdmi_block(const unsigned char *x, unsigned length)
 		}
 
 		b += len_vic;
+
+		if ((cta.preparsed_hdmi_vic_vsb_codes & cta.hdmi_vic_codes) != cta.hdmi_vic_codes)
+			fail("HDMI VIC Codes must have their CTA-861 VIC equivalents in the VSB.\n");
 	}
 
 	if (!len_3d)
@@ -1345,8 +1335,13 @@ void edid_state::cta_hf_scdb(const unsigned char *x, unsigned length)
 		// So reset this field to 0 to skip any clock rate checks.
 		cta.hdmi_max_rate = 0;
 	}
-	if (x[3] & 0x08)
+	if (x[3] & 0x08) {
 		printf("    Supports UHD VIC\n");
+		if (!(cta.preparsed_hdmi_vic_vsb_codes & cta.hdmi_vic_codes))
+			fail("UHD VIC bit is 1, but no related VIC codes are present.\n");
+	} else if (cta.preparsed_hdmi_vic_vsb_codes & cta.hdmi_vic_codes) {
+		fail("HDMI VIC and related CTA VIC codes are present, but the UHD VIC bit is 0.\n");
+	}
 	if (x[3] & 0x04)
 		printf("    Supports 16-bits/component Deep Color 4:2:0 Pixel Encoding\n");
 	if (x[3] & 0x02)
@@ -2951,11 +2946,28 @@ void edid_state::preparse_cta_block(unsigned char *x)
 				cta.preparsed_svds[for_ycbcr420].push_back(vic);
 				cta.preparsed_has_vic[for_ycbcr420][vic] = true;
 
+				if (for_ycbcr420)
+					continue;
+
 				const struct timings *t = find_vic_id(vic);
 
-				if (!for_ycbcr420 && t &&
-				    t->pixclk_khz > cta.preparsed_max_vic_pixclk_khz)
+				if (t && t->pixclk_khz > cta.preparsed_max_vic_pixclk_khz)
 					cta.preparsed_max_vic_pixclk_khz = t->pixclk_khz;
+
+				switch (vic) {
+				case 95:
+					cta.preparsed_hdmi_vic_vsb_codes |= 1 << 0;
+					break;
+				case 94:
+					cta.preparsed_hdmi_vic_vsb_codes |= 1 << 1;
+					break;
+				case 93:
+					cta.preparsed_hdmi_vic_vsb_codes |= 1 << 2;
+					break;
+				case 98:
+					cta.preparsed_hdmi_vic_vsb_codes |= 1 << 3;
+					break;
+				}
 			}
 			break;
 		}
@@ -3096,9 +3108,6 @@ void edid_state::parse_cta_block(const unsigned char *x)
 	if (!cta.has_vic_1 && !base.has_640x480p60_est_timing)
 		fail("Required 640x480p60 timings are missing in the established timings"
 		     " and the SVD list (VIC 1).\n");
-	if ((cta.supported_hdmi_vic_vsb_codes & cta.supported_hdmi_vic_codes) !=
-	    cta.supported_hdmi_vic_codes)
-		fail("HDMI VIC Codes must have their CTA-861 VIC equivalents in the VSB.\n");
 	if (!cta.has_vcdb)
 		fail("Missing VCDB, needed for Set Selectable RGB Quantization to avoid interop issues.\n");
 	if (!base.uses_srgb && !cta.has_cdb)
