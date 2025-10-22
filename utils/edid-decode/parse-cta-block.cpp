@@ -472,6 +472,8 @@ void edid_state::cta_audio_block(const unsigned char *x, unsigned length)
 		fail("Broken CTA-861 audio block length %d.\n", length);
 		return;
 	}
+	if (!length)
+		fail("This Data Block is empty.\n");
 
 	for (i = 0; i < length; i += 3) {
 		format = (x[i] & 0x78) >> 3;
@@ -1846,7 +1848,7 @@ const char *cta_speaker_map[] = {
 
 void edid_state::cta_sadb(const unsigned char *x, unsigned length)
 {
-	unsigned sad_deprecated = 0x7f000;
+	unsigned sad_valid = 0x3f;
 	unsigned sad;
 	unsigned i;
 
@@ -1858,13 +1860,13 @@ void edid_state::cta_sadb(const unsigned char *x, unsigned length)
 	sad = ((x[2] << 16) | (x[1] << 8) | x[0]);
 
 	for (i = 0; cta_speaker_map[i]; i++) {
-		bool deprecated = sad_deprecated & (1 << i);
+		bool valid = sad_valid & (1 << i);
 
 		if ((sad >> i) & 1)
 			printf("    %s%s\n", cta_speaker_map[i],
-			       deprecated ? " (Deprecated, use the RCDB)" : "");
+			       valid ? "" : " (Deprecated, use the RCDB)");
 	}
-	if (sad & 0xff040)
+	if (sad & ~sad_valid)
 		warn("Specifies deprecated speakers.\n");
 }
 

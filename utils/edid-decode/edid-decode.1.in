@@ -137,9 +137,7 @@ HDCP 1.4: High-bandwidth Digital Content Protection System, Revision 1.4
 .TP
 HDCP 2.3: High-bandwidth Digital Content Protection System, Mapping HDCP to HDMI, Revision 2.3
 .TP
-CTA-861-I: A DTV Profile for Uncompressed High Speed Digital Interfaces
-.TP
-CTA-861.7: Improvements to CTA-861-I
+CTA-861-J: A DTV Profile for Uncompressed High Speed Digital Interfaces
 .TP
 SPWG Notebook Panel Specification, Version 3.5
 .TP
