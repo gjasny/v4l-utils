@@ -122,7 +122,7 @@ static int read_edid_block(int adapter_fd, __u8 *edid,
 	};
 
 	if (segment) {
-		struct i2c_msg msgs[2] = { seg_message, read_message };
+		struct i2c_msg msgs[3] = { seg_message, write_message, read_message };
 
 		data.msgs = msgs;
 		data.nmsgs = ARRAY_SIZE(msgs);
