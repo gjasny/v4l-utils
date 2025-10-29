@@ -321,6 +321,9 @@ int testQueryExtControls(struct node *node)
 	if (user_controls != user_controls_check)
 		return fail("expected %d user controls, got %d\n",
 			user_controls_check, user_controls);
+	/* UVC doesn't support V4L2_CID_PRIVATE_BASE */
+	if (is_uvcvideo)
+		priv_user_controls_check = 0;
 	if (priv_user_controls != priv_user_controls_check)
 		return fail("expected %d private controls, got %d\n",
 			priv_user_controls_check, priv_user_controls);
