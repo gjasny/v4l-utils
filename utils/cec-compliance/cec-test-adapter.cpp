@@ -1111,13 +1111,8 @@ static void print_sfts(unsigned sft[12], const char *descr)
 // actually tests a lot more: it also checks Signal Free Time behavior
 // and if the speed of the CEC bus is as expected.
 
-// Some defines dealing with SFTs (from include/media/cec.h):
-// Correct Signal Free times are:
-#define CEC_SIGNAL_FREE_TIME_RETRY		3
-#define CEC_SIGNAL_FREE_TIME_NEW_INITIATOR	5
-#define CEC_SIGNAL_FREE_TIME_NEXT_XFER		7
-// but for measuring we support up to 11:
-#define CEC_SIGNAL_FREE_TIME_MAX		11
+// For measuring SFT we support up to 11:
+#define CEC_SIGNAL_FREE_TIME_MAX	11
 
 // Two defines (copied from include/media/cec.h) that give the maximum
 // number of CEC messages that can be queued up in the transmit and

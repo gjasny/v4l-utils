@@ -10,6 +10,11 @@
 
 #include <linux/cec.h>
 
+// Some defines dealing with SFTs (from include/media/cec.h):
+#define CEC_SIGNAL_FREE_TIME_RETRY		3
+#define CEC_SIGNAL_FREE_TIME_NEW_INITIATOR	5
+#define CEC_SIGNAL_FREE_TIME_NEXT_XFER		7
+
 #define cec_phys_addr_exp(pa) \
         ((pa) >> 12), ((pa) >> 8) & 0xf, ((pa) >> 4) & 0xf, (pa) & 0xf
 

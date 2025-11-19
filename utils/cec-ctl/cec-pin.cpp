@@ -93,6 +93,12 @@ static bool bcast;
 static bool cdc;
 static struct cec_msg msg;
 
+static double cur_sft;
+static bool cur_retry;
+static unsigned prev_header;
+static bool prev_failed;
+static bool new_initiator;
+
 static void cec_pin_rx_start_bit_was_high(bool is_high, __u64 usecs, __u64 usecs_min, bool show)
 {
 	bool period_too_long = low_usecs + usecs > CEC_TIM_START_BIT_TOTAL_LONG;
@@ -181,6 +187,13 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 
 		bool ack = !(bcast ^ bit);
 
+		if (byte_cnt == 0) {
+			new_initiator = ((byte >> 4) != (prev_header >> 4));
+			cur_retry = prev_failed && !new_initiator;
+			prev_failed = true;
+			prev_header = byte;
+		}
+
 		if (msg.len < CEC_MAX_MSG_SIZE)
 			msg.msg[msg.len++] = byte;
 		if (show)
@@ -198,6 +211,17 @@ static void cec_pin_rx_data_bit_was_high(bool is_high, __u64 ev_ts,
 		byte_cnt++;
 		if (byte_cnt >= CEC_MAX_MSG_SIZE)
 			eom_reached = true;
+		if (eom && msg.len) {
+			unsigned sft = new_initiator ? CEC_SIGNAL_FREE_TIME_NEW_INITIATOR :
+				CEC_SIGNAL_FREE_TIME_NEXT_XFER;
+
+			if (cur_retry)
+				sft = CEC_SIGNAL_FREE_TIME_RETRY;
+			if (cur_sft + 0.5 < sft)
+				printf("%s: warn: signal free time too short (%.1f instead of %d)\n",
+				       ts2s(ts).c_str(), cur_sft, sft);
+			prev_failed = !ack;
+		}
 		if (show && eom && msg.len > 2) {
 			msg.rx_status = CEC_RX_STATUS_OK;
 			msg.rx_ts = ev_ts;
@@ -333,6 +357,11 @@ void log_event_pin(bool is_high, __u64 ev_ts, bool show)
 	ts = ev_ts / 1000000000.0;
 	if (last_change_ts == 0) {
 		last_ts = last_change_ts = last_1_to_0_ts = ev_ts - CEC_TIM_DATA_BIT_TOTAL * 16000;
+		cur_sft = 10;
+		cur_retry = false;
+		prev_header = 0;
+		prev_failed = false;
+		new_initiator = true;
 		if (is_high)
 			return;
 	}
@@ -356,6 +385,7 @@ void log_event_pin(bool is_high, __u64 ev_ts, bool show)
 					    delta, bit_periods);
 			else
 				verb_printf("1 -> 0 (was 1 for %.2f ms)\n", delta);
+			cur_sft = bit_periods;
 		} else if (was_high && (ev_ts - last_1_to_0_ts) / 1000000 <= 10) {
 			verb_printf("1 -> 0 (was 1 for %.2f ms, period of previous %spulse %.2f ms)\n",
 				    delta, state == CEC_ST_RECEIVE_START_BIT ? "start " : "",
