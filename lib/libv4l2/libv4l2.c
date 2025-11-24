@@ -176,7 +176,7 @@ static int v4l2_map_buffers(int index)
 {
 	int result = 0;
 	unsigned int i;
-	struct v4l2_buffer buf;
+	struct v4l2_buffer buf = {};
 
 	for (i = 0; i < devices[index].no_frames; i++) {
 		if (devices[index].frame_pointers[i] != MAP_FAILED)
@@ -568,7 +568,7 @@ static int v4l2_buffers_mapped(int index)
 
 	if (!v4l2_needs_conversion(index)) {
 		/* Normal (no conversion) mode */
-		struct v4l2_buffer buf;
+		struct v4l2_buffer buf = {};
 
 		for (i = 0; i < devices[index].no_frames; i++) {
 			buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
