@@ -6,5 +6,5 @@
 #
 # Use '-idirafter': Don't interfere with include mechanics except where the
 # build would have failed anyways.
-"$@" -v -E - </dev/null 2>&1 \
+LC_ALL=C "$@" -v -E - </dev/null 2>&1 \
 	| sed -n '/<...> search starts here:/,/End of search list./{ s| \(/.*\)|-idirafter \1|p }'
