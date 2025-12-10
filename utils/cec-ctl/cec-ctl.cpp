@@ -2057,8 +2057,14 @@ static void stress_test_random_standby_wakeup_cycle(const struct node &node, uns
 		fflush(stdout);
 		usleep(usecs1);
 		printf("%s: ", ts2s(current_ts()).c_str());
-		printf("Transmit Image View On from LA %s (iteration %u): ", cec_la2s(wakeup_la), iter);
 
+		doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+		if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+			wakeup_la = laddrs.log_addr[0];
+		else
+			wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
+
+		printf("Transmit Image View On from LA %s (iteration %u): ", cec_la2s(wakeup_la), iter);
 		cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
 		cec_msg_image_view_on(&msg);
 		for (int i = 0; i < 10; i++) {
@@ -2097,6 +2103,12 @@ static void stress_test_random_standby_wakeup_cycle(const struct node &node, uns
 				printf("%s\n", strerror(ret));
 			}
 			printf("%s: ", ts2s(current_ts()).c_str());
+
+			doioctl(&node, CEC_ADAP_G_LOG_ADDRS, &laddrs);
+			if (laddrs.log_addr[0] != CEC_LOG_ADDR_INVALID)
+				wakeup_la = laddrs.log_addr[0];
+			else
+				wakeup_la = CEC_LOG_ADDR_UNREGISTERED;
 			printf("Retry transmit Image View On from LA %s: ", cec_la2s(wakeup_la));
 
 			cec_msg_init(&msg, wakeup_la, CEC_LOG_ADDR_TV);
