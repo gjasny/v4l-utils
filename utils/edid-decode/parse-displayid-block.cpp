@@ -1654,7 +1654,7 @@ void edid_state::parse_displayid_brightness_lum_range(const unsigned char *x)
 	// TODO: test that this is > Native Minimum Luminance from Display Params DB
 	// and <= Native Maximum Luminance (Full Coverage) in same DB.
 	printf("    Maximum Boost SDR Luminance: %s\n",
-	       ieee7542d(x[5] | (x[6] << 8)).c_str());
+	       ieee7542d(x[7] | (x[8] << 8)).c_str());
 	// TODO: test that this is >= the previous value
 }
 
