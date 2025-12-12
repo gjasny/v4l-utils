@@ -1378,7 +1378,7 @@ static int testLostMsgs(struct node *node)
 		return fail("There were %d messages in the receive queue for %d transmits\n",
 			    pending_msgs, xfer_cnt);
 	if (warn_msg)
-		warn("There were %d CEC_GET_VERSION transmits but only %d CEC_VERSION receives\n",
+		warn("There were %d GET_CEC_VERSION transmits but only %d CEC_VERSION receives\n",
 		     xfer_cnt, pending_rx_cec_version_msgs);
 
 	// Final check if everything else is OK: check that only the oldest
