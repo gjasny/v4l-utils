@@ -1000,7 +1000,7 @@ void common_process_controls(cv4l_fd &fd)
 	find_controls(fd);
 	for (const auto &get_ctrl : get_ctrls) {
 		std::string s = get_ctrl;
-		if (isdigit(s[0])) {
+		if (is_valid_number(s)) {
 			__u32 id = strtoul(s.c_str(), nullptr, 0);
 			if (ctrl_id2str.find(id) != ctrl_id2str.end())
 				s = ctrl_id2str[id];
@@ -1012,7 +1012,7 @@ void common_process_controls(cv4l_fd &fd)
 	}
 	for (const auto &set_ctrl : set_ctrls) {
 		std::string s = set_ctrl.first;
-		if (isdigit(s[0])) {
+		if (is_valid_number(s)) {
 			__u32 id = strtoul(s.c_str(), nullptr, 0);
 			if (ctrl_id2str.find(id) != ctrl_id2str.end())
 				s = ctrl_id2str[id];
@@ -1212,7 +1212,7 @@ void common_set(cv4l_fd &_fd)
 		memset(&ctrls, 0, sizeof(ctrls));
 		for (const auto &set_ctrl : set_ctrls) {
 			std::string s = set_ctrl.first;
-			if (isdigit(s[0])) {
+			if (is_valid_number(s)) {
 				__u32 id = strtoul(s.c_str(), nullptr, 0);
 				s = ctrl_id2str[id];
 			}
@@ -1359,7 +1359,7 @@ void common_get(cv4l_fd &_fd)
 		memset(&ctrls, 0, sizeof(ctrls));
 		for (const auto &get_ctrl : get_ctrls) {
 			std::string s = get_ctrl;
-			if (isdigit(s[0])) {
+			if (is_valid_number(s)) {
 				__u32 id = strtoul(s.c_str(), nullptr, 0);
 				s = ctrl_id2str[id];
 			}

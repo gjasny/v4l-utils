@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <linux/videodev2.h>
 #include <linux/v4l2-subdev.h>
+#include <stdlib.h>
 #include <v4l-getsubopt.h>
 
 #include <v4l2-info.h>
@@ -329,6 +330,14 @@ static inline bool subscribe_event(cv4l_fd &fd, __u32 type)
 
 	cv4l_disable_trace dt(fd);
 	return !fd.subscribe_event(sub);
+}
+
+static inline bool is_valid_number(const std::string &str)
+{
+	char *endptr;
+	strtoul(str.c_str(), &endptr, 0);
+
+	return *endptr == '\0';
 }
 
 #define doioctl(n, r, p) doioctl_name(n, r, p, #r)
