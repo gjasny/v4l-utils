@@ -5,10 +5,14 @@
 	#ifdef _LIBCPP_VERSION
 		#define fallthrough _LIBCPP_FALLTHROUGH()
 	#else
-		#ifdef __clang__
-			#define fallthrough [[clang::fallthrough]]
+		#if __cplusplus >= 201703L
+			#define fallthrough [[fallthrough]]
 		#else
-			#define fallthrough [[gnu::fallthrough]]
-		#endif // __clang__
+			#ifdef __clang__
+				#define fallthrough [[clang::fallthrough]]
+			#else
+				#define fallthrough [[gnu::fallthrough]]
+			#endif // __clang__
+		#endif // __cplusplus >= 201703L
 	#endif // _LIBCPP_VERSION
 #endif // __cplusplus

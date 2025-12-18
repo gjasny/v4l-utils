@@ -8,8 +8,9 @@
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include "compiler.h"
+
 #include "v4l2-tpg-colors.h"
+#include "compiler.h"
 
 /* Must remain in sync with enum tpg_pattern */
 const char * const tpg_pattern_strings[] = {

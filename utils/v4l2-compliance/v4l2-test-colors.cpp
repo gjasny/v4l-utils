@@ -20,8 +20,9 @@
 
 #include <sys/types.h>
 
-#include "compiler.h"
+
 #include "v4l2-compliance.h"
+#include "compiler.h"
 
 static void setupPlanes(const cv4l_fmt &fmt, __u8 *planes[3])
 {

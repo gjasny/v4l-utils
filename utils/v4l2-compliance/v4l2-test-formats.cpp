@@ -24,8 +24,8 @@
 
 #include <sys/types.h>
 
-#include "compiler.h"
 #include "v4l2-compliance.h"
+#include "compiler.h"
 
 static constexpr __u32 buftype2cap[] = {
 	0,

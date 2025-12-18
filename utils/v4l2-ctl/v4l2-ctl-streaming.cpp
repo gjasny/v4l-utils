@@ -5,7 +5,6 @@
 
 #include <linux/media.h>
 
-#include "compiler.h"
 #include "v4l2-ctl.h"
 #include "v4l-stream.h"
 #include <media-info.h>
@@ -13,6 +12,7 @@
 extern "C" {
 #include "v4l2-tpg.h"
 }
+#include "compiler.h"
 
 static unsigned stream_count;
 static unsigned stream_skip;

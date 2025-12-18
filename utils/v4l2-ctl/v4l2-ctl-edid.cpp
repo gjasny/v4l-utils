@@ -3,8 +3,8 @@
 
 #include <linux/v4l2-subdev.h>
 
-#include "compiler.h"
 #include "v4l2-ctl.h"
+#include "compiler.h"
 
 /*
  * The 24-bit IEEE Registration Identifier for the HDMI-LLC Vendor

@@ -26,8 +26,8 @@
 #include <sys/wait.h>
 #include <sys/epoll.h>
 
-#include "compiler.h"
 #include "v4l2-compliance.h"
+#include "compiler.h"
 
 static int checkQCtrl(struct node *node, struct test_query_ext_ctrl &qctrl)
 {

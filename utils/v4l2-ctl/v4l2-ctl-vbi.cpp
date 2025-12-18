@@ -1,7 +1,7 @@
 #include <cstring>
 
-#include "compiler.h"
 #include "v4l2-ctl.h"
+#include "compiler.h"
 
 static struct v4l2_format sliced_fmt;	  /* set_format/get_format for sliced VBI */
 static struct v4l2_format sliced_fmt_out; /* set_format/get_format for sliced VBI output */
