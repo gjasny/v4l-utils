@@ -76,7 +76,7 @@ int dvb_desc_t2_delivery_init(struct dvb_v5_fe_parms *parms,
 		p += sizeof(uint16_t);
 
 		if (d->tfs_flag) {
-			d->cell[d->num_cell].num_freqs = *p;
+			d->cell[d->num_cell].num_freqs = *p / sizeof(*d->centre_frequency);
 			p++;
 		}
 		else
