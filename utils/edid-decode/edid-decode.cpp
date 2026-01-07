@@ -878,10 +878,10 @@ void edid_state::data_block_oui(std::string block_name, const unsigned char *x,
 				warn("Expected PNP ID but found OUI.\n");
 			if (matched_reverse)
 				fail("Endian-ness (%s) of OUI is different than expected (%s).\n", big_endian ? "be" : "le", big_endian ? "le" : "be");
+		} else if (!do_ascii && !oui) {
+			warn("All zeroes OUI.\n");
 		} else if (!do_ascii && valid_ascii) {
 			warn("Unknown OUI %s (possible PNP %s).\n", buf.c_str(), ascii);
-		} else if (!do_ascii) {
-			warn("Unknown OUI %s.\n", buf.c_str());
 		}
 	}
 }

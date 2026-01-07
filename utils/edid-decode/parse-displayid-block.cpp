@@ -1186,6 +1186,8 @@ static std::string ieee7542d(unsigned short fp)
 void edid_state::parse_displayid_parameters_v2(const unsigned char *x,
 					       unsigned block_rev)
 {
+	static const char *nat_col_depth[] = {"Not defined", "6", "8", "10", "12", "16", NULL, NULL};
+
 	check_displayid_datablock_revision(x[1], 0, (x[1] & 7) == 1);
 	if (!check_displayid_datablock_length(x, 29, 29))
 		return;
@@ -1262,8 +1264,8 @@ void edid_state::parse_displayid_parameters_v2(const unsigned char *x,
 	printf("    Native Color Depth: ");
 	if (!(x[0x1e] & 0x07))
 		printf("Not defined\n");
-	else if (bpc444[x[0x1e] & 0x07])
-		printf("%s bpc\n", bpc444[x[0x1e] & 0x07]);
+	else if (nat_col_depth[x[0x1e] & 0x07])
+		printf("%s bpc\n", nat_col_depth[x[0x1e] & 0x07]);
 	else
 		printf("Reserved\n");
 	printf("    Display Device Technology: ");
