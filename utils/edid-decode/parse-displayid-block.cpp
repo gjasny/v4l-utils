@@ -107,6 +107,14 @@ void edid_state::parse_displayid_product_id(const unsigned char *x)
 		buf[x[14]] = 0;
 		printf("    Product ID: %s\n", buf);
 	}
+
+	unsigned len = x[2];
+	if (len < 12)
+		fail("Product Identification payload length (%u) is less than minimum required (12 bytes).\n", len);
+	if (week != 0 && week != 0xff && (week < 1 || week > 52))
+		fail("Week of Manufacture/Model Tag (%u) is out of valid range (0, 1-52, or 0xFF).\n", week);
+	if (week == 0xff && x[13] < 0x0f)
+		fail("Model Year specified (Week=0xFF) but Year value (%u) is in RESERVED range (0x00-0x0E).\n", x[13]);
 }
 
 // tag 0x01
@@ -387,6 +395,11 @@ void edid_state::parse_displayid_type_1_7_timing(const unsigned char *x,
 		if (match_timings(t, cvt_t))
 			fail("This T7VTDB can be represented as a T10VTDB.\n");
 	}
+
+	if (t.pixclk_khz > 16777216)
+		fail("Pixel Clock (%.3f MP/s) exceeds maximum (16,777.216 MP/s).\n", t.pixclk_khz / 1000.0);
+	if (t.hact > 65536 || t.vact > 65536)
+		fail("Active image dimensions exceed maximum (65536): %ux%u.\n", t.hact, t.vact);
 }
 
 // tag 0x04
@@ -1236,31 +1249,56 @@ void edid_state::parse_displayid_parameters_v2(const unsigned char *x,
 	switch ((v >> 3) & 0x03) {
 	case 0x00: printf("Minimum guaranteed value\n"); break;
 	case 0x01: printf("Guidance for the Source device\n"); break;
-	default: printf("Reserved\n"); break;
+	default:
+		printf("Reserved\n");
+		fail("Luminance Information field uses reserved value (%u).\n", (v >> 3) & 0x03);
+		break;
 	}
 	printf("    Color Information: CIE %u\n",
 	       (v & 0x40) ? 1976 : 1931);
 	printf("    Audio Speaker Information: %sintegrated\n",
 	       (v & 0x80) ? "not " : "");
+
+	double prim1_x = fp2d(x[0x0c] | ((x[0x0d] & 0x0f) << 8));
+	double prim1_y = fp2d(((x[0x0d] & 0xf0) >> 4) | (x[0x0e] << 4));
+	double prim2_x = fp2d(x[0x0f] | ((x[0x10] & 0x0f) << 8));
+	double prim2_y = fp2d(((x[0x10] & 0xf0) >> 4) | (x[0x11] << 4));
+	double prim3_x = fp2d(x[0x12] | ((x[0x13] & 0x0f) << 8));
+	double prim3_y = fp2d(((x[0x13] & 0xf0) >> 4) | (x[0x14] << 4));
+	double white_x = fp2d(x[0x15] | ((x[0x16] & 0x0f) << 8));
+	double white_y = fp2d(((x[0x16] & 0xf0) >> 4) | (x[0x17] << 4));
+
 	printf("    Native Color Chromaticity:\n");
-	printf("      Primary #1:  (%.6f, %.6f)\n",
-	       fp2d(x[0x0c] | ((x[0x0d] & 0x0f) << 8)),
-	       fp2d(((x[0x0d] & 0xf0) >> 4) | (x[0x0e] << 4)));
-	printf("      Primary #2:  (%.6f, %.6f)\n",
-	       fp2d(x[0x0f] | ((x[0x10] & 0x0f) << 8)),
-	       fp2d(((x[0x10] & 0xf0) >> 4) | (x[0x11] << 4)));
-	printf("      Primary #3:  (%.6f, %.6f)\n",
-	       fp2d(x[0x12] | ((x[0x13] & 0x0f) << 8)),
-	       fp2d(((x[0x13] & 0xf0) >> 4) | (x[0x14] << 4)));
-	printf("      White Point: (%.6f, %.6f)\n",
-	       fp2d(x[0x15] | ((x[0x16] & 0x0f) << 8)),
-	       fp2d(((x[0x16] & 0xf0) >> 4) | (x[0x17] << 4)));
+	printf("      Primary #1:  (%.6f, %.6f)\n", prim1_x, prim1_y);
+	printf("      Primary #2:  (%.6f, %.6f)\n", prim2_x, prim2_y);
+	printf("      Primary #3:  (%.6f, %.6f)\n", prim3_x, prim3_y);
+	printf("      White Point: (%.6f, %.6f)\n", white_x, white_y);
+
+	if (prim1_x < 0.0 || prim1_x > 1.0 || prim1_y < 0.0 || prim1_y > 1.0 ||
+	    prim2_x < 0.0 || prim2_x > 1.0 || prim2_y < 0.0 || prim2_y > 1.0 ||
+	    prim3_x < 0.0 || prim3_x > 1.0 || prim3_y < 0.0 || prim3_y > 1.0 ||
+	    white_x < 0.0 || white_x > 1.0 || white_y < 0.0 || white_y > 1.0) {
+		fail("Chromaticity coordinates are out of valid range (0.0-1.0).\n");
+	}
+
 	printf("    Native Maximum Luminance (Full Coverage): %s\n",
 	       ieee7542d(x[0x18] | (x[0x19] << 8)).c_str());
 	printf("    Native Maximum Luminance (10%% Rectangular Coverage): %s\n",
 	       ieee7542d(x[0x1a] | (x[0x1b] << 8)).c_str());
 	printf("    Native Minimum Luminance: %s\n",
 	       ieee7542d(x[0x1c] | (x[0x1d] << 8)).c_str());
+
+	if ((x[0x18] | (x[0x19] << 8)) == 0x8000) {
+		if ((v >> 3) & 0x03) {
+			fail("Luminance Information field should be 0 when Maximum Luminance (Full Coverage) is -0.\n");
+		}
+	}
+	if ((x[0x1a] | (x[0x1b] << 8)) == 0x8000) {
+		if ((v >> 3) & 0x03) {
+			fail("Luminance Information field should be 0 when Maximum Luminance (10%%) is -0.\n");
+		}
+	}
+
 	printf("    Native Color Depth: ");
 	if (!(x[0x1e] & 0x07))
 		printf("Not defined\n");
@@ -1281,6 +1319,16 @@ void edid_state::parse_displayid_parameters_v2(const unsigned char *x,
 	if (x[0x1f] != 0xff)
 		printf("    Native Gamma EOTF: %.2f\n",
 		       (100 + x[0x1f]) / 100.0);
+
+	if ((w == 0) != (h == 0))
+		fail("Invalid Native Pixel Format: one dimension is zero while the other is not (%ux%u).\n", w, h);
+	if (w > 65535 || h > 65535)
+		fail("Native Pixel Format exceeds maximum value (%ux%u > 65535x65535).\n", w, h);
+	if (x[0x1f] != 0xff) {
+		double gamma = (100 + x[0x1f]) / 100.0;
+		if (gamma < 1.00 || gamma > 3.754)
+			fail("Native Gamma EOTF (%.2f) is out of valid range (1.00-3.754).\n", gamma);
+	}
 }
 
 // tag 0x24
@@ -1323,6 +1371,11 @@ void edid_state::parse_displayid_type_9_timing(const unsigned char *x)
 	edid_cvt_mode(1 + x[5], t);
 
 	print_timings("    ", &t, "CVT", s.c_str());
+
+	if (t.hact > 65536 || t.vact > 65536)
+		fail("Type IX active image dimensions exceed maximum (65536): %ux%u.\n", t.hact, t.vact);
+	if (1 + x[5] > 256)
+		fail("Type IX refresh rate (%u Hz) exceeds maximum (256 Hz).\n", 1 + x[5]);
 }
 
 // tag 0x25
@@ -1334,17 +1387,44 @@ void edid_state::parse_displayid_dynamic_video_timings_range_limits(const unsign
 	if (!check_displayid_datablock_length(x, 9, 9))
 		return;
 
-	printf("    Minimum Pixel Clock: %u kHz\n",
-	       1 + (x[3] | (x[4] << 8) | (x[5] << 16)));
-	printf("    Maximum Pixel Clock: %u kHz\n",
-	       1 + (x[6] | (x[7] << 8) | (x[8] << 16)));
-	printf("    Minimum Vertical Refresh Rate: %u Hz\n", x[9]);
-	if (x[1] & 7)
-		printf("    Maximum Vertical Refresh Rate: %u Hz\n", x[10] + ((x[11] & 3) << 8));
-	else
-		printf("    Maximum Vertical Refresh Rate: %u Hz\n", x[10]);
+	unsigned min_pixclk = 1 + (x[3] | (x[4] << 8) | (x[5] << 16));
+	unsigned max_pixclk = 1 + (x[6] | (x[7] << 8) | (x[8] << 16));
+	unsigned min_refresh = x[9];
+	unsigned max_refresh;
+
+	printf("    Minimum Pixel Clock: %u kHz\n", min_pixclk);
+	printf("    Maximum Pixel Clock: %u kHz\n", max_pixclk);
+	printf("    Minimum Vertical Refresh Rate: %u Hz\n", min_refresh);
+
+	if (x[1] & 7) {
+		max_refresh = x[10] + ((x[11] & 3) << 8);
+		printf("    Maximum Vertical Refresh Rate: %u Hz\n", max_refresh);
+		if (max_refresh > 1023) {
+			fail("Maximum Vertical Refresh Rate (%u Hz) exceeds maximum (1023 Hz).\n", max_refresh);
+		}
+	} else {
+		max_refresh = x[10];
+		printf("    Maximum Vertical Refresh Rate: %u Hz\n", max_refresh);
+		if (max_refresh > 255) {
+			fail("Maximum Vertical Refresh Rate (%u Hz) exceeds maximum (255 Hz for Revision 0).\n", max_refresh);
+		}
+	}
+
 	printf("    Seamless Dynamic Video Timing Support: %s\n",
 	       (x[11] & 0x80) ? "Yes" : "No");
+
+	if (min_pixclk > max_pixclk) {
+		fail("Minimum Pixel Clock (%u kHz) is greater than Maximum Pixel Clock (%u kHz).\n",
+		     min_pixclk, max_pixclk);
+	}
+	if (max_pixclk > 16777216) {
+		fail("Maximum Pixel Clock (%u kHz = %.3f MP/s) exceeds maximum (16,777.216 MP/s).\n",
+		     max_pixclk, max_pixclk / 1000.0);
+	}
+	if (min_refresh > max_refresh) {
+		fail("Minimum Vertical Refresh Rate (%u Hz) is greater than Maximum Vertical Refresh Rate (%u Hz).\n",
+		     min_refresh, max_refresh);
+	}
 }
 
 // tag 0x26
