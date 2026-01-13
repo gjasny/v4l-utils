@@ -1377,18 +1377,16 @@ void edid_state::cta_hf_scdb(const unsigned char *x, unsigned length)
 		return;
 
 	v = x[5] & 0x3f;
-	if (v) {
-		printf("    VRRmin: %u Hz\n", v);
-		if (v > 48)
-			fail("VRRmin > 48.\n");
-	}
+	printf("    VRRmin: %u Hz\n", v);
+	if (v > 48)
+		fail("VRRmin > 48.\n");
 	v = (x[5] & 0xc0) << 2 | x[6];
+	printf("    VRRmax: %u Hz\n", v);
 	if (v) {
-		printf("    VRRmax: %u Hz\n", v);
 		if (!(x[5] & 0x3f))
 			fail("VRRmin == 0, but VRRmax isn't.\n");
 		else if (v < 100)
-			fail("VRRmax < 100.\n");
+			fail("0 < VRRmax < 100.\n");
 	}
 
 	if (length <= 7)
