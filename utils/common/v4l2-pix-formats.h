@@ -200,6 +200,8 @@
 	case V4L2_META_FMT_RK_ISP1_EXT_PARAMS: return "Rockchip ISP1 Ext 3A Params";
 	case V4L2_META_FMT_C3ISP_PARAMS: return "Amlogic C3 ISP Parameters";
 	case V4L2_META_FMT_C3ISP_STATS: return "Amlogic C3 ISP Statistics";
+	case V4L2_META_FMT_MALI_C55_PARAMS: return "ARM Mali-C55 ISP Parameters";
+	case V4L2_META_FMT_MALI_C55_STATS: return "ARM Mali-C55 ISP 3A Statistics";
 	case V4L2_PIX_FMT_NV12_8L128: return "NV12 (8x128 Linear)";
 	case V4L2_PIX_FMT_NV12M_8L128: return "NV12M (8x128 Linear)";
 	case V4L2_PIX_FMT_NV12_10BE_8L128: return "10-bit NV12 (8x128 Linear, BE)";
@@ -260,6 +262,7 @@
 	case V4L2_PIX_FMT_QC10C: return "QCOM Compressed 10-bit Format";
 	case V4L2_PIX_FMT_AJPG: return "Aspeed JPEG";
 	case V4L2_PIX_FMT_AV1_FRAME: return "AV1 Frame";
+	case V4L2_PIX_FMT_AV1: return "AV1 OBU Stream";
 	case V4L2_PIX_FMT_MT2110T: return "Mediatek 10bit Tile Mode";
 	case V4L2_PIX_FMT_MT2110R: return "Mediatek 10bit Raster Mode";
 	case V4L2_PIX_FMT_HEXTILE: return "Hextile Compressed Format";
