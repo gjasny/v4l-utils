@@ -545,6 +545,7 @@ static void determine_codec_mask(struct node &node)
 			case V4L2_PIX_FMT_VP8:
 			case V4L2_PIX_FMT_VP9:
 			case V4L2_PIX_FMT_HEVC:
+			case V4L2_PIX_FMT_AV1:
 			case V4L2_PIX_FMT_FWHT:
 				mask |= STATEFUL_ENCODER;
 				break;
@@ -585,6 +586,7 @@ static void determine_codec_mask(struct node &node)
 			case V4L2_PIX_FMT_VP8:
 			case V4L2_PIX_FMT_VP9:
 			case V4L2_PIX_FMT_HEVC:
+			case V4L2_PIX_FMT_AV1:
 			case V4L2_PIX_FMT_FWHT:
 				mask |= STATEFUL_DECODER;
 				break;
