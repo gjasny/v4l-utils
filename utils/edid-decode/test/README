@@ -65,6 +65,9 @@ it is useful to add it to the list of test 'EDIDs':
 
 vesa-displayid-fixed-length.test
 
+This EDID contains the DisplayID ARVR_HDM and ARVR_Layer Data Blocks:
+
+test/vesa-displayid-arvr.test
 
 InfoFrame examples can be found in the 'if' directory.
 ELD examples can be found in the 'eld' directory.
