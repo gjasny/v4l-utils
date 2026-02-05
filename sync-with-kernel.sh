@@ -28,6 +28,10 @@ if [ -z "${KERNEL_DIR}" -o \
 	exit 1
 fi
 
+# Update translations
+echo "Updating transations"
+./update_po.sh
+
 cp -a ${KERNEL_DIR}/usr/include/linux/videodev2.h ${TOPSRCDIR}/include/linux
 cp -a ${KERNEL_DIR}/usr/include/linux/fb.h ${TOPSRCDIR}/include/linux
 cp -a ${KERNEL_DIR}/usr/include/linux/vesa.h ${TOPSRCDIR}/include/linux
