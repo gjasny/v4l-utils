@@ -3,11 +3,12 @@
 # This file is distributed under the same license as the v4l-utils package.
 # Ekaterine Papava <papava.e@gtu.ge>, 2025.
 #
+#: utils/keytable/keytable.c:282
 msgid ""
 msgstr ""
 "Project-Id-Version: v4l-utils 1.32.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-10 23:30+0200\n"
+"POT-Creation-Date: 2026-01-05 11:53+0100\n"
 "PO-Revision-Date: 2025-12-10 10:47+0100\n"
 "Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
 "Language-Team: Georgian <(nothing)\n"
@@ -133,20 +134,20 @@ msgid ""
 msgstr ""
 
 #: utils/keytable/keytable.c:276 utils/dvb/dvb-fe-tool.c:69
-#: utils/dvb/dvb-format-convert.c:60 utils/dvb/dvbv5-scan.c:91
-#: utils/dvb/dvbv5-zap.c:133
+#: utils/dvb/dvb-format-convert.c:60 utils/dvb/dvbv5-scan.c:93
+#: utils/dvb/dvbv5-zap.c:137
 msgid "Give this help list"
 msgstr "ამ დახმარების სიის მიღება"
 
 #: utils/keytable/keytable.c:277 utils/dvb/dvb-fe-tool.c:70
-#: utils/dvb/dvb-format-convert.c:61 utils/dvb/dvbv5-scan.c:92
-#: utils/dvb/dvbv5-zap.c:134
+#: utils/dvb/dvb-format-convert.c:61 utils/dvb/dvbv5-scan.c:94
+#: utils/dvb/dvbv5-zap.c:138
 msgid "Give a short usage message"
 msgstr "გამოყენების მოკლე შეტყობინების მიღება"
 
 #: utils/keytable/keytable.c:278 utils/dvb/dvb-fe-tool.c:71
-#: utils/dvb/dvb-format-convert.c:62 utils/dvb/dvbv5-scan.c:93
-#: utils/dvb/dvbv5-zap.c:135
+#: utils/dvb/dvb-format-convert.c:62 utils/dvb/dvbv5-scan.c:95
+#: utils/dvb/dvbv5-zap.c:139
 msgid "Print program version"
 msgstr "პროგრამის ვერსიის დაბეჭდვა"
 
@@ -252,8 +253,8 @@ msgid "parameter %s=%ld\n"
 msgstr "პარამეტრი %s=%ld\n"
 
 #: utils/keytable/keytable.c:702 utils/dvb/dvb-fe-tool.c:159
-#: utils/dvb/dvb-format-convert.c:86 utils/dvb/dvbv5-scan.c:419
-#: utils/dvb/dvbv5-zap.c:723
+#: utils/dvb/dvb-format-convert.c:86 utils/dvb/dvbv5-scan.c:425
+#: utils/dvb/dvbv5-zap.c:731
 #, c-format
 msgid ""
 "\n"
@@ -1434,19 +1435,19 @@ msgstr "წინაბოლოს დაყენება"
 msgid "get frontend"
 msgstr "წინაბოლოს მიღება"
 
-#: utils/dvb/dvb-fe-tool.c:65 utils/dvb/dvbv5-zap.c:130
+#: utils/dvb/dvb-fe-tool.c:65 utils/dvb/dvbv5-zap.c:134
 msgid "SERVER"
 msgstr "SERVER"
 
-#: utils/dvb/dvb-fe-tool.c:65 utils/dvb/dvbv5-zap.c:130
+#: utils/dvb/dvb-fe-tool.c:65 utils/dvb/dvbv5-zap.c:134
 msgid "dvbv5-daemon host IP address"
 msgstr "dvbv5-daemon-ის ჰოსტის IP მისამართი"
 
-#: utils/dvb/dvb-fe-tool.c:66 utils/dvb/dvbv5-zap.c:131
+#: utils/dvb/dvb-fe-tool.c:66 utils/dvb/dvbv5-zap.c:135
 msgid "PORT"
 msgstr "PORT"
 
-#: utils/dvb/dvb-fe-tool.c:66 utils/dvb/dvbv5-zap.c:131
+#: utils/dvb/dvb-fe-tool.c:66 utils/dvb/dvbv5-zap.c:135
 msgid "dvbv5-daemon host tcp port"
 msgstr "dvbv5-daemon ჰოსტის tcp პორტი"
 
@@ -1462,53 +1463,53 @@ msgstr "COUNT"
 msgid "samples to take (default 0 = infinite)"
 msgstr "ასაღები სემპლების რაოდენობა (ნაგულისხმები 0 = უსასრულო)"
 
-#: utils/dvb/dvb-fe-tool.c:105 utils/dvb/dvbv5-scan.c:102
-#: utils/dvb/dvbv5-scan.c:109 utils/dvb/dvbv5-zap.c:143
-#: utils/dvb/dvbv5-zap.c:150
+#: utils/dvb/dvb-fe-tool.c:105 utils/dvb/dvbv5-scan.c:105
+#: utils/dvb/dvbv5-scan.c:112 utils/dvb/dvbv5-zap.c:147
+#: utils/dvb/dvbv5-zap.c:154
 #, c-format
 msgid "ERROR: "
 msgstr "ERROR: "
 
-#: utils/dvb/dvb-fe-tool.c:187 utils/dvb/dvbv5-scan.c:196
+#: utils/dvb/dvb-fe-tool.c:187 utils/dvb/dvbv5-scan.c:199
 msgid "dvb_fe_get_stats failed"
 msgstr "dvb_fe_get_stats-ის სეცდომა"
 
-#: utils/dvb/dvb-fe-tool.c:198 utils/dvb/dvbv5-scan.c:144
-#: utils/dvb/dvbv5-zap.c:440
+#: utils/dvb/dvb-fe-tool.c:198 utils/dvb/dvbv5-scan.c:147
+#: utils/dvb/dvbv5-zap.c:444
 msgid "Quality"
 msgstr "ხარისხი"
 
-#: utils/dvb/dvb-fe-tool.c:201 utils/dvb/dvbv5-scan.c:147
-#: utils/dvb/dvbv5-zap.c:443
+#: utils/dvb/dvb-fe-tool.c:201 utils/dvb/dvbv5-scan.c:150
+#: utils/dvb/dvbv5-zap.c:447
 msgid "Signal"
 msgstr "სიგნალი"
 
-#: utils/dvb/dvb-fe-tool.c:204 utils/dvb/dvbv5-scan.c:150
-#: utils/dvb/dvbv5-zap.c:446
+#: utils/dvb/dvb-fe-tool.c:204 utils/dvb/dvbv5-scan.c:153
+#: utils/dvb/dvbv5-zap.c:450
 msgid "C/N"
 msgstr "C/N"
 
-#: utils/dvb/dvb-fe-tool.c:207 utils/dvb/dvbv5-scan.c:153
-#: utils/dvb/dvbv5-zap.c:449
+#: utils/dvb/dvb-fe-tool.c:207 utils/dvb/dvbv5-scan.c:156
+#: utils/dvb/dvbv5-zap.c:453
 msgid "UCB"
 msgstr "UCB"
 
-#: utils/dvb/dvb-fe-tool.c:210 utils/dvb/dvbv5-scan.c:156
-#: utils/dvb/dvbv5-zap.c:452
+#: utils/dvb/dvb-fe-tool.c:210 utils/dvb/dvbv5-scan.c:159
+#: utils/dvb/dvbv5-zap.c:456
 msgid "postBER"
 msgstr "postBER"
 
-#: utils/dvb/dvb-fe-tool.c:213 utils/dvb/dvbv5-scan.c:159
-#: utils/dvb/dvbv5-zap.c:455
+#: utils/dvb/dvb-fe-tool.c:213 utils/dvb/dvbv5-scan.c:162
+#: utils/dvb/dvbv5-zap.c:459
 msgid "preBER"
 msgstr "preBER"
 
-#: utils/dvb/dvb-fe-tool.c:216 utils/dvb/dvbv5-scan.c:162
-#: utils/dvb/dvbv5-zap.c:458
+#: utils/dvb/dvb-fe-tool.c:216 utils/dvb/dvbv5-scan.c:165
+#: utils/dvb/dvbv5-zap.c:462
 msgid "PER"
 msgstr "PER"
 
-#: utils/dvb/dvb-fe-tool.c:345 utils/dvb/dvbv5-zap.c:1106
+#: utils/dvb/dvb-fe-tool.c:345 utils/dvb/dvbv5-zap.c:1114
 #, c-format
 msgid "Connecting to %s:%d\n"
 msgstr "%s-სთან მიერთება: %d\n"
@@ -1519,8 +1520,8 @@ msgid "Changing delivery system to: %s\n"
 msgstr ""
 
 #: utils/dvb/dvb-format-convert.c:57 utils/dvb/dvb-format-convert.c:58
-#: utils/dvb/dvbv5-scan.c:88 utils/dvb/dvbv5-scan.c:89
-#: utils/dvb/dvbv5-zap.c:110
+#: utils/dvb/dvbv5-scan.c:90 utils/dvb/dvbv5-scan.c:91
+#: utils/dvb/dvbv5-zap.c:113
 msgid "format"
 msgstr "ფორმატი"
 
@@ -1555,7 +1556,7 @@ msgstr "ფაილის (%s) წაკითხვის შეცდომ�
 msgid "Writing file %s\n"
 msgstr "იწერება ფაილი %s\n"
 
-#: utils/dvb/dvb-format-convert.c:129 utils/dvb/dvbv5-scan.c:459
+#: utils/dvb/dvb-format-convert.c:129 utils/dvb/dvbv5-scan.c:465
 msgid "scan DVB services using the channel file"
 msgstr "'DVB' სერვისების სკანირება არხების ფაილის გამოყენებით"
 
@@ -1588,432 +1589,438 @@ msgstr "შეცდომა: მიუთითეთ სწორი გა�
 msgid "ERROR: Please specify a valid delivery system for ZAP format\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:73 utils/dvb/dvbv5-zap.c:104
+#: utils/dvb/dvbv5-scan.c:74 utils/dvb/dvbv5-zap.c:107
 msgid "adapter#"
 msgstr "ადაპტერი#"
 
-#: utils/dvb/dvbv5-scan.c:73 utils/dvb/dvbv5-zap.c:104
+#: utils/dvb/dvbv5-scan.c:74 utils/dvb/dvbv5-zap.c:107
 msgid "use given adapter (default 0)"
 msgstr "მითითებული ადაპტერის გამოყენება (ნაგულისხმები 0)"
 
-#: utils/dvb/dvbv5-scan.c:74 utils/dvb/dvbv5-zap.c:109
+#: utils/dvb/dvbv5-scan.c:75 utils/dvb/dvbv5-zap.c:112
 msgid "frontend#"
 msgstr "წინაბოლო#"
 
-#: utils/dvb/dvbv5-scan.c:74 utils/dvb/dvbv5-zap.c:109
+#: utils/dvb/dvbv5-scan.c:75 utils/dvb/dvbv5-zap.c:112
 msgid "use given frontend (default 0)"
 msgstr "მითითებული წინაბოლოს გამოყენება (ნაგულისხმები 0)"
 
-#: utils/dvb/dvbv5-scan.c:75 utils/dvb/dvbv5-zap.c:108
+#: utils/dvb/dvbv5-scan.c:76 utils/dvb/dvbv5-zap.c:111
 msgid "demux#"
 msgstr "demux#"
 
-#: utils/dvb/dvbv5-scan.c:75 utils/dvb/dvbv5-zap.c:108
+#: utils/dvb/dvbv5-scan.c:76 utils/dvb/dvbv5-zap.c:111
 msgid "use given demux (default 0)"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:76 utils/dvb/dvbv5-zap.c:112
+#: utils/dvb/dvbv5-scan.c:77 utils/dvb/dvbv5-zap.c:115
 msgid "LNBf_type"
 msgstr "LNBf_type"
 
-#: utils/dvb/dvbv5-scan.c:76 utils/dvb/dvbv5-zap.c:112
+#: utils/dvb/dvbv5-scan.c:77 utils/dvb/dvbv5-zap.c:115
 msgid "type of LNBf to use. 'help' lists the available ones"
 msgstr ""
 "გამოსაყენებელი LNBf-ის ტიპი. ხელმისაწვდომი ვარიანტების სანახავად აკრიფეთ "
 "'help'"
 
-#: utils/dvb/dvbv5-scan.c:77 utils/dvb/dvbv5-zap.c:111
+#: utils/dvb/dvbv5-scan.c:78 utils/dvb/dvbv5-zap.c:114
 msgid "LNA (0, 1, -1)"
 msgstr "LNA (0, 1, -1)"
 
-#: utils/dvb/dvbv5-scan.c:77 utils/dvb/dvbv5-zap.c:111
+#: utils/dvb/dvbv5-scan.c:78 utils/dvb/dvbv5-zap.c:114
 msgid "enable/disable/auto LNA power"
 msgstr "'LNA'-ის კვების ჩართვა/გამორთვა/ავტომატიზაცია"
 
-#: utils/dvb/dvbv5-scan.c:78 utils/dvb/dvbv5-zap.c:120
+#: utils/dvb/dvbv5-scan.c:79 utils/dvb/dvbv5-zap.c:124
 msgid "satellite_number"
 msgstr "თანამგზავრის_ნომერი"
 
-#: utils/dvb/dvbv5-scan.c:78 utils/dvb/dvbv5-zap.c:120
+#: utils/dvb/dvbv5-scan.c:79 utils/dvb/dvbv5-zap.c:124
 msgid "satellite number. If not specified, disable DISEqC"
 msgstr "სატელიტის ნომერი. თუ მითითებული არაა, გამორთეთ DISEqC"
 
-#: utils/dvb/dvbv5-scan.c:79 utils/dvb/dvbv5-zap.c:122
+#: utils/dvb/dvbv5-scan.c:80 utils/dvb/dvbv5-zap.c:126
 msgid "frequency"
 msgstr "სიხშირე"
 
-#: utils/dvb/dvbv5-scan.c:79 utils/dvb/dvbv5-zap.c:122
+#: utils/dvb/dvbv5-scan.c:80 utils/dvb/dvbv5-zap.c:126
 msgid "SCR/Unicable band-pass filter frequency to use, in kHz"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:80 utils/dvb/dvbv5-zap.c:125
+#: utils/dvb/dvbv5-scan.c:81 utils/dvb/dvbv5-zap.c:129
 msgid "time"
 msgstr "დრო"
 
-#: utils/dvb/dvbv5-scan.c:80 utils/dvb/dvbv5-zap.c:125
+#: utils/dvb/dvbv5-scan.c:81 utils/dvb/dvbv5-zap.c:129
 msgid "adds additional wait time for DISEqC command completion"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:81
+#: utils/dvb/dvbv5-scan.c:82
 msgid "use data from NIT table on the output file"
 msgstr "'NIT' ცხრილის მონაცემების გამოყენება გამოსატან ფაილზე"
 
-#: utils/dvb/dvbv5-scan.c:82
+#: utils/dvb/dvbv5-scan.c:83
 msgid "use data from get_frontend on the output file"
 msgstr "get_frontend-ის მონაცემების გამოყენება გამოსატან ფაილზე"
 
-#: utils/dvb/dvbv5-scan.c:83
+#: utils/dvb/dvbv5-scan.c:84
+msgid "uses streaming I/O"
+msgstr ""
+
+#: utils/dvb/dvbv5-scan.c:85
 msgid "be (very) verbose"
 msgstr "(ძალიან) ბევრი შეტყობინების გამოტანა"
 
-#: utils/dvb/dvbv5-scan.c:84 utils/dvb/dvbv5-zap.c:106
-#: utils/dvb/dvbv5-zap.c:115
+#: utils/dvb/dvbv5-scan.c:86 utils/dvb/dvbv5-zap.c:109
+#: utils/dvb/dvbv5-zap.c:118
 msgid "file"
 msgstr "ფაილი"
 
-#: utils/dvb/dvbv5-scan.c:84
+#: utils/dvb/dvbv5-scan.c:86
 msgid "output filename (default: "
 msgstr "გამოტანის ფაილის სახელ (ნაგულისხმები: "
 
-#: utils/dvb/dvbv5-scan.c:85
+#: utils/dvb/dvbv5-scan.c:87
 msgid "don't use the other frequencies discovered during scan"
 msgstr "სკანირებისას სხვა აღმოჩენილი სიხშირეები გამოყენებული არ იქნება"
 
-#: utils/dvb/dvbv5-scan.c:86
+#: utils/dvb/dvbv5-scan.c:88
 msgid "factor"
 msgstr "ფაქტორი"
 
-#: utils/dvb/dvbv5-scan.c:86
+#: utils/dvb/dvbv5-scan.c:88
 msgid "Multiply scan timeouts by this factor"
 msgstr "სკანირების მოლოდინის დროის ამ მასშტაბზე გამრავლება"
 
-#: utils/dvb/dvbv5-scan.c:87
+#: utils/dvb/dvbv5-scan.c:89
 msgid "Parse the other NIT/SDT tables"
 msgstr "სხვა NIT/SDT ცხრილების დამუშავება"
 
-#: utils/dvb/dvbv5-scan.c:88
+#: utils/dvb/dvbv5-scan.c:90
 msgid "Input format: CHANNEL, DVBV5 (default: DVBV5)"
 msgstr "შეყვანის ფორმატი: CHANNEL, DVBV5 (ნაგულისხმები: DVBV5)"
 
-#: utils/dvb/dvbv5-scan.c:89
+#: utils/dvb/dvbv5-scan.c:91
 msgid "Output format: VDR, CHANNEL, ZAP, DVBV5 (default: DVBV5)"
 msgstr "გამოტანის ფორმატი: VDR, ZAP, CHANNEL, DVBV5 (ნაგულისხმები: DVBV5)"
 
-#: utils/dvb/dvbv5-scan.c:90 utils/dvb/dvbv5-zap.c:128
+#: utils/dvb/dvbv5-scan.c:92 utils/dvb/dvbv5-zap.c:132
 msgid "country_code"
 msgstr "ქვეყნის_კოდი"
 
-#: utils/dvb/dvbv5-scan.c:90 utils/dvb/dvbv5-zap.c:128
+#: utils/dvb/dvbv5-scan.c:92 utils/dvb/dvbv5-zap.c:132
 msgid "Set the default country to be used (in ISO 3166-1 two letter code)"
 msgstr ""
 "დააყენეთ ნაგულისხმებად გამოსაყენებელი ქვეყნის კოდი (ISO 3166-1 ორსიმბოლოიან "
 "ფორმატში)"
 
-#: utils/dvb/dvbv5-scan.c:254
+#: utils/dvb/dvbv5-scan.c:257
 msgid "opening demux failed"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:281
+#: utils/dvb/dvbv5-scan.c:284
 #, c-format
 msgid "Scanning frequency #%d %d"
 msgstr "სიხშირის სკანირება: #%d %d"
 
-#: utils/dvb/dvbv5-scan.c:460
+#: utils/dvb/dvbv5-scan.c:466
 msgid "<initial file>"
 msgstr "<საწყისი ფაილი>"
 
-#: utils/dvb/dvbv5-scan.c:494 utils/dvb/dvbv5-zap.c:1092
+#: utils/dvb/dvbv5-scan.c:500 utils/dvb/dvbv5-zap.c:1100
 #, c-format
 msgid "Please select one of the LNBf's below:\n"
 msgstr "აირჩიეთ ერთ-ერთი LNBf ქვემოდან:\n"
 
-#: utils/dvb/dvbv5-scan.c:498 utils/dvb/dvbv5-zap.c:1096
+#: utils/dvb/dvbv5-scan.c:504 utils/dvb/dvbv5-zap.c:1104
 #, c-format
 msgid "Using LNBf "
 msgstr "LNBf– ის გამოყენება "
 
-#: utils/dvb/dvbv5-scan.c:513
+#: utils/dvb/dvbv5-scan.c:519
 #, c-format
 msgid "ERROR: Please specify a valid format\n"
 msgstr "შეცდომა: გთხოვთ მიუთითოთ სწორი ფორმატი\n"
 
-#: utils/dvb/dvbv5-scan.c:527 utils/dvb/dvbv5-zap.c:1118
+#: utils/dvb/dvbv5-scan.c:536 utils/dvb/dvbv5-zap.c:1126
 #, c-format
 msgid "Couldn't find demux device node\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:534 utils/dvb/dvbv5-zap.c:1134
+#: utils/dvb/dvbv5-scan.c:543 utils/dvb/dvbv5-zap.c:1142
 #, c-format
 msgid "using demux '%s'\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-scan.c:554 utils/dvb/dvbv5-zap.c:1166
+#: utils/dvb/dvbv5-scan.c:563 utils/dvb/dvbv5-zap.c:1174
 #, c-format
 msgid "Failed to set the country code:%s\n"
 msgstr "ქვეყნის კოდის დაყენების შეცდომა: %s\n"
 
-#: utils/dvb/dvbv5-zap.c:105
+#: utils/dvb/dvbv5-zap.c:108
 msgid "audio_pid#"
 msgstr "audio_pid#"
 
-#: utils/dvb/dvbv5-zap.c:105
+#: utils/dvb/dvbv5-zap.c:108
 msgid "audio pid program to use (default 0)"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:106
+#: utils/dvb/dvbv5-zap.c:109
 msgid "read channels list from 'file'"
 msgstr "არხების სიის მითითებული ფაილიდან წაკითხვა"
 
-#: utils/dvb/dvbv5-zap.c:107
+#: utils/dvb/dvbv5-zap.c:110
 msgid "output all channel pids"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:110
+#: utils/dvb/dvbv5-zap.c:113
 msgid "Input format: ZAP, CHANNEL, DVBV5 (default: DVBV5)"
 msgstr "შეყვანის ფორმატი: ZAP, CHANNEL, DVBV5 (ნაგულისხმები: DVBV5)"
 
-#: utils/dvb/dvbv5-zap.c:113
+#: utils/dvb/dvbv5-zap.c:116
 msgid "string"
 msgstr "სტრიქონი"
 
-#: utils/dvb/dvbv5-zap.c:113
+#: utils/dvb/dvbv5-zap.c:116
 msgid "search/look for a string inside the traffic"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:114
+#: utils/dvb/dvbv5-zap.c:117
 msgid "monitors the DVB traffic"
 msgstr "აკონტროლებს DVB ტრაფიკს"
 
-#: utils/dvb/dvbv5-zap.c:115
+#: utils/dvb/dvbv5-zap.c:118
 msgid "output filename (use -o - for stdout)"
 msgstr "გამოტანის ფაილის სახელი (stdout-სთვის გამოიყენეთ -o -)"
 
-#: utils/dvb/dvbv5-zap.c:116
+#: utils/dvb/dvbv5-zap.c:119
 msgid "add pat and pmt to TS recording (implies -r)"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:117
+#: utils/dvb/dvbv5-zap.c:120
 msgid "don't filter any pids. Instead, outputs all of them"
 msgstr "pid-ები არ გაიფილტრება. პირიქით, ისინი ყველაგამოჩნდება"
 
-#: utils/dvb/dvbv5-zap.c:118
+#: utils/dvb/dvbv5-zap.c:121
 msgid "set up /dev/dvb/adapterX/dvr0 for TS recording"
 msgstr "'TS'-ის ჩასაწერად საჭიროა /dev/dvb/adapterX/dvr0-ის მორგება"
 
-#: utils/dvb/dvbv5-zap.c:119
-msgid "increases silence (can be used more than once)"
-msgstr "ზრდის სიჩუმეს (შეგიძლიათ მრავალჯერაც გამოიყენოთ)"
-
-#: utils/dvb/dvbv5-zap.c:121
-msgid "seconds"
-msgstr "წამი"
-
-#: utils/dvb/dvbv5-zap.c:121
-msgid "timeout for zapping and for recording"
+#: utils/dvb/dvbv5-zap.c:122
+msgid "uses streaming I/O for TS recording"
 msgstr ""
 
 #: utils/dvb/dvbv5-zap.c:123
+msgid "increases silence (can be used more than once)"
+msgstr "ზრდის სიჩუმეს (შეგიძლიათ მრავალჯერაც გამოიყენოთ)"
+
+#: utils/dvb/dvbv5-zap.c:125
+msgid "seconds"
+msgstr "წამი"
+
+#: utils/dvb/dvbv5-zap.c:125
+msgid "timeout for zapping and for recording"
+msgstr ""
+
+#: utils/dvb/dvbv5-zap.c:127
 msgid "verbose debug messages (can be used more than once)"
 msgstr "მეტი გამართვის შეტყობინება (შეგიძლიათ მრავალჯერაც გამოიყენოთ)"
 
-#: utils/dvb/dvbv5-zap.c:124
+#: utils/dvb/dvbv5-zap.c:128
 msgid "video_pid#"
 msgstr "video_pid#"
 
-#: utils/dvb/dvbv5-zap.c:124
+#: utils/dvb/dvbv5-zap.c:128
 msgid "video pid program to use (default 0)"
 msgstr "გამოსაყენებელი ვიდეო pid პროგრამა (ნაგულისხმებად 0)"
 
-#: utils/dvb/dvbv5-zap.c:126
+#: utils/dvb/dvbv5-zap.c:130
 msgid "exit after tuning"
 msgstr "გასვლა რეგულირების შემდეგ"
 
-#: utils/dvb/dvbv5-zap.c:127
+#: utils/dvb/dvbv5-zap.c:131
 msgid "packets_per_sec"
 msgstr "packets_per_sec"
 
-#: utils/dvb/dvbv5-zap.c:127
+#: utils/dvb/dvbv5-zap.c:131
 msgid ""
 "sets DVB low traffic threshold. PIDs with less than this amount of packets "
 "per second will be ignored. Default: 1 packet per second"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:129
+#: utils/dvb/dvbv5-zap.c:133
 msgid "Non-human formatted stats (useful for scripts)"
 msgstr "არაადამიანურად დაფორმატებული სტატისტიკა (სასარგებლოა სკრიპტებში)"
 
-#: utils/dvb/dvbv5-zap.c:132
+#: utils/dvb/dvbv5-zap.c:136
 msgid "PIPE"
 msgstr "PIPE"
 
-#: utils/dvb/dvbv5-zap.c:132
+#: utils/dvb/dvbv5-zap.c:136
 msgid ""
 "Named pipe for DVR output, when using remote access (by default: /tmp/dvr-"
 "pipe)"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:282
+#: utils/dvb/dvbv5-zap.c:286
 #, c-format
 msgid "service has pid type %02x: "
 msgstr "სერვისის pid-ის ტიპია %02x: "
 
-#: utils/dvb/dvbv5-zap.c:349
+#: utils/dvb/dvbv5-zap.c:353
 #, c-format
 msgid "tuning to %i Hz\n"
 msgstr "რეგულირება %i ჰერცზე\n"
 
-#: utils/dvb/dvbv5-zap.c:569
+#: utils/dvb/dvbv5-zap.c:573
 #, c-format
 msgid "buffer overrun at %lld\n"
 msgstr "ბუფერის გადავსება მისამართზე %lld\n"
 
-#: utils/dvb/dvbv5-zap.c:571
+#: utils/dvb/dvbv5-zap.c:575
 #, c-format
 msgid "buffer overrun after %lld.%02ld seconds\n"
 msgstr "ბუფერის გადავსება %lld.%02ld წამის შემდეგ\n"
 
-#: utils/dvb/dvbv5-zap.c:598 utils/dvb/dvbv5-zap.c:843
+#: utils/dvb/dvbv5-zap.c:602 utils/dvb/dvbv5-zap.c:851
 msgid "Write failed"
 msgstr "ჩაწერის შეცდომა"
 
-#: utils/dvb/dvbv5-zap.c:606
+#: utils/dvb/dvbv5-zap.c:610
 #, c-format
 msgid "received %lld bytes (%lld Kbytes/sec)\n"
 msgstr "მიღებულია %lld ბაიტი (%lld კბაიტი/წმ)\n"
 
-#: utils/dvb/dvbv5-zap.c:609
+#: utils/dvb/dvbv5-zap.c:613
 #, c-format
 msgid "received %lld bytes\n"
 msgstr "მიღებულია %lld ბაიტი\n"
 
-#: utils/dvb/dvbv5-zap.c:785 utils/dvb/dvbv5-zap.c:1252
-#: utils/dvb/dvbv5-zap.c:1272
+#: utils/dvb/dvbv5-zap.c:793 utils/dvb/dvbv5-zap.c:1260
+#: utils/dvb/dvbv5-zap.c:1280
 #, c-format
 msgid "dvb_dev_set_bufsize: buffer set to %d\n"
 msgstr "dvb_dev_set_bufsize: ბუფერის მნიშვნელობაა %d\n"
 
-#: utils/dvb/dvbv5-zap.c:795
+#: utils/dvb/dvbv5-zap.c:803
 #, c-format
 msgid "  dvb_set_pesfilter to 0x2000\n"
 msgstr "  dvb_set_pesfilter 0x2000-ზე\n"
 
-#: utils/dvb/dvbv5-zap.c:804
+#: utils/dvb/dvbv5-zap.c:812
 #, c-format
 msgid "Can't get timespec\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:810
+#: utils/dvb/dvbv5-zap.c:818
 #, c-format
 msgid "%.2fs: Starting capture\n"
 msgstr "%.2fs: გადაღების დაწყება\n"
 
-#: utils/dvb/dvbv5-zap.c:822
+#: utils/dvb/dvbv5-zap.c:830
 #, c-format
 msgid "%.2fs: buffer overrun\n"
 msgstr "%.2fs: ბუფერის გადავსება\n"
 
-#: utils/dvb/dvbv5-zap.c:825
+#: utils/dvb/dvbv5-zap.c:833
 #, c-format
 msgid "%.2fs: read() returned error %zd\n"
 msgstr "%.2fs: read()-მა დააბრუნა შეცდომა %zd\n"
 
-#: utils/dvb/dvbv5-zap.c:848
+#: utils/dvb/dvbv5-zap.c:856
 #, c-format
 msgid "%.2fs: only read %zd bytes\n"
 msgstr "%.2fs: წაკითხულია მხოლოდ %zd ბაიტი\n"
 
-#: utils/dvb/dvbv5-zap.c:855
+#: utils/dvb/dvbv5-zap.c:863
 #, c-format
 msgid "%.2fs: invalid sync byte. Discarding %zd bytes\n"
 msgstr "%.2fs: არასწორი სინქრონიზაციის ბაიტი. %zd ბაიტის მოცილება\n"
 
-#: utils/dvb/dvbv5-zap.c:878
+#: utils/dvb/dvbv5-zap.c:886
 #, c-format
 msgid "%.2fs: invalid pid: 0x%04x\n"
 msgstr "%.2fs: არასწორი pid: 0x%04x\n"
 
-#: utils/dvb/dvbv5-zap.c:902
+#: utils/dvb/dvbv5-zap.c:910
 #, c-format
 msgid "%.2fs: pid %d has adaption layer, but size is too small!\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:913
+#: utils/dvb/dvbv5-zap.c:921
 #, c-format
 msgid "%.2fs: pid %d, expecting %d received %d\n"
 msgstr "%.2fs: pid %d, მოველოდი %d მივიღე %d\n"
 
-#: utils/dvb/dvbv5-zap.c:958
+#: utils/dvb/dvbv5-zap.c:966
 #, c-format
 msgid " PID           FREQ         SPEED       TOTAL\n"
 msgstr " PID           სიხშ         სიჩქ       სულ\n"
 
-#: utils/dvb/dvbv5-zap.c:983
+#: utils/dvb/dvbv5-zap.c:991
 #, c-format
 msgid "OTHER"
 msgstr "OTHER"
 
-#: utils/dvb/dvbv5-zap.c:1009
+#: utils/dvb/dvbv5-zap.c:1017
 #, c-format
 msgid "%.2fs: Stopping capture\n"
 msgstr "%.2fs: გადაღების დასრულება\n"
 
-#: utils/dvb/dvbv5-zap.c:1048
+#: utils/dvb/dvbv5-zap.c:1056
 msgid "DVB zap utility"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:1049
+#: utils/dvb/dvbv5-zap.c:1057
 msgid "<channel name> [or <frequency> if in monitor mode]"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:1126
+#: utils/dvb/dvbv5-zap.c:1134
 #, c-format
 msgid "Couldn't find dvr device node\n"
 msgstr "DVR მოწყობილობის კვანძი ვერ ვიპოვე\n"
 
-#: utils/dvb/dvbv5-zap.c:1147
+#: utils/dvb/dvbv5-zap.c:1155
 #, c-format
 msgid "reading channels from file '%s'\n"
 msgstr "არხების წაკითხვა ფაილიდან '%s'\n"
 
-#: utils/dvb/dvbv5-zap.c:1188 utils/dvb/dvbv5-zap.c:1374
-#: utils/dvb/dvbv5-zap.c:1426
+#: utils/dvb/dvbv5-zap.c:1196 utils/dvb/dvbv5-zap.c:1382
+#: utils/dvb/dvbv5-zap.c:1452
 #, c-format
 msgid "open of '%s' failed"
 msgstr "'%s'-ის გახსნის შეცდომა"
 
-#: utils/dvb/dvbv5-zap.c:1206
+#: utils/dvb/dvbv5-zap.c:1214
 #, c-format
 msgid "couldn't find pmt-pid for sid %04x\n"
 msgstr "sid-სთვის %04x pmt-pid ვერ ვიპოვე\n"
 
-#: utils/dvb/dvbv5-zap.c:1256
+#: utils/dvb/dvbv5-zap.c:1264
 #, c-format
 msgid "pass all PIDs to TS\n"
 msgstr "ყველა PID-ების TS-ზე გადაცემა\n"
 
-#: utils/dvb/dvbv5-zap.c:1257
+#: utils/dvb/dvbv5-zap.c:1265
 #, c-format
 msgid "  dvb_set_pesfilter %d\n"
 msgstr "  dvb_set_pesfilter %d\n"
 
-#: utils/dvb/dvbv5-zap.c:1285
+#: utils/dvb/dvbv5-zap.c:1293
 #, c-format
-#| msgid "video pid %d\n"
 msgid "video%2$s pid %1$d\n"
 msgstr "ვიდეო%2$s pid %1$d\n"
 
-#: utils/dvb/dvbv5-zap.c:1315
+#: utils/dvb/dvbv5-zap.c:1323
 #, c-format
-#| msgid "audio pid %d\n"
 msgid "audio%2$s pid %1$d\n"
 msgstr "აუდიო%2$s pid %1$d\n"
 
-#: utils/dvb/dvbv5-zap.c:1337
+#: utils/dvb/dvbv5-zap.c:1345
 #, c-format
 msgid "other pid %d (%d)\n"
 msgstr ""
 
-#: utils/dvb/dvbv5-zap.c:1351
+#: utils/dvb/dvbv5-zap.c:1359
 #, c-format
 msgid ""
 "PMT record is disabled.\n"
@@ -2025,22 +2032,22 @@ msgstr ""
 "შესაძლებელი.\n"
 "იმისათვის, რომ PMT-იც ჩაიწეროთ, გამოიყენეთ პარამეტრი '-p'.\n"
 
-#: utils/dvb/dvbv5-zap.c:1360
+#: utils/dvb/dvbv5-zap.c:1368
 #, c-format
 msgid "frontend doesn't lock\n"
 msgstr "წინაბოლო არ დაბლოკილა\n"
 
-#: utils/dvb/dvbv5-zap.c:1391
+#: utils/dvb/dvbv5-zap.c:1406
 #, c-format
 msgid "Record to file '%s' started\n"
 msgstr "ჩაწერა ფაილში '%s' დაიწყო\n"
 
-#: utils/dvb/dvbv5-zap.c:1410
+#: utils/dvb/dvbv5-zap.c:1436
 #, c-format
 msgid "DVR pipe interface '%s' will be opened\n"
 msgstr "გაიხსნება DVR-ის ფაიფის ინტერფეისი '%s'\n"
 
-#: utils/dvb/dvbv5-zap.c:1434
+#: utils/dvb/dvbv5-zap.c:1460
 #, c-format
 msgid "DVR interface '%s' can now be opened\n"
 msgstr "DVR ინტერფეისის '%s' გახსნა ახლა შესაძლებელია\n"
