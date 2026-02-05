@@ -1,0 +1,823 @@
+# Georgian translation for libdvb5.
+# Copyright (C) 2025 Mauro Carvalho Chehab
+# This file is distributed under the same license as the v4l-utils package.
+# Ekaterine Papava <papava.e@gtu.ge>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: v4l-utils 1.32.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-08-03 14:12+0200\n"
+"PO-Revision-Date: 2025-12-02 09:49+0100\n"
+"Last-Translator: Ekaterine Papava <papava.e@gtu.ge>\n"
+"Language-Team: Georgian\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.8\n"
+
+#: lib/libdvbv5/dvb-fe.c:149
+#, c-format
+msgid "adapter %d, frontend %d not found"
+msgstr "ადაპტერი %d, წინაბოლო %d ვერ ვიპოვე"
+
+#: lib/libdvbv5/dvb-fe.c:157
+msgid "Detected dvbloopback"
+msgstr "აღმოჩენილია dvbloopback"
+
+#: lib/libdvbv5/dvb-fe.c:163
+#, c-format
+msgid "fname calloc: %s"
+msgstr "fname calloc: %s"
+
+#: lib/libdvbv5/dvb-fe.c:168
+#, c-format
+msgid "parms calloc: %s"
+msgstr "parms calloc: %s"
+
+#: lib/libdvbv5/dvb-fe.c:203
+#, c-format
+msgid "%s while opening %s"
+msgstr "%s %s-ის გახსნისას"
+
+#: lib/libdvbv5/dvb-fe.c:217
+#, c-format
+msgid "Device %s (%s) capabilities:"
+msgstr "%s (%s) მოწყობილობის შესაძლებლობები:"
+
+#: lib/libdvbv5/dvb-fe.c:243
+#, c-format
+msgid "DVB API Version %d.%d%s, Current v5 delivery system: %s"
+msgstr "DVB API-ის ვერსია %d.%d%s, მიმდინარე v5 მიწოდების სისტემა: %s"
+
+#: lib/libdvbv5/dvb-fe.c:246
+msgid " (forcing DVBv3 calls)"
+msgstr " (ნაძალადევი DVBv3 ფუნქციები)"
+
+#: lib/libdvbv5/dvb-fe.c:291
+msgid "delivery system not detected"
+msgstr "მიწოდების სისტემა აღმოჩენილი არაა"
+
+#: lib/libdvbv5/dvb-fe.c:310
+msgid "driver returned 0 supported delivery systems!"
+msgstr "დრაივერმა დააბრუნა 0 მხარდაჭერილი მიწოდების სისტემა!"
+
+#: lib/libdvbv5/dvb-fe.c:317
+msgid "Supported delivery system: "
+msgid_plural "Supported delivery systems: "
+msgstr[0] "მხარდაჭერილი მიწოდების სისტემა: "
+msgstr[1] "მხარდაჭერილი მიწოდების სისტემები: "
+
+#: lib/libdvbv5/dvb-fe.c:327
+msgid ""
+"Warning: new delivery systems like ISDB-T, ISDB-S, DMB-TH, DSS, ATSC-MH will "
+"be miss-detected by a DVBv5.4 or earlier API call"
+msgstr ""
+"გაფრთხილება: ახალი მიწოდების სისტემები, როგორიცაა ISDB-T, ISDB-S, DMB-TH, "
+"DSS, ATSC-MH არასწორად იქნება აღმოჩენილი DVBv5.4 ან უფრო ძველი API-ის "
+"გამოძახებით"
+
+#: lib/libdvbv5/dvb-fe.c:358
+msgid "Frequency range for the current standard: "
+msgstr "სიხშირის დიაპაზონი მიმდინარე სტანდარტისთვის: "
+
+#: lib/libdvbv5/dvb-fe.c:361
+#, c-format
+msgid "From:       %11sHz"
+msgstr "საიდან: %11shc"
+
+#: lib/libdvbv5/dvb-fe.c:363
+#, c-format
+msgid "To:         %11sHz"
+msgstr "სადამდე:         %11sჰც"
+
+#: lib/libdvbv5/dvb-fe.c:366
+#, c-format
+msgid "Step:       %11sHz"
+msgstr "ბიჯი:       %11sჰც"
+
+#: lib/libdvbv5/dvb-fe.c:370
+#, c-format
+msgid "Tolerance:  %11sHz"
+msgstr "დაშვება:  %11sჰც"
+
+#: lib/libdvbv5/dvb-fe.c:374
+msgid "Symbol rate ranges for the current standard: "
+msgstr "სიმბოლოს სიხშირის დიაპაზონები მიმდინარე სტანდარტისთვის: "
+
+#: lib/libdvbv5/dvb-fe.c:376
+#, c-format
+msgid "From:       %11sBauds"
+msgstr "საიდან:       %11sბოდი"
+
+#: lib/libdvbv5/dvb-fe.c:378
+#, c-format
+msgid "To:         %11sBauds"
+msgstr "სადამდე:         %11sბოდი"
+
+#: lib/libdvbv5/dvb-fe.c:381
+#, c-format
+msgid "Tolerance:  %11sBauds"
+msgstr "დაშვება:  %11sბოდი"
+
+#: lib/libdvbv5/dvb-fe.c:511
+msgid "Set delivery system"
+msgstr "მიწოდების სისტემის დაყენება"
+
+#: lib/libdvbv5/dvb-fe.c:523
+msgid "Can't retrieve DVB information for the new delivery system."
+msgstr "ვერ მივიღე DVB-ის ინფორმაცია ახალი მიწოდების სისტემისთვის."
+
+#: lib/libdvbv5/dvb-fe.c:608
+#, c-format
+msgid "Using a DVBv3 compat file for %s"
+msgstr "%s-სთვის DVBv3 თავსებადობის ფაილს ვიყენებ"
+
+#: lib/libdvbv5/dvb-fe.c:697
+#, c-format
+msgid "command %s (%d) not found during retrieve"
+msgstr "ბრძანება %s (%d) მიღებისას აღმოჩენილი არაა"
+
+#: lib/libdvbv5/dvb-fe.c:714
+#, c-format
+msgid "command %s (%d) not found during store"
+msgstr "ბრძანება %s (%d) დამახსოვრებისას აღმოჩენილი არაა"
+
+#: lib/libdvbv5/dvb-fe.c:776
+#, c-format
+msgid "Got parameters for %s:"
+msgstr "%s-სთვის მიღებული პარამეტრები:"
+
+#: lib/libdvbv5/dvb-fe.c:895
+msgid "Setting LNA"
+msgstr "LNA-ის დაყენება"
+
+#: lib/libdvbv5/dvb-fe.c:898
+#, c-format
+msgid "LNA is %s"
+msgstr "LNA უდრის %s"
+
+#: lib/libdvbv5/dvb-fe.c:898 lib/libdvbv5/dvb-fe.c:1898
+msgid "ON"
+msgstr "ჩართ"
+
+#: lib/libdvbv5/dvb-fe.c:898 lib/libdvbv5/dvb-fe.c:1898
+msgid "OFF"
+msgstr "გამორთ"
+
+#: lib/libdvbv5/dvb-fe.c:998
+#, c-format
+msgid "%s not found on store"
+msgstr "%s ვერ ვიპოვე შენახვისას"
+
+#: lib/libdvbv5/dvb-fe.c:1070 lib/libdvbv5/dvb-fe.c:1085
+#, c-format
+msgid "%s not found on retrieve"
+msgstr "%s ვერ ვიპოვე მიღებისას"
+
+#: lib/libdvbv5/dvb-fe.c:1092
+#, c-format
+msgid "%s not available"
+msgstr "%s ხელმისაწვდომი არა"
+
+#: lib/libdvbv5/dvb-fe.c:1099
+#, c-format
+msgid "Stats for %s = %d"
+msgstr "%s-ის სტატისტიკა = %d"
+
+#: lib/libdvbv5/dvb-fe.c:1526 lib/libdvbv5/dvb-fe.c:1556
+msgid "Status: "
+msgstr "სტატუსი: "
+
+#: lib/libdvbv5/dvb-fe.c:1531
+#, c-format
+msgid "BER: %d, Strength: %d, SNR: %d, UCB: %d"
+msgstr "BER: %d, სიძლიერე: %d, SNR: %d, UCB: %d"
+
+#: lib/libdvbv5/dvb-fe.c:1685
+msgid "RF"
+msgstr "RF"
+
+#: lib/libdvbv5/dvb-fe.c:1686
+msgid "Carrier"
+msgstr "გადამზიდი"
+
+#: lib/libdvbv5/dvb-fe.c:1687
+msgid "Viterbi"
+msgstr "Viterbi"
+
+#: lib/libdvbv5/dvb-fe.c:1688
+msgid "Sync"
+msgstr "სინქრონიზაცია"
+
+#: lib/libdvbv5/dvb-fe.c:1689
+msgid "Lock"
+msgstr "ჩაკეტვა"
+
+#: lib/libdvbv5/dvb-fe.c:1690
+msgid "Timeout"
+msgstr "ვადა"
+
+#: lib/libdvbv5/dvb-fe.c:1691
+msgid "Reinit"
+msgstr "Reinit"
+
+#: lib/libdvbv5/dvb-fe.c:1695
+msgid "Poor"
+msgstr "ცუდი"
+
+#: lib/libdvbv5/dvb-fe.c:1696
+msgid "Ok"
+msgstr "დიახ"
+
+#: lib/libdvbv5/dvb-fe.c:1697
+msgid "Good"
+msgstr "კარგი"
+
+#: lib/libdvbv5/dvb-fe.c:1720
+msgid "Error: no adapter status"
+msgstr "შეცდომა: ადაპტერის სტატუსის გარეშე"
+
+#: lib/libdvbv5/dvb-fe.c:1732
+#, c-format
+msgid "%-7s"
+msgstr "%-7s"
+
+#: lib/libdvbv5/dvb-fe.c:1739
+#, c-format
+msgid "%7s"
+msgstr "%7s"
+
+#: lib/libdvbv5/dvb-fe.c:1784
+#, c-format
+msgid "  Layer %c:"
+msgstr "  ფენა %c:"
+
+#: lib/libdvbv5/dvb-fe.c:1859
+msgid "SEC: set voltage to OFF"
+msgstr "SEC: დენის გამორთვა"
+
+#: lib/libdvbv5/dvb-fe.c:1863
+#, c-format
+msgid "SEC: set voltage to %sV"
+msgstr "SEC: ვოლტაჟის %sვ-ზე დაყენება"
+
+#: lib/libdvbv5/dvb-fe.c:1882
+#, c-format
+msgid "DiSEqC TONE: %s"
+msgstr "DiSEqC TONE: %s"
+
+#: lib/libdvbv5/dvb-fe.c:1898
+#, c-format
+msgid "DiSEqC HIGH LNB VOLTAGE: %s"
+msgstr "DiSEqC HIGH LNB VOLTAGE: %s"
+
+#: lib/libdvbv5/dvb-fe.c:1916
+#, c-format
+msgid "DiSEqC BURST: %s"
+msgstr "DiSEqC BURST: %s"
+
+#: lib/libdvbv5/dvb-fe.c:1942
+#, c-format
+msgid "DiSEqC command: "
+msgstr "DiSEqC ბრძანება: "
+
+#: lib/libdvbv5/dvb-fe.c:1992
+#, c-format
+msgid "Assuming you're in %s.\n"
+msgstr "ჩათვლა, რომ ბრძანდებით %s-ში.\n"
+
+#: lib/libdvbv5/dvb-fe.c:1995
+msgid "Failed to guess country from the current locale setting.\n"
+msgstr "მიმდინარე ენის პარამეტრებიდან ქვეყნის დადგენა შეუძლებელია.\n"
+
+#: lib/libdvbv5/dvb-file.c:76
+#, c-format
+msgid "Can't add property %s\n"
+msgstr "თვისების %s დამატების შეცდომა\n"
+
+#: lib/libdvbv5/dvb-file.c:79
+#, c-format
+msgid "Can't add property %d\n"
+msgstr "თვისების %d დამატება შეუძლებელია\n"
+
+#: lib/libdvbv5/dvb-file.c:243 lib/libdvbv5/dvb-file.c:756
+#: lib/libdvbv5/dvb-file.c:1343
+msgid "Allocating memory for dvb_file"
+msgstr "მეხსიერების გამოყოფა dvb_file-სთვის"
+
+#: lib/libdvbv5/dvb-file.c:269
+#, c-format
+msgid "unknown delivery system type for %s"
+msgstr "უცნობი მიწოდები სისტემის ტიპი %s-ისთვის"
+
+#: lib/libdvbv5/dvb-file.c:280
+#, c-format
+msgid "Doesn't know how to handle delimiter '%s'"
+msgstr "გამყოფის '%s' დამუშავების ხერხი უცნობია"
+
+#: lib/libdvbv5/dvb-file.c:291
+#, c-format
+msgid "Doesn't know how to parse delivery system %d"
+msgstr "არ ვიცი, როგორ დავამუშაო მიწოდების სისტემა %d"
+
+#: lib/libdvbv5/dvb-file.c:319
+#, c-format
+msgid "parameter %i (%s) missing"
+msgstr "აკლია პარამეტრი %i (%s)"
+
+#: lib/libdvbv5/dvb-file.c:328
+#, c-format
+msgid "parameter %s invalid: %s"
+msgstr "პარამეტრი %s არასწორია: %s"
+
+#: lib/libdvbv5/dvb-file.c:385 lib/libdvbv5/dvb-file.c:841
+#, c-format
+msgid "ERROR %s while parsing line %d of %s\n"
+msgstr "%3$s-ის %2$d ხაზის დამუშავებისას აღმოჩენილია შეცდომა %1$s\n"
+
+#: lib/libdvbv5/dvb-file.c:466
+#, c-format
+msgid "delivery system %d not supported on this format"
+msgstr "მიწოდები სისტემა %d ამ ფორმატში მხარდაჭერილი არაა"
+
+#: lib/libdvbv5/dvb-file.c:508 lib/libdvbv5/dvb-vdr-format.c:345
+#, c-format
+msgid "value not supported"
+msgstr "მნიშვნელობა მხარდაჭერილი არაა"
+
+#: lib/libdvbv5/dvb-file.c:518
+#, c-format
+msgid "WARNING: missing video PID while parsing entry %d of %s\n"
+msgstr "გაფრთხილება: ნაკლული ვიდეოს PID %d ჩანაწერის დამუშავებისას %s-ისთვის\n"
+
+#: lib/libdvbv5/dvb-file.c:528
+#, c-format
+msgid "WARNING: missing audio PID while parsing entry %d of %s\n"
+msgstr "გაფრთხილება: ნაკლული აუდიოს PID %d ჩანაწერის დამუშავებისას %s-ისთვის\n"
+
+#: lib/libdvbv5/dvb-file.c:547
+#, c-format
+msgid "property %s not supported while parsing entry %d of %s\n"
+msgstr "თვისება %s მხარდაუჭერელია %d ჩანაწერის დამუშავებისას %s-ისთვის\n"
+
+#: lib/libdvbv5/dvb-file.c:568 lib/libdvbv5/dvb-vdr-format.c:438
+#, c-format
+msgid "ERROR: %s while parsing entry %d of %s\n"
+msgstr "შეცდომა: %1$s %3$s-ის %2$d ჩანაწერის დამუშავებისას\n"
+
+#: lib/libdvbv5/dvb-file.c:792
+#, c-format
+msgid "Missing channel group"
+msgstr "აკლია არხების ჯგუფი"
+
+#: lib/libdvbv5/dvb-file.c:805
+#, c-format
+msgid "key/value without a channel group"
+msgstr "გასაღები/მნიშვნელობა არხის ჯგუფის გარეშე"
+
+#: lib/libdvbv5/dvb-file.c:810
+#, c-format
+msgid "missing key"
+msgstr "აკლია გასაღები"
+
+#: lib/libdvbv5/dvb-file.c:819
+#, c-format
+msgid "missing value"
+msgstr "აკლია მნიშვნელობა"
+
+#: lib/libdvbv5/dvb-file.c:827
+#, c-format
+msgid "value %s is invalid for %s"
+msgstr "%2$s-სთვის მნიშვნელობა %1$s არასწორია"
+
+#: lib/libdvbv5/dvb-file.c:1222
+#, c-format
+msgid "Channel %s (service ID %d) not found on PMT. Skipping it."
+msgstr ""
+"არხი %s (სერვისის ID %d) PMT-ზე აღმოჩენილი არაა. ის გამოტოვებული იქნება."
+
+#: lib/libdvbv5/dvb-file.c:1240
+msgid "Not enough memory"
+msgstr "მეხსიერება საკმარისი არ არის"
+
+#: lib/libdvbv5/dvb-file.c:1271
+msgid "Couldn't get frontend props"
+msgstr "წინაბოლოს თვისებების მიღების შეცდომა"
+
+#: lib/libdvbv5/dvb-file.c:1300
+#, c-format
+msgid "Storing Service ID %d: '%s'"
+msgstr "მიმდინარეობს დამახსოვრება სერვისის ID-ით %d: '%s'"
+
+#: lib/libdvbv5/dvb-file.c:1315
+msgid "reserved"
+msgstr "რეზერვირებული"
+
+#: lib/libdvbv5/dvb-file.c:1316
+msgid "digital television"
+msgstr "ციფრული ტელევიზია"
+
+#: lib/libdvbv5/dvb-file.c:1317
+msgid "digital radio"
+msgstr "ციფრული რადიო"
+
+#: lib/libdvbv5/dvb-file.c:1318
+msgid "Teletext"
+msgstr "ტელეტექსტი"
+
+#: lib/libdvbv5/dvb-file.c:1319
+msgid "NVOD reference"
+msgstr "NVOD მიმართვა"
+
+#: lib/libdvbv5/dvb-file.c:1320
+msgid "NVOD time-shifted"
+msgstr "NVOD დროში წანაცვლებულია"
+
+#: lib/libdvbv5/dvb-file.c:1321
+msgid "mosaic"
+msgstr "მოზაიკა"
+
+#: lib/libdvbv5/dvb-file.c:1322
+msgid "PAL coded signal"
+msgstr "PAL-ით კოდირებული სიგნალი"
+
+#: lib/libdvbv5/dvb-file.c:1323
+msgid "SECAM coded signal"
+msgstr "SECAM-ით კოდირებული სიგნალი"
+
+#: lib/libdvbv5/dvb-file.c:1324
+msgid "D/D2-MAC"
+msgstr "D/D2-MAC"
+
+#: lib/libdvbv5/dvb-file.c:1325
+msgid "FM Radio"
+msgstr "FM რადიო"
+
+#: lib/libdvbv5/dvb-file.c:1326
+msgid "NTSC coded signal"
+msgstr "NTSC-ით კოდირებული სიგნალი"
+
+#: lib/libdvbv5/dvb-file.c:1327
+msgid "data broadcast"
+msgstr "მონაცემების გადაცემა"
+
+#: lib/libdvbv5/dvb-file.c:1328
+msgid "user defined"
+msgstr "მომხმარებლის მიერ განსაზღვრული"
+
+#: lib/libdvbv5/dvb-file.c:1367
+#, c-format
+msgid "Virtual channel %s, name = %s"
+msgstr "ვირტუალური არხი %s, სახელი = %s"
+
+#: lib/libdvbv5/dvb-file.c:1396
+#, c-format
+msgid "Service %s, provider %s: %s"
+msgstr "სერვისი %s, მომწოდებელი %s: %s"
+
+#: lib/libdvbv5/dvb-file.c:1409
+#, c-format
+msgid "Storing as channel %s"
+msgstr "დამახსოვრება, როგორც არხი %s"
+
+#: lib/libdvbv5/dvb-file.c:1452
+msgid "WARNING: no SDT table - storing channel(s) without their names"
+msgstr ""
+"გაფრთხილება: SDT-ის ცხრილი აღმოჩენილი არაა - არხები სახელების გარეშე იქნება "
+"დამახსოვრებული"
+
+#: lib/libdvbv5/dvb-file.c:1454
+msgid "WARNING: Some Service IDs are not at the SDT table"
+msgstr "გაფრთხილება: ზოგიერთი სერვისის ID SDT ცხრილში არაა"
+
+#: lib/libdvbv5/dvb-file.c:1483
+#, c-format
+msgid "File format %s is unknown\n"
+msgstr "ფაილის ფორმატი %s უცნობია\n"
+
+#: lib/libdvbv5/dvb-file.c:1528
+#, c-format
+msgid "ERROR: Delivery system %s is not known. Valid values are:\n"
+msgstr "შეცდომა: მიწოდების სისტემა %s უცნობია. სწორი მნიშვნელობებია:\n"
+
+#: lib/libdvbv5/dvb-file.c:1572
+#, c-format
+msgid "Currently, VDR format is supported only for output\n"
+msgstr "ამჟამად VDR ფორმატი მხოლოდ გამოტანისთვისაა მხარდაჭერილი\n"
+
+#: lib/libdvbv5/dvb-file.c:1575
+#, c-format
+msgid "Format is not supported\n"
+msgstr "ფორმატი მხარდაჭერილი არაა\n"
+
+#: lib/libdvbv5/dvb-log.c:44
+msgid "EMERG    "
+msgstr "სასწრ    "
+
+#: lib/libdvbv5/dvb-log.c:45
+msgid "ALERT    "
+msgstr "განგაში    "
+
+#: lib/libdvbv5/dvb-log.c:46
+msgid "CRITICAL "
+msgstr "კრიტიკული "
+
+#: lib/libdvbv5/dvb-log.c:47
+msgid "ERROR    "
+msgstr "შეცდომა      "
+
+#: lib/libdvbv5/dvb-log.c:48
+msgid "WARNING  "
+msgstr "გაფრთხილება  "
+
+#: lib/libdvbv5/dvb-log.c:51
+msgid "DEBUG    "
+msgstr "გამართვა   "
+
+#: lib/libdvbv5/dvb-sat.c:54
+msgid "Astra 19.2E, European Universal Ku (extended)"
+msgstr "Astra 19.2E, ევროპული უნივერსალური Ku (გაფართოებული)"
+
+#: lib/libdvbv5/dvb-sat.c:71
+msgid "Old European Universal. Nowadays mostly replaced by Astra 19.2E"
+msgstr ""
+"ძველი ევროპული უნივერსალური. დღესდღეისობით ძირითადად ჩანაცვლდა Astra 19.2E-ით"
+
+#: lib/libdvbv5/dvb-sat.c:88
+msgid "Expressvu, North America"
+msgstr "Expressvu, ჩრდილო ამერიკა"
+
+#: lib/libdvbv5/dvb-sat.c:101
+msgid "Standard"
+msgstr "სტანდარტული"
+
+#: lib/libdvbv5/dvb-sat.c:114
+msgid "L10700"
+msgstr "L10700"
+
+#: lib/libdvbv5/dvb-sat.c:127
+msgid "L10750"
+msgstr "L10750"
+
+#: lib/libdvbv5/dvb-sat.c:140
+msgid "L11300"
+msgstr "L11300"
+
+#: lib/libdvbv5/dvb-sat.c:153
+msgid "Astra"
+msgstr "Astra"
+
+#: lib/libdvbv5/dvb-sat.c:166
+msgid "Invacom QPH-031"
+msgstr "Invacom QPH-031"
+
+#: lib/libdvbv5/dvb-sat.c:189
+msgid "Big Dish - Monopoint LNBf"
+msgstr "Big Dish - Monopoint LNBf"
+
+#: lib/libdvbv5/dvb-sat.c:202
+msgid "Big Dish - Multipoint LNBf"
+msgstr "Big Dish - Multipoint LNBf"
+
+#: lib/libdvbv5/dvb-sat.c:217
+msgid "DishPro LNBf"
+msgstr "DishPro LNBf"
+
+#: lib/libdvbv5/dvb-sat.c:232
+msgid "Japan 110BS/CS LNBf"
+msgstr "Japan 110BS/CS LNBf"
+
+#: lib/libdvbv5/dvb-sat.c:245
+msgid "BrasilSat Stacked"
+msgstr "BrasilSat Stacked"
+
+#: lib/libdvbv5/dvb-sat.c:260
+msgid "BrasilSat Oi"
+msgstr "BrasilSat Oi"
+
+#: lib/libdvbv5/dvb-sat.c:277
+msgid "BrasilSat Amazonas 1/2 - 3 Oscilators"
+msgstr "BrasilSat Amazonas 1/2 - 3 Oscilators"
+
+#: lib/libdvbv5/dvb-sat.c:288
+msgid "BrasilSat Amazonas 1/2 - 2 Oscilators"
+msgstr "BrasilSat Amazonas 1/2 - 2 Oscilators"
+
+#: lib/libdvbv5/dvb-sat.c:299
+msgid "BrasilSat custom GVT"
+msgstr "BrasilSat custom GVT"
+
+#: lib/libdvbv5/dvb-sat.c:324
+msgid "Freqs     : "
+msgstr "სიხშირეები     : "
+
+#: lib/libdvbv5/dvb-sat.c:325
+msgid "Horizontal: "
+msgstr "ჰორიზონტალური: "
+
+#: lib/libdvbv5/dvb-sat.c:326
+msgid "Vertical  : "
+msgstr "ვერტიკალური  : "
+
+#: lib/libdvbv5/dvb-sat.c:327
+msgid "Left      : "
+msgstr "მარცხენა      : "
+
+#: lib/libdvbv5/dvb-sat.c:328
+msgid "Right     : "
+msgstr "მარჯვენა     : "
+
+#: lib/libdvbv5/dvb-sat.c:339
+msgid " (bandstacking)"
+msgstr " (bandstacking)"
+
+#: lib/libdvbv5/dvb-sat.c:342
+#, c-format
+msgid "\t%s%d to %d MHz, LO: %d MHz\n"
+msgstr "\t%s%d-დან %d-მდე მჰც LO: %d მჰც\n"
+
+#: lib/libdvbv5/dvb-sat.c:525
+msgid "DiSEqC disabled. Can't tune using SCR/Unicable."
+msgstr "DiSEqC გამორთულია. SCR/Unicable-ის გამოყენებით რეგულირება შეუძლებელია."
+
+#: lib/libdvbv5/dvb-sat.c:570
+msgid "sending diseq failed"
+msgstr "diseq-ის გაგზავნის შეცდომა"
+
+#: lib/libdvbv5/dvb-sat.c:607
+#, c-format
+msgid "frequency %.2fMHz (tune freq %.2fMHz) is out of LNBf %s range"
+msgstr "სიხშირე %.2fმჰც (რეგულაციის სიხშირე %.2fმჰც) LNBf %s შუალედს გარეთაა"
+
+#: lib/libdvbv5/dvb-sat.c:627
+msgid "Need a LNBf to work"
+msgstr "სამუშაოდ საჭიროა LNBf"
+
+#: lib/libdvbv5/dvb-scan.c:157
+#, c-format
+msgid "%s: table memory pointer not filled"
+msgstr "%s: ცხრილის მეხსიერების მაჩვენებელი შევსებული არაა"
+
+#: lib/libdvbv5/dvb-scan.c:164 lib/libdvbv5/dvb-scan.c:212
+#: lib/libdvbv5/dvb-scan.c:237 lib/libdvbv5/dvb-scan.c:337
+#, c-format
+msgid "%s: out of memory"
+msgstr "%s: არასაკმარისი მეხსიერება"
+
+#: lib/libdvbv5/dvb-scan.c:197
+#, c-format
+msgid "%s: received table 0x%02x, extension ID 0x%04x, section %d/%d"
+msgstr "%s: მიღებული ცხრილი 0x%02x, გაფართოების ID 0x%04x, სექცია %d/%d"
+
+#: lib/libdvbv5/dvb-scan.c:201
+#, c-format
+msgid "%s: couldn't match ID %d at the active section filters"
+msgstr "%s: ID %d არ ემთხვევა აქტიური სექციის ფილტრებს"
+
+#: lib/libdvbv5/dvb-scan.c:252
+#, c-format
+msgid "%s: extension already done, ignoring: 0x%04x"
+msgstr "%s: გაფართოება უკვე შედგა. მოხდება გამოტოვება: 0x%04x"
+
+#: lib/libdvbv5/dvb-scan.c:265
+#, c-format
+msgid ""
+"%s: section repeated on table 0x%02x, extension ID 0x%04x, section %d/%d: "
+"done"
+msgstr ""
+"%s: სექცია გამეორდა ცხრილზე 0x%02x, გაფართოების ID 0x%04x, სექცია %d/%d: "
+"მზადაა"
+
+#: lib/libdvbv5/dvb-scan.c:283
+#, c-format
+msgid "%s: no initializer for table %d"
+msgstr "%s: ცხრილისთვის %d ინიციალიზატორი აღმოჩენილი არაა"
+
+#: lib/libdvbv5/dvb-scan.c:289
+#, c-format
+msgid "%s: table 0x%02x, extension ID 0x%04x: done"
+msgstr "%s: ცხრილი 0x%02x, გაფართოების ID 0x%04x: დასრულდა"
+
+#: lib/libdvbv5/dvb-scan.c:302
+#, c-format
+msgid "%s: extension not completed yet: 0x%04x"
+msgstr "%s: გაფართოება ჯერ დასრულებული არაა: 0x%04x"
+
+#: lib/libdvbv5/dvb-scan.c:332
+#, c-format
+msgid "%s: waiting for table ID 0x%02x, program ID 0x%02x"
+msgstr "%s: ველოდები ცხრილს ID 0x%02x, პროგრამას ID 0x%02x"
+
+#: lib/libdvbv5/dvb-scan.c:358
+#, c-format
+msgid "%s: no data read on section filter"
+msgstr "%s: სექციის ფილტრზე მონაცემები წაკითხული არაა"
+
+#: lib/libdvbv5/dvb-scan.c:365
+#, c-format
+msgid "%s: buf returned an empty buffer"
+msgstr "%s: buf-მა ცარიელი ბუფერი დააბრუნა"
+
+#: lib/libdvbv5/dvb-scan.c:370
+msgid "dvb_read_section: read error"
+msgstr "dvb_read_section: წაკითხვის შეცდომა"
+
+#: lib/libdvbv5/dvb-scan.c:377
+#, c-format
+msgid "%s: crc error"
+msgstr "%s: crc-ის შეცდომა"
+
+#: lib/libdvbv5/dvb-scan.c:520
+msgid "error while waiting for PAT table"
+msgstr "'PAT' ცხრილის მოლოდინის შეცდომა"
+
+#: lib/libdvbv5/dvb-scan.c:536
+msgid "error while waiting for VCT table"
+msgstr "'VCT' ცხრილის მოლოდინის შეცდომა"
+
+#: lib/libdvbv5/dvb-scan.c:550
+#, c-format
+msgid "Program #%d is network PID: 0x%04x"
+msgstr "პროგრამა #%d ქსელის PID-ია: 0x%04x"
+
+#: lib/libdvbv5/dvb-scan.c:556
+#, c-format
+msgid "Program #%d ID 0x%04x, service ID 0x%04x"
+msgstr "პროგრამა #%d ID 0x%04x, სერვისის ID 0x%04x"
+
+#: lib/libdvbv5/dvb-scan.c:567
+#, c-format
+msgid "error while reading the PMT table for service 0x%04x"
+msgstr "შეცდომა PMT ცხრილის კითხვისას სერვისისთვის 0x%04x"
+
+#: lib/libdvbv5/dvb-scan.c:587 lib/libdvbv5/dvb-scan.c:616
+msgid "error while reading the NIT table"
+msgstr "შეცდომა NIT ცხრილის კითხვისას"
+
+#: lib/libdvbv5/dvb-scan.c:600 lib/libdvbv5/dvb-scan.c:627
+msgid "error while reading the SDT table"
+msgstr "შეცდომა SDT ცხრილის კითხვისას"
+
+#: lib/libdvbv5/dvb-scan.c:608
+msgid "Parsing other NIT/SDT"
+msgstr "სხვა NIT/SDT-ის დამუშავება"
+
+#: lib/libdvbv5/dvb-scan.c:673
+msgid "dvb_fe_set_parms failed"
+msgstr "dvb_fe_set_parms-ის შეცდომა"
+
+#: lib/libdvbv5/dvb-scan.c:768
+msgid ""
+"Cannot calc frequency shift. Either bandwidth/symbol-rate is unavailable "
+"(yet)."
+msgstr ""
+"სიხშირის წანაცვლების გამოთვლის შეცდომა. სიჩქარე/სიმბოლოების სიხშირე (ჯერ) "
+"მიუწვდომელია."
+
+#: lib/libdvbv5/dvb-scan.c:850
+msgid "not enough memory for a new scanning frequency/TS"
+msgstr "ახალი სკანირების სიხშირისთვის/TS-სთვის მეხსიერება საკმარისი არაა"
+
+#: lib/libdvbv5/dvb-scan.c:879
+#, c-format
+msgid "New transponder/channel found: #%d: %d"
+msgstr "აღმოჩენილია ახალი ტრანსპონდერი/არხი #%d: %d"
+
+#: lib/libdvbv5/dvb-scan.c:888
+#, c-format
+msgid "BUG: Couldn't add %d to the scan frequency list."
+msgstr ""
+"შეცდომა: %d-ის სიხშირეების, რომლების სკანირებაც მოხდება, დამატება "
+"შეუძლებელია."
+
+#: lib/libdvbv5/dvb-scan.c:1254
+msgid "Transponders detection not implemented for this standard yet."
+msgstr "ტრანსპონდერების აღმოჩენა ამ სტანდარტისთვის ჯერ განხორციელებული არაა."
+
+#: lib/libdvbv5/dvb-vdr-format.c:286
+#, c-format
+msgid ""
+"WARNING: entry %d: delivery system %d not supported on this format. skipping "
+"entry\n"
+msgstr ""
+"გაფრთხილება: ჩანაწერი %d: მიწოდების სისტემა არ %d მხარდაჭერილი ამ ფორმატში. "
+"ჩანაწერის გამოტოვება\n"
+
+#: lib/libdvbv5/dvb-vdr-format.c:294
+#, c-format
+msgid "WARNING: entry %d: channel name not found. skipping entry\n"
+msgstr ""
+"გაფრთხილება: ჩანაწერი %d: არხის სახელი ვერ მოიძებნა. ჩანაწერის გამოტოვება\n"
+
+#: lib/libdvbv5/dvb-vdr-format.c:301
+#, c-format
+msgid "WARNING: entry %d: frequency not found. skipping entry\n"
+msgstr "გაფრთხილება: ჩანაწერი %d: სიხშირე ვერ მოიძებნა. ჩანაწერის გამოტოვება\n"
+
+#: lib/libdvbv5/dvb-vdr-format.c:387
+#, c-format
+msgid "symbol rate not found"
+msgstr "სიმბოლოების სიჩქარე ვერ ვიპოვე"
