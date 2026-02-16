@@ -208,8 +208,7 @@ static int handle_device_change(struct dvb_device_priv *dvb,
 
 	/* Get optional per-bus fields associated with the device parent */
 	if (!strcmp(bus_type, "pci")) {
-		const char *pci_dev, *pci_vend;
-		char *p;
+		const char *p, *pci_dev, *pci_vend;
 
 		pci_dev = udev_device_get_sysattr_value(parent, "subsystem_device");
 		pci_vend = udev_device_get_sysattr_value(parent, "subsystem_vendor");

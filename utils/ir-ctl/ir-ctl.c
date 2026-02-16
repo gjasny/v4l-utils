@@ -527,7 +527,7 @@ static struct send *read_scancode(const char *name)
 	struct send *f;
 	unsigned scancode;
 	char *pstr;
-	char *p = strchr(name, ':');
+	const char *p = strchr(name, ':');
 
 	if (!p) {
 		fprintf(stderr, _("error: scancode '%s' must be in protocol:scancode format\n"), name);

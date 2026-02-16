@@ -452,7 +452,8 @@ const char *get_associated_device(void *opaque,
 	struct media_devices *md = opaque;
 	struct media_device_entry *md_ptr = md->md_entry;
 	int i, found = 0;
-	char *prev, *p;
+	const char *p;
+	char *prev;
 
 	if (seek_type != NONE && seek_device[0]) {
 		/* Get just the device name */
