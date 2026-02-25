@@ -252,8 +252,8 @@ void trace_v4l2_buffer(void *arg, json_object *ioctl_args)
 	if (buf->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ||
 	    buf->type == V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE) {
 		json_object *planes_obj = json_object_new_array();
-		/* TODO add planes > 0 */
-		json_object_array_add(planes_obj, trace_v4l2_plane(buf->m.planes, buf->memory));
+		for (__u32 i = 0; i < buf->length; i++)
+			json_object_array_add(planes_obj, trace_v4l2_plane(&buf->m.planes[i], buf->memory));
 		json_object_object_add(m_obj, "planes", planes_obj);
 	}
 
