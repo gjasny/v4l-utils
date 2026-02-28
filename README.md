@@ -281,7 +281,8 @@ Installed under `<prefix>/sbin`.
 
 ### v4l2-sysfs-path
 
-*FIXME* add description.
+Tool to show relationships between V4L2 video devices and other related devices
+belonging to the same physical device by parsing the sysfs tree.
 
 Installed under `<prefix>/bin`.
 
