@@ -41,6 +41,7 @@ enum output_format {
  */
 enum Option {
 	OptI2CAdapter = 'a',
+	OptBlockHexDump = 'b',
 	OptCheck = 'c',
 	OptCheckInline = 'C',
 	OptEld = 'E',
@@ -93,6 +94,7 @@ static struct option long_options[] = {
 	{ "native-resolution", no_argument, 0, OptNativeResolution },
 	{ "preferred-timings", no_argument, 0, OptPreferredTimings },
 	{ "physical-address", no_argument, 0, OptPhysicalAddress },
+	{ "block-hex-dump", no_argument, 0, OptBlockHexDump },
 	{ "skip-hex-dump", no_argument, 0, OptSkipHexDump },
 	{ "only-hex-dump", no_argument, 0, OptOnlyHexDump },
 	{ "skip-sha", no_argument, 0, OptSkipSHA },
@@ -165,6 +167,7 @@ static void usage(void)
 	       "  -V, --v4l2-timings    Report all long video timings in v4l2-dv-timings.h format.\n"
 	       "  -s, --skip-hex-dump   Skip the initial hex dump of the EDID.\n"
 	       "  -H, --only-hex-dump   Only output the hex dump of the EDID.\n"
+	       "  -b, --block-hex-dump  Output hex dump for each block in the EDID.\n"
 	       "  --skip-sha            Skip the SHA report.\n"
 	       "  --hide-serial-numbers Hide serial numbers with '...'.\n"
 	       "  --replace-unique-ids  Replace unique IDs (serial numbers, dates, Container IDs) with fixed values.\n"
@@ -1234,6 +1237,17 @@ std::string block_name(unsigned char block)
 	}
 }
 
+void edid_state::block_hex_dump(const char *prefix, const unsigned char *start, unsigned length)
+{
+	if (!options[OptBlockHexDump])
+		return;
+
+	printf("%sHex: Offset: 0x%02x Data:", prefix, int(start - start_block));
+	for (unsigned i = 0; i < length; i++)
+		printf(" %02x", start[i]);
+	printf("\n");
+}
+
 void edid_state::parse_block_map(const unsigned char *x)
 {
 	unsigned last_valid_block_tag = 0;
@@ -1598,11 +1612,13 @@ int edid_state::parse_edid()
 
 	block = block_name(0x00);
 	printf("Block %u, %s:\n", block_nr, block.c_str());
+	start_block = edid;
 	parse_base_block(edid);
 
 	for (unsigned i = 1; i < num_blocks; i++) {
 		block_nr++;
 		printf("\n----------------\n");
+		start_block = edid + i * EDID_PAGE_SIZE;
 		parse_extension(edid + i * EDID_PAGE_SIZE);
 	}
 

@@ -2783,6 +2783,7 @@ static void cta_hdmi_audio_block(const unsigned char *x, unsigned length)
 
 void edid_state::cta_block(const unsigned char *x, std::vector<unsigned> &found_tags)
 {
+	const unsigned char *start = x;
 	unsigned length = x[0] & 0x1f;
 	unsigned tag = (x[0] & 0xe0) >> 5;
 	unsigned extended = (tag == 0x07) ? 1 : 0;
@@ -2869,6 +2870,8 @@ void edid_state::cta_block(const unsigned char *x, std::vector<unsigned> &found_
 
 	if (dooutputname && data_block.length())
 		printf("  %s:\n", data_block.c_str());
+
+	block_hex_dump("    ", start, 1 + (start[0] & 0x1f));
 
 	switch (tag) {
 	case 0x04:
@@ -3129,6 +3132,7 @@ void edid_state::parse_cta_block(const unsigned char *x)
 
 	// See Table 52 of CTA-861-G for a description of Byte 3
 
+	block_hex_dump("  ", x, 4);
 	printf("  Revision: %u\n", version);
 	if (version == 0)
 		fail("Invalid CTA-861 Extension revision 0.\n");

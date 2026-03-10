@@ -11,6 +11,7 @@ void edid_state::parse_digital_interface(const unsigned char *x)
 {
 	data_block = "Digital Interface";
 	printf("  %s:\n", data_block.c_str());
+	block_hex_dump("    ", x, 12);
 
 	printf("    Supported Digital Interface: ");
 	unsigned short v = x[2];
@@ -131,6 +132,7 @@ void edid_state::parse_display_device(const unsigned char *x)
 {
 	data_block = "Display Device";
 	printf("  %s:\n", data_block.c_str());
+	block_hex_dump("    ", x, 6);
 
 	printf("    Sub-Pixel Layout: ");
 	unsigned char v = x[0x0e];
@@ -207,6 +209,7 @@ void edid_state::parse_display_caps(const unsigned char *x)
 {
 	data_block = "Display Capabities & Feature Support Set";
 	printf("  %s:\n", data_block.c_str());
+	block_hex_dump("    ", x, 35);
 
 	unsigned short v = x[0x14];
 
@@ -434,6 +437,7 @@ void edid_state::parse_display_xfer(const unsigned char *x)
 {
 	data_block = "Display Transfer Characteristics - Gamma";
 	printf("  %s:\n", data_block.c_str());
+	block_hex_dump("    ", x, 46);
 
 	unsigned char v = x[0x51];
 	unsigned num_entries = v & 0x3f;

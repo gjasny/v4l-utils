@@ -145,6 +145,7 @@ struct edid_state {
 	{
 		// Global state
 		edid_size = num_blocks = block_nr = 0;
+		start_block = NULL;
 		max_hor_freq_hz = max_vert_freq_hz = max_pixclk_khz = 0;
 		min_hor_freq_hz = 0xffffff;
 		min_vert_freq_hz = 0xffffffff;
@@ -244,6 +245,7 @@ struct edid_state {
 	unsigned edid_size;
 	unsigned num_blocks;
 	unsigned block_nr;
+	const unsigned char *start_block;
 	std::string block;
 	std::string data_block;
 	unsigned unused_bytes;
@@ -444,6 +446,7 @@ struct edid_state {
 	void data_block_oui(std::string block_name, const unsigned char *x, unsigned length, unsigned *ouinum,
 	                    bool ignorezeros = false, bool do_ascii = false, bool big_endian = false,
 			    bool silent = false);
+	void block_hex_dump(const char *prefix, const unsigned char *start, unsigned length);
 
 	void print_vic_index(const char *prefix, unsigned idx, const char *suffix, bool ycbcr420 = false);
 	void hdmi_latency(unsigned char vid_lat, unsigned char aud_lat, bool is_ilaced);

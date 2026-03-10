@@ -688,6 +688,7 @@ void edid_state::detailed_display_range_limits(const unsigned char *x)
 
 	data_block = "Display Range Limits";
 	printf("    %s:\n", data_block.c_str());
+	block_hex_dump("      ", x, 18);
 	base.has_display_range_descriptor = 1;
 
 	if (base.edid_minor >= 4) {
@@ -888,6 +889,7 @@ void edid_state::detailed_epi(const unsigned char *x)
 {
 	data_block = "EPI Descriptor";
 	printf("    %s:\n", data_block.c_str());
+	block_hex_dump("      ", x, 18);
 
 	unsigned v = x[5] & 0x07;
 
@@ -1130,6 +1132,8 @@ void edid_state::detailed_timings(const char *prefix, const unsigned char *x,
 
 	std::string s_type = base_or_cta ? dtd_type() : "DTD";
 	bool ok = print_timings(prefix, &t, s_type.c_str(), s_flags.c_str(), true);
+	if (ok)
+		block_hex_dump((std::string(prefix) + "  ").c_str(), x, 18);
 	timings_ext te(t, s_type, s_flags);
 
 	if (block_nr == 0 && base.dtd_cnt == 1) {
@@ -1240,6 +1244,7 @@ void edid_state::detailed_block(const unsigned char *x)
 	if (!memcmp(x, zero_descr, sizeof(zero_descr))) {
 		data_block = "Empty Descriptor";
 		printf("    %s\n", data_block.c_str());
+		block_hex_dump("      ", x, 18);
 		fail("Use Dummy Descriptor instead of all zeroes.\n");
 		return;
 	}
@@ -1251,6 +1256,7 @@ void edid_state::detailed_block(const unsigned char *x)
 	case 0x10:
 		data_block = "Dummy Descriptor";
 		printf("    %s:\n", data_block.c_str());
+		block_hex_dump("      ", x, 18);
 		for (i = 5; i < 18; i++) {
 			if (x[i]) {
 				fail("Dummy block filled with garbage.\n");
@@ -1261,6 +1267,7 @@ void edid_state::detailed_block(const unsigned char *x)
 	case 0xf7:
 		data_block = "Established timings III";
 		printf("    %s:\n", data_block.c_str());
+		block_hex_dump("      ", x, 18);
 		for (i = 0; i < ARRAY_SIZE(established_timings3_dmt_ids); i++)
 			if (x[6 + i / 8] & (1 << (7 - i % 8))) {
 				unsigned char dmt_id = established_timings3_dmt_ids[i];
@@ -1275,6 +1282,7 @@ void edid_state::detailed_block(const unsigned char *x)
 	case 0xf8:
 		data_block = "CVT 3 Byte Timing Codes";
 		printf("    %s:\n", data_block.c_str());
+		block_hex_dump("      ", x, 18);
 		if (x[5] != 0x01) {
 			fail("Invalid version number %u.\n", x[5]);
 			return;
@@ -1287,6 +1295,7 @@ void edid_state::detailed_block(const unsigned char *x)
 	case 0xf9:
 		data_block = "Display Color Management Data";
 		printf("    %s:\n", data_block.c_str());
+		block_hex_dump("      ", x, 18);
 		printf("      Version : %d\n", x[5]);
 		printf("      Red a3  : %.2f\n", (short)(x[6] | (x[7] << 8)) / 100.0);
 		printf("      Red a2  : %.2f\n", (short)(x[8] | (x[9] << 8)) / 100.0);
@@ -1298,6 +1307,7 @@ void edid_state::detailed_block(const unsigned char *x)
 	case 0xfa:
 		data_block = "Standard Timing Identifications";
 		printf("    %s:\n", data_block.c_str());
+		block_hex_dump("      ", x, 18);
 		for (cnt = i = 0; i < 6; i++) {
 			if (x[5 + i * 2] != 0x01 || x[5 + i * 2 + 1] != 0x01)
 				cnt++;
@@ -1312,6 +1322,7 @@ void edid_state::detailed_block(const unsigned char *x)
 
 		data_block = "Color Point Data";
 		printf("    %s:\n", data_block.c_str());
+		block_hex_dump("      ", x, 18);
 		w_x = (x[7] << 2) | ((x[6] >> 2) & 3);
 		w_y = (x[8] << 2) | (x[6] & 3);
 		gamma = x[9];
@@ -1340,6 +1351,7 @@ void edid_state::detailed_block(const unsigned char *x)
 		data_block = "Display Product Name";
 		base.has_name_descriptor = 1;
 		printf("    %s: '%s'\n", data_block.c_str(), extract_string(x + 5, 13, true));
+		block_hex_dump("      ", x, 18);
 		return;
 	case 0xfd:
 		detailed_display_range_limits(x);
@@ -1349,6 +1361,7 @@ void edid_state::detailed_block(const unsigned char *x)
 			data_block = "Alphanumeric Data String";
 			printf("    %s: '%s'\n", data_block.c_str(),
 			       extract_string(x + 5, 13, true));
+			block_hex_dump("      ", x, 18);
 			return;
 		}
 		if (base.detailed_block_cnt == 3) {
@@ -1356,6 +1369,7 @@ void edid_state::detailed_block(const unsigned char *x)
 
 			data_block = "SPWG Descriptor #3";
 			printf("    %s:\n", data_block.c_str());
+			block_hex_dump("      ", x, 18);
 			memcpy(buf, x + 5, 5);
 			if (strlen(buf) != 5)
 				fail("Invalid PC Maker P/N length.\n");
@@ -1365,6 +1379,7 @@ void edid_state::detailed_block(const unsigned char *x)
 		} else {
 			data_block = "SPWG Descriptor #4";
 			printf("    %s:\n", data_block.c_str());
+			block_hex_dump("      ", x, 18);
 			printf("      SMBUS Values: 0x%02hhx 0x%02hhx 0x%02hhx 0x%02hhx"
 			       " 0x%02hhx 0x%02hhx 0x%02hhx 0x%02hhx\n",
 			       x[5], x[6], x[7], x[8], x[9], x[10], x[11], x[12]);
@@ -1399,6 +1414,7 @@ void edid_state::detailed_block(const unsigned char *x)
 			printf("    %s: '123456'\n", data_block.c_str());
 		else
 			printf("    %s: '%s'\n", data_block.c_str(), sn);
+		block_hex_dump("      ", x, 18);
 		bool dummy = true;
 		// Any serial numbers consisting only of spaces, 0, and/or 1
 		// characters are always considered dummy values.
@@ -1487,6 +1503,7 @@ void edid_state::parse_base_block(const unsigned char *x)
 
 	data_block = "EDID Structure Version & Revision";
 	printf("  %s: %hhu.%hhu\n", data_block.c_str(), x[0x12], x[0x13]);
+	block_hex_dump("    ", x + 0x12, 2);
 	if (x[0x12] == 1) {
 		base.edid_minor = x[0x13];
 		if (base.edid_minor > 4)
@@ -1500,6 +1517,7 @@ void edid_state::parse_base_block(const unsigned char *x)
 	data_block = "Vendor & Product Identification";
 	manufacturer = manufacturer_name(x + 0x08);
 	printf("  %s:\n", data_block.c_str());
+	block_hex_dump("    ", x + 0x08, 10);
 	printf("    Manufacturer: %s\n    Model: %u\n",
 	       manufacturer,
 	       (unsigned short)(x[0x0a] + (x[0x0b] << 8)));
@@ -1564,6 +1582,7 @@ void edid_state::parse_base_block(const unsigned char *x)
 
 	data_block = "Basic Display Parameters & Features";
 	printf("  %s:\n", data_block.c_str());
+	block_hex_dump("    ", x + 0x14, 5);
 	if (x[0x14] & 0x80) {
 		base.is_analog = false;
 		printf("    Digital display\n");
@@ -1724,6 +1743,7 @@ void edid_state::parse_base_block(const unsigned char *x)
 
 	data_block = "Color Characteristics";
 	printf("  %s:\n", data_block.c_str());
+	block_hex_dump("    ", x + 0x19, 10);
 	col_x = (x[0x1b] << 2) | (x[0x19] >> 6);
 	col_y = (x[0x1c] << 2) | ((x[0x19] >> 4) & 3);
 	printf("    Red  : 0.%04u, 0.%04u\n",
@@ -1744,6 +1764,7 @@ void edid_state::parse_base_block(const unsigned char *x)
 	data_block = "Established Timings I & II";
 	if (x[0x23] || x[0x24] || x[0x25]) {
 		printf("  %s:\n", data_block.c_str());
+		block_hex_dump("    ", x + 0x23, 3);
 		for (unsigned i = 0; i < ARRAY_SIZE(established_timings12); i++) {
 			if (x[0x23 + i / 8] & (1 << (7 - i % 8))) {
 				unsigned char dmt_id = established_timings12[i].dmt_id;
@@ -1762,6 +1783,7 @@ void edid_state::parse_base_block(const unsigned char *x)
 		}
 	} else {
 		printf("  %s: none\n", data_block.c_str());
+		block_hex_dump("    ", x + 0x23, 3);
 	}
 	base.has_640x480p60_est_timing = x[0x23] & 0x20;
 
@@ -1775,10 +1797,12 @@ void edid_state::parse_base_block(const unsigned char *x)
 	}
 	if (found) {
 		printf("  %s:\n", data_block.c_str());
+		block_hex_dump("    ", x + 0x26, 16);
 		for (unsigned i = 0; i < 8; i++)
 			print_standard_timing("    ", x[0x26 + i * 2], x[0x26 + i * 2 + 1]);
 	} else {
 		printf("  %s: none\n", data_block.c_str());
+		block_hex_dump("    ", x + 0x26, 16);
 	}
 
 	/* 18 byte descriptors */

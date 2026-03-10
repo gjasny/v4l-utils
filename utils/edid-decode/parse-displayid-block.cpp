@@ -2551,8 +2551,10 @@ unsigned edid_state::displayid_block(const unsigned version, const unsigned char
 		return length;
 	}
 
-	if (dooutputname && data_block.length())
+	if (dooutputname && data_block.length()) {
 		printf("  %s:\n", data_block.c_str());
+		block_hex_dump("    ", x, len + 1);
+	}
 
 	if (version >= 0x20 && tag_version == 1)
 		fail("Use of DisplayID v1.x tag for DisplayID v%u.%u.\n",

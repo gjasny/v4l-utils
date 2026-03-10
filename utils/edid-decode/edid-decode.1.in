@@ -280,6 +280,10 @@ Skip the initial hex dump of the EDID.
 \fB\-H\fR, \fB\-\-only\-hex\-dump\fR
 Only show the hex dump of the EDID, then exit.
 .TP
+\fB\-b\fR, \fB\-\-block\-hex\-dump\fR
+Show the offset and hex dump of each data block inside the EDID. That can be
+helpful if you want to manually modify an EDID.
+.TP
 \fB\-\-skip\-sha\fR
 Don't show the SHA hash. Normally edid-decode will show the SHA, i.e. the
 hash of the git commit used to compile edid-decode. This uniquely identifies
