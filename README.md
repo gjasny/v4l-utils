@@ -16,6 +16,15 @@ information about the mailing list.
 There is also a wiki page for the v4l-utils:
 [https://linuxtv.org/wiki/index.php/V4l-utils](https://linuxtv.org/wiki/index.php/V4l-utils).
 
+# Intended Audence
+
+This project provides general-purpose software components intended primarily
+for integration, development, research, and infrastructure use by technical
+users.
+
+The project is not offered as a consumer-facing online service or
+managed platform.
+
 ## Building
 
 v4l-utils uses the meson build system.
